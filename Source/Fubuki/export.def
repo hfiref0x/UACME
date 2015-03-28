@@ -1,0 +1,12 @@
+EXPORTS
+DllRegisterServer          = DummyFunc PRIVATE
+WdsAbortBlackboard         = DummyFunc
+WdsTerminate               = DummyFunc
+WdsCreateBlackboard        = DummyFunc
+WdsDestroyBlackboard       = DummyFunc
+WdsEnumFirstBlackboardItem = DummyFunc
+WdsEnumNextBlackboardItem  = DummyFunc
+WdsFreeData                = DummyFunc
+WdsGetBlackboardValue      = DummyFunc
+WdsInitialize              = DummyFunc
+WdsAbortBlackboardItemEnum = DummyFunc
