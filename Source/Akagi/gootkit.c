@@ -81,35 +81,6 @@ BOOL ucmInitAppHelp(
 }
 
 /*
-* ucmRunProcess
-*
-* Purpose:
-*
-* Execute given process with given parameters.
-*
-*/
-BOOL ucmRunProcess(
-	LPWSTR lpszProcessName, 
-	LPWSTR lpszParameters
-	)
-{
-	SHELLEXECUTEINFOW shinfo;
-	RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
-
-	if (lpszProcessName == NULL) {
-		return FALSE;
-	}
-
-	shinfo.cbSize = sizeof(shinfo);
-	shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-	shinfo.lpFile = lpszProcessName;
-	shinfo.lpParameters = lpszParameters;
-	shinfo.lpDirectory = NULL;
-	shinfo.nShow = SW_SHOW;
-	return ShellExecuteExW(&shinfo);
-}
-
-/*
 * ucmDoFireworks
 *
 * Purpose:
@@ -215,14 +186,14 @@ BOOL ucmDoFireworks(
 	pSdbCloseDatabaseWrite(hShimDb);
 
 	//register shim, sdbinst.exe
-	if (ucmRunProcess(szSdbinstPath, szShimDbPath)) {
+	if (supRunProcess(szSdbinstPath, szShimDbPath)) {
 		wsprintfW(szTempDirectory, L"%ws\\cliconfg.exe", szSystemDirectory);
-		ucmRunProcess(szTempDirectory, NULL);
+		supRunProcess(szTempDirectory, NULL);
 
 		//remove database
 		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
 		wsprintf(szCmd, L"/q /u %ws", szShimDbPath);
-		ucmRunProcess(szSdbinstPath, szCmd);
+		supRunProcess(szSdbinstPath, szCmd);
 		DeleteFileW(szShimDbPath);
 	}
 	return TRUE;

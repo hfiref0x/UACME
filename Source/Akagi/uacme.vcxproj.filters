@@ -36,6 +36,9 @@
     <ClCompile Include="simda.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="carberp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dll64.h">
@@ -72,6 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="apphelp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="carberp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

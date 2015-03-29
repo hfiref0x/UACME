@@ -10,15 +10,17 @@
 # Usage
 
 Run executable from command line with following keys (watch debug ouput with dbgview or similar for more info):
-* 1 - Leo Davidson syspep method, this will work only on Windows 7 and Windows 8, used in multiple malware;
+* 1 - Leo Davidson sysprep method, this will work only on Windows 7 and Windows 8, used in multiple malware;
 * 2 - Tweaked Leo Davidson sysprep method, this will work only on Windows 8.1;
 * 3 - Leo Davidson method tweaked by WinNT/Pitou developers, works from Windows 7 up to Windows 10 b10041;
 * 4 - Application Compatibility Shim RedirectEXE method, from WinNT/Gootkit. Works from Windows 7 up to Windows 8.1;
 * 5 - ISecurityEditor WinNT/Simda method, used to turn off UAC, works from Windows 7 up to Windows 10 b10041.
+* 6 - Wusa method used by Win32/Carberp, tweaked to work with Windows 8/8.1 also.
 
 Note:
 * Methods (1), (2), (3), (5) require process injection, so they won't work from wow64, you need either Heavens gate or use x64 edition of this tool;
 * Method (4) unavailable in 64 bit edition because of Shim restriction.
+* Method (6) unavailable in wow64 environment starting from Windows 8. Also target application absent in recent Windows 10 TP 10041 build.
 
 Run examples:
 * akagi32.exe 1

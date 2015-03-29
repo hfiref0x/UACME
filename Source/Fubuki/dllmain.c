@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     1.00
+*  VERSION:     1.10
 *
-*  DATE:        10 Mar 2015
+*  DATE:        29 Mar 2015
 *
 *  Proxy dll entry point.
 *
@@ -32,7 +32,7 @@ BOOL WINAPI DllMain(
 	)
 {
 	DWORD					cch;
-	TCHAR					cmdbuf[MAX_PATH + 1], sysdir[MAX_PATH + 1];
+	TCHAR					cmdbuf[MAX_PATH * 2], sysdir[MAX_PATH + 1];
 	STARTUPINFO				startupInfo;
 	PROCESS_INFORMATION		processInfo;
 

