@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.H
 *
-*  VERSION:     1.20
+*  VERSION:     1.30
 *
-*  DATE:        29 Mar 2015
+*  DATE:        30 Mar 2015
 *
 *  Prototypes and definitions for Leo Davidson method.
 *

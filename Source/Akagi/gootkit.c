@@ -4,9 +4,9 @@
 *
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     1.10
+*  VERSION:     1.30
 *
-*  DATE:        28 Mar 2015
+*  DATE:        30 Mar 2015
 *
 *  Gootkit based AutoElevation using AppCompat.
 *
@@ -229,7 +229,7 @@ BOOL ucmAppcompatElevation(
 			break;
 		}
 
-		if (ucmInitAppHelp() != TRUE) {
+		if (ucmInitAppHelp() == FALSE) {
 			break;
 		}
 

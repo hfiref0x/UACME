@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     1.20
+*  VERSION:     1.30
 *
-*  DATE:        29 Mar 2015
+*  DATE:        30 Mar 2015
 *
 *  Leo Davidson work based AutoElevation and Pitou new variant.
 *
@@ -241,8 +241,8 @@ BOOL ucmStandardAutoElevation(
 		}
 		OutputDebugStringW(g_ElevParams.SourceFilePathAndName);
 
-		if (supWriteBufferToFile(g_ElevParams.SourceFilePathAndName, 
-			ProxyDll, ProxyDllSize) != TRUE)
+		if (!supWriteBufferToFile(g_ElevParams.SourceFilePathAndName, 
+			ProxyDll, ProxyDllSize))
 		{
 			break;
 		}

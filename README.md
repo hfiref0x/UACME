@@ -16,6 +16,7 @@ Run executable from command line with following keys (watch debug ouput with dbg
 * 4 - Application Compatibility Shim RedirectEXE method, from WinNT/Gootkit. Works from Windows 7 up to Windows 8.1;
 * 5 - ISecurityEditor WinNT/Simda method, used to turn off UAC, works from Windows 7 up to Windows 10 b10041.
 * 6 - Wusa method used by Win32/Carberp, tweaked to work with Windows 8/8.1 also.
+* 7 - Wusa method, tweaked to work from Windows 7 up to Windows 10 b10041.
 
 Note:
 * Methods (1), (2), (3), (5) require process injection, so they won't work from wow64, you need either Heavens gate or use x64 edition of this tool;

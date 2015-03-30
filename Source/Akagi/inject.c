@@ -4,9 +4,9 @@
 *
 *  TITLE:       INJECT.C
 *
-*  VERSION:     1.10
+*  VERSION:     1.30
 *
-*  DATE:        28 Mar 2015
+*  DATE:        30 Mar 2015
 *
 *  Inject module.
 *
@@ -62,7 +62,7 @@ BOOL ucmInjectExplorer(
 		//
 		// Allocate buffer in target process and write itself inside
 		//
-		remotebuffer = VirtualAllocEx(hProcess, NULL, opth->SizeOfImage,
+		remotebuffer = VirtualAllocEx(hProcess, NULL, (SIZE_T)opth->SizeOfImage,
 			MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 
 		if (remotebuffer == NULL) {

