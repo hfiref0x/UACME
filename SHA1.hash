@@ -1,5 +1,5 @@
-7dd89a3e73a4e10cf568df18da931cdca9d7df00 *Compiled\Akagi32.exe
-4230633c2d94741b90ee64fb4e5d9d463813720f *Compiled\Akagi64.exe
+f9131b559450cafcff2781e3c1c07eb827daa4e4 *Compiled\Akagi32.exe
+d0f08973dd5807309524b3d38db1b19a982997ed *Compiled\Akagi64.exe
 23dc9550ef86b0810d1932905cd4d88fbf42f314 *Source\Akagi\apphelp.h
 7895e27a32e4105ac1a0efbe7c0bc229592f683e *Source\Akagi\carberp.c
 0b653808dbf160f1f0057afd1ff45ae962211517 *Source\Akagi\carberp.h
@@ -17,7 +17,7 @@ d8ba23b52cde3467c1847b9747f82067e7a74ccc *Source\Akagi\main.c
 c6de174bc03377645f0bdad16d9cfd43f23ee17e *Source\Akagi\pitou.c
 dae1634ab493c621a818862b298af795f444451d *Source\Akagi\pitou.h
 5624e41c8fde72299a2603378cf891afba555766 *Source\Akagi\resource.h
-0cc53369d754b450515a6deb1895cf9d9d3c4867 *Source\Akagi\Resource.rc
+1b7df69dde0263bbf8e97ebf68476c93f75a3cd8 *Source\Akagi\Resource.rc
 634a7ffa1534fe270c074b777db3d5d6cddce69d *Source\Akagi\simda.c
 2ae00e2e16ee8b072419fcf142b5b0eba123645c *Source\Akagi\simda.h
 f5d016746457b3374cd86ff5ae6e2d66e74c52ff *Source\Akagi\sup.c
