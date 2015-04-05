@@ -2,13 +2,13 @@
 *
 *  (C) COPYRIGHT AUTHORS, 2015
 *
-*  TITLE:       SIMDA.H
+*  TITLE:       HYBRIDS.H
 *
 *  VERSION:     1.50
 *
 *  DATE:        05 Apr 2015
 *
-*  Prototypes and definitions for Simda method.
+*  Prototypes and definitions for hybrid methods.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -17,14 +17,7 @@
 *
 *******************************************************************************/
 
-#define T_UACKEY					L"MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system"
-#define T_SSDL_ALL_FOR_EVERYONE		L"D:(A;;GA;;;WD)"
-
-BOOL ucmSimdaTurnOffUac(
-	VOID
-	);
-
-BOOL ucmSimdaAlterKeySecurity(
-	LPWSTR lpTargetKey,
-	LPWSTR lpSddlString
+BOOL ucmAvrfMethod(
+	PVOID AvrfDll,
+	DWORD AvrfDllSize
 	);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     1.10
+*  VERSION:     1.50
 *
-*  DATE:        29 Mar 2015
+*  DATE:        05 Apr 2015
 *
 *  Proxy dll entry point.
 *
@@ -17,18 +17,35 @@
 *
 *******************************************************************************/
 
-#include <windows.h>
+#include <Windows.h>
+#include "..\Shared\minirtl.h"
 
+/*
+* DummyFunc
+*
+* Purpose:
+*
+* Stub for fake exports.
+*
+*/
 VOID WINAPI DummyFunc(
 	VOID
 	)
 {
 }
 
+/*
+* DllMain
+*
+* Purpose:
+*
+* Proxy dll entry point, start cmd.exe and exit immediatelly.
+*
+*/
 BOOL WINAPI DllMain(
-	__in  HINSTANCE hinstDLL,
-	__in  DWORD fdwReason,
-	__in  LPVOID lpvReserved
+	_In_ HINSTANCE hinstDLL,
+	_In_ DWORD fdwReason,
+	_In_ LPVOID lpvReserved
 	)
 {
 	DWORD					cch;
@@ -40,7 +57,7 @@ BOOL WINAPI DllMain(
 	UNREFERENCED_PARAMETER(lpvReserved);
 
 	if (fdwReason == DLL_PROCESS_ATTACH) {
-		OutputDebugString(TEXT("UACMe injected\r\n"));
+		OutputDebugString(TEXT("UACMe injected, Fubuki at your service.\r\n"));
 
 		RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
 		RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
@@ -51,8 +68,8 @@ BOOL WINAPI DllMain(
 		cch = ExpandEnvironmentStrings(TEXT("%systemroot%\\system32\\"), sysdir, MAX_PATH);
 		if ((cch != 0) && (cch < MAX_PATH)) {
 			RtlSecureZeroMemory(cmdbuf, sizeof(cmdbuf));
-			lstrcpy(cmdbuf, sysdir);
-			lstrcat(cmdbuf, TEXT("cmd.exe"));
+			_strcpy(cmdbuf, sysdir);
+			_strcat(cmdbuf, TEXT("cmd.exe"));
 
 			if (CreateProcess(cmdbuf, NULL, NULL, NULL, FALSE, 0, NULL,
 				sysdir, &startupInfo, &processInfo))

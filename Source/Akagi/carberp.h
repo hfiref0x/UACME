@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.H
 *
-*  VERSION:     1.30
+*  VERSION:     1.50
 *
-*  DATE:        30 Mar 2015
+*  DATE:        05 Apr 2015
 *
 *  Prototypes and definitions for Carberp method.
 *
@@ -30,4 +30,12 @@ BOOL ucmWusaMethod(
 	DWORD dwType,
 	PVOID ProxyDll,
 	DWORD ProxyDllSize
+	);
+
+BOOL ucmWusaCopyFile(
+	LPWSTR lpSourceDll,
+	LPWSTR lpMsuPackage,
+	LPWSTR lpCommandLine,
+	PVOID FileBuffer,
+	DWORD FileBufferSize
 	);

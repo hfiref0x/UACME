@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     1.10
+*  VERSION:     1.50
 *
-*  DATE:        29 Mar 2015
+*  DATE:        05 Apr 2015
 *
 *  Common header file for the program support routines.
 *
@@ -26,7 +26,8 @@
 
 #include <Windows.h>
 #include <ntstatus.h>
-#include "ntos.h"
+#include "..\shared\ntos.h"
+#include "..\shared\minirtl.h"
 #include "sup.h"
 #include "inject.h"
 #include "cmdline.h"
@@ -34,3 +35,4 @@
 #include "gootkit.h"
 #include "simda.h"
 #include "carberp.h"
+#include "hybrids.h"

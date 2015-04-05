@@ -4,9 +4,9 @@
 *
 *  TITLE:       INJECT.H
 *
-*  VERSION:     1.40
+*  VERSION:     1.50
 *
-*  DATE:        04 Apr 2015
+*  DATE:        05 Apr 2015
 *
 *  Injector prototypes and definitions.
 *
@@ -19,14 +19,15 @@
 
 #include <AccCtrl.h>
 
-#define METHOD_SYSPREP		0x00000001
-#define METHOD_SYSPREP_EX	0x00000002
-#define METHOD_OOBE			0x00000004
-#define METHOD_APPCOMPAT	0x00000008
-#define METHOD_SIMDA		0x00000010
-#define METHOD_CARBERP		0x00000020
-#define METHOD_CARBERP_EX	0x00000040
-#define METHOD_TILON		0x00000080
+#define METHOD_SYSPREP		1
+#define METHOD_SYSPREP_EX	2
+#define METHOD_OOBE			3
+#define METHOD_APPCOMPAT	4
+#define METHOD_SIMDA		5
+#define METHOD_CARBERP		6
+#define METHOD_CARBERP_EX	7
+#define METHOD_TILON		8
+#define METHOD_AVRF         9
 
 #define SHELL32DLL			TEXT("shell32.dll")
 #define OLE32DLL			TEXT("ole32.dll")
@@ -64,9 +65,8 @@ typedef struct _ELOAD_PARAMETERS {
 } ELOAD_PARAMETERS, *PELOAD_PARAMETERS;
 
 typedef struct _ELOAD_PARAMETERS_2 {
-	WCHAR	ObjectName[MAX_PATH * 2];
-	WCHAR   szKey[MAX_PATH];
-	WCHAR   szNewSDDL[MAX_PATH];
+	WCHAR   szKey[MAX_PATH + 1];
+	WCHAR   szNewSDDL[MAX_PATH + 1];
 	WCHAR	EleMoniker[MAX_PATH];
 	//
 	IID		xIID_ISecurityEditor;

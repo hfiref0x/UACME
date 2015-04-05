@@ -14,19 +14,43 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="minirtl">
-      <UniqueIdentifier>{04ee0fac-8cb1-42ba-8211-a3b0023677db}</UniqueIdentifier>
+      <UniqueIdentifier>{cf1e8bef-2207-422c-a3ae-8e2856b92c8c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="export.def">
+    <ClCompile Include="dllmain.c">
       <Filter>Source Files</Filter>
-    </None>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strcat.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strcmp.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strcmpi.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strcpy.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strend.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strlen.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strncmp.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strncmpi.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strncpy.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\minirtl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -34,37 +58,5 @@
     <ResourceCompile Include="version.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="dllmain.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strcat.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strcmp.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strcmpi.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strcpy.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strend.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strlen.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strncmp.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strncmpi.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strncpy.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

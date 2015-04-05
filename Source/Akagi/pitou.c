@@ -256,7 +256,7 @@ BOOL ucmStandardAutoElevation(
 
 		//dest directory
 		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-		lstrcpyW(szBuffer, lpTargetDir);
+		_strcpy_w(szBuffer, lpTargetDir);
 		
 		if (ExpandEnvironmentStringsW(szBuffer, 
 			g_ElevParams.DestinationDir, MAX_PATH) == 0) 
@@ -268,7 +268,7 @@ BOOL ucmStandardAutoElevation(
 
 		//target
 		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-		lstrcpyW(szBuffer, lpTargetProcess);
+		_strcpy_w(szBuffer, lpTargetProcess);
 		
 		if (ExpandEnvironmentStringsW(szBuffer, 
 			g_ElevParams.ExePathAndName, MAX_PATH) == 0) 
@@ -278,7 +278,7 @@ BOOL ucmStandardAutoElevation(
 		OutputDebugStringW(g_ElevParams.ExePathAndName);
 
 		//elevation moniker
-		lstrcpyW(g_ElevParams.EleMoniker, L"Elevation:Administrator!new:{3ad05575-8857-4850-9277-11b85bdb8e09}");
+		_strcpy_w(g_ElevParams.EleMoniker, L"Elevation:Administrator!new:{3ad05575-8857-4850-9277-11b85bdb8e09}");
 
 		g_ElevParams.xIID = IID_IFileOperation;
 		g_ElevParams.xIID_IShellItem = IID_IShellItem;

