@@ -32,9 +32,7 @@ Run examples:
 # Warning
 * Using (5) method will permanently turn off UAC (after reboot), make sure to do this in test environment or don't forget to re-enable UAC after tool usage;
 * Using (9) method will permanently compromise security of IFEO key, if you do tests on your real machine - restore IFEO security manually after you complete this tool usage;
-* This tool is not intended for AV tests and not tested to work in aggressive AV environment, if you still plan to use it with installed bloatware AV soft - you use it at your 
-
-own risk.
+* This tool is not intended for AV tests and not tested to work in aggressive AV environment, if you still plan to use it with installed bloatware AV soft - you use it at your own risk.
 
 # Protection
 * UAC turned on maximum level and full awareness about every window it will show;
