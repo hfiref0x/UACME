@@ -116,9 +116,6 @@
     <ClInclude Include="..\shared\minirtl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\ntos.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\shared\rtltypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>

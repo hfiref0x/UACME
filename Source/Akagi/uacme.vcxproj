@@ -204,7 +204,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\shared\minirtl.h" />
-    <ClInclude Include="..\shared\ntos.h" />
     <ClInclude Include="..\shared\rtltypes.h" />
     <ClInclude Include="apphelp.h" />
     <ClInclude Include="carberp.h" />

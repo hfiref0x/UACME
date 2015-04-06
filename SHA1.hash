@@ -15,7 +15,6 @@ ed452f854377d4ff3570a0232393e89f164ef8ce *Source\Akagi\gootkit.h
 6d91b30d8791805bee59d0b5dacc30abf789a9f9 *Source\Akagi\inject.c
 95a93f97b757fa10c3507227d089292ba58fd1f8 *Source\Akagi\inject.h
 44c575230ccf2f7f850502fd408d59da141872fd *Source\Akagi\main.c
-6c58a1874cdb58602a6af28d2f493b16c4b1d335 *Source\Akagi\ntos.h
 11e0c48f6af6633d8842fdca7278fa9c57a70be1 *Source\Akagi\pitou.c
 74025cdd6e11ea09189b7c102cbd3feb58b70e3e *Source\Akagi\pitou.h
 5624e41c8fde72299a2603378cf891afba555766 *Source\Akagi\resource.h
@@ -24,8 +23,8 @@ ed452f854377d4ff3570a0232393e89f164ef8ce *Source\Akagi\gootkit.h
 9475fc0071b9cebe8434a638cd530a7a23499e93 *Source\Akagi\simda.h
 f5d016746457b3374cd86ff5ae6e2d66e74c52ff *Source\Akagi\sup.c
 313936541d5afd787402705f0e20be25db7741dd *Source\Akagi\sup.h
-23edf74d7398a06e786e8a8356e14b266d168147 *Source\Akagi\uacme.vcxproj
-d2eeed3319ded095b862a2e97ff712e7aef7d59e *Source\Akagi\uacme.vcxproj.filters
+6d058ac64196044375657796b44d2db5f807e5b5 *Source\Akagi\uacme.vcxproj
+91bcb311ed11e16b436856cf6ba9b9f8a5d70e69 *Source\Akagi\uacme.vcxproj.filters
 1f7166760bc04edd68484816f33856d61065341c *Source\Akagi\uacme.vcxproj.user
 4c3299c3f22c9e0dd6dc8d036e6391ce13d73f1e *Source\Fubuki\dll.vcxproj
 5b2b3c9bf4a1497fd8cb74f35170ba904daac4f3 *Source\Fubuki\dll.vcxproj.filters
