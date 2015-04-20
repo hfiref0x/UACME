@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     1.40
+*  VERSION:     1.60
 *
-*  DATE:        04 Apr 2015
+*  DATE:        20 Apr 2015
 *
 *  Leo Davidson work based AutoElevation and Pitou new variant.
 *

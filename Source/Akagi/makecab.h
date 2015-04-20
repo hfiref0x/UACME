@@ -2,13 +2,13 @@
 *
 *  (C) COPYRIGHT AUTHORS, 2015
 *
-*  TITLE:       SIMDA.H
+*  TITLE:       MAKECAB.H
 *
 *  VERSION:     1.60
 *
 *  DATE:        20 Apr 2015
 *
-*  Prototypes and definitions for Simda method.
+*  Prototypes and definitions for makecab module.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -17,14 +17,26 @@
 *
 *******************************************************************************/
 
-#define T_UACKEY					L"MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system"
-#define T_SDDL_ALL_FOR_EVERYONE		L"D:(A;;GA;;;WD)"
+#include <fci.h>
+#include <fcntl.h>
 
-BOOL ucmSimdaTurnOffUac(
-	VOID
+typedef struct _CABDATA {
+	ERF erf;
+	CCAB cab;
+	HFCI hfci;
+} CABDATA, *PCABDATA;
+
+CABDATA *cabCreate(
+	_In_ LPWSTR lpszCabName
 	);
 
-BOOL ucmSimdaAlterKeySecurity(
-	LPWSTR lpTargetKey,
-	LPWSTR lpSddlString
+BOOL cabAddFile(
+	_In_ CABDATA *Cabinet,
+	_In_ LPWSTR lpszFileName,
+	_In_ LPWSTR lpszInternalName
 	);
+
+VOID cabClose(
+	_In_ CABDATA *Cabinet
+	);
+

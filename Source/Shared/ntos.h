@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.13
+*  VERSION:     1.16
 *
-*  DATE:        05 Apr 2015
+*  DATE:        17 Apr 2015
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -379,21 +379,21 @@ typedef struct _PROCESS_BASIC_INFORMATION {
 typedef PROCESS_BASIC_INFORMATION *PPROCESS_BASIC_INFORMATION;
 
 typedef struct _PROCESS_EXTENDED_BASIC_INFORMATION {
-	SIZE_T Size;  
+	SIZE_T Size;
 	PROCESS_BASIC_INFORMATION BasicInfo;
 	union
 	{
 		ULONG Flags;
 		struct
 		{
-			ULONG IsProtectedProcess : 1; 
-			ULONG IsWow64Process : 1; 
-			ULONG IsProcessDeleting : 1; 
-			ULONG IsCrossSessionCreate : 1; 
-			ULONG IsFrozen : 1; 
-			ULONG IsBackground : 1; 
+			ULONG IsProtectedProcess : 1;
+			ULONG IsWow64Process : 1;
+			ULONG IsProcessDeleting : 1;
+			ULONG IsCrossSessionCreate : 1;
+			ULONG IsFrozen : 1;
+			ULONG IsBackground : 1;
 			ULONG IsStronglyNamed : 1;
-			ULONG SpareBits : 25; 
+			ULONG SpareBits : 25;
 		} DUMMYSTRUCTNAME;
 	} DUMMYUNIONNAME;
 } PROCESS_EXTENDED_BASIC_INFORMATION, *PPROCESS_EXTENDED_BASIC_INFORMATION;
@@ -680,27 +680,27 @@ typedef struct _OBJECT_NAME_INFORMATION {
 
 #ifndef _OBJECT_TYPE_INFORMATION
 typedef struct _OBJECT_TYPE_INFORMATION {
-    UNICODE_STRING TypeName;
-    ULONG TotalNumberOfObjects;
-    ULONG TotalNumberOfHandles;
-    ULONG TotalPagedPoolUsage;
-    ULONG TotalNonPagedPoolUsage;
-    ULONG TotalNamePoolUsage;
-    ULONG TotalHandleTableUsage;
-    ULONG HighWaterNumberOfObjects;
-    ULONG HighWaterNumberOfHandles;
-    ULONG HighWaterPagedPoolUsage;
-    ULONG HighWaterNonPagedPoolUsage;
-    ULONG HighWaterNamePoolUsage;
-    ULONG HighWaterHandleTableUsage;
-    ULONG InvalidAttributes;
-    GENERIC_MAPPING GenericMapping;
-    ULONG ValidAccessMask;
-    BOOLEAN SecurityRequired;
-    BOOLEAN MaintainHandleCount;
-    ULONG PoolType;
-    ULONG DefaultPagedPoolCharge;
-    ULONG DefaultNonPagedPoolCharge;
+	UNICODE_STRING TypeName;
+	ULONG TotalNumberOfObjects;
+	ULONG TotalNumberOfHandles;
+	ULONG TotalPagedPoolUsage;
+	ULONG TotalNonPagedPoolUsage;
+	ULONG TotalNamePoolUsage;
+	ULONG TotalHandleTableUsage;
+	ULONG HighWaterNumberOfObjects;
+	ULONG HighWaterNumberOfHandles;
+	ULONG HighWaterPagedPoolUsage;
+	ULONG HighWaterNonPagedPoolUsage;
+	ULONG HighWaterNamePoolUsage;
+	ULONG HighWaterHandleTableUsage;
+	ULONG InvalidAttributes;
+	GENERIC_MAPPING GenericMapping;
+	ULONG ValidAccessMask;
+	BOOLEAN SecurityRequired;
+	BOOLEAN MaintainHandleCount;
+	ULONG PoolType;
+	ULONG DefaultPagedPoolCharge;
+	ULONG DefaultNonPagedPoolCharge;
 } OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
 #endif
 
@@ -855,22 +855,22 @@ typedef struct _FILE_ACCESS_INFORMATION {
 	ACCESS_MASK AccessFlags;
 } FILE_ACCESS_INFORMATION, *PFILE_ACCESS_INFORMATION;
 
-typedef struct _FILE_POSITION_INFORMATION {                 
-	LARGE_INTEGER CurrentByteOffset;                        
-} FILE_POSITION_INFORMATION, *PFILE_POSITION_INFORMATION;   
+typedef struct _FILE_POSITION_INFORMATION {
+	LARGE_INTEGER CurrentByteOffset;
+} FILE_POSITION_INFORMATION, *PFILE_POSITION_INFORMATION;
 
 typedef struct _FILE_MODE_INFORMATION {
 	ULONG Mode;
 } FILE_MODE_INFORMATION, *PFILE_MODE_INFORMATION;
 
-typedef struct _FILE_ALIGNMENT_INFORMATION {               
-	ULONG AlignmentRequirement;                             
+typedef struct _FILE_ALIGNMENT_INFORMATION {
+	ULONG AlignmentRequirement;
 } FILE_ALIGNMENT_INFORMATION, *PFILE_ALIGNMENT_INFORMATION;
 
-typedef struct _FILE_NAME_INFORMATION {                    
-	ULONG FileNameLength;                                   
-	WCHAR FileName[1];                                      
-} FILE_NAME_INFORMATION, *PFILE_NAME_INFORMATION;          
+typedef struct _FILE_NAME_INFORMATION {
+	ULONG FileNameLength;
+	WCHAR FileName[1];
+} FILE_NAME_INFORMATION, *PFILE_NAME_INFORMATION;
 
 typedef struct _FILE_ALL_INFORMATION {
 	FILE_BASIC_INFORMATION BasicInformation;
@@ -884,20 +884,20 @@ typedef struct _FILE_ALL_INFORMATION {
 	FILE_NAME_INFORMATION NameInformation;
 } FILE_ALL_INFORMATION, *PFILE_ALL_INFORMATION;
 
-typedef struct _FILE_NETWORK_OPEN_INFORMATION {                 
-	LARGE_INTEGER CreationTime;                                 
-	LARGE_INTEGER LastAccessTime;                             
-	LARGE_INTEGER LastWriteTime;                              
-	LARGE_INTEGER ChangeTime;                                   
-	LARGE_INTEGER AllocationSize;                            
-	LARGE_INTEGER EndOfFile;                                  
-	ULONG FileAttributes;                                    
-} FILE_NETWORK_OPEN_INFORMATION, *PFILE_NETWORK_OPEN_INFORMATION;   
+typedef struct _FILE_NETWORK_OPEN_INFORMATION {
+	LARGE_INTEGER CreationTime;
+	LARGE_INTEGER LastAccessTime;
+	LARGE_INTEGER LastWriteTime;
+	LARGE_INTEGER ChangeTime;
+	LARGE_INTEGER AllocationSize;
+	LARGE_INTEGER EndOfFile;
+	ULONG FileAttributes;
+} FILE_NETWORK_OPEN_INFORMATION, *PFILE_NETWORK_OPEN_INFORMATION;
 
-typedef struct _FILE_ATTRIBUTE_TAG_INFORMATION {             
-	ULONG FileAttributes;                                     
-	ULONG ReparseTag;                                         
-} FILE_ATTRIBUTE_TAG_INFORMATION, *PFILE_ATTRIBUTE_TAG_INFORMATION; 
+typedef struct _FILE_ATTRIBUTE_TAG_INFORMATION {
+	ULONG FileAttributes;
+	ULONG ReparseTag;
+} FILE_ATTRIBUTE_TAG_INFORMATION, *PFILE_ATTRIBUTE_TAG_INFORMATION;
 
 typedef struct _FILE_ALLOCATION_INFORMATION {
 	LARGE_INTEGER AllocationSize;
@@ -912,17 +912,17 @@ typedef struct _FILE_COMPRESSION_INFORMATION {
 	UCHAR Reserved[3];
 } FILE_COMPRESSION_INFORMATION, *PFILE_COMPRESSION_INFORMATION;
 
-typedef struct _FILE_DISPOSITION_INFORMATION {                  
-	BOOLEAN DeleteFile;                                         
-} FILE_DISPOSITION_INFORMATION, *PFILE_DISPOSITION_INFORMATION; 
+typedef struct _FILE_DISPOSITION_INFORMATION {
+	BOOLEAN DeleteFile;
+} FILE_DISPOSITION_INFORMATION, *PFILE_DISPOSITION_INFORMATION;
 
-typedef struct _FILE_END_OF_FILE_INFORMATION {                  
-	LARGE_INTEGER EndOfFile;                                    
-} FILE_END_OF_FILE_INFORMATION, *PFILE_END_OF_FILE_INFORMATION; 
+typedef struct _FILE_END_OF_FILE_INFORMATION {
+	LARGE_INTEGER EndOfFile;
+} FILE_END_OF_FILE_INFORMATION, *PFILE_END_OF_FILE_INFORMATION;
 
-typedef struct _FILE_VALID_DATA_LENGTH_INFORMATION {                                    
-	LARGE_INTEGER ValidDataLength;                                                      
-} FILE_VALID_DATA_LENGTH_INFORMATION, *PFILE_VALID_DATA_LENGTH_INFORMATION;             
+typedef struct _FILE_VALID_DATA_LENGTH_INFORMATION {
+	LARGE_INTEGER ValidDataLength;
+} FILE_VALID_DATA_LENGTH_INFORMATION, *PFILE_VALID_DATA_LENGTH_INFORMATION;
 
 typedef struct _FILE_LINK_INFORMATION {
 	BOOLEAN ReplaceIfExists;
@@ -1270,7 +1270,7 @@ typedef enum _SECTION_INHERIT {
 */
 
 /*
-** Kernel Debugger START 
+** Kernel Debugger START
 */
 
 #ifndef _SYSDBG_COMMAND
@@ -1340,9 +1340,9 @@ typedef struct _SYSTEM_BOOT_ENVIRONMENT_INFORMATION_V1 // Size=20
 
 typedef struct _SYSTEM_BOOT_ENVIRONMENT_INFORMATION // Size=32
 {
-	struct _GUID BootIdentifier; 
-	enum _FIRMWARE_TYPE FirmwareType; 
-	unsigned __int64 BootFlags; 
+	struct _GUID BootIdentifier;
+	enum _FIRMWARE_TYPE FirmwareType;
+	unsigned __int64 BootFlags;
 } SYSTEM_BOOT_ENVIRONMENT_INFORMATION, *PSYSTEM_BOOT_ENVIRONMENT_INFORMATION;
 
 /*
@@ -1399,7 +1399,7 @@ typedef struct _KEY_FULL_INFORMATION {
 	ULONG   Values;
 	ULONG   MaxValueNameLen;
 	ULONG   MaxValueDataLen;
-	WCHAR   Class[1];           
+	WCHAR   Class[1];
 } KEY_FULL_INFORMATION, *PKEY_FULL_INFORMATION;
 #endif
 
@@ -1764,8 +1764,8 @@ typedef struct _OBJECT_TYPE_INITIALIZER_V1 {
 	GENERIC_MAPPING GenericMapping;
 	ACCESS_MASK     ValidAccessMask;
 	BOOLEAN         SecurityRequired;
-	BOOLEAN         MaintainHandleCount; 
-	BOOLEAN         MaintainTypeList;    
+	BOOLEAN         MaintainHandleCount;
+	BOOLEAN         MaintainTypeList;
 	UCHAR           Reserved2;
 	BOOLEAN         PagedPool;
 	ULONG           DefaultPagedPoolCharge;
@@ -1775,7 +1775,7 @@ typedef struct _OBJECT_TYPE_INITIALIZER_V1 {
 	PVOID           CloseProcedure;
 	PVOID           DeleteProcedure;
 	PVOID           ParseProcedure;
-	PVOID           SecurityProcedure;    
+	PVOID           SecurityProcedure;
 	PVOID           QueryNameProcedure;
 	PVOID           OkayToCloseProcedure;
 } OBJECT_TYPE_INITIALIZER_V1, *POBJECT_TYPE_INITIALIZER_V1;
@@ -1855,10 +1855,10 @@ typedef struct _OBJECT_TYPE_V2 {// Size=216
 	ULONG TotalNumberOfHandles; // Size=4 Offset=48
 	ULONG HighWaterNumberOfObjects; // Size=4 Offset=52
 	ULONG HighWaterNumberOfHandles; // Size=4 Offset=56
-	OBJECT_TYPE_INITIALIZER_V2 TypeInfo; 
-	EX_PUSH_LOCK TypeLock; 
-	ULONG Key; 
-	LIST_ENTRY CallbackList; 
+	OBJECT_TYPE_INITIALIZER_V2 TypeInfo;
+	EX_PUSH_LOCK TypeLock;
+	ULONG Key;
+	LIST_ENTRY CallbackList;
 } OBJECT_TYPE_V2, *POBJECT_TYPE_V2;
 
 typedef struct _OBJECT_TYPE_V3 {// Size=216
@@ -1871,20 +1871,20 @@ typedef struct _OBJECT_TYPE_V3 {// Size=216
 	ULONG HighWaterNumberOfObjects; // Size=4 Offset=52
 	ULONG HighWaterNumberOfHandles; // Size=4 Offset=56
 	OBJECT_TYPE_INITIALIZER_V3 TypeInfo;
-	EX_PUSH_LOCK TypeLock; 
-	ULONG Key; 
+	EX_PUSH_LOCK TypeLock;
+	ULONG Key;
 	LIST_ENTRY CallbackList;
 } OBJECT_TYPE_V3, *POBJECT_TYPE_V3;
 
 typedef struct _OBJECT_TYPE_COMPATIBLE {
-	LIST_ENTRY TypeList; 
-	UNICODE_STRING Name; 
-	PVOID DefaultObject; 
-	UCHAR Index; 
-	ULONG TotalNumberOfObjects; 
-	ULONG TotalNumberOfHandles; 
-	ULONG HighWaterNumberOfObjects; 
-	ULONG HighWaterNumberOfHandles; 
+	LIST_ENTRY TypeList;
+	UNICODE_STRING Name;
+	PVOID DefaultObject;
+	UCHAR Index;
+	ULONG TotalNumberOfObjects;
+	ULONG TotalNumberOfHandles;
+	ULONG HighWaterNumberOfObjects;
+	ULONG HighWaterNumberOfHandles;
 	OBJECT_TYPE_INITIALIZER_V2 TypeInfo;
 } OBJECT_TYPE_COMPATIBLE, *POBJECT_TYPE_COMPATIBLE;
 
@@ -3152,6 +3152,88 @@ __inline struct _PEB * NtCurrentPeb() { return NtCurrentTeb()->ProcessEnvironmen
 */
 
 /*
+** ALPC START
+*/
+
+typedef struct _PORT_MESSAGE {
+	union {
+		struct {
+			CSHORT DataLength;
+			CSHORT TotalLength;
+		} s1;
+		ULONG Length;
+	} u1;
+	union {
+		struct {
+			CSHORT Type;
+			CSHORT DataInfoOffset;
+		} s2;
+		ULONG ZeroInit;
+	} u2;
+	union {
+		CLIENT_ID ClientId;
+		double DoNotUseThisField;       // Force quadword alignment
+	} u3;
+	ULONG MessageId;
+	union {
+		ULONG ClientViewSize;               // Only valid on LPC_CONNECTION_REQUEST message
+		ULONG CallbackId;                   // Only valid on LPC_REQUEST message
+	} u4;
+	UCHAR Reserved[8];
+} PORT_MESSAGE, *PPORT_MESSAGE;
+
+// end_ntsrv
+
+typedef struct _PORT_DATA_ENTRY {
+	PVOID Base;
+	ULONG Size;
+} PORT_DATA_ENTRY, *PPORT_DATA_ENTRY;
+
+typedef struct _PORT_DATA_INFORMATION {
+	ULONG CountDataEntries;
+	PORT_DATA_ENTRY DataEntries[1];
+} PORT_DATA_INFORMATION, *PPORT_DATA_INFORMATION;
+
+#define LPC_REQUEST             1
+#define LPC_REPLY               2
+#define LPC_DATAGRAM            3
+#define LPC_LOST_REPLY          4
+#define LPC_PORT_CLOSED         5
+#define LPC_CLIENT_DIED         6
+#define LPC_EXCEPTION           7
+#define LPC_DEBUG_EVENT         8
+#define LPC_ERROR_EVENT         9
+#define LPC_CONNECTION_REQUEST 10
+
+#define PORT_VALID_OBJECT_ATTRIBUTES (OBJ_CASE_INSENSITIVE)
+#define PORT_MAXIMUM_MESSAGE_LENGTH 256
+
+typedef struct _LPC_CLIENT_DIED_MSG {
+	PORT_MESSAGE PortMsg;
+	LARGE_INTEGER CreateTime;
+} LPC_CLIENT_DIED_MSG, *PLPC_CLIENT_DIED_MSG;
+
+typedef struct _PORT_VIEW {
+	ULONG Length;
+	HANDLE SectionHandle;
+	ULONG SectionOffset;
+	ULONG ViewSize;
+	PVOID ViewBase;
+	PVOID ViewRemoteBase;
+} PORT_VIEW, *PPORT_VIEW;
+
+typedef struct _REMOTE_PORT_VIEW {
+	ULONG Length;
+	ULONG ViewSize;
+	PVOID ViewBase;
+} REMOTE_PORT_VIEW, *PREMOTE_PORT_VIEW;
+
+/*
+** ALPC END
+*/
+
+
+/*
 ** Csr Runtime START
 */
 
@@ -3236,7 +3318,7 @@ VOID NTAPI RtlSetLastWin32Error(
 	);
 
 ULONG DbgPrint(
-	_In_ PCH Format, 
+	_In_ PCH Format,
 	...
 	);
 
@@ -3280,7 +3362,7 @@ NTSTATUS NTAPI NtQueryDirectoryObject(
 	_In_       BOOLEAN ReturnSingleEntry,
 	_In_       BOOLEAN RestartScan,
 	_Inout_    PULONG Context,
-			   PULONG ReturnLength
+	PULONG ReturnLength
 	);
 
 NTSTATUS NTAPI NtQueryObject(
@@ -3342,9 +3424,9 @@ NTSTATUS NtSetTimer(
 	);
 
 NTSTATUS NTAPI NtOpenTimer(
-	_In_ PHANDLE TimerHandle,
-	_In_ ACCESS_MASK DesiredAccess,
-	_In_ POBJECT_ATTRIBUTES ObjectAttributes
+	_In_	PHANDLE TimerHandle,
+	_In_	ACCESS_MASK DesiredAccess,
+	_In_	POBJECT_ATTRIBUTES ObjectAttributes
 	);
 
 NTSTATUS NTAPI NtQueryTimer(
@@ -3356,9 +3438,9 @@ NTSTATUS NTAPI NtQueryTimer(
 	);
 
 NTSTATUS WINAPI NtOpenSymbolicLinkObject(
-	_Out_		PHANDLE LinkHandle,
-	_In_		ACCESS_MASK DesiredAccess,
-	_In_		POBJECT_ATTRIBUTES ObjectAttributes
+	_Out_	PHANDLE LinkHandle,
+	_In_	ACCESS_MASK DesiredAccess,
+	_In_	POBJECT_ATTRIBUTES ObjectAttributes
 	);
 
 NTSTATUS NTAPI NtQuerySymbolicLinkObject(
@@ -3398,9 +3480,37 @@ NTSTATUS NTAPI NtQuerySection(
 	);
 
 NTSTATUS NtOpenSection(
+	_Out_	PHANDLE SectionHandle,
+	_In_	ACCESS_MASK DesiredAccess,
+	_In_	POBJECT_ATTRIBUTES ObjectAttributes
+	);
+
+NTSTATUS NTAPI NtCreateSection(
 	_Out_		PHANDLE SectionHandle,
 	_In_		ACCESS_MASK DesiredAccess,
-	_In_		POBJECT_ATTRIBUTES ObjectAttributes
+	_In_opt_	POBJECT_ATTRIBUTES ObjectAttributes,
+	_In_opt_	PLARGE_INTEGER MaximumSize,
+	_In_		ULONG SectionPageProtection,
+	_In_		ULONG AllocationAttributes,
+	_In_opt_	HANDLE FileHandle
+	);
+
+NTSTATUS NTAPI NtMapViewOfSection(
+	_In_		HANDLE SectionHandle,
+	_In_		HANDLE ProcessHandle,
+	__inout		PVOID *BaseAddress,
+	_In_		ULONG_PTR ZeroBits,
+	_In_		SIZE_T CommitSize,
+	_Inout_opt_ PLARGE_INTEGER SectionOffset,
+	_Inout_		PSIZE_T ViewSize,
+	_In_		SECTION_INHERIT InheritDisposition,
+	_In_		ULONG AllocationType,
+	_In_		ULONG Win32Protect
+	);
+
+NTSTATUS NTAPI NtUnmapViewOfSection(
+	_In_	HANDLE ProcessHandle,
+	_In_	PVOID BaseAddress
 	);
 
 NTSTATUS NTAPI NtOpenProcessToken(
@@ -3585,6 +3695,21 @@ NTSTATUS NTAPI NtOpenProcess(
 	_In_opt_	PCLIENT_ID ClientId
 	);
 
+NTSTATUS NTAPI NtTerminateProcess(
+	_In_opt_	HANDLE ProcessHandle,
+	_In_		NTSTATUS ExitStatus
+	);
+
+NTSTATUS NTAPI NtSuspendThread(
+	_In_		HANDLE ThreadHandle,
+	_Out_opt_	PULONG PreviousSuspendCount
+	);
+
+NTSTATUS NTAPI NtResumeThread(
+	_In_		HANDLE ThreadHandle,
+	_Out_opt_	PULONG PreviousSuspendCount
+	);
+
 NTSTATUS NTAPI NtQueryInformationProcess(
 	_In_		HANDLE ProcessHandle,
 	_In_		PROCESSINFOCLASS ProcessInformationClass,
@@ -3604,61 +3729,151 @@ NTSTATUS NTAPI NtDuplicateObject(
 	);
 
 NTSTATUS NTAPI NtSetSecurityObject(
-	_In_ HANDLE Handle,
-	_In_ SECURITY_INFORMATION SecurityInformation,
-	_In_ PSECURITY_DESCRIPTOR SecurityDescriptor
+	_In_	HANDLE Handle,
+	_In_	SECURITY_INFORMATION SecurityInformation,
+	_In_	PSECURITY_DESCRIPTOR SecurityDescriptor
 	);
 
 NTSTATUS NTAPI NtQuerySecurityObject(
-	_In_ HANDLE Handle,
-	__in SECURITY_INFORMATION SecurityInformation,
-	_Out_ PSECURITY_DESCRIPTOR SecurityDescriptor,
-	_In_ ULONG Length,
-	_Out_ PULONG LengthNeeded
+	_In_	HANDLE Handle,
+	_In_	SECURITY_INFORMATION SecurityInformation,
+	_Out_	PSECURITY_DESCRIPTOR SecurityDescriptor,
+	_In_	ULONG Length,
+	_Out_	PULONG LengthNeeded
 	);
 
 NTSTATUS NtCreateIoCompletion(
-	_Out_ PHANDLE IoCompletionHandle,
-	_In_ ACCESS_MASK DesiredAccess,
-	_In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
-	_In_ ULONG Count OPTIONAL
+	_Out_		PHANDLE IoCompletionHandle,
+	_In_		ACCESS_MASK DesiredAccess,
+	_In_opt_	POBJECT_ATTRIBUTES ObjectAttributes,
+	_In_opt_	ULONG Count
 	);
 
 NTSTATUS NTAPI NtCreateEvent(
-	_Out_ PHANDLE EventHandle,
-	_In_ ACCESS_MASK DesiredAccess,
-	_In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
-	_In_ EVENT_TYPE EventType,
-	_In_ BOOLEAN InitialState
+	_Out_		PHANDLE EventHandle,
+	_In_		ACCESS_MASK DesiredAccess,
+	_In_opt_	POBJECT_ATTRIBUTES ObjectAttributes,
+	_In_		EVENT_TYPE EventType,
+	_In_		BOOLEAN InitialState
 	);
 
 NTSTATUS NTAPI NtQueryVirtualMemory(
-	_In_ HANDLE ProcessHandle,
-	_In_ PVOID BaseAddress,
-	_In_ MEMORY_INFORMATION_CLASS MemoryInformationClass,
-	_Out_ PVOID MemoryInformation,
-	_In_ SIZE_T MemoryInformationLength,
-	_Out_opt_ PSIZE_T ReturnLength
+	_In_		HANDLE ProcessHandle,
+	_In_		PVOID BaseAddress,
+	_In_		MEMORY_INFORMATION_CLASS MemoryInformationClass,
+	_Out_		PVOID MemoryInformation,
+	_In_		SIZE_T MemoryInformationLength,
+	_Out_opt_	PSIZE_T ReturnLength
 	);
 
 NTSTATUS NTAPI NtReadVirtualMemory(
+	_In_		HANDLE ProcessHandle,
+	_In_opt_	PVOID BaseAddress,
+	_Out_		PVOID Buffer,
+	_In_		SIZE_T BufferSize,
+	_Out_opt_	PSIZE_T NumberOfBytesRead
+	);
+
+NTSTATUS NTAPI NtWriteVirtualMemory(
 	_In_ HANDLE ProcessHandle,
 	_In_opt_ PVOID BaseAddress,
-	_Out_ PVOID Buffer,
+	_In_ VOID *Buffer,
 	_In_ SIZE_T BufferSize,
-	_Out_opt_ PSIZE_T NumberOfBytesRead
+	_Out_opt_ PSIZE_T NumberOfBytesWritten
 	);
 
 NTSTATUS NTAPI NtEnumerateKey(
-	_In_ HANDLE KeyHandle,
-	_In_ ULONG Index,
-	_In_ KEY_INFORMATION_CLASS KeyInformationClass,
-	_Out_opt_ PVOID KeyInformation,
-	_In_ ULONG Length,
-	_Out_ PULONG ResultLength
+	_In_		HANDLE KeyHandle,
+	_In_		ULONG Index,
+	_In_		KEY_INFORMATION_CLASS KeyInformationClass,
+	_Out_opt_	PVOID KeyInformation,
+	_In_		ULONG Length,
+	_Out_		PULONG ResultLength
 	);
 
-NTSTATUS NTAPI NtTerminateProcess(
-	_In_opt_ HANDLE ProcessHandle,
-	_In_ NTSTATUS ExitStatus
+NTSTATUS NTAPI NtCreatePort(
+	_Out_	PHANDLE PortHandle,
+	_In_	POBJECT_ATTRIBUTES ObjectAttributes,
+	_In_	ULONG MaxConnectionInfoLength,
+	_In_	ULONG MaxMessageLength,
+	_In_	ULONG MaxPoolUsage
+	);
+
+NTSTATUS NTAPI NtCompleteConnectPort(
+	_In_	HANDLE PortHandle
+	);
+
+NTSTATUS NTAPI NtListenPort(
+	_In_	HANDLE PortHandle,
+	_Out_	PPORT_MESSAGE ConnectionRequest
+	);
+
+NTSTATUS NTAPI NtReplyPort(
+	_In_	HANDLE PortHandle,
+	_In_	PPORT_MESSAGE ReplyMessage
+	);
+
+NTSTATUS NTAPI NtReplyWaitReplyPort(
+	_In_	HANDLE PortHandle,
+	_Inout_	PPORT_MESSAGE ReplyMessage
+	);
+
+NTSTATUS NTAPI NtRequestPort(
+	_In_	HANDLE PortHandle,
+	_In_	PPORT_MESSAGE RequestMessage
+	);
+
+NTSTATUS NTAPI NtRequestWaitReplyPort(
+	_In_	HANDLE PortHandle,
+	_In_	PPORT_MESSAGE RequestMessage,
+	_Out_	PPORT_MESSAGE ReplyMessage
+	);
+
+NTSTATUS NTAPI NtClosePort(
+	_In_	HANDLE PortHandle
+	);
+
+NTSTATUS NTAPI NtReplyWaitReceivePort(
+	_In_		HANDLE PortHandle,
+	_Out_opt_	PVOID *PortContext,
+	_In_opt_	PPORT_MESSAGE ReplyMessage,
+	_Out_		PPORT_MESSAGE ReceiveMessage
+	);
+
+NTSTATUS NTAPI NtWriteRequestData(
+	_In_		HANDLE PortHandle,
+	_In_		PPORT_MESSAGE Message,
+	_In_		ULONG DataEntryIndex,
+	_In_		PVOID Buffer,
+	_In_		ULONG BufferSize,
+	_Out_opt_	PULONG NumberOfBytesWritten
+	);
+
+NTSTATUS NTAPI NtReadRequestData(
+	_In_		HANDLE PortHandle,
+	_In_		PPORT_MESSAGE Message,
+	_In_		ULONG DataEntryIndex,
+	_Out_		PVOID Buffer,
+	_In_		ULONG BufferSize,
+	_Out_opt_	PULONG NumberOfBytesRead
+	);
+
+NTSTATUS NTAPI NtConnectPort(
+	_Out_			PHANDLE PortHandle,
+	_In_			PUNICODE_STRING PortName,
+	_In_			PSECURITY_QUALITY_OF_SERVICE SecurityQos,
+	_Inout_opt_		PPORT_VIEW ClientView,
+	_Out_opt_		PREMOTE_PORT_VIEW ServerView,
+	_Out_opt_		PULONG MaxMessageLength,
+	_Inout_opt_		PVOID ConnectionInformation,
+	_Inout_opt_		PULONG ConnectionInformationLength
+	);
+
+NTSTATUS NTAPI NtAcceptConnectPort(
+	_Out_			PHANDLE PortHandle,
+	_In_opt_		PVOID PortContext,
+	_In_			PPORT_MESSAGE ConnectionRequest,
+	_In_			BOOLEAN AcceptConnection,
+	_Inout_opt_		PPORT_VIEW ServerView,
+	_Out_opt_		PREMOTE_PORT_VIEW ClientView
 	);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     1.50
+*  VERSION:     1.60
 *
-*  DATE:        05 Apr 2015
+*  DATE:        20 Apr 2015
 *
 *  Gootkit based AutoElevation using AppCompat.
 *

@@ -16,6 +16,9 @@
     <Filter Include="minirtl">
       <UniqueIdentifier>{1caf2f34-af91-46be-aa2e-1893b0be628c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\modules">
+      <UniqueIdentifier>{32e582cb-c743-4874-aeb2-0a4baea4fed3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -75,14 +78,11 @@
     <ClCompile Include="hybrids.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="makecab.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dll64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dll32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cmdline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -120,6 +120,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="hybrids.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fubuki32.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="fubuki64.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="hibiki32.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="hibiki64.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="makecab.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

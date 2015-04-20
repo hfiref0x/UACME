@@ -4,9 +4,9 @@
 *
 *  TITLE:       GOOTKIT.H
 *
-*  VERSION:     1.10
+*  VERSION:     1.60
 *
-*  DATE:        27 Mar 2015
+*  DATE:        20 Apr 2015
 *
 *  Prototypes and definitions for Gootkit method.
 *

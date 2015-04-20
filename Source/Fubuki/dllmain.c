@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     1.50
+*  VERSION:     1.60
 *
-*  DATE:        05 Apr 2015
+*  DATE:        20 Apr 2015
 *
 *  Proxy dll entry point.
 *
@@ -16,6 +16,9 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
+
+//disable nonmeaningful warnings.
+#pragma warning(disable: 4005) // macro redefinition
 
 #include <Windows.h>
 #include "..\Shared\minirtl.h"

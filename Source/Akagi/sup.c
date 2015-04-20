@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.20
+*  VERSION:     1.60
 *
-*  DATE:        29 Mar 2015
+*  DATE:        20 Apr 2015
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -180,4 +180,91 @@ BOOL supRunProcess(
 		CloseHandle(shinfo.hProcess);
 	}
 	return bResult;
+}
+
+/*
+* supRunProcessEx
+*
+* Purpose:
+*
+* Start new process in suspended state.
+*
+*/
+HANDLE supRunProcessEx(
+	_In_ LPWSTR lpszParameters,
+	_In_opt_ LPWSTR lpCurrentDirectory,
+	_Out_opt_ HANDLE *PrimaryThread
+	)
+{
+	BOOL cond = FALSE;
+	LPWSTR pszBuffer = NULL;
+	SIZE_T ccb;
+	STARTUPINFOW sti1;
+	PROCESS_INFORMATION pi1;
+
+	if (PrimaryThread) {
+		*PrimaryThread = NULL;
+	}
+
+	if (lpszParameters == NULL) {
+		return NULL;
+	}
+
+	ccb = (_strlen_w(lpszParameters) * sizeof(WCHAR)) + sizeof(WCHAR);
+	pszBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ccb);
+	if (pszBuffer == NULL) {
+		return NULL;
+	}
+
+	_strcpy_w(pszBuffer, lpszParameters);
+
+	RtlSecureZeroMemory(&pi1, sizeof(pi1));
+	RtlSecureZeroMemory(&sti1, sizeof(sti1));
+	GetStartupInfoW(&sti1);
+
+	do {
+
+		if (!CreateProcessW(NULL, pszBuffer, NULL, NULL, FALSE,
+			CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS | CREATE_SUSPENDED,
+			NULL, lpCurrentDirectory, &sti1, &pi1))
+		{
+			break;
+		}
+
+		if (PrimaryThread) {
+			*PrimaryThread = pi1.hThread;
+		}
+		else {
+			CloseHandle(pi1.hThread);
+		}
+	} while (cond);
+
+	HeapFree(GetProcessHeap(), 0, pszBuffer);
+
+	return pi1.hProcess;
+}
+
+/*
+* _filenameW
+*
+* Purpose:
+*
+* Return name part of filename.
+*
+*/
+wchar_t *_filenameW(
+	const wchar_t *f
+	)
+{
+	wchar_t *p = (wchar_t *)f;
+
+	if (f == 0)
+		return 0;
+
+	while (*f != (wchar_t)0) {
+		if (*f == (wchar_t)'\\')
+			p = (wchar_t *)f + 1;
+		f++;
+	}
+	return p;
 }

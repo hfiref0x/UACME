@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     1.20
+*  VERSION:     1.60
 *
-*  DATE:        29 Mar 2015
+*  DATE:        20 Apr 2015
 *
 *  Common header file for the program support routines.
 *
@@ -38,4 +38,14 @@ BOOL supWriteBufferToFile(
 BOOL supRunProcess(
 	_In_ LPWSTR lpszProcessName,
 	_In_opt_ LPWSTR lpszParameters
+	);
+
+HANDLE supRunProcessEx(
+	_In_ LPWSTR lpszParameters,
+	_In_opt_ LPWSTR lpCurrentDirectory,
+	_Out_opt_ HANDLE *PrimaryThread
+	);
+
+wchar_t *_filenameW(
+	const wchar_t *f
 	);

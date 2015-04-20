@@ -12,18 +12,19 @@
 Run executable from command line with following keys (watch debug ouput with dbgview or similar for more info):
 * 1 - Leo Davidson sysprep method, this will work only on Windows 7 and Windows 8, used in multiple malware;
 * 2 - Tweaked Leo Davidson sysprep method, this will work only on Windows 8.1.9600;
-* 3 - Leo Davidson method tweaked by WinNT/Pitou developers, works from Windows 7 up to 10.0.10049;
+* 3 - Leo Davidson method tweaked by WinNT/Pitou developers, works from Windows 7 up to 10.0.10056;
 * 4 - Application Compatibility Shim RedirectEXE method, from WinNT/Gootkit. Works from Windows 7 up to 8.1.9600;
-* 5 - ISecurityEditor WinNT/Simda method, used to turn off UAC, works from Windows 7 up to Windows 10.0.10049;
+* 5 - ISecurityEditor WinNT/Simda method, used to turn off UAC, works from Windows 7 up to Windows 10.0.10056;
 * 6 - Wusa method used by Win32/Carberp, tweaked to work with Windows 8/8.1 also;
-* 7 - Wusa method, tweaked to work from Windows 7 up to 10.0.10049;
+* 7 - Wusa method, tweaked to work from Windows 7 up to 10.0.10056;
 * 8 - Slightly modified Leo Davidson method used by Win32/Tilon, works only on Windows 7;
-* 9 - Hybrid method, combination of WinNT/Simda and Win32/Carberp + AVrf, works from Windows 7 up to 10.0.10049.
+* 9 - Hybrid method, combination of WinNT/Simda and Win32/Carberp + AVrf, works from Windows 7 up to 10.0.10056;
+* 10 - Hybrid method, abusing appinfo.dll way of whitelisting autoelevated applications and KnownDlls cache changes, works from Windows 7 up to 10.0.10056.
 
 Note:
 * Methods (1), (2), (3), (5), (8), (9) require process injection, so they won't work from wow64, you need either Heavens gate or use x64 edition of this tool;
 * Method (4) unavailable in 64 bit edition because of Shim restriction.
-* Method (6) unavailable in wow64 environment starting from Windows 8. Also target application absent in recent Windows 10 TP 10049 build.
+* Method (6) unavailable in wow64 environment starting from Windows 8. Also target application absent in recent Windows 10 TP 10056 build.
 
 Run examples:
 * akagi32.exe 1

