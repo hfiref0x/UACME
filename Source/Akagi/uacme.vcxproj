@@ -222,6 +222,7 @@
     <ClInclude Include="hibiki32.h" />
     <ClInclude Include="hibiki64.h" />
     <ClInclude Include="hybrids.h" />
+    <ClInclude Include="inazuma32.h" />
     <ClInclude Include="inject.h" />
     <ClInclude Include="makecab.h" />
     <ClInclude Include="pitou.h" />

@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.60
+*  VERSION:     1.70
 *
-*  DATE:        20 Apr 2015
+*  DATE:        24 Apr 2015
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -176,7 +176,7 @@ BOOL supRunProcess(
 	shinfo.nShow = SW_SHOW;
 	bResult = ShellExecuteExW(&shinfo);
 	if (bResult) {
-		WaitForSingleObject(shinfo.hProcess, 0x4000);
+		WaitForSingleObject(shinfo.hProcess, 0x8000);
 		CloseHandle(shinfo.hProcess);
 	}
 	return bResult;
@@ -267,4 +267,75 @@ wchar_t *_filenameW(
 		f++;
 	}
 	return p;
+}
+
+/*
+* supCopyMemory
+*
+* Purpose:
+*
+* Copies bytes between buffers.
+*
+* dest - Destination buffer
+* cbdest - Destination buffer size in bytes
+* src - Source buffer
+* cbsrc - Source buffer size in bytes
+*
+*/
+void supCopyMemory(
+	_Inout_ void *dest,
+	_In_ size_t cbdest,
+	_In_ const void *src,
+	_In_ size_t cbsrc
+	)
+{
+	char *d = (char*)dest;
+	char *s = (char*)src;
+
+	if ((dest == 0) || (src == 0) || (cbdest == 0))
+		return;
+	if (cbdest<cbsrc)
+		cbsrc = cbdest;
+
+	while (cbsrc>0) {
+		*d++ = *s++;
+		cbsrc--;
+	}
+}
+
+/*
+* supQueryEntryPointRVA
+*
+* Purpose:
+*
+* Return EP RVA of the given PE file.
+*
+*/
+DWORD supQueryEntryPointRVA(
+	_In_ LPWSTR lpImageFile
+	)
+{
+	PVOID                       ImageBase;
+	PIMAGE_DOS_HEADER           pdosh;
+	PIMAGE_FILE_HEADER          pfh1;
+	PIMAGE_OPTIONAL_HEADER      poh;
+	DWORD                       epRVA = 0;
+
+	if (lpImageFile == NULL) {
+		return 0;
+	}
+
+	ImageBase = LoadLibraryExW(lpImageFile, 0, DONT_RESOLVE_DLL_REFERENCES);
+	if (ImageBase) {
+
+		pdosh = (PIMAGE_DOS_HEADER)ImageBase;
+		pfh1 = (PIMAGE_FILE_HEADER)((ULONG_PTR)ImageBase + (pdosh->e_lfanew + sizeof(DWORD)));
+		poh = (PIMAGE_OPTIONAL_HEADER)((ULONG_PTR)pfh1 + sizeof(IMAGE_FILE_HEADER));
+
+		//AddressOfEntryPoint is in standard fields.
+		epRVA = poh->AddressOfEntryPoint;
+
+		FreeLibrary(ImageBase);
+	}
+	return epRVA;
 }

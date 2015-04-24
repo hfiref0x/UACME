@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     1.60
+*  VERSION:     1.70
 *
-*  DATE:        20 Apr 2015
+*  DATE:        24 Apr 2015
 *
 *  Common header file for the program support routines.
 *
@@ -48,4 +48,15 @@ HANDLE supRunProcessEx(
 
 wchar_t *_filenameW(
 	const wchar_t *f
+	);
+
+void supCopyMemory(
+	_Inout_ void *dest,
+	_In_ size_t cbdest,
+	_In_ const void *src,
+	_In_ size_t cbsrc
+	);
+
+DWORD supQueryEntryPointRVA(
+	_In_ LPWSTR lpImageFile
 	);

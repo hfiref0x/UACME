@@ -137,6 +137,9 @@
     <ClInclude Include="makecab.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inazuma32.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">

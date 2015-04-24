@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.16
+*  VERSION:     1.17
 *
-*  DATE:        17 Apr 2015
+*  DATE:        24 Apr 2015
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -2646,6 +2646,9 @@ typedef struct _LDR_DATA_TABLE_ENTRY_COMPATIBLE {
 	//fields below removed for compatibility
 } LDR_DATA_TABLE_ENTRY_COMPATIBLE, *PLDR_DATA_TABLE_ENTRY_COMPATIBLE;
 typedef LDR_DATA_TABLE_ENTRY_COMPATIBLE LDR_DATA_TABLE_ENTRY;
+typedef LDR_DATA_TABLE_ENTRY_COMPATIBLE *PLDR_DATA_TABLE_ENTRY;
+
+
 /*
 * WDM END
 */

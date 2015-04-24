@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     1.60
+*  VERSION:     1.70
 *
-*  DATE:        20 Apr 2015
+*  DATE:        24 Apr 2015
 *
 *  Leo Davidson work based AutoElevation and Pitou new variant.
 *
@@ -181,7 +181,7 @@ DWORD WINAPI ucmElevatedLoadProc(
 */
 BOOL ucmStandardAutoElevation(
 	DWORD dwType,
-	PVOID ProxyDll,
+	CONST PVOID ProxyDll,
 	DWORD ProxyDllSize
 	)
 {

@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.H
 *
-*  VERSION:     1.60
+*  VERSION:     1.70
 *
-*  DATE:        20 Apr 2015
+*  DATE:        24 Apr 2015
 *
 *  Prototypes and definitions for Leo Davidson method.
 *
@@ -31,6 +31,6 @@
 
 BOOL ucmStandardAutoElevation(
 	DWORD dwType,
-	PVOID ProxyDll,
+	CONST PVOID ProxyDll,
 	DWORD ProxyDllSize
 	);

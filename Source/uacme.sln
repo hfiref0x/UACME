@@ -26,6 +26,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{49552A
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hibiki", "Hibiki\Hibiki.vcxproj", "{31CD69DD-2040-4E43-86F5-921E182F3F43}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NanoDesu", "NanoDesu", "{04845492-BD9E-4EC6-ACA4-4A0A460B3508}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Inazuma", "Inazuma\Inazuma.vcxproj", "{FDA7B084-4940-482B-B200-3B2A37C2099A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -55,8 +59,19 @@ Global
 		{31CD69DD-2040-4E43-86F5-921E182F3F43}.Release|Win32.ActiveCfg = Release|Win32
 		{31CD69DD-2040-4E43-86F5-921E182F3F43}.Release|Win32.Build.0 = Release|Win32
 		{31CD69DD-2040-4E43-86F5-921E182F3F43}.Release|x64.ActiveCfg = Release|x64
+		{FDA7B084-4940-482B-B200-3B2A37C2099A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FDA7B084-4940-482B-B200-3B2A37C2099A}.Debug|Win32.Build.0 = Debug|Win32
+		{FDA7B084-4940-482B-B200-3B2A37C2099A}.Debug|x64.ActiveCfg = Debug|Win32
+		{FDA7B084-4940-482B-B200-3B2A37C2099A}.Release|Win32.ActiveCfg = Release|Win32
+		{FDA7B084-4940-482B-B200-3B2A37C2099A}.Release|Win32.Build.0 = Release|Win32
+		{FDA7B084-4940-482B-B200-3B2A37C2099A}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{23A2E629-DC9D-46EA-8B5A-F1D60566EA09} = {04845492-BD9E-4EC6-ACA4-4A0A460B3508}
+		{31CD69DD-2040-4E43-86F5-921E182F3F43} = {04845492-BD9E-4EC6-ACA4-4A0A460B3508}
+		{FDA7B084-4940-482B-B200-3B2A37C2099A} = {04845492-BD9E-4EC6-ACA4-4A0A460B3508}
 	EndGlobalSection
 EndGlobal

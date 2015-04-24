@@ -1,12 +1,14 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2015, original idea (?) mzH
+*  (C) COPYRIGHT AUTHORS, 2014 - 2015, 
+*  (C) Original idea (?) mzH,
+*  (C) FixIT Shim Patches by Jon Erickson
 *
 *  TITLE:       GOOTKIT.H
 *
-*  VERSION:     1.60
+*  VERSION:     1.70
 *
-*  DATE:        20 Apr 2015
+*  DATE:        24 Apr 2015
 *
 *  Prototypes and definitions for Gootkit method.
 *
@@ -18,5 +20,7 @@
 *******************************************************************************/
 
 BOOL ucmAppcompatElevation(
-	VOID
+	DWORD dwType,
+	CONST PVOID ProxyDll,
+	DWORD ProxyDllSize
 	);
