@@ -1,4 +1,4 @@
-dee6d6f784279679f9dc28cf92fe9dfb8f3090ef *Compiled\Akagi32.exe
+a7aafdd1075cc0a6b99264bd0e1a7b81b1cb191e *Compiled\Akagi32.exe
 9c4b0fb73a68275cca06e0a83ac92059f5d245cf *Compiled\Akagi64.exe
 473b8adde1f372b113b24364a71da9910945caf9 *Source\Akagi\apphelp.h
 3b02ee06d488ea635591fa7d0a11e08b264aac27 *Source\Akagi\carberp.c
@@ -14,7 +14,7 @@ ede3873c4cac59240a705859d1647d3ae70ed679 *Source\Akagi\fubuki64.h
 006ef177c8737f919de6702c03c461a8524139e3 *Source\Akagi\hibiki64.h
 2fe80aa962f5e59c584f5e54ecdad25511bb355e *Source\Akagi\hybrids.c
 483bbb62d0418b4bdb90e5af4ede08bd1c3bec70 *Source\Akagi\hybrids.h
-fe53ea04f7a66eaa6909511c5d7f67b12594c109 *Source\Akagi\inazuma32.h
+91c50d3b91797414541972cc34a3421e71ef01ae *Source\Akagi\inazuma32.h
 4290301346fac8589b8ac675bb4e40f31df125dc *Source\Akagi\inject.c
 89e3354f512c0cceda724cad14520e7fb8f656f4 *Source\Akagi\inject.h
 caba22ad17586d84ee118d1eb8df3ecedbc2af31 *Source\Akagi\main.c
@@ -23,14 +23,14 @@ caba22ad17586d84ee118d1eb8df3ecedbc2af31 *Source\Akagi\main.c
 e42bcd4b1b98a3d2a382d9dcc9fd3d42d2b48912 *Source\Akagi\pitou.c
 37d6701403544584fcac71dc15ef7a2d22e7690c *Source\Akagi\pitou.h
 5624e41c8fde72299a2603378cf891afba555766 *Source\Akagi\resource.h
-1995a422daff311d3ce926ad8c98c1dc7ceef6b1 *Source\Akagi\Resource.rc
+d2676892b78e03a948840c10581735ed54352eb3 *Source\Akagi\Resource.rc
 f998e3d79f1758a2187768e3c3179ae4d5ef791f *Source\Akagi\simda.c
 c70e599d6b38d6b165100c8491e93f0c13b82e8d *Source\Akagi\simda.h
 aef3c69bfd7edb49510a5b631698f2c3443b8016 *Source\Akagi\sup.c
 5beab3a65f7d785f4f20617a6cca559b244e6a4d *Source\Akagi\sup.h
 6d87b41c4d654ac2f32cec2285f0f85480ca666d *Source\Akagi\uacme.vcxproj
 139ea36376a0e13cbc0454cb471aed61934f1c94 *Source\Akagi\uacme.vcxproj.filters
-5f05d5a63e1ce0886e1e65e7627b3c2cbb9ff6d3 *Source\Akagi\uacme.vcxproj.user
+9d237c2d790e626ab86ea9bb64f00555648c1598 *Source\Akagi\uacme.vcxproj.user
 ba50701abf0602f1e86c26e9f5bf0d6648d85e57 *Source\Fubuki\dll.vcxproj
 5b2b3c9bf4a1497fd8cb74f35170ba904daac4f3 *Source\Fubuki\dll.vcxproj.filters
 a0c64ac5d278a04f4030fe7e0a0c0331d9d09e85 *Source\Fubuki\dll.vcxproj.user
@@ -44,10 +44,10 @@ ab231d1bd141ed7dfb16828603652be493da4e04 *Source\Hibiki\Hibiki.vcxproj.filters
 a0c64ac5d278a04f4030fe7e0a0c0331d9d09e85 *Source\Hibiki\Hibiki.vcxproj.user
 f15d174cf11772acdfea267f60c259b5b09b13c4 *Source\Hibiki\resource.h
 22b28f5db20f4a6f4d43b01b28679a49d1b9c02c *Source\Hibiki\version.rc
-ac982c6cfe0c252b9a66da3f5941c7d48091d247 *Source\Inazuma\Inazuma.vcxproj
-6d60b1edc9752fa3712e4d71a05247ce40d2ad8c *Source\Inazuma\Inazuma.vcxproj.filters
+5a0ebfc9599abd8bd94e9fcdae0207dd271732eb *Source\Inazuma\Inazuma.vcxproj
+fdf155128dad8d12c7c430682266029fab48ce16 *Source\Inazuma\Inazuma.vcxproj.filters
 a0c64ac5d278a04f4030fe7e0a0c0331d9d09e85 *Source\Inazuma\Inazuma.vcxproj.user
-bd9f243eb1c20662f15e0b5c92fd77e6dce732b7 *Source\Inazuma\main.c
+011f5940da4a84c7e92e033fbba5d45ae6c9ba97 *Source\Inazuma\main.c
 2c463edbd1baf1f673ed23a7aa0bc9af04a2ec43 *Source\Shared\minirtl.h
 6739960e4d312541285c15b5ae4ab41eccaa73ac *Source\Shared\ntos.h
 8c9c94b92febb42053952ad8b70c0d6b8b2b618e *Source\Shared\rtltypes.h
