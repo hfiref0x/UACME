@@ -24,3 +24,5 @@ DevObjDestroyDeviceInfoList = DummyFunc
 DevObjOpenDeviceInfo        = DummyFunc
 CallNtPowerInformation      = DummyFunc
 PowerGetActiveScheme        = DummyFunc
+CreateUri                   = DummyFunc
+PrivateCoInternetCombineUri = DummyFunc

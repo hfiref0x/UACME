@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.70
+*  VERSION:     1.72
 *
-*  DATE:        24 Apr 2015
+*  DATE:        28 Apr 2015
 *
 *  Injector entry point.
 *
@@ -36,6 +36,7 @@
 This is not supported, run x64 version of this tool.")
 #define WINPREBLUE TEXT("This method is only for pre Windows 8.1 use")
 #define WINBLUEONLY TEXT("This method is only for Windows 8.1 use")
+#define WIN10ONLY TEXT("This method is only for Windows 10 use")
 #define WOW64WIN32ONLY TEXT("This method only works from x86-32 Windows or Wow64")
 
 /*
@@ -88,8 +89,8 @@ VOID main()
 		dwType = strtoul(szBuffer);
 		switch (dwType) {
 
-		case METHOD_SYSPREP:
-			OutputDebugString(TEXT("[UCM] Sysprep\n\r"));
+		case METHOD_SYSPREP1:
+			OutputDebugString(TEXT("[UCM] Sysprep cryptbase\n\r"));
 			if (osver.dwBuildNumber > 9200) {
 				MessageBox(GetDesktopWindow(), WINPREBLUE,
 					PROGRAMTITLE, MB_ICONINFORMATION);
@@ -97,10 +98,19 @@ VOID main()
 			}
 			break;
 
-		case METHOD_SYSPREP_EX:
-			OutputDebugString(TEXT("[UCM] Sysprep_ex\n\r"));
+		case METHOD_SYSPREP2:
+			OutputDebugString(TEXT("[UCM] Sysprep shcore\n\r"));
 			if (osver.dwBuildNumber < 9600) {
 				MessageBox(GetDesktopWindow(), WINBLUEONLY,
+					PROGRAMTITLE, MB_ICONINFORMATION);
+				goto Done;
+			}
+			break;
+
+		case METHOD_SYSPREP3:
+			OutputDebugString(TEXT("[UCM] Sysprep iertutil\n\r"));
+			if (osver.dwBuildNumber < 10000) {
+				MessageBox(GetDesktopWindow(), WIN10ONLY,
 					PROGRAMTITLE, MB_ICONINFORMATION);
 				goto Done;
 			}
@@ -165,8 +175,9 @@ VOID main()
 
 	switch (dwType) {
 
-	case METHOD_SYSPREP:
-	case METHOD_SYSPREP_EX:
+	case METHOD_SYSPREP1:
+	case METHOD_SYSPREP2:
+	case METHOD_SYSPREP3:
 	case METHOD_OOBE:
 	case METHOD_TILON:
 

