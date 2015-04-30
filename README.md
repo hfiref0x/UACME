@@ -27,7 +27,8 @@ Note:
 * Methods (1), (2), (3), (5), (8), (9), (12) require process injection, so they won't work from wow64, you need either Heavens gate or use x64 edition of this tool;
 * Method (4) unavailable in 64 bit edition because of Shim restriction;
 * Method (6) unavailable in wow64 environment starting from Windows 8. Also target application absent in recent Windows 10 TP 10061 build;
-* Method (11) implemented in x86-32 version.
+* Method (11) implemented in x86-32 version;
+* Methods (4), (11) targeted by MS April patch by removing autoelevation from sdbinst.
 
 Run examples:
 * akagi32.exe 1
