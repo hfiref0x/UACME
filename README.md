@@ -20,7 +20,7 @@ Run executable from command line with following keys (watch debug ouput with dbg
 * 8 - Slightly modified Leo Davidson method used by Win32/Tilon, works only on Windows 7;
 * 9 - Hybrid method, combination of WinNT/Simda and Win32/Carberp + AVrf, works from Windows 7 up to 10.0.10125;
 * 10 - Hybrid method, abusing appinfo.dll way of whitelisting autoelevated applications and KnownDlls cache changes, works from Windows 7 up to 10.0.10125;
-* 11* - WinNT/Gootkit second method based on the memory patching from MS "Fix it" patch shim (and as side effect - arbitrary dll injection), works from Windows 7 up to 8.1.9600) [See Important Note];
+* 11* - WinNT/Gootkit second method based on the memory patching from MS "Fix it" patch shim (and as side effect - arbitrary dll injection), works from Windows 7 up to 8.1.9600 [See Important Note];
 * 12 - Windows 10 sysprep method, abusing different dll dependency added in Windows 10.
 
 Note:
