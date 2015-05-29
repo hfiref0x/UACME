@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.H
 *
-*  VERSION:     1.72
+*  VERSION:     1.73
 *
-*  DATE:        28 Apr 2015
+*  DATE:        29 May 2015
 *
 *  Prototypes and definitions for Leo Davidson method.
 *
@@ -26,7 +26,7 @@
 #define M1W8_SOURCEDLL          L"%temp%\\shcore.dll"
 #define M1WALL_SOURCEDLL        L"%temp%\\wdscore.dll"
 #define M1W7T_SOURCEDLL         L"%temp%\\ActionQueue.dll"
-#define M1W10_SOURCEDLL         L"%temp%\\iertutil.dll"
+#define M1W10_SOURCEDLL         L"%temp%\\dbgcore.dll"
 #define M1WALL_TARGETDIR        L"%systemroot%\\system32\\oobe\\"
 #define M1WALL_TARGETPROCESS    L"%systemroot%\\system32\\oobe\\setupsqm.exe"
 
