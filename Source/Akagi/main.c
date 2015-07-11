@@ -4,7 +4,7 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.8
+*  VERSION:     1.80
 *
 *  DATE:        11 July 2015
 *
@@ -71,12 +71,12 @@ VOID ucmShowMessage(
 */
 VOID main()
 {
-	BOOL					IsWow64 = FALSE;
-	DWORD					bytesIO, dwType;
-	WCHAR					*p;
-	WCHAR					szBuffer[MAX_PATH + 1];
-	TOKEN_ELEVATION_TYPE	ElevType;
-	RTL_OSVERSIONINFOW		osver;
+	BOOL                    IsWow64 = FALSE;
+	DWORD                   bytesIO, dwType;
+	WCHAR                   *p;
+	WCHAR                   szBuffer[MAX_PATH + 1];
+	TOKEN_ELEVATION_TYPE    ElevType;
+	RTL_OSVERSIONINFOW      osver;
 
 	//query windows version
 	if (!supIsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7), 0)) {

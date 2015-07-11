@@ -17,8 +17,8 @@
 *
 *******************************************************************************/
 
-#define T_UACKEY					L"MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system"
-#define T_SDDL_ALL_FOR_EVERYONE		L"D:(A;;GA;;;WD)"
+#define T_UACKEY                    L"MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system"
+#define T_SDDL_ALL_FOR_EVERYONE     L"D:(A;;GA;;;WD)"
 
 BOOL ucmSimdaTurnOffUac(
 	VOID

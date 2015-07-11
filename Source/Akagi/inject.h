@@ -4,7 +4,7 @@
 *
 *  TITLE:       INJECT.H
 *
-*  VERSION:     1.8
+*  VERSION:     1.80
 *
 *  DATE:        11 Jul 2015
 *
@@ -32,9 +32,9 @@
 #define METHOD_SHIMPATCH    11
 #define METHOD_SYSPREP3     12
 
-#define SHELL32DLL			TEXT("shell32.dll")
-#define OLE32DLL			TEXT("ole32.dll")
-#define KERNEL32DLL			TEXT("kernel32.dll")
+#define SHELL32DLL          TEXT("shell32.dll")
+#define OLE32DLL            TEXT("ole32.dll")
+#define KERNEL32DLL         TEXT("kernel32.dll")
 
 typedef HRESULT(__stdcall *pfnCoInitialize)(LPVOID pvReserved);
 typedef HRESULT(__stdcall *pfnCoCreateInstance)(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID FAR * ppv);

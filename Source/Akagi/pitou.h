@@ -4,7 +4,7 @@
 *
 *  TITLE:       PITOU.H
 *
-*  VERSION:     1.8
+*  VERSION:     1.80
 *
 *  DATE:        11 Jul 2015
 *
@@ -20,16 +20,16 @@
 //
 // Standard elevation methods.
 //
-#define M1W7_SOURCEDLL          L"%temp%\\CRYPTBASE.dll"
-#define M1W7_TARGETDIR          L"%systemroot%\\system32\\sysprep\\"
-#define M1W7_TARGETPROCESS      L"%systemroot%\\system32\\sysprep\\sysprep.exe"
-#define M1W8_SOURCEDLL          L"%temp%\\shcore.dll"
-#define M1WALL_SOURCEDLL        L"%temp%\\wdscore.dll"
-#define M1W7T_SOURCEDLL         L"%temp%\\ActionQueue.dll"
-#define M1W10_SOURCEDLL         L"%temp%\\dbgcore.dll"
-#define M1WALL_TARGETDIR        L"%systemroot%\\system32\\oobe\\"
-#define M1WALL_TARGETPROCESS    L"%systemroot%\\system32\\oobe\\setupsqm.exe"
-#define IFILEOP_ELEMONIKER      L"Elevation:Administrator!new:{3ad05575-8857-4850-9277-11b85bdb8e09}"
+#define M1W7_SOURCEDLL         L"%temp%\\CRYPTBASE.dll"
+#define M1W7_TARGETDIR         L"%systemroot%\\system32\\sysprep\\"
+#define M1W7_TARGETPROCESS     L"%systemroot%\\system32\\sysprep\\sysprep.exe"
+#define M1W8_SOURCEDLL         L"%temp%\\shcore.dll"
+#define M1WALL_SOURCEDLL       L"%temp%\\wdscore.dll"
+#define M1W7T_SOURCEDLL        L"%temp%\\ActionQueue.dll"
+#define M1W10_SOURCEDLL        L"%temp%\\dbgcore.dll"
+#define M1WALL_TARGETDIR       L"%systemroot%\\system32\\oobe\\"
+#define M1WALL_TARGETPROCESS   L"%systemroot%\\system32\\oobe\\setupsqm.exe"
+#define IFILEOP_ELEMONIKER     L"Elevation:Administrator!new:{3ad05575-8857-4850-9277-11b85bdb8e09}"
 
 BOOL ucmStandardAutoElevation(
 	DWORD dwType,

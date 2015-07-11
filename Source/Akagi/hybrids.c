@@ -4,7 +4,7 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     1.8
+*  VERSION:     1.80
 *
 *  DATE:        11 Jul 2015
 *
@@ -19,13 +19,13 @@
 #include "global.h"
 #include "makecab.h"
 
-#define T_IFEO						L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"
-#define T_AVRFDLL					L"Hibiki.dll"
-#define T_AVRF_SOURCEDLL			L"%temp%\\Hibiki.dll"
-#define T_AVRF_CMDLINE				L"/c wusa %ws /extract:%%windir%%\\system32"
-#define T_WINSATSRC					L"%temp%\\winsat.exe"
-#define T_WINSAT_CMDLINE			L"/c wusa %ws /extract:%%windir%%\\system32\\sysprep"
-#define T_WINSAT_TARGET             L"%systemroot%\\system32\\sysprep\\winsat.exe"
+#define T_IFEO                L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"
+#define T_AVRFDLL             L"Hibiki.dll"
+#define T_AVRF_SOURCEDLL      L"%temp%\\Hibiki.dll"
+#define T_AVRF_CMDLINE        L"/c wusa %ws /extract:%%windir%%\\system32"
+#define T_WINSATSRC           L"%temp%\\winsat.exe"
+#define T_WINSAT_CMDLINE      L"/c wusa %ws /extract:%%windir%%\\system32\\sysprep"
+#define T_WINSAT_TARGET       L"%systemroot%\\system32\\sysprep\\winsat.exe"
 
 /*
 * ucmAvrfMethod
