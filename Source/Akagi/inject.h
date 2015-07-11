@@ -4,9 +4,9 @@
 *
 *  TITLE:       INJECT.H
 *
-*  VERSION:     1.72
+*  VERSION:     1.8
 *
-*  DATE:        28 Apr 2015
+*  DATE:        11 Jul 2015
 *
 *  Injector prototypes and definitions.
 *
@@ -47,10 +47,6 @@ typedef void(__stdcall *pfnCoUninitialize)(void);
 typedef void(WINAPI *pfnOutputDebugStringW)(LPCWSTR lpOutputString);
 
 typedef struct _ELOAD_PARAMETERS {
-	WCHAR	SourceFilePathAndName[MAX_PATH + 1];
-	WCHAR	DestinationDir[MAX_PATH + 1];
-	WCHAR	ExePathAndName[MAX_PATH + 1];
-	WCHAR	EleMoniker[MAX_PATH];
 	//
 	IID		xIID_IShellItem;
 	IID		xIID;
@@ -65,6 +61,11 @@ typedef struct _ELOAD_PARAMETERS {
 	pfnCloseHandle					xCloseHandle;
 	pfnCoUninitialize				xCoUninitialize;
 	pfnOutputDebugStringW			xOutputDebugStringW;
+
+	WCHAR	EleMoniker[MAX_PATH];
+	WCHAR	SourceFilePathAndName[MAX_PATH + 1];
+	WCHAR	DestinationDir[MAX_PATH + 1];
+	WCHAR	ExePathAndName[MAX_PATH + 1];
 } ELOAD_PARAMETERS, *PELOAD_PARAMETERS;
 
 typedef struct _ELOAD_PARAMETERS_2 {
@@ -81,6 +82,31 @@ typedef struct _ELOAD_PARAMETERS_2 {
 	pfnCoUninitialize				xCoUninitialize;
 	pfnOutputDebugStringW			xOutputDebugStringW;
 } ELOAD_PARAMETERS_2, *PELOAD_PARAMETERS_2;
+
+typedef struct _ELOAD_PARAMETERS_3 {
+	//common with ELOAD_PARAMETERS
+	//
+	IID		xIID_IShellItem;
+	IID		xIID;
+	CLSID	xCLSID;
+	//
+	pfnCoInitialize					xCoInitialize;
+	pfnCoCreateInstance				xCoCreateInstance;
+	pfnCoGetObject					xCoGetObject;
+	pfnSHCreateItemFromParsingName	xSHCreateItemFromParsingName;
+	PVOID							Spare0;
+	PVOID							Spare1;
+	PVOID							Spare2;
+	pfnCoUninitialize				xCoUninitialize;
+	pfnOutputDebugStringW			xOutputDebugStringW;
+
+	WCHAR	EleMoniker[MAX_PATH];
+	//end of common with ELOAD_PARAMETERS
+
+	WCHAR	SourceFilePathAndName[MAX_PATH + 1];
+	WCHAR	DestinationDir[MAX_PATH + 1];
+} ELOAD_PARAMETERS_3, *PELOAD_PARAMETERS_3;
+
 
 typedef interface ISecurityEditor ISecurityEditor;
 

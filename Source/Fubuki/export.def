@@ -26,3 +26,4 @@ CallNtPowerInformation      = DummyFunc
 PowerGetActiveScheme        = DummyFunc
 CreateUri                   = DummyFunc
 PrivateCoInternetCombineUri = DummyFunc
+SLGetWindowsInformation     = DummyFunc

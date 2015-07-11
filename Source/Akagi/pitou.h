@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.H
 *
-*  VERSION:     1.73
+*  VERSION:     1.8
 *
-*  DATE:        29 May 2015
+*  DATE:        11 Jul 2015
 *
 *  Prototypes and definitions for Leo Davidson method.
 *
@@ -29,9 +29,15 @@
 #define M1W10_SOURCEDLL         L"%temp%\\dbgcore.dll"
 #define M1WALL_TARGETDIR        L"%systemroot%\\system32\\oobe\\"
 #define M1WALL_TARGETPROCESS    L"%systemroot%\\system32\\oobe\\setupsqm.exe"
+#define IFILEOP_ELEMONIKER      L"Elevation:Administrator!new:{3ad05575-8857-4850-9277-11b85bdb8e09}"
 
 BOOL ucmStandardAutoElevation(
 	DWORD dwType,
 	CONST PVOID ProxyDll,
 	DWORD ProxyDllSize
+	);
+
+BOOL ucmAutoElevateCopyFile(
+	LPWSTR SourceFileName,
+	LPWSTR DestinationDir
 	);

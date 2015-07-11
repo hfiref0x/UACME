@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.70
+*  VERSION:     1.8
 *
-*  DATE:        24 Apr 2015
+*  DATE:        11 Jul 2015
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -338,4 +338,36 @@ DWORD supQueryEntryPointRVA(
 		FreeLibrary(ImageBase);
 	}
 	return epRVA;
+}
+
+/*
+* supIsWindowsVersionOrGreater
+*
+* Purpose:
+*
+* Query version info in new MS style.
+*
+*/
+BOOL supIsWindowsVersionOrGreater(
+	WORD wMajorVersion, 
+	WORD wMinorVersion, 
+	WORD wServicePackMajor
+	)
+{
+	OSVERSIONINFOEXW osvi;
+	DWORDLONG        dwlConditionMask;
+
+	RtlSecureZeroMemory(&osvi, sizeof(osvi));
+	dwlConditionMask = VerSetConditionMask(
+		VerSetConditionMask(
+		VerSetConditionMask(
+		0, VER_MAJORVERSION, VER_GREATER_EQUAL),
+		VER_MINORVERSION, VER_GREATER_EQUAL),
+		VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
+
+	osvi.dwMajorVersion = wMajorVersion;
+	osvi.dwMinorVersion = wMinorVersion;
+	osvi.wServicePackMajor = wServicePackMajor;
+
+	return VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) != FALSE;
 }

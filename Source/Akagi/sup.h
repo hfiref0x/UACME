@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     1.70
+*  VERSION:     1.8
 *
-*  DATE:        24 Apr 2015
+*  DATE:        11 Jul 2015
 *
 *  Common header file for the program support routines.
 *
@@ -59,4 +59,10 @@ void supCopyMemory(
 
 DWORD supQueryEntryPointRVA(
 	_In_ LPWSTR lpImageFile
+	);
+
+BOOL supIsWindowsVersionOrGreater(
+	WORD wMajorVersion,
+	WORD wMinorVersion,
+	WORD wServicePackMajor
 	);

