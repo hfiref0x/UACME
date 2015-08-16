@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     1.50
+*  VERSION:     1.81
 *
-*  DATE:        05 Apr 2015
+*  DATE:        11 Aug 2015
 *
 *  AVrf entry point.
 *
@@ -255,6 +255,10 @@ VOID ucmbRunTarget(
 	TCHAR					cmdbuf[MAX_PATH * 2], sysdir[MAX_PATH + 1];
 	STARTUPINFOW			startupInfo;
 	PROCESS_INFORMATION		processInfo;
+
+	if (pCreateProcessW == NULL) {
+		return;
+	}
 
 	RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
 	RtlSecureZeroMemory(&processInfo, sizeof(processInfo));

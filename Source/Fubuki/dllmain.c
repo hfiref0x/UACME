@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     1.60
+*  VERSION:     1.81
 *
-*  DATE:        20 Apr 2015
+*  DATE:        11 Aug 2015
 *
 *  Proxy dll entry point.
 *

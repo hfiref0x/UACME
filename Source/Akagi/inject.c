@@ -4,9 +4,9 @@
 *
 *  TITLE:       INJECT.C
 *
-*  VERSION:     1.60
+*  VERSION:     1.80
 *
-*  DATE:        20 Apr 2015
+*  DATE:        11 Jul 2015
 *
 *  Inject module.
 *
