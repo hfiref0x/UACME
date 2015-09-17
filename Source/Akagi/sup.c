@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.80
+*  VERSION:     1.90
 *
-*  DATE:        11 Jul 2015
+*  DATE:        17 Sept 2015
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -16,6 +16,9 @@
 *******************************************************************************/
 
 #include "global.h"
+
+#define T_AKAGI_KEY    L"Software\\Akagi"
+#define T_AKAGI_PARAM  L"LoveLetter"
 
 /*
 * supIsProcess32bit
@@ -370,4 +373,45 @@ BOOL supIsWindowsVersionOrGreater(
 	osvi.wServicePackMajor = wServicePackMajor;
 
 	return VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) != FALSE;
+}
+
+/*
+* supSetParameter
+*
+* Purpose:
+*
+* Set parameter for payload execution.
+*
+*/
+BOOL supSetParameter(
+	LPWSTR lpParameter,
+	DWORD cbParameter
+	)
+{
+	BOOL cond = FALSE, bResult = FALSE;
+	HKEY hKey;
+	LRESULT lRet;
+
+	hKey = NULL;
+
+	do {
+		lRet = RegCreateKeyExW(HKEY_CURRENT_USER, T_AKAGI_KEY, 0, NULL,
+			REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL);
+
+		if ((lRet != ERROR_SUCCESS) || (hKey == NULL)) {
+			break;
+		}
+
+		lRet = RegSetValueExW(hKey, T_AKAGI_PARAM, 0, REG_SZ,
+			(LPBYTE)lpParameter, cbParameter);
+
+		bResult = (lRet == ERROR_SUCCESS);
+
+	} while (cond);
+
+	if (hKey) {
+		RegCloseKey(hKey);
+	}
+
+	return bResult;
 }

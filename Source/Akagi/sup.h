@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     1.80
+*  VERSION:     1.90
 *
-*  DATE:        11 Jul 2015
+*  DATE:        17 Sept 2015
 *
 *  Common header file for the program support routines.
 *
@@ -65,4 +65,9 @@ BOOL supIsWindowsVersionOrGreater(
 	WORD wMajorVersion,
 	WORD wMinorVersion,
 	WORD wServicePackMajor
+	);
+
+BOOL supSetParameter(
+	LPWSTR lpParameter,
+	DWORD cbParameter
 	);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.71
+*  VERSION:     1.90
 *
-*  DATE:        25 Apr 2015
+*  DATE:        16 Sept 2015
 *
 *  ShellCode.
 *
@@ -22,6 +22,15 @@
 
 #include <Windows.h>
 #include "..\Shared\ntos.h"
+
+#if (_MSC_VER >= 1900) 
+#ifdef _DEBUG
+#pragma comment(lib, "vcruntimed.lib")
+#pragma comment(lib, "ucrtd.lib")
+#else
+#pragma comment(lib, "libvcruntime.lib")
+#endif
+#endif
 
 typedef HMODULE(WINAPI *pfnLoadLibraryA)(LPCSTR lpLibFileName);
 typedef DWORD(WINAPI *pfnExpandEnvironmentStringsA)(LPCSTR lpSrc, LPSTR lpDst, DWORD nSize);

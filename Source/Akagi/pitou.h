@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.H
 *
-*  VERSION:     1.80
+*  VERSION:     1.90
 *
-*  DATE:        11 Jul 2015
+*  DATE:        17 Sept 2015
 *
 *  Prototypes and definitions for Leo Davidson method.
 *
@@ -30,6 +30,8 @@
 #define M1WALL_TARGETDIR       L"%systemroot%\\system32\\oobe\\"
 #define M1WALL_TARGETPROCESS   L"%systemroot%\\system32\\oobe\\setupsqm.exe"
 #define IFILEOP_ELEMONIKER     L"Elevation:Administrator!new:{3ad05575-8857-4850-9277-11b85bdb8e09}"
+#define SYSTEMROOTDIR          L"%systemroot%\\system32\\"
+#define TEMPDIR                L"%temp%\\"
 
 BOOL ucmStandardAutoElevation(
 	DWORD dwType,

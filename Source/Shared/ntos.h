@@ -4,13 +4,11 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.17
+*  VERSION:     1.21
 *
-*  DATE:        24 Apr 2015
+*  DATE:        17 Sept 2015
 *
 *  Common header file for the ntos API functions and definitions.
-*
-*  ONLY program required types and definitions listed.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -703,6 +701,32 @@ typedef struct _OBJECT_TYPE_INFORMATION {
 	ULONG DefaultNonPagedPoolCharge;
 } OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
 #endif
+
+typedef struct _OBJECT_TYPE_INFORMATION_8 {
+	UNICODE_STRING TypeName;
+	ULONG TotalNumberOfObjects;
+	ULONG TotalNumberOfHandles;
+	ULONG TotalPagedPoolUsage;
+	ULONG TotalNonPagedPoolUsage;
+	ULONG TotalNamePoolUsage;
+	ULONG TotalHandleTableUsage;
+	ULONG HighWaterNumberOfObjects;
+	ULONG HighWaterNumberOfHandles;
+	ULONG HighWaterPagedPoolUsage;
+	ULONG HighWaterNonPagedPoolUsage;
+	ULONG HighWaterNamePoolUsage;
+	ULONG HighWaterHandleTableUsage;
+	ULONG InvalidAttributes;
+	GENERIC_MAPPING GenericMapping;
+	ULONG ValidAccessMask;
+	BOOLEAN SecurityRequired;
+	BOOLEAN MaintainHandleCount;
+	UCHAR TypeIndex;
+	CHAR ReservedByte;
+	ULONG PoolType;
+	ULONG DefaultPagedPoolCharge;
+	ULONG DefaultNonPagedPoolCharge;
+} OBJECT_TYPE_INFORMATION_8, *POBJECT_TYPE_INFORMATION_8;
 
 #ifndef _OBJECT_TYPES_INFORMATION
 typedef struct _OBJECT_TYPES_INFORMATION
@@ -1656,6 +1680,21 @@ typedef struct _EX_PUSH_LOCK {
 		PVOID Ptr;
 	};
 } EX_PUSH_LOCK, *PEX_PUSH_LOCK;
+
+typedef struct _OBJECT_NAMESPACE_LOOKUPTABLE {
+	LIST_ENTRY HashBuckets[37];
+	EX_PUSH_LOCK Lock;
+	ULONG NumberOfPrivateSpaces;
+} OBJECT_NAMESPACE_LOOKUPTABLE, *POBJECT_NAMESPACE_LOOKUPTABLE;
+
+typedef struct _OBJECT_NAMESPACE_ENTRY {
+	LIST_ENTRY ListEntry;
+	PVOID NamespaceRootDirectory;
+	ULONG SizeOfBoundaryInformation;
+	ULONG Reserved;
+	UCHAR HashValue;
+	ULONG Alignment;
+} OBJECT_NAMESPACE_ENTRY, *POBJECT_NAMESPACE_ENTRY;
 
 typedef struct _OBJECT_DIRECTORY {
 	POBJECT_DIRECTORY_ENTRY HashBuckets[37];
@@ -3235,6 +3274,126 @@ typedef struct _REMOTE_PORT_VIEW {
 ** ALPC END
 */
 
+/*
+** KUSER_SHARED_DATA START
+*/
+
+typedef struct _KSYSTEM_TIME {
+	ULONG LowPart;
+	LONG High1Time;
+	LONG High2Time;
+} KSYSTEM_TIME, *PKSYSTEM_TIME;
+
+typedef enum _NT_PRODUCT_TYPE {
+	NtProductWinNt = 1,
+	NtProductLanManNt,
+	NtProductServer
+} NT_PRODUCT_TYPE, *PNT_PRODUCT_TYPE;
+
+#define PROCESSOR_FEATURE_MAX 64
+
+typedef enum _ALTERNATIVE_ARCHITECTURE_TYPE {
+	StandardDesign,                 // None == 0 == standard design
+	NEC98x86,                       // NEC PC98xx series on X86
+	EndAlternatives                 // past end of known alternatives
+} ALTERNATIVE_ARCHITECTURE_TYPE;
+
+//
+// Define Address of User Shared Data
+//
+#define MM_SHARED_USER_DATA_VA      0x000000007FFE0000
+
+//
+// WARNING: this definition is compatibility only.
+// Structure is incomplete. Only important fields.
+//
+typedef struct _KUSER_SHARED_DATA_COMPAT {
+	ULONG TickCountLowDeprecated;
+	ULONG TickCountMultiplier;
+	volatile KSYSTEM_TIME InterruptTime;
+	volatile KSYSTEM_TIME SystemTime;
+	volatile KSYSTEM_TIME TimeZoneBias;
+	USHORT ImageNumberLow;
+	USHORT ImageNumberHigh;
+	WCHAR NtSystemRoot[260];
+	ULONG MaxStackTraceDepth;
+	ULONG CryptoExponent;
+	ULONG TimeZoneId;
+	ULONG LargePageMinimum;
+
+	union {
+		ULONG Reserved2[7];
+		struct {
+			ULONG AitSamplingValue;
+			ULONG AppCompatFlag;
+			struct {
+				ULONG LowPart;
+				ULONG HighPart;
+			} RNGSeedVersion;
+			ULONG GlobalValidationRunlevel;
+			ULONG TimeZoneBiasStamp;
+			ULONG ReservedField;
+		};
+	};
+	
+	NT_PRODUCT_TYPE NtProductType;
+	BOOLEAN ProductTypeIsValid;
+	ULONG NtMajorVersion;
+	ULONG NtMinorVersion;
+	BOOLEAN ProcessorFeatures[PROCESSOR_FEATURE_MAX];
+	ULONG Reserved1;
+	ULONG Reserved3;
+	volatile ULONG TimeSlip;
+	ALTERNATIVE_ARCHITECTURE_TYPE AlternativeArchitecture;
+	ULONG AltArchitecturePad;
+	LARGE_INTEGER SystemExpirationDate;
+	ULONG SuiteMask;
+	BOOLEAN KdDebuggerEnabled;
+
+	union {
+		UCHAR MitigationPolicies;
+		struct {
+			UCHAR NXSupportPolicy : 2;
+			UCHAR SEHValidationPolicy : 2;
+			UCHAR CurDirDevicesSkippedForDlls : 2;
+			UCHAR Reserved : 2;
+			UCHAR Reserved6[2];
+		};
+	};
+
+	volatile ULONG ActiveConsoleId;
+	volatile ULONG DismountCount;
+	ULONG ComPlusPackage;
+	ULONG LastSystemRITEventTickCount;
+	ULONG NumberOfPhysicalPages;
+	BOOLEAN SafeBootMode;
+	UCHAR Reserved12[3];
+
+	union {
+		ULONG SharedDataFlags;
+		struct {
+			ULONG DbgErrorPortPresent : 1;
+			ULONG DbgElevationEnabled : 1;
+			ULONG DbgVirtEnabled : 1;
+			ULONG DbgInstallerDetectEnabled: 1;
+			ULONG DbgLkgEnabled : 1;
+			ULONG DbgDynProcessorEnabled : 1;
+			ULONG DbgConsoleBrokerEnabled : 1;
+			ULONG DbgSecureBootEnabled : 1;
+			ULONG DbgMultiSessionSku : 1;
+			ULONG SpareBits : 23;
+		};
+	};
+
+	//incomplete
+
+} KUSER_SHARED_DATA, *PKUSER_SHARED_DATA;
+
+#define USER_SHARED_DATA ((KUSER_SHARED_DATA * const)MM_SHARED_USER_DATA_VA)
+
+/*
+** KUSER_SHARED_DATA END
+*/
 
 /*
 ** Csr Runtime START
@@ -3318,6 +3477,117 @@ NTSTATUS NTAPI RtlExpandEnvironmentStrings_U(
 
 VOID NTAPI RtlSetLastWin32Error(
 	LONG Win32Error
+	);
+
+PVOID NTAPI RtlAllocateHeap(
+	_In_ PVOID HeapHandle,
+	_In_ ULONG Flags,
+	_In_ SIZE_T Size
+	);
+
+BOOLEAN NTAPI RtlFreeHeap(
+	_In_ PVOID HeapHandle,
+	_In_ ULONG Flags,
+	_In_ PVOID BaseAddress
+	);
+
+BOOLEAN NTAPI RtlValidSid(
+	PSID Sid
+	);
+
+BOOLEAN NTAPI RtlEqualSid(
+	PSID Sid1,
+	PSID Sid2
+	);
+
+BOOLEAN NTAPI RtlEqualPrefixSid(
+	PSID Sid1,
+	PSID Sid2
+	);
+
+ULONG NTAPI RtlLengthRequiredSid(
+	ULONG SubAuthorityCount
+	);
+
+PVOID NTAPI RtlFreeSid(
+	IN PSID Sid
+	);
+
+NTSTATUS NTAPI RtlAllocateAndInitializeSid(
+	IN PSID_IDENTIFIER_AUTHORITY IdentifierAuthority,
+	IN UCHAR SubAuthorityCount,
+	IN ULONG SubAuthority0,
+	IN ULONG SubAuthority1,
+	IN ULONG SubAuthority2,
+	IN ULONG SubAuthority3,
+	IN ULONG SubAuthority4,
+	IN ULONG SubAuthority5,
+	IN ULONG SubAuthority6,
+	IN ULONG SubAuthority7,
+	OUT PSID *Sid
+	);
+                                          
+NTSTATUS NTAPI RtlInitializeSid(                                  
+	PSID Sid,                                      
+	PSID_IDENTIFIER_AUTHORITY IdentifierAuthority,  
+	UCHAR SubAuthorityCount                         
+	);                                              
+
+PSID_IDENTIFIER_AUTHORITY NTAPI RtlIdentifierAuthoritySid(
+	PSID Sid
+	);
+
+PULONG NTAPI RtlSubAuthoritySid(                               
+	PSID Sid,                                       
+	ULONG SubAuthority                              
+	);                                              
+
+PUCHAR NTAPI
+RtlSubAuthorityCountSid(
+	PSID Sid
+	);
+
+ULONG NTAPI RtlLengthSid(
+	PSID Sid
+	);
+
+NTSTATUS NTAPI RtlCopySid(
+	ULONG DestinationSidLength,
+	PSID DestinationSid,
+	PSID SourceSid
+	);
+
+NTSTATUS NTAPI RtlCopySidAndAttributesArray(
+	ULONG ArrayLength,
+	PSID_AND_ATTRIBUTES Source,
+	ULONG TargetSidBufferSize,
+	PSID_AND_ATTRIBUTES TargetArrayElement,
+	PSID TargetSid,
+	PSID *NextTargetSid,
+	PULONG RemainingTargetSidSize
+	);
+
+NTSTATUS NTAPI RtlLengthSidAsUnicodeString(
+	PSID Sid,
+	PULONG StringLength
+	);
+
+NTSTATUS NTAPI RtlConvertSidToUnicodeString(
+	PUNICODE_STRING UnicodeString,
+	PSID Sid,
+	BOOLEAN AllocateDestinationString
+	);
+
+NTSTATUS NTAPI RtlFormatCurrentUserKeyPath(
+	_Out_ PUNICODE_STRING CurrentUserKeyPath
+	);
+
+VOID NTAPI RtlFreeUnicodeString(
+	PUNICODE_STRING UnicodeString
+	);
+
+VOID NTAPI RtlFreeAnsiString(
+	PANSI_STRING AnsiString
 	);
 
 ULONG DbgPrint(
@@ -3440,6 +3710,13 @@ NTSTATUS NTAPI NtQueryTimer(
 	_Out_opt_  PULONG ReturnLength
 	);
 
+NTSTATUS NTAPI NtCreateSymbolicLinkObject(
+	_Out_   PHANDLE LinkHandle,
+	_In_    ACCESS_MASK DesiredAccess,
+	_In_    POBJECT_ATTRIBUTES ObjectAttributes,
+	_In_    PUNICODE_STRING LinkTarget
+	);
+
 NTSTATUS WINAPI NtOpenSymbolicLinkObject(
 	_Out_	PHANDLE LinkHandle,
 	_In_	ACCESS_MASK DesiredAccess,
@@ -3551,6 +3828,24 @@ NTSTATUS NTAPI NtQueryKey(
 	_Out_opt_	PVOID KeyInformation,
 	_In_		ULONG Length,
 	_Out_		PULONG ResultLength
+	);
+
+NTSTATUS NTAPI NtQueryValueKey(
+	_In_       HANDLE KeyHandle,
+	_In_       PUNICODE_STRING ValueName,
+	_In_       KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
+	_Out_      PVOID KeyValueInformation,
+	_In_       ULONG Length,
+	_Out_      PULONG ResultLength
+	);
+
+NTSTATUS NTAPI NtDeleteKey(
+	_In_       HANDLE KeyHandle
+	);
+
+NTSTATUS NTAPI NtDeleteValueKey(
+	_In_       HANDLE KeyHandle,
+	_In_       PUNICODE_STRING ValueName
 	);
 
 NTSTATUS NTAPI NtOpenJobObject(

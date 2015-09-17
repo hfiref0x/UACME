@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     1.80
+*  VERSION:     1.90
 *
-*  DATE:        11 Jul 2015
+*  DATE:        17 Sept 2015
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -27,4 +27,10 @@ BOOL ucmWinSATMethod(
 	PVOID ProxyDll,
 	DWORD ProxyDllSize,
 	BOOL UseWusa
+	);
+
+BOOL ucmMMCMethod(
+	LPWSTR lpTargetDll,
+	PVOID ProxyDll,
+	DWORD ProxyDllSize
 	);

