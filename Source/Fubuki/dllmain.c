@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     1.90
+*  VERSION:     1.91
 *
-*  DATE:        16 Sept 2015
+*  DATE:        12 Oct 2015
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -113,9 +113,15 @@ BOOL ucmQueryCustomParameter(
 		HeapFree(GetProcessHeap(), 0, lpParameter);
 
 		RegCloseKey(hKey);
+		hKey = NULL;
 		RegDeleteKey(HKEY_CURRENT_USER, T_AKAGI_KEY);
 
 	} while (cond);
+
+	if (hKey != NULL) {
+		RegCloseKey(hKey);
+	}
+
 	return bResult;
 }
 
@@ -143,7 +149,7 @@ BOOL WINAPI DllMain(
 	UNREFERENCED_PARAMETER(lpvReserved);
 
 	if (fdwReason == DLL_PROCESS_ATTACH) {
-		OutputDebugStringW(L"Fubuki at your service.\r\n");
+		OutputDebugStringW(L"UACMe injected, Fubuki at your service.\r\n");
 
 		if (!ucmQueryCustomParameter()) {
 

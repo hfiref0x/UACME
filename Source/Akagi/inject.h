@@ -4,9 +4,9 @@
 *
 *  TITLE:       INJECT.H
 *
-*  VERSION:     1.90
+*  VERSION:     1.91
 *
-*  DATE:        17 Sept 2015
+*  DATE:        12 Oct 2015
 *
 *  Injector prototypes and definitions.
 *
@@ -32,19 +32,16 @@
 #define METHOD_SHIMPATCH    11
 #define METHOD_SYSPREP3     12
 #define METHOD_MMC          13
+#define METHOD_H1N1         14
 
-#define SHELL32DLL          TEXT("shell32.dll")
-#define OLE32DLL            TEXT("ole32.dll")
-#define KERNEL32DLL         TEXT("kernel32.dll")
-
-typedef HRESULT(__stdcall *pfnCoInitialize)(LPVOID pvReserved);
-typedef HRESULT(__stdcall *pfnCoCreateInstance)(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID FAR * ppv);
-typedef HRESULT(__stdcall *pfnCoGetObject)(LPCWSTR pszName, BIND_OPTS *pBindOptions, REFIID riid, void **ppv);
-typedef HRESULT(__stdcall *pfnSHCreateItemFromParsingName)(PCWSTR pszPath, IBindCtx *pbc, REFIID riid, void **ppv);
-typedef BOOL(__stdcall *pfnShellExecuteExW)(SHELLEXECUTEINFOW *pExecInfo);
-typedef DWORD(__stdcall *pfnWaitForSingleObject)(HANDLE hHandle, DWORD dwMilliseconds);
-typedef BOOL(__stdcall *pfnCloseHandle)(HANDLE hObject);
-typedef void(__stdcall *pfnCoUninitialize)(void);
+typedef HRESULT(WINAPI *pfnCoInitialize)(LPVOID pvReserved);
+typedef HRESULT(WINAPI *pfnCoCreateInstance)(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID FAR * ppv);
+typedef HRESULT(WINAPI *pfnCoGetObject)(LPCWSTR pszName, BIND_OPTS *pBindOptions, REFIID riid, void **ppv);
+typedef HRESULT(WINAPI *pfnSHCreateItemFromParsingName)(PCWSTR pszPath, IBindCtx *pbc, REFIID riid, void **ppv);
+typedef BOOL(WINAPI *pfnShellExecuteExW)(SHELLEXECUTEINFOW *pExecInfo);
+typedef DWORD(WINAPI *pfnWaitForSingleObject)(HANDLE hHandle, DWORD dwMilliseconds);
+typedef BOOL(WINAPI *pfnCloseHandle)(HANDLE hObject);
+typedef void(WINAPI *pfnCoUninitialize)(void);
 typedef void(WINAPI *pfnOutputDebugStringW)(LPCWSTR lpOutputString);
 
 typedef struct _ELOAD_PARAMETERS {
@@ -107,6 +104,25 @@ typedef struct _ELOAD_PARAMETERS_3 {
 	WCHAR	SourceFilePathAndName[MAX_PATH + 1];
 	WCHAR	DestinationDir[MAX_PATH + 1];
 } ELOAD_PARAMETERS_3, *PELOAD_PARAMETERS_3;
+
+typedef struct _ELOAD_PARAMETERS_4 {
+	WCHAR                           szVerb[MAX_PATH + 1];
+	WCHAR                           szTargetApp[MAX_PATH * 4];
+	pfnShellExecuteExW				xShellExecuteExW;
+	pfnWaitForSingleObject			xWaitForSingleObject;
+	pfnCloseHandle					xCloseHandle;
+} ELOAD_PARAMETERS_4, *PELOAD_PARAMETERS_4;
+
+typedef struct _ELOAD_PARAM_GLOBAL {
+	BOOL                IsWow64;
+	HINSTANCE           hKernel32;
+	HINSTANCE           hOle32;
+	HINSTANCE           hShell32;
+	RTL_OSVERSIONINFOW  osver;
+	WCHAR               szSystemDirectory[MAX_PATH + 1];
+} ELOAD_PARAM_GLOBAL, *PELOAD_PARAM_GLOBAL;
+
+extern ELOAD_PARAM_GLOBAL g_ldp;
 
 
 typedef interface ISecurityEditor ISecurityEditor;

