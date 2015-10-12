@@ -64,7 +64,7 @@ Methods fixed:
 * 9 - Fixed only in Windows 10 starting from 10147 build;
 * 10 - Fixed only in Windows 10 TH2 starting from build 10548;
 * 11 - Fixed in Windows 10 starting from first preview builds, earlier OS versions got KB3045645/KB3048097 fix;
-* 13 - Fixed in Windows 10 TH2 starting from build 10548.
+* 14 - Fixed in Windows 10 TH2 starting from build 10548.
 
 # Protection
 * UAC turned on maximum level and full awareness about every window it will show;
