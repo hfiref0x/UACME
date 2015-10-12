@@ -11,9 +11,7 @@
 
 Run executable from command line: akagi32 [Key] [Param] or akagi64 [Key] [Param]. See "Run examples" below for more info.
 
-First param is number of method to use, second is optional command (executable file name including full path) to run. Second param can be empty - in this case program will execute elevated cmd.exe from 
-
-system32 folder.
+First param is number of method to use, second is optional command (executable file name including full path) to run. Second param can be empty - in this case program will execute elevated cmd.exe from system32 folder.
 
 Keys (watch debug ouput with dbgview or similar for more info):
 * 1 - Leo Davidson sysprep method, this will work only on Windows 7 and Windows 8, used in multiple malware;
