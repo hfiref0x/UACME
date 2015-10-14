@@ -17,14 +17,14 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 1 - Leo Davidson sysprep method, this will work only on Windows 7 and Windows 8, used in multiple malware;
 * 2 - Tweaked Leo Davidson sysprep method, this will work only on Windows 8.1.9600;
 * 3 - Leo Davidson method tweaked by WinNT/Pitou developers, works from Windows 7 up to 10.0.10532;
-* 4* - Application Compatibility Shim RedirectEXE method, from WinNT/Gootkit. Works from Windows 7 up to 8.1.9600;
-* 5** - ISecurityEditor WinNT/Simda method, used to turn off UAC, works from Windows 7 up to Windows 10.0.100136;
+* 4 - Application Compatibility Shim RedirectEXE method, from WinNT/Gootkit. Works from Windows 7 up to 8.1.9600;
+* 5 - ISecurityEditor WinNT/Simda method, used to turn off UAC, works from Windows 7 up to Windows 10.0.100136;
 * 6 - Wusa method used by Win32/Carberp, tweaked to work with Windows 8/8.1 also;
-* 7** - Wusa method, tweaked to work from Windows 7 up to 10.0.10136;
+* 7 - Wusa method, tweaked to work from Windows 7 up to 10.0.10136;
 * 8 - Slightly modified Leo Davidson method used by Win32/Tilon, works only on Windows 7;
-* 9** - Hybrid method, combination of WinNT/Simda and Win32/Carberp + AVrf, works from Windows 7 up to 10.0.10136;
+* 9 - Hybrid method, combination of WinNT/Simda and Win32/Carberp + AVrf, works from Windows 7 up to 10.0.10136;
 * 10 - Hybrid method, abusing appinfo.dll way of whitelisting autoelevated applications and KnownDlls cache changes, works from Windows 7 up to 10.0.10532;
-* 11* - WinNT/Gootkit second method based on the memory patching from MS "Fix it" patch shim (and as side effect - arbitrary dll injection), works from Windows 7 up to 8.1.9600;
+* 11 - WinNT/Gootkit second method based on the memory patching from MS "Fix it" patch shim (and as side effect - arbitrary dll injection), works from Windows 7 up to 8.1.9600;
 * 12 - Windows 10 sysprep method, abusing different dll dependency added in Windows 10 (works up to 10.0.10558);
 * 13 - Hybrid method, abusing appinfo.dll way of whitelisting MMC console commands and EventViewer missing dependency, works from Windows 7 up to 10.0.10558;
 * 14 - Presumable Win32/Zlader author method, abusing appinfo.dll way of whitelisting OOBE.exe, works from Windows 7 up to 10, fixed in Windows 10 10558 build.
@@ -62,6 +62,7 @@ Methods fixed:
 * 9 - Fixed only in Windows 10 starting from 10147 build;
 * 10 - Fixed only in Windows 10 TH2 starting from build 10548;
 * 11 - Fixed in Windows 10 starting from first preview builds, earlier OS versions got KB3045645/KB3048097 fix;
+* 12 - Fixed in Windows 10 starting from 10565 build;
 * 14 - Fixed in Windows 10 TH2 starting from build 10548.
 
 # Protection
