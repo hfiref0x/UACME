@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     1.91
+*  VERSION:     1.93
 *
-*  DATE:        12 Oct 2015
+*  DATE:        05 Nov 2015
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -36,6 +36,13 @@ BOOL ucmMMCMethod(
 	);
 
 BOOL ucmH1N1Method(
+	PVOID ProxyDll,
+	DWORD ProxyDllSize
+	);
+
+BOOL ucmGenericAutoelevation(
+	LPWSTR lpTargetApp,
+	LPWSTR lpTargetDll,
 	PVOID ProxyDll,
 	DWORD ProxyDllSize
 	);

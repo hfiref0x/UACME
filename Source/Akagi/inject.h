@@ -4,9 +4,9 @@
 *
 *  TITLE:       INJECT.H
 *
-*  VERSION:     1.91
+*  VERSION:     1.93
 *
-*  DATE:        12 Oct 2015
+*  DATE:        05 Nov 2015
 *
 *  Injector prototypes and definitions.
 *
@@ -33,6 +33,7 @@
 #define METHOD_SYSPREP3     12
 #define METHOD_MMC          13
 #define METHOD_H1N1         14
+#define METHOD_GENERIC      15
 
 typedef HRESULT(WINAPI *pfnCoInitialize)(LPVOID pvReserved);
 typedef HRESULT(WINAPI *pfnCoCreateInstance)(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID FAR * ppv);

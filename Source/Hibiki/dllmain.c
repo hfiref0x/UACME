@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     1.90
+*  VERSION:     1.93
 *
-*  DATE:        17 Sept 2015
+*  DATE:        05 Nov 2015
 *
 *  AVrf entry point, Hibiki Kai Ni.
 *
@@ -86,8 +86,8 @@ typedef struct _RTL_VERIFIER_PROVIDER_DESCRIPTOR {
 } RTL_VERIFIER_PROVIDER_DESCRIPTOR, *PRTL_VERIFIER_PROVIDER_DESCRIPTOR;
 
 static RTL_VERIFIER_PROVIDER_DESCRIPTOR g_avrfProvider;
-static RTL_VERIFIER_THUNK_DESCRIPTOR avrfThunks[1];
-static RTL_VERIFIER_DLL_DESCRIPTOR avrfDlls[1];
+static RTL_VERIFIER_THUNK_DESCRIPTOR avrfThunks[2];
+static RTL_VERIFIER_DLL_DESCRIPTOR avrfDlls[2];
 static HMODULE g_pvKernel32;
 
 /*
@@ -460,9 +460,13 @@ VOID ucmRegisterProvider(
 	VOID
 	)
 {
+	RtlSecureZeroMemory(&avrfThunks, sizeof(avrfThunks)); //for future case
+
 	avrfThunks[0].ThunkName = NULL;
 	avrfThunks[0].ThunkOldAddress = NULL;
 	avrfThunks[0].ThunkNewAddress = NULL;
+
+	RtlSecureZeroMemory(&avrfDlls, sizeof(avrfDlls)); //for future case
 
 	avrfDlls[0].DllName = NULL;
 	avrfDlls[0].DllFlags = 0;
