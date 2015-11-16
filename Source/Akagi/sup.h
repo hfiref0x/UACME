@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2015
+*  (C) COPYRIGHT AUTHORS, 2014 - 2016
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     1.90
+*  VERSION:     2.00
 *
-*  DATE:        17 Sept 2015
+*  DATE:        16 Nov 2015
 *
 *  Common header file for the program support routines.
 *
@@ -16,6 +16,7 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
+#pragma once
 
 BOOLEAN supIsProcess32bit(
 	_In_ HANDLE hProcess
@@ -61,13 +62,20 @@ DWORD supQueryEntryPointRVA(
 	_In_ LPWSTR lpImageFile
 	);
 
-BOOL supIsWindowsVersionOrGreater(
-	WORD wMajorVersion,
-	WORD wMinorVersion,
-	WORD wServicePackMajor
-	);
-
 BOOL supSetParameter(
 	LPWSTR lpParameter,
 	DWORD cbParameter
+	);
+
+BOOLEAN supVerifyMappedImageMatchesChecksum(
+	_In_ PVOID BaseAddress,
+	_In_ ULONG FileLength
+	);
+
+VOID ucmShowMessage(
+	LPWSTR lpszMsg
+	);
+
+INT ucmShowQuestion(
+	LPWSTR lpszMsg
 	);

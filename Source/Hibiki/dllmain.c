@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2015
+*  (C) COPYRIGHT AUTHORS, 2014 - 2016
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     1.93
+*  VERSION:     2.00
 *
-*  DATE:        05 Nov 2015
+*  DATE:        15 Nov 2015
 *
 *  AVrf entry point, Hibiki Kai Ni.
 *
@@ -479,6 +479,8 @@ VOID ucmRegisterProvider(
 	g_avrfProvider.ProviderDllLoadCallback = (RTL_VERIFIER_DLL_LOAD_CALLBACK)&ucmLoadCallback;
 }
 
+#define Msg "Hibiki at your service, Admiral"
+
 /*
 * DllMain
 *
@@ -500,7 +502,8 @@ BOOL WINAPI DllMain(
 	switch (fdwReason) {
 
 	case DLL_PROCESS_VERIFIER:
-		DbgPrint("UACMe injected, Hibiki at your service.");
+		DbgPrint("Put your signature here");
+		DbgPrint(Msg);
 		ucmRegisterProvider();
 		*pVPD = &g_avrfProvider;
 		break;

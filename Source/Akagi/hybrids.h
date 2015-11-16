@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015
+*  (C) COPYRIGHT AUTHORS, 2015 - 2016
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     1.93
+*  VERSION:     2.00
 *
-*  DATE:        05 Nov 2015
+*  DATE:        16 Nov 2015
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -16,9 +16,10 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
+#pragma once
 
 BOOL ucmAvrfMethod(
-	PVOID AvrfDll,
+	CONST PVOID AvrfDll,
 	DWORD AvrfDllSize
 	);
 
@@ -45,4 +46,8 @@ BOOL ucmGenericAutoelevation(
 	LPWSTR lpTargetDll,
 	PVOID ProxyDll,
 	DWORD ProxyDllSize
+	);
+
+BOOL ucmGWX(
+	VOID
 	);

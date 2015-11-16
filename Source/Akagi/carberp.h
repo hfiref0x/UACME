@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015
+*  (C) COPYRIGHT AUTHORS, 2015 - 2016
 *
 *  TITLE:       CARBERP.H
 *
-*  VERSION:     1.80
+*  VERSION:     2.00
 *
-*  DATE:        11 Jul 2015
+*  DATE:        16 Nov 2015
 *
 *  Prototypes and definitions for Carberp method.
 *
@@ -16,20 +16,10 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
-
-//default fake msu cabinet name
-#define T_MSUPACKAGE_NAME           L"%temp%\\ellocnak.msu"
-
-#define METHOD_MIGWIZ_SOURCEDLL     L"%temp%\\wdscore.dll"
-#define METHOD_MIGWIZ_CMDLINE       L"/c wusa %ws /extract:%%windir%%\\system32\\migwiz"
-#define METHOD_MIGWIZ_TARGETAPP     L"%systemroot%\\system32\\migwiz\\migwiz.exe"
-
-#define METHOD_SQLSRV_SOURCEDLL     L"%temp%\\ntwdblib.dll"
-#define METHOD_SQLSRV_CMDLINE       L"/c wusa %ws /extract:%%windir%%\\system32"
-#define METHOD_SQLSRV_TARGETAPP     L"%systemroot%\\system32\\cliconfg.exe"
+#pragma once
 
 BOOL ucmWusaMethod(
-	DWORD dwType,
+	UACBYPASSMETHOD Method,
 	PVOID ProxyDll,
 	DWORD ProxyDllSize
 	);

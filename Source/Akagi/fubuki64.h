@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2015
+*  (C) COPYRIGHT AUTHORS, 2014 - 2016
 *
 *  TITLE:       FUBUKI64.H
 *
-*  VERSION:     1.91
+*  VERSION:     2.00
 *
-*  DATE:        08 Nov 2015
+*  DATE:        12 Nov 2015
 *
 *  Proxy dll 64 bit (Fubuki64).
 *
@@ -16,6 +16,7 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
+#pragma once
 
 static const unsigned char Fubuki64[7168] = {
 	0x4D, 0x5A, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00,

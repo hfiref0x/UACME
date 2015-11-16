@@ -26,9 +26,10 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 10 - Hybrid method, abusing appinfo.dll way of whitelisting autoelevated applications and KnownDlls cache changes, works from Windows 7 up to 10.0.10532;
 * 11 - WinNT/Gootkit second method based on the memory patching from MS "Fix it" patch shim (and as side effect - arbitrary dll injection), works from Windows 7 up to 8.1.9600;
 * 12 - Windows 10 sysprep method, abusing different dll dependency added in Windows 10 (works up to 10.0.10558);
-* 13 - Hybrid method, abusing appinfo.dll way of whitelisting MMC console commands and EventViewer missing dependency, works from Windows 7 up to 10.0.10576;
+* 13 - Hybrid method, abusing appinfo.dll way of whitelisting MMC console commands and EventViewer missing dependency, works from Windows 7 up to 10th2 10586 build;
 * 14 - Presumable Win32/Zlader author method, abusing appinfo.dll way of whitelisting OOBE.exe, works from Windows 7 up to 10, fixed in Windows 10 10558 build;
-* 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10 10576.
+* 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10th2 10586 build;
+* 16 - Hybrid method working together with Microsoft GWX backdoor, work from Windows 7 up to 10th2 10586 build.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;

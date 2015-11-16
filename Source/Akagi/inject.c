@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2015
+*  (C) COPYRIGHT AUTHORS, 2014 - 2016
 *
 *  TITLE:       INJECT.C
 *
-*  VERSION:     1.91
+*  VERSION:     2.00
 *
-*  DATE:        12 Oct 2015
+*  DATE:        12 Nov 2015
 *
 *  Inject module.
 *

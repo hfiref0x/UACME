@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015
+*  (C) COPYRIGHT AUTHORS, 2015 - 2016
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.90
+*  VERSION:     2.00
 *
-*  DATE:        17 Sept 2015
+*  DATE:        16 Nov 2015
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -16,9 +16,6 @@
 *******************************************************************************/
 
 #include "global.h"
-
-#define T_AKAGI_KEY    L"Software\\Akagi"
-#define T_AKAGI_PARAM  L"LoveLetter"
 
 /*
 * supIsProcess32bit
@@ -344,38 +341,6 @@ DWORD supQueryEntryPointRVA(
 }
 
 /*
-* supIsWindowsVersionOrGreater
-*
-* Purpose:
-*
-* Query version info in new MS style.
-*
-*/
-BOOL supIsWindowsVersionOrGreater(
-	WORD wMajorVersion, 
-	WORD wMinorVersion, 
-	WORD wServicePackMajor
-	)
-{
-	OSVERSIONINFOEXW osvi;
-	DWORDLONG        dwlConditionMask;
-
-	RtlSecureZeroMemory(&osvi, sizeof(osvi));
-	dwlConditionMask = VerSetConditionMask(
-		VerSetConditionMask(
-		VerSetConditionMask(
-		0, VER_MAJORVERSION, VER_GREATER_EQUAL),
-		VER_MINORVERSION, VER_GREATER_EQUAL),
-		VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
-
-	osvi.dwMajorVersion = wMajorVersion;
-	osvi.dwMinorVersion = wMinorVersion;
-	osvi.wServicePackMajor = wServicePackMajor;
-
-	return VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) != FALSE;
-}
-
-/*
 * supSetParameter
 *
 * Purpose:
@@ -414,4 +379,98 @@ BOOL supSetParameter(
 	}
 
 	return bResult;
+}
+
+/*
+* supChkSum
+*
+* Purpose:
+*
+* Calculate partial checksum for given buffer.
+*
+*/
+USHORT supChkSum(
+	ULONG PartialSum,
+	PUSHORT Source,
+	ULONG Length
+	)
+{
+	while (Length--) {
+		PartialSum += *Source++;
+		PartialSum = (PartialSum >> 16) + (PartialSum & 0xffff);
+	}
+	return (USHORT)(((PartialSum >> 16) + PartialSum) & 0xffff);
+}
+
+/*
+* supVerifyMappedImageMatchesChecksum
+*
+* Purpose:
+*
+* Calculate PE file checksum and compare it with checksum in PE header.
+*
+*/
+BOOLEAN supVerifyMappedImageMatchesChecksum(
+	_In_ PVOID BaseAddress,
+	_In_ ULONG FileLength
+	)
+{
+	PUSHORT AdjustSum;
+	PIMAGE_NT_HEADERS NtHeaders;
+	USHORT PartialSum;
+	ULONG HeaderSum;
+	ULONG CheckSum;
+
+	HeaderSum = 0;
+	PartialSum = supChkSum(0, (PUSHORT)BaseAddress, (FileLength + 1) >> 1);
+
+	NtHeaders = RtlImageNtHeader(BaseAddress);
+	if (NtHeaders != NULL) {
+		HeaderSum = NtHeaders->OptionalHeader.CheckSum;
+		AdjustSum = (PUSHORT)(&NtHeaders->OptionalHeader.CheckSum);
+		PartialSum -= (PartialSum < AdjustSum[0]);
+		PartialSum -= AdjustSum[0];
+		PartialSum -= (PartialSum < AdjustSum[1]);
+		PartialSum -= AdjustSum[1];
+	}
+	else
+	{
+		PartialSum = 0;
+		HeaderSum = FileLength;
+	}
+	CheckSum = (ULONG)PartialSum + FileLength;
+	return (CheckSum == HeaderSum);
+}
+
+/*
+* ucmShowMessage
+*
+* Purpose:
+*
+* Output message to user.
+*
+*/
+VOID ucmShowMessage(
+	LPWSTR lpszMsg
+	)
+{
+	if (lpszMsg) {
+		MessageBoxW(GetDesktopWindow(),
+			lpszMsg, PROGRAMTITLE, MB_ICONINFORMATION);
+	}
+}
+
+/*
+* ucmShowQuestion
+*
+* Purpose:
+*
+* Output message with question to user.
+*
+*/
+INT ucmShowQuestion(
+	LPWSTR lpszMsg
+	)
+{
+	return MessageBoxW(GetDesktopWindow(), lpszMsg, PROGRAMTITLE, MB_YESNO);
 }

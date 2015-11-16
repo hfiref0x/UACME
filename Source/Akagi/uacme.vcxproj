@@ -87,7 +87,7 @@
     <IntDir>.\output\$(Platform)\$(Configuration)\</IntDir>
     <CodeAnalysisRuleSet>..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\SecurityRules.ruleset</CodeAnalysisRuleSet>
     <TargetName>$(ProjectName)32</TargetName>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -95,7 +95,7 @@
     <IntDir>.\output\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)64</TargetName>
     <CodeAnalysisRuleSet>..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\SecurityRules.ruleset</CodeAnalysisRuleSet>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -147,7 +147,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <CompileAs>CompileAsC</CompileAs>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnablePREfast>true</EnablePREfast>
+      <EnablePREfast>false</EnablePREfast>
       <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
@@ -175,7 +175,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <CompileAs>CompileAsC</CompileAs>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnablePREfast>true</EnablePREfast>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -207,6 +207,7 @@
     <ClCompile Include="inject.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="makecab.c" />
+    <ClCompile Include="compress.c" />
     <ClCompile Include="pitou.c" />
     <ClCompile Include="simda.c" />
     <ClCompile Include="sup.c" />
@@ -217,15 +218,19 @@
     <ClInclude Include="apphelp.h" />
     <ClInclude Include="carberp.h" />
     <ClInclude Include="cmdline.h" />
-    <ClInclude Include="fubuki32.h" />
-    <ClInclude Include="fubuki64.h" />
+    <ClInclude Include="compress.h" />
+    <ClInclude Include="consts.h" />
+    <ClInclude Include="fubuki32comp.h" />
+    <ClInclude Include="fubuki64comp.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="gootkit.h" />
-    <ClInclude Include="hibiki32.h" />
-    <ClInclude Include="hibiki64.h" />
+    <ClInclude Include="hibiki32comp.h" />
+    <ClInclude Include="hibiki64comp.h" />
     <ClInclude Include="hybrids.h" />
     <ClInclude Include="inazuma32.h" />
     <ClInclude Include="inject.h" />
+    <ClInclude Include="kongou32comp.h" />
+    <ClInclude Include="kongou64comp.h" />
     <ClInclude Include="makecab.h" />
     <ClInclude Include="pitou.h" />
     <ClInclude Include="resource.h" />

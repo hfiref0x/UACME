@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015
+*  (C) COPYRIGHT AUTHORS, 2015 - 2016
 *
 *  TITLE:       SIMDA.H
 *
-*  VERSION:     1.60
+*  VERSION:     2.00
 *
-*  DATE:        20 Apr 2015
+*  DATE:        16 Nov 2015
 *
 *  Prototypes and definitions for Simda method.
 *
@@ -16,15 +16,15 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
-
-#define T_UACKEY                    L"MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system"
-#define T_SDDL_ALL_FOR_EVERYONE     L"D:(A;;GA;;;WD)"
+#pragma once
 
 BOOL ucmSimdaTurnOffUac(
 	VOID
 	);
 
-BOOL ucmSimdaAlterKeySecurity(
-	LPWSTR lpTargetKey,
+BOOL ucmSimdaAlterObjectSecurity(
+	SE_OBJECT_TYPE ObjectType,
+	SECURITY_INFORMATION SecurityInformation,
+	LPWSTR lpTargetObject,
 	LPWSTR lpSddlString
 	);

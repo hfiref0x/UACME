@@ -84,6 +84,9 @@
     <ClCompile Include="..\Shared\ultostr.c">
       <Filter>minirtl</Filter>
     </ClCompile>
+    <ClCompile Include="compress.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cmdline.h">
@@ -125,22 +128,34 @@
     <ClInclude Include="hybrids.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="fubuki32.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="fubuki64.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="hibiki32.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="hibiki64.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
     <ClInclude Include="makecab.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inazuma32.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="compress.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fubuki32comp.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="fubuki64comp.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="hibiki32comp.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="hibiki64comp.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="kongou64comp.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="consts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="kongou32comp.h">
       <Filter>Header Files\modules</Filter>
     </ClInclude>
   </ItemGroup>

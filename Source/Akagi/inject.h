@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2015
+*  (C) COPYRIGHT AUTHORS, 2014 - 2016
 *
 *  TITLE:       INJECT.H
 *
-*  VERSION:     1.93
+*  VERSION:     2.00
 *
-*  DATE:        05 Nov 2015
+*  DATE:        16 Nov 2015
 *
 *  Injector prototypes and definitions.
 *
@@ -16,24 +16,9 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
+#pragma once
 
 #include <AccCtrl.h>
-
-#define METHOD_SYSPREP1     1
-#define METHOD_SYSPREP2     2
-#define METHOD_OOBE         3
-#define METHOD_REDIRECTEXE  4
-#define METHOD_SIMDA        5
-#define METHOD_CARBERP      6
-#define METHOD_CARBERP_EX   7
-#define METHOD_TILON        8
-#define METHOD_AVRF         9
-#define METHOD_WINSAT       10
-#define METHOD_SHIMPATCH    11
-#define METHOD_SYSPREP3     12
-#define METHOD_MMC          13
-#define METHOD_H1N1         14
-#define METHOD_GENERIC      15
 
 typedef HRESULT(WINAPI *pfnCoInitialize)(LPVOID pvReserved);
 typedef HRESULT(WINAPI *pfnCoCreateInstance)(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID FAR * ppv);
@@ -44,6 +29,7 @@ typedef DWORD(WINAPI *pfnWaitForSingleObject)(HANDLE hHandle, DWORD dwMillisecon
 typedef BOOL(WINAPI *pfnCloseHandle)(HANDLE hObject);
 typedef void(WINAPI *pfnCoUninitialize)(void);
 typedef void(WINAPI *pfnOutputDebugStringW)(LPCWSTR lpOutputString);
+typedef void (WINAPI *pfnSleep)(DWORD dwMilliseconds);
 
 typedef struct _ELOAD_PARAMETERS {
 	//
@@ -68,12 +54,15 @@ typedef struct _ELOAD_PARAMETERS {
 } ELOAD_PARAMETERS, *PELOAD_PARAMETERS;
 
 typedef struct _ELOAD_PARAMETERS_2 {
-	WCHAR   szKey[MAX_PATH + 1];
-	WCHAR   szNewSDDL[MAX_PATH + 1];
-	WCHAR	EleMoniker[MAX_PATH];
+	SE_OBJECT_TYPE        ObjectType;
+	SECURITY_INFORMATION  SecurityInformation;
 	//
-	IID		xIID_ISecurityEditor;
-	CLSID	xCLSID_ShellSecurityEditor;
+	WCHAR            szTargetObject[MAX_PATH + 1];
+	WCHAR            szNewSDDL[MAX_PATH + 1];
+	WCHAR	         EleMoniker[MAX_PATH];
+	//
+	IID		         xIID_ISecurityEditor;
+	CLSID	         xCLSID_ShellSecurityEditor;
 	//
 	pfnCoInitialize					xCoInitialize;
 	pfnCoCreateInstance				xCoCreateInstance;
@@ -113,18 +102,6 @@ typedef struct _ELOAD_PARAMETERS_4 {
 	pfnWaitForSingleObject			xWaitForSingleObject;
 	pfnCloseHandle					xCloseHandle;
 } ELOAD_PARAMETERS_4, *PELOAD_PARAMETERS_4;
-
-typedef struct _ELOAD_PARAM_GLOBAL {
-	BOOL                IsWow64;
-	HINSTANCE           hKernel32;
-	HINSTANCE           hOle32;
-	HINSTANCE           hShell32;
-	RTL_OSVERSIONINFOW  osver;
-	WCHAR               szSystemDirectory[MAX_PATH + 1];
-} ELOAD_PARAM_GLOBAL, *PELOAD_PARAM_GLOBAL;
-
-extern ELOAD_PARAM_GLOBAL g_ldp;
-
 
 typedef interface ISecurityEditor ISecurityEditor;
 
