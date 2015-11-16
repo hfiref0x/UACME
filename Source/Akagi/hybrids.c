@@ -602,14 +602,8 @@ BOOL ucmGenericAutoelevation(
 	return bResult;
 }
 
-#ifdef _WIN64
-#include "kongou64comp.h"
-#define KONGOU64 Kongou64Comp
-#else
-#endif
-
 /*
-* ucmMSFTGift
+* ucmGWX
 *
 * Purpose:
 *
