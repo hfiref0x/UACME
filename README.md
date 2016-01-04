@@ -27,7 +27,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 11 - WinNT/Gootkit second method based on the memory patching from MS "Fix it" patch shim (and as side effect - arbitrary dll injection), works from Windows 7 up to 8.1.9600;
 * 12 - Windows 10 sysprep method, abusing different dll dependency added in Windows 10 (works up to 10th2 10558);
 * 13 - Hybrid method, abusing appinfo.dll way of whitelisting MMC console commands and EventViewer missing dependency, works from Windows 7 up to 10rs1 11082;
-* 14 - Presumable Win32/Zlader author method, abusing appinfo.dll way of whitelisting OOBE.exe, works from Windows 7 up to 10th2 10558;
+* 14 - WinNT/Sirefef method, abusing appinfo.dll way of whitelisting OOBE.exe, works from Windows 7 up to 10th2 10558;
 * 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10rs1 11082;
 * 16 - Hybrid method working together with Microsoft GWX backdoor, work from Windows 7 up to 10rs1 11082.
 
