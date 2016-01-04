@@ -312,7 +312,7 @@ PVOID DecompressPayload(
 			k = CompressedBufferSize - sizeof(ULONG); //new compressed size without header
 
 			UncompressedData = DecompressBufferLZNT1(Ptr, k, c, &FinalDecompressedSize);
-		    if (UncompressedData == NULL)
+			if (UncompressedData == NULL)
 				break;
 
 			//validate uncompressed data

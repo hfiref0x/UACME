@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.24
+*  VERSION:     1.25
 *
-*  DATE:        13 Nov 2015
+*  DATE:        03 Jan 2016
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -3460,11 +3460,6 @@ NTSTATUS NTAPI RtlGetVersion(
 	_Inout_	PRTL_OSVERSIONINFOW lpVersionInformation
 	);
 
-VOID NTAPI RtlTimeToTimeFields(
-	_Inout_ PLARGE_INTEGER Time,
-	_Inout_ PTIME_FIELDS TimeFields
-	);
-
 ULONG NTAPI RtlNtStatusToDosError(
 	_In_ NTSTATUS Status
 	);
@@ -3618,6 +3613,32 @@ NTSTATUS NTAPI RtlConvertSidToUnicodeString(
 	BOOLEAN AllocateDestinationString
 	);
 
+NTSTATUS NTAPI RtlCreateSecurityDescriptor(
+	PSECURITY_DESCRIPTOR SecurityDescriptor,
+	ULONG Revision
+	);
+
+NTSTATUS NTAPI RtlSetOwnerSecurityDescriptor( 
+	PSECURITY_DESCRIPTOR SecurityDescriptor,   
+	PSID Owner,                                
+	BOOLEAN OwnerDefaulted                     
+	);
+
+FORCEINLINE LUID
+NTAPI
+RtlConvertLongToLuid(
+	LONG Long
+	)
+{
+	LUID TempLuid;
+	LARGE_INTEGER TempLi;
+
+	TempLi.QuadPart = Long;
+	TempLuid.LowPart = TempLi.LowPart;
+	TempLuid.HighPart = TempLi.HighPart;
+	return(TempLuid);
+}
+
 NTSTATUS NTAPI RtlFormatCurrentUserKeyPath(
 	_Out_ PUNICODE_STRING CurrentUserKeyPath
 	);
@@ -3665,6 +3686,31 @@ NTSTATUS NTAPI RtlDecompressBuffer(
 
 PIMAGE_NT_HEADERS NTAPI RtlImageNtHeader(
 	IN PVOID Base
+	);
+
+VOID NTAPI RtlSecondsSince1970ToTime(
+	ULONG ElapsedSeconds,
+	PLARGE_INTEGER Time
+	);
+
+VOID NTAPI RtlSecondsSince1980ToTime(
+	ULONG ElapsedSeconds,
+	PLARGE_INTEGER Time
+	);
+
+BOOLEAN NTAPI RtlTimeToSecondsSince1980(
+	PLARGE_INTEGER Time,
+	PULONG ElapsedSeconds
+	);
+
+VOID NTAPI RtlTimeToTimeFields(
+	_Inout_ PLARGE_INTEGER Time,
+	_Inout_ PTIME_FIELDS TimeFields
+	);
+
+BOOLEAN NTAPI RtlTimeFieldsToTime(
+	PTIME_FIELDS TimeFields,
+	PLARGE_INTEGER Time
 	);
 
 ULONG DbgPrint(
@@ -3985,6 +4031,14 @@ NTSTATUS NTAPI NtWriteFile(
 NTSTATUS NTAPI NtFlushBuffersFile(
 	_In_ HANDLE FileHandle,
 	_Out_ PIO_STATUS_BLOCK IoStatusBlock
+	);
+
+NTSTATUS NTAPI NtSetInformationFile(
+	_In_ HANDLE FileHandle,
+	_Out_ PIO_STATUS_BLOCK IoStatusBlock,
+	__in_bcount(Length) PVOID FileInformation,
+	_In_ ULONG Length,
+	_In_ FILE_INFORMATION_CLASS FileInformationClass
 	);
 
 NTSTATUS NTAPI NtOpenEvent(

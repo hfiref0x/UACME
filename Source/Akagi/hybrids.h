@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     2.00
+*  VERSION:     2.01
 *
-*  DATE:        16 Nov 2015
+*  DATE:        04 Jan 2016
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -36,7 +36,7 @@ BOOL ucmMMCMethod(
 	DWORD ProxyDllSize
 	);
 
-BOOL ucmH1N1Method(
+BOOL ucmSirefefMethod(
 	PVOID ProxyDll,
 	DWORD ProxyDllSize
 	);

