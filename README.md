@@ -1,6 +1,5 @@
 # UACMe
 * Defeating Windows User Account Control by abusing built-in Windows AutoElevate backdoor.
-* More info http://www.kernelmode.info/forum/viewtopic.php?f=11&t=3643
 
 # System Requirements
 
@@ -26,10 +25,10 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 10 - Hybrid method, abusing appinfo.dll way of whitelisting autoelevated applications and KnownDlls cache changes, works from Windows 7 up to 10th2 10532;
 * 11 - WinNT/Gootkit second method based on the memory patching from MS "Fix it" patch shim (and as side effect - arbitrary dll injection), works from Windows 7 up to 8.1.9600;
 * 12 - Windows 10 sysprep method, abusing different dll dependency added in Windows 10 (works up to 10th2 10558);
-* 13 - Hybrid method, abusing appinfo.dll way of whitelisting MMC console commands and EventViewer missing dependency, works from Windows 7 up to 10rs1 11082;
+* 13 - Hybrid method, abusing appinfo.dll way of whitelisting MMC console commands and EventViewer missing dependency, works from Windows 7 up to 10rs1 14279;
 * 14 - WinNT/Sirefef method, abusing appinfo.dll way of whitelisting OOBE.exe, works from Windows 7 up to 10th2 10558;
-* 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10rs1 11082;
-* 16 - Hybrid method working together with Microsoft GWX backdoor, work from Windows 7 up to 10rs1 11082.
+* 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10rs1 14279;
+* 16 - Hybrid method working together with Microsoft GWX backdoor, work from Windows 7 up to 10rs1 14279.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -78,6 +77,12 @@ Methods fixed:
 
 * UACMe comes with full source code, written in C;
 * In order to build from source you need Microsoft Visual Studio 2013/2015 and later versions.
+
+# References
+
+* Windows 7 UAC whitelist, http://www.pretentiousname.com/misc/win7_uac_whitelist2.html
+* Malicious Application Compatibility Shims, https://www.blackhat.com/docs/eu-15/materials/eu-15-Pierce-Defending-Against-Malicious-Application-Compatibility-Shims-wp.pdf
+
  
 # Authors
 
