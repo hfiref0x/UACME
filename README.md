@@ -25,10 +25,10 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 10 - Hybrid method, abusing appinfo.dll way of whitelisting autoelevated applications and KnownDlls cache changes, works from Windows 7 up to 10th2 10532;
 * 11 - WinNT/Gootkit second method based on the memory patching from MS "Fix it" patch shim (and as side effect - arbitrary dll injection), works from Windows 7 up to 8.1.9600;
 * 12 - Windows 10 sysprep method, abusing different dll dependency added in Windows 10 (works up to 10th2 10558);
-* 13 - Hybrid method, abusing appinfo.dll way of whitelisting MMC console commands and EventViewer missing dependency, works from Windows 7 up to 10rs1 14279;
+* 13 - Hybrid method, abusing appinfo.dll way of whitelisting MMC console commands and EventViewer missing dependency, works from Windows 7 up to 10rs1 14295;
 * 14 - WinNT/Sirefef method, abusing appinfo.dll way of whitelisting OOBE.exe, works from Windows 7 up to 10th2 10558;
-* 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10rs1 14279;
-* 16 - Hybrid method working together with Microsoft GWX backdoor, work from Windows 7 up to 10rs1 14279.
+* 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10rs1 14295;
+* 16 - Hybrid method working together with Microsoft GWX backdoor, work from Windows 7 up to 10rs1 14295.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -64,7 +64,10 @@ Methods fixed:
 * 10 - Fixed only in Windows 10 TH2 starting from build 10548;
 * 11 - Fixed in Windows 10 starting from first preview builds, earlier OS versions got KB3045645/KB3048097 fix;
 * 12 - Fixed in Windows 10 TH2 starting from 10565 build;
-* 14 - Fixed in Windows 10 TH2 starting from 10548 build.
+* 13 - Fixed in Windows 10 RS1 starting from public 14316 build;
+* 14 - Fixed in Windows 10 TH2 starting from 10548 build;
+* 15 - Fixed in Windows 10 RS1 starting from public 14316 build;
+* 16 - Fixed in Windows 10 RS1 starting from public 14316 build.
 
 # Protection
 * UAC turned on maximum level and full awareness about every window it will show;
