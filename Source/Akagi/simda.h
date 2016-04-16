@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIMDA.H
 *
-*  VERSION:     2.00
+*  VERSION:     2.10
 *
-*  DATE:        16 Nov 2015
+*  DATE:        16 Apr 2016
 *
 *  Prototypes and definitions for Simda method.
 *
@@ -18,13 +18,55 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmSimdaTurnOffUac(
-	VOID
-	);
+#include <AccCtrl.h>
 
-BOOL ucmSimdaAlterObjectSecurity(
-	SE_OBJECT_TYPE ObjectType,
-	SECURITY_INFORMATION SecurityInformation,
-	LPWSTR lpTargetObject,
-	LPWSTR lpSddlString
-	);
+typedef interface ISecurityEditor ISecurityEditor;
+
+typedef struct ISecurityEditorVtbl {
+
+    BEGIN_INTERFACE
+
+        HRESULT(STDMETHODCALLTYPE *QueryInterface)(
+            __RPC__in ISecurityEditor * This,
+            __RPC__in REFIID riid,
+            _COM_Outptr_  void **ppvObject);
+
+    ULONG(STDMETHODCALLTYPE *AddRef)(
+        __RPC__in ISecurityEditor * This);
+
+    ULONG(STDMETHODCALLTYPE *Release)(
+        __RPC__in ISecurityEditor * This);
+
+    HRESULT(STDMETHODCALLTYPE *GetSecurity)(
+        __RPC__in ISecurityEditor * This,
+        _In_ LPCOLESTR ObjectName,
+        _In_ SE_OBJECT_TYPE ObjectType,
+        _In_ SECURITY_INFORMATION SecurityInfo,
+        _Out_opt_ LPCOLESTR * ppSDDLStr);
+
+    HRESULT(STDMETHODCALLTYPE *SetSecurity)(
+        __RPC__in ISecurityEditor * This,
+        _In_ LPCOLESTR ObjectName,
+        _In_ SE_OBJECT_TYPE ObjectType,
+        _In_ SECURITY_INFORMATION SecurityInfo,
+        _In_ LPCOLESTR ppSDDLStr);
+
+    END_INTERFACE
+
+} *PISecurityEditorVtbl;
+
+interface ISecurityEditor
+{
+    CONST_VTBL struct ISecurityEditorVtbl *lpVtbl;
+};
+
+DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
+    _In_ LPWSTR lpTargetObject,
+    _In_ SECURITY_INFORMATION SecurityInformation,
+    _In_ SE_OBJECT_TYPE ObjectType,
+    _In_ LPWSTR NewSddl
+    );
+
+BOOL ucmSimdaTurnOffUac(
+    VOID
+    );

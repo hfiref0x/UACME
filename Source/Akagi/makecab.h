@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAKECAB.H
 *
-*  VERSION:     2.00
+*  VERSION:     2.10
 *
-*  DATE:        12 Nov 2015
+*  DATE:        16 Apr 2016
 *
 *  Prototypes and definitions for makecab module.
 *
@@ -22,22 +22,22 @@
 #include <fcntl.h>
 
 typedef struct _CABDATA {
-	ERF erf;
-	CCAB cab;
-	HFCI hfci;
+    ERF erf;
+    CCAB cab;
+    HFCI hfci;
 } CABDATA, *PCABDATA;
 
 CABDATA *cabCreate(
-	_In_ LPWSTR lpszCabName
-	);
+    _In_ LPWSTR lpszCabName
+    );
 
 BOOL cabAddFile(
-	_In_ CABDATA *Cabinet,
-	_In_ LPWSTR lpszFileName,
-	_In_ LPWSTR lpszInternalName
-	);
+    _In_ CABDATA *Cabinet,
+    _In_ LPWSTR lpszFileName,
+    _In_ LPWSTR lpszInternalName
+    );
 
 VOID cabClose(
-	_In_ CABDATA *Cabinet
-	);
+    _In_ CABDATA *Cabinet
+    );
 

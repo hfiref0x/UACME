@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     2.00
+*  VERSION:     2.10
 *
-*  DATE:        16 Nov 2015
+*  DATE:        16 Apr 2016
 *
 *  Compression support.
 *
@@ -22,13 +22,13 @@
 #undef GENERATE_COMPRESSED_PAYLOAD
 #else
 #ifdef _WIN64
-#include "hibiki64.h"
-#include "fubuki64.h"
-#include "kongou64.h"
+#include "modules\hibiki64.h"
+#include "modules\fubuki64.h"
+#include "modules\kongou64.h"
 #else
-#include "hibiki32.h"
-#include "fubuki32.h"
-#include "kongou32.h"
+#include "modules\hibiki32.h"
+#include "modules\fubuki32.h"
+#include "modules\kongou32.h"
 #endif
 #endif
 
@@ -41,26 +41,26 @@
 *
 */
 VOID EncodeBuffer(
-	PVOID Buffer,
-	ULONG BufferSize
-	)
+    PVOID Buffer,
+    ULONG BufferSize
+    )
 {
-	ULONG k, c;
-	PUCHAR ptr;
+    ULONG k, c;
+    PUCHAR ptr;
 
-	if ((Buffer == NULL) || (BufferSize == 0))
-		return;
+    if ((Buffer == NULL) || (BufferSize == 0))
+        return;
 
-	k = 'ftp2';
-	c = BufferSize;
-	ptr = Buffer;
+    k = AKAGI_XOR_KEY;
+    c = BufferSize;
+    ptr = Buffer;
 
-	do {
-		*ptr ^= k;
-		k = _rotl(k, 1);
-		ptr++;
-		--c;
-	} while (c != 0);
+    do {
+        *ptr ^= k;
+        k = _rotl(k, 1);
+        ptr++;
+        --c;
+    } while (c != 0);
 }
 
 
@@ -75,80 +75,80 @@ VOID EncodeBuffer(
 *
 */
 PUCHAR CompressBufferLZNT1(
-	_In_ PUCHAR SrcBuffer,
-	_In_ ULONG SrcSize,
-	_Inout_ PULONG FinalCompressedSize
-	)
+    _In_ PUCHAR SrcBuffer,
+    _In_ ULONG SrcSize,
+    _Inout_ PULONG FinalCompressedSize
+    )
 {
-	BOOL cond = FALSE;
-	NTSTATUS status;
-	ULONG CompressedSize = 0;
-	ULONG CompressBufferWorkSpaceSize = 0;
-	ULONG CompressFragmentWorkSpaceSize = 0;
-	ULONG CompBufferSize = 0;
-	PVOID WorkSpace = NULL;
-	PUCHAR CompBuffer = NULL;
+    BOOL cond = FALSE;
+    NTSTATUS status;
+    ULONG CompressedSize = 0;
+    ULONG CompressBufferWorkSpaceSize = 0;
+    ULONG CompressFragmentWorkSpaceSize = 0;
+    ULONG CompBufferSize = 0;
+    PVOID WorkSpace = NULL;
+    PUCHAR CompBuffer = NULL;
 
-	if (FinalCompressedSize == NULL)
-		return NULL;
+    if (FinalCompressedSize == NULL)
+        return NULL;
 
-	do {
+    do {
 
-		status = RtlGetCompressionWorkSpaceSize(
-			COMPRESSION_FORMAT_LZNT1,
-			&CompressBufferWorkSpaceSize,
-			&CompressFragmentWorkSpaceSize
-			);
+        status = RtlGetCompressionWorkSpaceSize(
+            COMPRESSION_FORMAT_LZNT1,
+            &CompressBufferWorkSpaceSize,
+            &CompressFragmentWorkSpaceSize
+            );
 
-		//accept nothing but STATUS_SUCCESS
-		if (status != STATUS_SUCCESS) {
-			break;
-		}
+        //accept nothing but STATUS_SUCCESS
+        if (status != STATUS_SUCCESS) {
+            break;
+        }
 
-		WorkSpace = (PVOID)VirtualAlloc(NULL, CompressBufferWorkSpaceSize, 
-			MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        WorkSpace = (PVOID)VirtualAlloc(NULL, CompressBufferWorkSpaceSize,
+            MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
-		if (WorkSpace == NULL) {
-			break;
-		}
+        if (WorkSpace == NULL) {
+            break;
+        }
 
-		//original size + safe buffer + sizeof header
-		CompBufferSize = SrcSize + 0x1000 + sizeof(ULONG);
-		CompBuffer = (PUCHAR)VirtualAlloc(NULL, CompBufferSize, 
-			MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        //original size + safe buffer + sizeof header
+        CompBufferSize = SrcSize + 0x1000 + sizeof(ULONG);
+        CompBuffer = (PUCHAR)VirtualAlloc(NULL, CompBufferSize,
+            MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
-		if (CompBuffer == NULL) {
-			break;
-		}
+        if (CompBuffer == NULL) {
+            break;
+        }
 
-		CompressedSize = 0;
-		status = RtlCompressBuffer(
-			COMPRESSION_FORMAT_LZNT1,
-			SrcBuffer,
-			SrcSize,
-			&CompBuffer[4],
-			CompBufferSize,
-			4096,
-			&CompressedSize,
-			WorkSpace
-			);
+        CompressedSize = 0;
+        status = RtlCompressBuffer(
+            COMPRESSION_FORMAT_LZNT1,
+            SrcBuffer,
+            SrcSize,
+            &CompBuffer[4],
+            CompBufferSize,
+            4096,
+            &CompressedSize,
+            WorkSpace
+            );
 
-		if (status != STATUS_SUCCESS) {
-			VirtualFree(CompBuffer, 0, MEM_RELEASE);
-			break;
-		}
-	
-		*(PULONG)&CompBuffer[0] = SrcSize;//save original size
-		CompressedSize += sizeof(ULONG); //add header size
-		*FinalCompressedSize = CompressedSize;
+        if (status != STATUS_SUCCESS) {
+            VirtualFree(CompBuffer, 0, MEM_RELEASE);
+            break;
+        }
 
-	} while (cond);
+        *(PULONG)&CompBuffer[0] = SrcSize;//save original size
+        CompressedSize += sizeof(ULONG); //add header size
+        *FinalCompressedSize = CompressedSize;
 
-	if (WorkSpace != NULL) {
-		VirtualFree(WorkSpace, 0, MEM_RELEASE);
-	}
+    } while (cond);
 
-	return CompBuffer;
+    if (WorkSpace != NULL) {
+        VirtualFree(WorkSpace, 0, MEM_RELEASE);
+    }
+
+    return CompBuffer;
 }
 
 /*
@@ -162,39 +162,39 @@ PUCHAR CompressBufferLZNT1(
 *
 */
 PUCHAR DecompressBufferLZNT1(
-	_In_ PUCHAR CompBuffer,
-	_In_ ULONG CompSize,
-	_In_ ULONG UncompressedBufferSize,
-	_Inout_ PULONG FinalUncompressedSize
-	)
+    _In_ PUCHAR CompBuffer,
+    _In_ ULONG CompSize,
+    _In_ ULONG UncompressedBufferSize,
+    _Inout_ PULONG FinalUncompressedSize
+    )
 {
-	PUCHAR UncompBuffer = NULL;
-	NTSTATUS status;
+    PUCHAR UncompBuffer = NULL;
+    NTSTATUS status;
 
-	UncompBuffer = (PUCHAR)VirtualAlloc(NULL, UncompressedBufferSize,
-		MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    UncompBuffer = (PUCHAR)VirtualAlloc(NULL, UncompressedBufferSize,
+        MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
-	if (UncompBuffer == NULL) {
-		return NULL;
-	}
+    if (UncompBuffer == NULL) {
+        return NULL;
+    }
 
-	status = RtlDecompressBuffer(
-		COMPRESSION_FORMAT_LZNT1,
-		UncompBuffer,
-		UncompressedBufferSize,
-		CompBuffer,
-		CompSize,
-		FinalUncompressedSize
-		);
+    status = RtlDecompressBuffer(
+        COMPRESSION_FORMAT_LZNT1,
+        UncompBuffer,
+        UncompressedBufferSize,
+        CompBuffer,
+        CompSize,
+        FinalUncompressedSize
+        );
 
-	if (status != STATUS_SUCCESS) { //accept only success value
-		if (UncompBuffer) {
-			VirtualFree(UncompBuffer, 0, MEM_RELEASE);
-			UncompBuffer = NULL;
-		}
-	}
+    if (status != STATUS_SUCCESS) { //accept only success value
+        if (UncompBuffer) {
+            VirtualFree(UncompBuffer, 0, MEM_RELEASE);
+            UncompBuffer = NULL;
+        }
+    }
 
-	return UncompBuffer;
+    return UncompBuffer;
 }
 
 #ifdef GENERATE_COMPRESSED_PAYLOAD
@@ -209,67 +209,67 @@ PUCHAR DecompressBufferLZNT1(
 *
 */
 VOID CompressPayload(
-	VOID
-	)
+    VOID
+    )
 {
-	PUCHAR Data;
-	ULONG FinalCompressedSize = 0;
+    PUCHAR Data;
+    ULONG FinalCompressedSize = 0;
 
 #ifdef _WIN64
-	Data = CompressBufferLZNT1((PUCHAR)Fubuki64, sizeof(Fubuki64), &FinalCompressedSize);
+    Data = CompressBufferLZNT1((PUCHAR)Fubuki64, sizeof(Fubuki64), &FinalCompressedSize);
 #else
-	Data = CompressBufferLZNT1((PUCHAR)Fubuki32, sizeof(Fubuki32), &FinalCompressedSize);
+    Data = CompressBufferLZNT1((PUCHAR)Fubuki32, sizeof(Fubuki32), &FinalCompressedSize);
 #endif
 
-	if (Data) {
+    if (Data) {
 
-		EncodeBuffer(Data, FinalCompressedSize);
+        EncodeBuffer(Data, FinalCompressedSize);
 
 #ifdef _WIN64
-		supWriteBufferToFile(TEXT("fubuki64.cd"), Data, FinalCompressedSize);
+        supWriteBufferToFile(TEXT("fubuki64.cd"), Data, FinalCompressedSize);
 #else
-		supWriteBufferToFile(TEXT("fubuki32.cd"), Data, FinalCompressedSize);
+        supWriteBufferToFile(TEXT("fubuki32.cd"), Data, FinalCompressedSize);
 #endif
-		VirtualFree(Data, 0, MEM_RELEASE);
-	}
+        VirtualFree(Data, 0, MEM_RELEASE);
+    }
 
-	FinalCompressedSize = 0;
+    FinalCompressedSize = 0;
 
 #ifdef _WIN64
-	Data = CompressBufferLZNT1((PUCHAR)Hibiki64, sizeof(Hibiki64), &FinalCompressedSize);
+    Data = CompressBufferLZNT1((PUCHAR)Hibiki64, sizeof(Hibiki64), &FinalCompressedSize);
 #else
-	Data = CompressBufferLZNT1((PUCHAR)Hibiki32, sizeof(Hibiki32), &FinalCompressedSize);
+    Data = CompressBufferLZNT1((PUCHAR)Hibiki32, sizeof(Hibiki32), &FinalCompressedSize);
 #endif
-	if (Data) {
+    if (Data) {
 
-		EncodeBuffer(Data, FinalCompressedSize);
+        EncodeBuffer(Data, FinalCompressedSize);
 
 #ifdef _WIN64
-		supWriteBufferToFile(TEXT("hibiki64.cd"), Data, FinalCompressedSize);
+        supWriteBufferToFile(TEXT("hibiki64.cd"), Data, FinalCompressedSize);
 #else
-		supWriteBufferToFile(TEXT("hibiki32.cd"), Data, FinalCompressedSize);
+        supWriteBufferToFile(TEXT("hibiki32.cd"), Data, FinalCompressedSize);
 #endif
-		VirtualFree(Data, 0, MEM_RELEASE);
-	}
+        VirtualFree(Data, 0, MEM_RELEASE);
+    }
 
-	FinalCompressedSize = 0;
-
-#ifdef _WIN64
-	Data = CompressBufferLZNT1((PUCHAR)Kongou64, sizeof(Kongou64), &FinalCompressedSize);
-#else
-	Data = CompressBufferLZNT1((PUCHAR)Kongou32, sizeof(Kongou32), &FinalCompressedSize);
-#endif
-	if (Data) {
-		
-		EncodeBuffer(Data, FinalCompressedSize);
+    FinalCompressedSize = 0;
 
 #ifdef _WIN64
-		supWriteBufferToFile(TEXT("kongou64.cd"), Data, FinalCompressedSize);
+    Data = CompressBufferLZNT1((PUCHAR)Kongou64, sizeof(Kongou64), &FinalCompressedSize);
 #else
-		supWriteBufferToFile(TEXT("kongou32.cd"), Data, FinalCompressedSize);
+    Data = CompressBufferLZNT1((PUCHAR)Kongou32, sizeof(Kongou32), &FinalCompressedSize);
 #endif
-		VirtualFree(Data, 0, MEM_RELEASE);
-	}
+    if (Data) {
+
+        EncodeBuffer(Data, FinalCompressedSize);
+
+#ifdef _WIN64
+        supWriteBufferToFile(TEXT("kongou64.cd"), Data, FinalCompressedSize);
+#else
+        supWriteBufferToFile(TEXT("kongou32.cd"), Data, FinalCompressedSize);
+#endif
+        VirtualFree(Data, 0, MEM_RELEASE);
+    }
 }
 
 #endif
@@ -283,68 +283,68 @@ VOID CompressPayload(
 *
 */
 PVOID DecompressPayload(
-	_In_ PVOID CompressedBuffer,
-	_In_ ULONG CompressedBufferSize,
-	_Inout_ PULONG DecompressedBufferSize
-	)
+    _In_ PVOID CompressedBuffer,
+    _In_ ULONG CompressedBufferSize,
+    _Inout_ PULONG DecompressedBufferSize
+    )
 {
-	BOOL     cond = FALSE, bResult;
-	PUCHAR   Data = NULL, UncompressedData = NULL, Ptr;
-	ULONG    FinalDecompressedSize = 0, k, c;
+    BOOL     cond = FALSE, bResult;
+    PUCHAR   Data = NULL, UncompressedData = NULL, Ptr;
+    ULONG    FinalDecompressedSize = 0, k, c;
 
-	__try {
+    __try {
 
-		bResult = FALSE;
+        bResult = FALSE;
 
-		do {
+        do {
 
-			Data = VirtualAlloc(NULL, CompressedBufferSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-			if (Data == NULL)
-				break;
+            Data = VirtualAlloc(NULL, CompressedBufferSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+            if (Data == NULL)
+                break;
 
-			supCopyMemory(Data, CompressedBufferSize, CompressedBuffer, CompressedBufferSize);
+            supCopyMemory(Data, CompressedBufferSize, CompressedBuffer, CompressedBufferSize);
 
-			EncodeBuffer(Data, CompressedBufferSize);
+            EncodeBuffer(Data, CompressedBufferSize);
 
-			Ptr = Data;
-			c = *(PULONG)&Ptr[0]; //query original size
-			Ptr += sizeof(ULONG); //skip header
-			k = CompressedBufferSize - sizeof(ULONG); //new compressed size without header
+            Ptr = Data;
+            c = *(PULONG)&Ptr[0]; //query original size
+            Ptr += sizeof(ULONG); //skip header
+            k = CompressedBufferSize - sizeof(ULONG); //new compressed size without header
 
-			UncompressedData = DecompressBufferLZNT1(Ptr, k, c, &FinalDecompressedSize);
-			if (UncompressedData == NULL)
-				break;
+            UncompressedData = DecompressBufferLZNT1(Ptr, k, c, &FinalDecompressedSize);
+            if (UncompressedData == NULL)
+                break;
 
-			//validate uncompressed data
-			if (!supVerifyMappedImageMatchesChecksum(UncompressedData, FinalDecompressedSize)) {
-				OutputDebugString(TEXT("Invalid file checksum"));
-				break;
-			}
+            //validate uncompressed data
+            if (!supVerifyMappedImageMatchesChecksum(UncompressedData, FinalDecompressedSize)) {
+                OutputDebugString(TEXT("Invalid file checksum"));
+                break;
+            }
 
-			bResult = TRUE;
+            bResult = TRUE;
 
-		} while (cond);
+        } while (cond);
 
-	}
-	__except (EXCEPTION_EXECUTE_HANDLER) {
-		return NULL;
-	}
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+        return NULL;
+    }
 
-	if (Data != NULL) {
-		VirtualFree(Data, 0, MEM_RELEASE);
-	}
+    if (Data != NULL) {
+        VirtualFree(Data, 0, MEM_RELEASE);
+    }
 
-	if (bResult == FALSE) {
-		if (UncompressedData != NULL) {
-			VirtualFree(UncompressedData, 0, MEM_RELEASE);
-			UncompressedData = NULL;
-		}
-		FinalDecompressedSize = 0;
-	}
+    if (bResult == FALSE) {
+        if (UncompressedData != NULL) {
+            VirtualFree(UncompressedData, 0, MEM_RELEASE);
+            UncompressedData = NULL;
+        }
+        FinalDecompressedSize = 0;
+    }
 
-	if (DecompressedBufferSize) {
-		*DecompressedBufferSize = FinalDecompressedSize;
-	}
+    if (DecompressedBufferSize) {
+        *DecompressedBufferSize = FinalDecompressedSize;
+    }
 
-	return UncompressedData;
+    return UncompressedData;
 }

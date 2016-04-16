@@ -94,7 +94,7 @@
     <OutDir>.\output\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>.\output\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)64</TargetName>
-    <CodeAnalysisRuleSet>..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\SecurityRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>SecurityRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -114,6 +114,11 @@
       <Version>6.1</Version>
       <MinimumRequiredVersion>6.1</MinimumRequiredVersion>
     </Link>
+    <ResourceCompile />
+    <ResourceCompile>
+      <ShowProgress>true</ShowProgress>
+      <PreprocessorDefinitions>useRc32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -132,6 +137,11 @@
       <Version>6.1</Version>
       <MinimumRequiredVersion>6.1</MinimumRequiredVersion>
     </Link>
+    <ResourceCompile />
+    <ResourceCompile />
+    <ResourceCompile>
+      <ShowProgress>true</ShowProgress>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -160,6 +170,11 @@
       <MinimumRequiredVersion>6.1</MinimumRequiredVersion>
       <Version>6.1</Version>
     </Link>
+    <ResourceCompile />
+    <ResourceCompile>
+      <ShowProgress>true</ShowProgress>
+      <PreprocessorDefinitions>useRc32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -187,10 +202,17 @@
       <MinimumRequiredVersion>6.1</MinimumRequiredVersion>
       <Version>6.1</Version>
     </Link>
+    <ResourceCompile />
+    <ResourceCompile />
+    <ResourceCompile>
+      <ShowProgress>true</ShowProgress>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Shared\cmdline.c" />
     <ClCompile Include="..\Shared\strtoul.c" />
     <ClCompile Include="..\Shared\ultostr.c" />
+    <ClCompile Include="..\Shared\_filename.c" />
     <ClCompile Include="..\shared\_strcat.c" />
     <ClCompile Include="..\shared\_strcmp.c" />
     <ClCompile Include="..\shared\_strcmpi.c" />
@@ -201,10 +223,8 @@
     <ClCompile Include="..\shared\_strncmpi.c" />
     <ClCompile Include="..\shared\_strncpy.c" />
     <ClCompile Include="carberp.c" />
-    <ClCompile Include="cmdline.c" />
     <ClCompile Include="gootkit.c" />
     <ClCompile Include="hybrids.c" />
-    <ClCompile Include="inject.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="makecab.c" />
     <ClCompile Include="compress.c" />
@@ -215,30 +235,44 @@
   <ItemGroup>
     <ClInclude Include="..\shared\minirtl.h" />
     <ClInclude Include="..\shared\rtltypes.h" />
+    <ClInclude Include="..\Shared\_filename.h" />
     <ClInclude Include="apphelp.h" />
     <ClInclude Include="carberp.h" />
-    <ClInclude Include="cmdline.h" />
     <ClInclude Include="compress.h" />
     <ClInclude Include="consts.h" />
-    <ClInclude Include="fubuki32comp.h" />
-    <ClInclude Include="fubuki64comp.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="gootkit.h" />
-    <ClInclude Include="hibiki32comp.h" />
-    <ClInclude Include="hibiki64comp.h" />
     <ClInclude Include="hybrids.h" />
-    <ClInclude Include="inazuma32.h" />
-    <ClInclude Include="inject.h" />
-    <ClInclude Include="kongou32comp.h" />
-    <ClInclude Include="kongou64comp.h" />
     <ClInclude Include="makecab.h" />
+    <ClInclude Include="modules\fubuki32.h" />
+    <ClInclude Include="modules\fubuki64.h" />
+    <ClInclude Include="modules\hibiki32.h" />
+    <ClInclude Include="modules\hibiki64.h" />
+    <ClInclude Include="modules\inazuma32.h" />
+    <ClInclude Include="modules\kongou32.h" />
+    <ClInclude Include="modules\kongou64.h" />
     <ClInclude Include="pitou.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="simda.h" />
     <ClInclude Include="sup.h" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="bin32res.rc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ResourceCompile>
+    <ResourceCompile Include="bin64res.rc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ResourceCompile>
     <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="akagi.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

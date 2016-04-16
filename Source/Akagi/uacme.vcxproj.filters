@@ -24,16 +24,10 @@
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cmdline.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="sup.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pitou.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="inject.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="gootkit.c">
@@ -87,15 +81,15 @@
     <ClCompile Include="compress.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\_filename.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\cmdline.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cmdline.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="global.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="sup.h">
@@ -131,37 +125,51 @@
     <ClInclude Include="makecab.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inazuma32.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
     <ClInclude Include="compress.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="fubuki32comp.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="fubuki64comp.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="hibiki32comp.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="hibiki64comp.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="kongou64comp.h">
-      <Filter>Header Files\modules</Filter>
     </ClInclude>
     <ClInclude Include="consts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="kongou32comp.h">
+    <ClInclude Include="modules\fubuki32.h">
       <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\fubuki64.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\hibiki32.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\hibiki64.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\inazuma32.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\kongou32.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\kongou64.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\_filename.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+    <ResourceCompile Include="bin32res.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="bin64res.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="akagi.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

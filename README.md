@@ -28,7 +28,8 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 13 - Hybrid method, abusing appinfo.dll way of whitelisting MMC console commands and EventViewer missing dependency, works from Windows 7 up to 10rs1 14295;
 * 14 - WinNT/Sirefef method, abusing appinfo.dll way of whitelisting OOBE.exe, works from Windows 7 up to 10th2 10558;
 * 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10rs1 14295;
-* 16 - Hybrid method working together with Microsoft GWX backdoor, work from Windows 7 up to 10rs1 14295.
+* 16 - Hybrid method working together with Microsoft GWX backdoor, work from Windows 7 up to 10rs1 14295;
+* 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, work from Windows 8.1 (9600) up to 10rs1 14316.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -48,6 +49,7 @@ Run examples:
 * Using (5) method will permanently turn off UAC (after reboot), make sure to do this in test environment or don't forget to re-enable UAC after tool usage;
 * Using (5), (9) methods will permanently compromise security of target keys (UAC Settings key for (5) and IFEO for (9)), if you do tests on your real machine - restore keys security manually after you complete this tool usage;
 * This tool is not intended for AV tests and not tested to work in aggressive AV environment, if you still plan to use it with installed bloatware AV soft - you use it at your own risk;
+* Some AV may flag this tools as HackTool, MSE/WinDefender constantly marks it as malware, nope;
 * If you run this program on real computer remember to remove all program leftovers after usage, for more info about files it drops to system folders see source code.
 
 # Microsoft countermeasures
@@ -79,7 +81,7 @@ Methods fixed:
 # Build 
 
 * UACMe comes with full source code, written in C;
-* In order to build from source you need Microsoft Visual Studio 2013/2015 and later versions.
+* In order to build from source you need Microsoft Visual Studio 2013/2015 U2 and later versions.
 
 # References
 

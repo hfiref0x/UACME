@@ -49,3 +49,7 @@ NetpwNameValidate           = DummyFunc
 NetpwPathCanonicalize       = DummyFunc
 NetpwPathCompare            = DummyFunc
 NetpwPathType               = DummyFunc
+ClrCreateManagedInstance    = DummyFunc
+CorBindToRuntimeEx          = DummyFunc
+LoadLibraryShim             = DummyFunc
+DpxNewJob                   = DummyFunc

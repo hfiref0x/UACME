@@ -18,15 +18,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="export.def">
-      <Filter>Source Files</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\minirtl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="unbcl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -66,5 +64,10 @@
     <ClCompile Include="..\shared\_strncpy.c">
       <Filter>minirtl</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="export.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

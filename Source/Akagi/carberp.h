@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.H
 *
-*  VERSION:     2.00
+*  VERSION:     2.10
 *
-*  DATE:        16 Nov 2015
+*  DATE:        16 Apr 2016
 *
 *  Prototypes and definitions for Carberp method.
 *
@@ -19,17 +19,17 @@
 #pragma once
 
 BOOL ucmWusaMethod(
-	UACBYPASSMETHOD Method,
-	PVOID ProxyDll,
-	DWORD ProxyDllSize
-	);
+    UACBYPASSMETHOD Method,
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+    );
 
 BOOL ucmWusaExtractPackage(
-	LPWSTR lpCommandLine
-	);
+    LPWSTR lpCommandLine
+    );
 
 BOOL ucmCreateCabinetForSingleFile(
-	LPWSTR lpSourceDll,
-	PVOID ProxyDll,
-	DWORD ProxyDllSize
-	);
+    LPWSTR lpSourceDll,
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+    );

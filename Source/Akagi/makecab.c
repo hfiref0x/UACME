@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAKECAB.C
 *
-*  VERSION:     1.60
+*  VERSION:     2.10
 *
-*  DATE:        20 Apr 2015
+*  DATE:        15 Apr 2016
 *
 *  Simplified Cabinet file support for makecab utility replacement.
 *
@@ -26,274 +26,277 @@
 */
 
 LPVOID DIAMONDAPI fnFCIALLOC(
-	ULONG cb
-	)
+    ULONG cb
+    )
 {
-	return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cb);
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cb);
 }
 
 VOID DIAMONDAPI fnFCIFREE(
-	VOID HUGE *lpMem
-	)
+    VOID HUGE *lpMem
+    )
 {
-	if (lpMem) {
-		HeapFree(GetProcessHeap(), 0, lpMem);
-	}
+    if (lpMem) {
+        HeapFree(GetProcessHeap(), 0, lpMem);
+    }
 }
 
 INT_PTR DIAMONDAPI fnFCIOPEN(
-	LPSTR pszFile,
-	int oflag,
-	int pmode,
-	int FAR *err,
-	void FAR *pv
-	)
+    LPSTR pszFile,
+    int oflag,
+    int pmode,
+    int FAR *err,
+    void FAR *pv
+    )
 {
-	HANDLE hFile = NULL;
-	DWORD dwDesiredAccess = 0;
-	DWORD dwCreationDisposition = 0;
+    HANDLE hFile = NULL;
+    DWORD dwDesiredAccess = 0;
+    DWORD dwCreationDisposition = 0;
 
-	UNREFERENCED_PARAMETER(pv);
-	UNREFERENCED_PARAMETER(pmode);
+    UNREFERENCED_PARAMETER(pv);
+    UNREFERENCED_PARAMETER(pmode);
 
-	if (oflag & _O_RDWR) {
-		dwDesiredAccess = GENERIC_READ | GENERIC_WRITE;
-	} else if (oflag & _O_WRONLY) {
-		dwDesiredAccess = GENERIC_WRITE;
-	} else {
-		dwDesiredAccess = GENERIC_READ;
-	}
+    if (oflag & _O_RDWR) {
+        dwDesiredAccess = GENERIC_READ | GENERIC_WRITE;
+    }
+    else if (oflag & _O_WRONLY) {
+        dwDesiredAccess = GENERIC_WRITE;
+    }
+    else {
+        dwDesiredAccess = GENERIC_READ;
+    }
 
-	if (oflag & _O_CREAT) {
-		dwCreationDisposition = CREATE_ALWAYS;
-	} else {
-		dwCreationDisposition = OPEN_EXISTING;
-	}
+    if (oflag & _O_CREAT) {
+        dwCreationDisposition = CREATE_ALWAYS;
+    }
+    else {
+        dwCreationDisposition = OPEN_EXISTING;
+    }
 
-	hFile = CreateFileA(pszFile,
-		dwDesiredAccess,
-		FILE_SHARE_READ,
-		NULL,
-		dwCreationDisposition,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL);
+    hFile = CreateFileA(pszFile,
+        dwDesiredAccess,
+        FILE_SHARE_READ,
+        NULL,
+        dwCreationDisposition,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL);
 
-	if (hFile == INVALID_HANDLE_VALUE) {
-		*err = GetLastError();
-	}
+    if (hFile == INVALID_HANDLE_VALUE) {
+        *err = GetLastError();
+    }
 
-	return (INT_PTR)hFile;
+    return (INT_PTR)hFile;
 }
 
 UINT DIAMONDAPI fnFCIREAD(
-	INT_PTR hf,
-	void FAR *memory,
-	UINT cb,
-	int FAR *err,
-	void FAR *pv
-	)
+    INT_PTR hf,
+    void FAR *memory,
+    UINT cb,
+    int FAR *err,
+    void FAR *pv
+    )
 {
-	DWORD dwBytesRead = 0;
+    DWORD dwBytesRead = 0;
 
-	UNREFERENCED_PARAMETER(pv);
+    UNREFERENCED_PARAMETER(pv);
 
-	if (ReadFile((HANDLE)hf, memory, cb, &dwBytesRead, NULL) == FALSE) {
-		dwBytesRead = (DWORD)-1;
-		if (err) {
-			*err = GetLastError();
-		}
-	}
-	return dwBytesRead;
+    if (ReadFile((HANDLE)hf, memory, cb, &dwBytesRead, NULL) == FALSE) {
+        dwBytesRead = (DWORD)-1;
+        if (err) {
+            *err = GetLastError();
+        }
+    }
+    return dwBytesRead;
 }
 
 UINT DIAMONDAPI fnFCIWRITE(
-	INT_PTR hf,
-	void FAR *memory,
-	UINT cb,
-	int FAR *err,
-	void FAR *pv
-	)
+    INT_PTR hf,
+    void FAR *memory,
+    UINT cb,
+    int FAR *err,
+    void FAR *pv
+    )
 {
-	DWORD dwBytesWritten = 0;
+    DWORD dwBytesWritten = 0;
 
-	UNREFERENCED_PARAMETER(pv);
+    UNREFERENCED_PARAMETER(pv);
 
-	if (WriteFile((HANDLE)hf, memory, cb, &dwBytesWritten, NULL) == FALSE) {
-		dwBytesWritten = (DWORD)-1;
-		if (err) {
-			*err = GetLastError();
-		}
-	}
-	return dwBytesWritten;
+    if (WriteFile((HANDLE)hf, memory, cb, &dwBytesWritten, NULL) == FALSE) {
+        dwBytesWritten = (DWORD)-1;
+        if (err) {
+            *err = GetLastError();
+        }
+    }
+    return dwBytesWritten;
 }
 
 int DIAMONDAPI fnFCICLOSE(
-	INT_PTR hf,
-	int FAR *err,
-	void FAR *pv
-	)
+    INT_PTR hf,
+    int FAR *err,
+    void FAR *pv
+    )
 {
-	INT iResult = 0;
+    INT iResult = 0;
 
-	UNREFERENCED_PARAMETER(pv);
+    UNREFERENCED_PARAMETER(pv);
 
-	if (CloseHandle((HANDLE)hf) == FALSE) {
-		if (err) {
-			*err = GetLastError();
-		}
-		iResult = -1;
-	}
-	return iResult;
+    if (CloseHandle((HANDLE)hf) == FALSE) {
+        if (err) {
+            *err = GetLastError();
+        }
+        iResult = -1;
+    }
+    return iResult;
 }
 
 long DIAMONDAPI fnFCISEEK(
-	INT_PTR hf,
-	long dist,
-	int seektype,
-	int FAR *err,
-	void FAR *pv
-	)
+    INT_PTR hf,
+    long dist,
+    int seektype,
+    int FAR *err,
+    void FAR *pv
+    )
 {
-	INT iResult = 0;
+    INT iResult = 0;
 
-	UNREFERENCED_PARAMETER(pv);
+    UNREFERENCED_PARAMETER(pv);
 
-	iResult = SetFilePointer((HANDLE)hf, dist, NULL, seektype);
+    iResult = SetFilePointer((HANDLE)hf, dist, NULL, seektype);
 
-	if (iResult == -1) {
-		if (err) {
-			*err = GetLastError();
-		}
-	}
-	return iResult;
+    if (iResult == -1) {
+        if (err) {
+            *err = GetLastError();
+        }
+    }
+    return iResult;
 }
 
 int DIAMONDAPI fnFCIDELETE(
-	LPSTR pszFile,
-	int FAR *err,
-	void FAR *pv
-	)
+    LPSTR pszFile,
+    int FAR *err,
+    void FAR *pv
+    )
 {
-	INT iResult = 0;
+    INT iResult = 0;
 
-	UNREFERENCED_PARAMETER(pv);
+    UNREFERENCED_PARAMETER(pv);
 
-	if (DeleteFileA(pszFile) == FALSE) {
-		if (err) {
-			*err = GetLastError();
-		}
-		iResult = -1;
-	}
-	return iResult;
+    if (DeleteFileA(pszFile) == FALSE) {
+        if (err) {
+            *err = GetLastError();
+        }
+        iResult = -1;
+    }
+    return iResult;
 }
 
 long DIAMONDAPI fnFCISTATUS(
-	UINT typeStatus,
-	ULONG cb1,
-	ULONG cb2,
-	void FAR *pv
-	)
+    UINT typeStatus,
+    ULONG cb1,
+    ULONG cb2,
+    void FAR *pv
+    )
 {
-	UNREFERENCED_PARAMETER(typeStatus);
-	UNREFERENCED_PARAMETER(cb1);
-	UNREFERENCED_PARAMETER(cb2);
-	UNREFERENCED_PARAMETER(pv);
+    UNREFERENCED_PARAMETER(typeStatus);
+    UNREFERENCED_PARAMETER(cb1);
+    UNREFERENCED_PARAMETER(cb2);
+    UNREFERENCED_PARAMETER(pv);
 
-	return 0; //not implemented
+    return 0; //not implemented
 }
 
 int DIAMONDAPI fnFCIFILEPLACED(
-	PCCAB pccab,
-	LPSTR pszFile,
-	long cbFile,
-	BOOL fContinuation,
-	void FAR *pv
-	)
+    PCCAB pccab,
+    LPSTR pszFile,
+    long cbFile,
+    BOOL fContinuation,
+    void FAR *pv
+    )
 {
-	UNREFERENCED_PARAMETER(pccab);
-	UNREFERENCED_PARAMETER(pszFile);
-	UNREFERENCED_PARAMETER(cbFile);
-	UNREFERENCED_PARAMETER(fContinuation);
-	UNREFERENCED_PARAMETER(pv);
+    UNREFERENCED_PARAMETER(pccab);
+    UNREFERENCED_PARAMETER(pszFile);
+    UNREFERENCED_PARAMETER(cbFile);
+    UNREFERENCED_PARAMETER(fContinuation);
+    UNREFERENCED_PARAMETER(pv);
 
-	return 0; //not implemented
+    return 0; //not implemented
 }
 
 INT_PTR DIAMONDAPI fnFCIGETOPENINFO(
-	LPSTR pszName,
-	USHORT *pdate,
-	USHORT *ptime,
-	USHORT *pattribs,
-	int FAR *err,
-	void FAR *pv
-	)
+    LPSTR pszName,
+    USHORT *pdate,
+    USHORT *ptime,
+    USHORT *pattribs,
+    int FAR *err,
+    void FAR *pv
+    )
 {
-	HANDLE hFile;
-	FILETIME fileTime;
-	BY_HANDLE_FILE_INFORMATION fileInfo;
+    HANDLE hFile;
+    FILETIME fileTime;
+    BY_HANDLE_FILE_INFORMATION fileInfo;
 
-	hFile = (HANDLE)fnFCIOPEN(pszName, _O_RDONLY, 0, err, pv);
+    hFile = (HANDLE)fnFCIOPEN(pszName, _O_RDONLY, 0, err, pv);
 
-	if (hFile != INVALID_HANDLE_VALUE)
-	{
-		if (GetFileInformationByHandle(hFile, &fileInfo)
-			&& FileTimeToLocalFileTime(&fileInfo.ftCreationTime, &fileTime)
-			&& FileTimeToDosDateTime(&fileTime, pdate, ptime))
-		{
-			*pattribs = (USHORT)fileInfo.dwFileAttributes;			
-			*pattribs &= (
-				FILE_ATTRIBUTE_READONLY | 
-				FILE_ATTRIBUTE_HIDDEN	| 
-				FILE_ATTRIBUTE_SYSTEM	| 
-				FILE_ATTRIBUTE_ARCHIVE
-				);
-		}
-		else
-		{
-			fnFCICLOSE((INT_PTR)hFile, err, pv);
-			hFile = INVALID_HANDLE_VALUE;
-		}
-	}
+    if (hFile != INVALID_HANDLE_VALUE)
+    {
+        if (GetFileInformationByHandle(hFile, &fileInfo)
+            && FileTimeToLocalFileTime(&fileInfo.ftCreationTime, &fileTime)
+            && FileTimeToDosDateTime(&fileTime, pdate, ptime))
+        {
+            *pattribs = (USHORT)fileInfo.dwFileAttributes;
+            *pattribs &= (
+                FILE_ATTRIBUTE_READONLY |
+                FILE_ATTRIBUTE_HIDDEN |
+                FILE_ATTRIBUTE_SYSTEM |
+                FILE_ATTRIBUTE_ARCHIVE
+                );
+        }
+        else
+        {
+            fnFCICLOSE((INT_PTR)hFile, err, pv);
+            hFile = INVALID_HANDLE_VALUE;
+        }
+    }
 
-	return (INT_PTR)hFile;
+    return (INT_PTR)hFile;
 }
 
 BOOL DIAMONDAPI fnFCIGETTEMPFILE(
-	char *pszTempName,
-	int cbTempName,
-	void FAR *pv
-	)
+    char *pszTempName,
+    int cbTempName,
+    void FAR *pv
+    )
 {
-	BOOL bSucceeded = FALSE;
-	SIZE_T cch;
-	CHAR szTempPath[MAX_PATH];
-	CHAR szTempFile[MAX_PATH];
+    BOOL bSucceeded = FALSE;
+    SIZE_T cch;
+    CHAR szTempPath[MAX_PATH];
+    CHAR szTempFile[MAX_PATH];
 
-	UNREFERENCED_PARAMETER(pv);
+    UNREFERENCED_PARAMETER(pv);
 
-	if (GetTempPathA(MAX_PATH, szTempPath) != 0) {			
-		if (GetTempFileNameA(szTempPath, "emcau", 0, szTempFile) != 0) {
-			DeleteFileA(szTempPath);
-			cch = cbTempName / sizeof(CHAR);
-			_strncpy_a(pszTempName, cch, szTempFile, _strlen_a(szTempFile));
-			bSucceeded = TRUE;
-		}
-	}
+    if (GetTempPathA(MAX_PATH, szTempPath) != 0) {
+        if (GetTempFileNameA(szTempPath, "emcau", 0, szTempFile) != 0) {
+            DeleteFileA(szTempPath);
+            cch = cbTempName / sizeof(CHAR);
+            _strncpy_a(pszTempName, cch, szTempFile, _strlen_a(szTempFile));
+            bSucceeded = TRUE;
+        }
+    }
 
-	return bSucceeded;
+    return bSucceeded;
 }
 
 BOOL DIAMONDAPI fnFCIGETNEXTCABINET(
-	PCCAB  pccab,
-	ULONG  cbPrevCab,
-	void FAR *pv
-	)
+    PCCAB  pccab,
+    ULONG  cbPrevCab,
+    void FAR *pv
+    )
 {
-	UNREFERENCED_PARAMETER(pccab);
-	UNREFERENCED_PARAMETER(cbPrevCab);
-	UNREFERENCED_PARAMETER(pv);
+    UNREFERENCED_PARAMETER(pccab);
+    UNREFERENCED_PARAMETER(cbPrevCab);
+    UNREFERENCED_PARAMETER(pv);
 
-	return FALSE;
+    return FALSE;
 }
 
 /*
@@ -309,50 +312,50 @@ BOOL DIAMONDAPI fnFCIGETNEXTCABINET(
 *
 */
 CABDATA *cabCreate(
-	_In_ LPWSTR lpszCabName
-	)
+    _In_ LPWSTR lpszCabName
+    )
 {
-	PCABDATA pCabinet;
-	CHAR szCab[CB_MAX_CABINET_NAME];
+    PCABDATA pCabinet;
+    CHAR szCab[CB_MAX_CABINET_NAME];
 
-	if (lpszCabName == NULL) {
-		return NULL;
-	}
+    if (lpszCabName == NULL) {
+        return NULL;
+    }
 
-	RtlSecureZeroMemory(szCab, sizeof(szCab));
-	if (WideCharToMultiByte(CP_ACP, 0, lpszCabName, -1, szCab, CB_MAX_CABINET_NAME - 2, 0, NULL) == 0) {
-		return NULL;
-	}
+    RtlSecureZeroMemory(szCab, sizeof(szCab));
+    if (WideCharToMultiByte(CP_ACP, 0, lpszCabName, -1, szCab, CB_MAX_CABINET_NAME - 2, 0, NULL) == 0) {
+        return NULL;
+    }
 
-	pCabinet = (PCABDATA)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CABDATA));
-	if (pCabinet == NULL) {
-		return NULL;
-	}
+    pCabinet = (PCABDATA)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CABDATA));
+    if (pCabinet == NULL) {
+        return NULL;
+    }
 
-	_strcpy_a(pCabinet->cab.szCab, szCab); //Full name with path or only name (current folder then).
+    _strcpy_a(pCabinet->cab.szCab, szCab); //Full name with path or only name (current folder then).
 
-	pCabinet->cab.cb = 0x7FFFFFFF; //Maximum cabinet size in bytes.
+    pCabinet->cab.cb = 0x7FFFFFFF; //Maximum cabinet size in bytes.
 
-	pCabinet->hfci = FCICreate(
-		&pCabinet->erf,
-		fnFCIFILEPLACED,
-		fnFCIALLOC,
-		fnFCIFREE,
-		fnFCIOPEN,
-		fnFCIREAD,
-		fnFCIWRITE,
-		fnFCICLOSE,
-		fnFCISEEK,
-		fnFCIDELETE,
-		fnFCIGETTEMPFILE,
-		&pCabinet->cab,
-		NULL);
+    pCabinet->hfci = FCICreate(
+        &pCabinet->erf,
+        fnFCIFILEPLACED,
+        fnFCIALLOC,
+        fnFCIFREE,
+        fnFCIOPEN,
+        fnFCIREAD,
+        fnFCIWRITE,
+        fnFCICLOSE,
+        fnFCISEEK,
+        fnFCIDELETE,
+        fnFCIGETTEMPFILE,
+        &pCabinet->cab,
+        NULL);
 
-	if (pCabinet->hfci == NULL) {
-		HeapFree(GetProcessHeap(), 0, pCabinet);
-		pCabinet = NULL;
-	}
-	return pCabinet;
+    if (pCabinet->hfci == NULL) {
+        HeapFree(GetProcessHeap(), 0, pCabinet);
+        pCabinet = NULL;
+    }
+    return pCabinet;
 }
 
 /*
@@ -364,38 +367,38 @@ CABDATA *cabCreate(
 *
 */
 BOOL cabAddFile(
-	_In_ CABDATA *Cabinet,
-	_In_ LPWSTR lpszFileName,
-	_In_ LPWSTR lpszInternalName
-	)
+    _In_ CABDATA *Cabinet,
+    _In_ LPWSTR lpszFileName,
+    _In_ LPWSTR lpszInternalName
+    )
 {
-	BOOL bResult = FALSE, cond = FALSE;
-	CHAR szFileName[CB_MAX_FILENAME];
-	CHAR szInternalName[CB_MAX_FILENAME];
-	
-	do {
+    BOOL bResult = FALSE, cond = FALSE;
+    CHAR szFileName[CB_MAX_FILENAME];
+    CHAR szInternalName[CB_MAX_FILENAME];
 
-		if (Cabinet == NULL) {
-			break;
-		}
+    do {
 
-		//convert filename to ansi
-		RtlSecureZeroMemory(szFileName, sizeof(szFileName));
-		if (WideCharToMultiByte(CP_ACP, 0, lpszFileName, -1, szFileName, CB_MAX_FILENAME - 2, 0, NULL) == 0) {
-			break;
-		}
-		//convert internal name to ansi
-		RtlSecureZeroMemory(szInternalName, sizeof(szInternalName));
-		if (WideCharToMultiByte(CP_ACP, 0, lpszInternalName, -1, szInternalName, CB_MAX_FILENAME - 2, 0, NULL) == 0) {
-			break;
-		}
+        if (Cabinet == NULL) {
+            break;
+        }
 
-		bResult = FCIAddFile(Cabinet->hfci, (char*)szFileName, (char*)szInternalName, FALSE,
-			fnFCIGETNEXTCABINET, fnFCISTATUS, fnFCIGETOPENINFO, tcompTYPE_NONE /*tcompTYPE_MSZIP*/);
+        //convert filename to ansi
+        RtlSecureZeroMemory(szFileName, sizeof(szFileName));
+        if (WideCharToMultiByte(CP_ACP, 0, lpszFileName, -1, szFileName, CB_MAX_FILENAME - 2, 0, NULL) == 0) {
+            break;
+        }
+        //convert internal name to ansi
+        RtlSecureZeroMemory(szInternalName, sizeof(szInternalName));
+        if (WideCharToMultiByte(CP_ACP, 0, lpszInternalName, -1, szInternalName, CB_MAX_FILENAME - 2, 0, NULL) == 0) {
+            break;
+        }
 
-	} while (cond);
+        bResult = FCIAddFile(Cabinet->hfci, (char*)szFileName, (char*)szInternalName, FALSE,
+            fnFCIGETNEXTCABINET, fnFCISTATUS, fnFCIGETOPENINFO, tcompTYPE_NONE /*tcompTYPE_MSZIP*/);
 
-	return bResult;
+    } while (cond);
+
+    return bResult;
 }
 
 /*
@@ -407,20 +410,20 @@ BOOL cabAddFile(
 *
 */
 VOID cabClose(
-	_In_ CABDATA *Cabinet
-	)
+    _In_ CABDATA *Cabinet
+    )
 {
-	if (Cabinet == NULL) {
-		return;
-	}
+    if (Cabinet == NULL) {
+        return;
+    }
 
-	FCIFlushCabinet(
-		Cabinet->hfci,
-		FALSE,
-		fnFCIGETNEXTCABINET,
-		fnFCISTATUS
-		);
+    FCIFlushCabinet(
+        Cabinet->hfci,
+        FALSE,
+        fnFCIGETNEXTCABINET,
+        fnFCISTATUS
+        );
 
-	FCIDestroy(Cabinet->hfci);
-	HeapFree(GetProcessHeap(), 0, Cabinet);
+    FCIDestroy(Cabinet->hfci);
+    HeapFree(GetProcessHeap(), 0, Cabinet);
 }

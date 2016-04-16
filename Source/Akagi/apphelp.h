@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPHELP.H
 *
-*  VERSION:     2.00
+*  VERSION:     2.10
 *
-*  DATE:        12 Nov 2015
+*  DATE:        14 Apr 2016
 *
 *  Application Compatibility Helper routines and definitions.
 *
@@ -61,8 +61,8 @@ typedef HANDLE HSDB;
 #define TAG_INTERNAL_NAME (0x15 | TAG_TYPE_STRINGREF)
 
 typedef enum _PATH_TYPE {
-	DOS_PATH,
-	NT_PATH
+    DOS_PATH,
+    NT_PATH
 } PATH_TYPE;
 
 #define PATCH_MATCH 0x4
@@ -70,72 +70,72 @@ typedef enum _PATH_TYPE {
 #define MAX_MODULE	32
 
 typedef struct _PATCHBITS {
-	DWORD	Opcode;
-	DWORD	ActionSize;
-	DWORD	PatternSize;
-	DWORD	RVA;
-	DWORD	Reserved;
-	WCHAR	ModuleName[MAX_MODULE];
-	BYTE	Pattern[1];
+    DWORD	Opcode;
+    DWORD	ActionSize;
+    DWORD	PatternSize;
+    DWORD	RVA;
+    DWORD	Reserved;
+    WCHAR	ModuleName[MAX_MODULE];
+    BYTE	Pattern[1];
 } PATCHBITS, *PPATCHBITS;
 
 typedef PDB(WINAPI *pfnSdbCreateDatabase)(
-	_In_  LPCWSTR pwszPath,
-	_In_  PATH_TYPE eType
-	);
+    _In_  LPCWSTR pwszPath,
+    _In_  PATH_TYPE eType
+    );
 
 typedef void(WINAPI *pfnSdbCloseDatabaseWrite)(
-	_Inout_  PDB pdb
-	);
+    _Inout_  PDB pdb
+    );
 
 typedef TAGID(WINAPI *pfnSdbBeginWriteListTag)(
-	_In_  PDB pdb,
-	_In_  TAG tTag
-	);
+    _In_  PDB pdb,
+    _In_  TAG tTag
+    );
 
 typedef BOOL(WINAPI *pfnSdbWriteStringTag)(
-	_In_  PDB pdb,
-	_In_  TAG tTag,
-	_In_  LPCWSTR pwszData
-	);
+    _In_  PDB pdb,
+    _In_  TAG tTag,
+    _In_  LPCWSTR pwszData
+    );
 
 typedef BOOL(WINAPI *pfnSdbEndWriteListTag)(
-	_Inout_  PDB pdb,
-	_In_     TAGID tiList
-	);
+    _Inout_  PDB pdb,
+    _In_     TAGID tiList
+    );
 
 typedef BOOL(WINAPI *pfnSdbWriteBinaryTag)(
-	_In_  PDB pdb,
-	_In_  TAG tTag,
-	_In_  PBYTE pBuffer,
-	_In_  DWORD dwSize
-	);
+    _In_  PDB pdb,
+    _In_  TAG tTag,
+    _In_  PBYTE pBuffer,
+    _In_  DWORD dwSize
+    );
 
 typedef BOOL(WINAPI *pfnSdbWriteDWORDTag)(
-	_In_  PDB pdb,
-	_In_  TAG tTag,
-	_In_  DWORD dwData
-	);
+    _In_  PDB pdb,
+    _In_  TAG tTag,
+    _In_  DWORD dwData
+    );
 
 typedef BOOL(WINAPI *pfnSdbStartIndexing)(
-	_In_  PDB pdb,
-	_In_  INDEXID iiWhich
-	);
+    _In_  PDB pdb,
+    _In_  INDEXID iiWhich
+    );
 
 typedef void (WINAPI *pfnSdbStopIndexing)(
-	_In_  PDB pdb,
-	_In_  INDEXID iiWhich
-	);
+    _In_  PDB pdb,
+    _In_  INDEXID iiWhich
+    );
 
 typedef BOOL(WINAPI *pfnSdbCommitIndexes)(
-	_Inout_  PDB pdb
-	);
+    _Inout_  PDB pdb
+    );
 
 typedef BOOL(WINAPI *pfnSdbDeclareIndex)(
-	_In_   PDB pdb,
-	_In_   TAG tWhich,
-	_In_   TAG tKey,
-	_In_   DWORD dwEntries,
-	_In_   BOOL bUniqueKey,
-	_Out_  INDEXID *piiIndex
-	);
+    _In_   PDB pdb,
+    _In_   TAG tWhich,
+    _In_   TAG tKey,
+    _In_   DWORD dwEntries,
+    _In_   BOOL bUniqueKey,
+    _Out_  INDEXID *piiIndex
+    );

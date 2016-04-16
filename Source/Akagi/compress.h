@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.H
 *
-*  VERSION:     2.00
+*  VERSION:     2.10
 *
-*  DATE:        15 Nov 2015
+*  DATE:        15 Apr 2016
 *
 *  Prototypes and definitions for compression.
 *
@@ -18,31 +18,31 @@
 *******************************************************************************/
 #pragma once
 
-typedef PVOID (*pfnDecompressPayload)(
-	_In_ PVOID CompressedBuffer,
-	_In_ ULONG CompressedBufferSize,
-	_Inout_ PULONG DecompressedBufferSize
-	);
+typedef PVOID(*pfnDecompressPayload)(
+    _In_ PVOID CompressedBuffer,
+    _In_ ULONG CompressedBufferSize,
+    _Inout_ PULONG DecompressedBufferSize
+    );
 
 PUCHAR CompressBufferLZNT1(
-	_In_ PUCHAR SrcBuffer,
-	_In_ ULONG SrcSize,
-	_Inout_ PULONG FinalCompressedSize
-	);
+    _In_ PUCHAR SrcBuffer,
+    _In_ ULONG SrcSize,
+    _Inout_ PULONG FinalCompressedSize
+    );
 
 PUCHAR DecompressBufferLZNT1(
-	_In_ PUCHAR CompBuffer,
-	_In_ ULONG CompSize,
-	_In_ ULONG UncompressedBufferSize,
-	_Inout_ PULONG FinalUncompressedSize
-	);
+    _In_ PUCHAR CompBuffer,
+    _In_ ULONG CompSize,
+    _In_ ULONG UncompressedBufferSize,
+    _Inout_ PULONG FinalUncompressedSize
+    );
 
 VOID CompressPayload(
-	VOID
-	);
+    VOID
+    );
 
 PVOID DecompressPayload(
-	_In_ PVOID CompressedBuffer,
-	_In_ ULONG CompressedBufferSize,
-	_Inout_ PULONG DecompressedBufferSize
-	);
+    _In_ PVOID CompressedBuffer,
+    _In_ ULONG CompressedBufferSize,
+    _Inout_ PULONG DecompressedBufferSize
+    );

@@ -1,0 +1,6 @@
+#include "bin32res.h"
+#include "winres.h"
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+IDR_FUBUKI32 RCDATA "bin\fubuki32.cd"
+IDR_HIBIKI32 RCDATA "bin\hibiki32.cd"
+IDR_KONGOU32 RCDATA "bin\kongou32.cd"

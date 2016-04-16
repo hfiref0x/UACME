@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.H
 *
-*  VERSION:     2.00
+*  VERSION:     2.10
 *
-*  DATE:        16 Nov 2015
+*  DATE:        16 Apr 2016
 *
 *  Prototypes and definitions for Leo Davidson method.
 *
@@ -19,12 +19,17 @@
 #pragma once
 
 BOOL ucmStandardAutoElevation(
-	UACBYPASSMETHOD Method,
-	CONST PVOID ProxyDll,
-	DWORD ProxyDllSize
-	);
+    UACBYPASSMETHOD Method,
+    CONST PVOID ProxyDll,
+    DWORD ProxyDllSize
+    );
 
-BOOL ucmAutoElevateCopyFile(
-	LPWSTR SourceFileName,
-	LPWSTR DestinationDir
-	);
+BOOL ucmMasqueradedCopyFileCOM(
+    LPWSTR SourceFileName,
+    LPWSTR DestinationDir
+    );
+
+BOOL ucmStandardAutoElevation2(
+    CONST PVOID ProxyDll,
+    DWORD ProxyDllSize
+    );
