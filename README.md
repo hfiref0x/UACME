@@ -29,7 +29,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 14 - WinNT/Sirefef method, abusing appinfo.dll way of whitelisting OOBE.exe, works from Windows 7 up to 10th2 10558;
 * 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10rs1 14295;
 * 16 - Hybrid method working together with Microsoft GWX backdoor, work from Windows 7 up to 10rs1 14295;
-* 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, work from Windows 8.1 (9600) up to 10rs1 14316.
+* 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, work from Windows 8.1 (9600) up to 10rs1 14332.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -54,16 +54,16 @@ Run examples:
 
 # Microsoft countermeasures
 Methods fixed:
-* 1 - Fixed only with Windows 8.1 release, still work on Windows 7;
-* 2 - Fixed only in Windows 10 starting from earlier preview builds;
-* 3 - Fixed only in Windows 10 TH2 starting from 1055X builds;
+* 1 - Fixed with Windows 8.1 release, still work on Windows 7;
+* 2 - Fixed in Windows 10 starting from earlier preview builds;
+* 3 - Fixed in Windows 10 TH2 starting from 1055X builds;
 * 4 - Fixed in Windows 10 starting from first preview builds, earlier OS versions got KB3045645/KB3048097 fix;
-* 5 - Fixed only in Windows 10 starting from 10147 build;
-* 6 - Fixed only in Windows 10 starting from 10147 build;
-* 7 - Fixed only in Windows 10 starting from 10147 build;
-* 8 - Fixed only with Windows 8.1 release, still work on Windows 7;
-* 9 - Fixed only in Windows 10 starting from 10147 build;
-* 10 - Fixed only in Windows 10 TH2 starting from build 10548;
+* 5 - Fixed in Windows 10 starting from 10147 build;
+* 6 - Fixed in Windows 10 starting from 10147 build;
+* 7 - Fixed in Windows 10 starting from 10147 build;
+* 8 - Fixed with Windows 8.1 release, still work on Windows 7;
+* 9 - Fixed in Windows 10 starting from 10147 build;
+* 10 - Fixed in Windows 10 TH2 starting from build 10548;
 * 11 - Fixed in Windows 10 starting from first preview builds, earlier OS versions got KB3045645/KB3048097 fix;
 * 12 - Fixed in Windows 10 TH2 starting from 10565 build;
 * 13 - Fixed in Windows 10 RS1 starting from public 14316 build;
@@ -76,7 +76,7 @@ Methods fixed:
 * Account without administrative privileges.
 
 # Malware usage
-* It is currently known that UACMe used by Adware/Multiplug (9) and by Win32/Dyre (3). We do  not take any responsibility for this tool usage in the malicious purposes. It is free, open-source and provided AS-IS for everyone.
+* It is currently known that UACMe used by Adware/Multiplug (9), by Win32/Dyre (3), by Win32/Empercrypt (10 & 13). We do  not take any responsibility for this tool usage in the malicious purposes. It is free, open-source and provided AS-IS for everyone.
 
 # Build 
 
