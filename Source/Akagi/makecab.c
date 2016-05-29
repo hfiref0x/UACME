@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015
+*  (C) COPYRIGHT AUTHORS, 2015 - 2016
 *
 *  TITLE:       MAKECAB.C
 *
-*  VERSION:     2.10
+*  VERSION:     2.20
 *
-*  DATE:        15 Apr 2016
+*  DATE:        25 May 2016
 *
 *  Simplified Cabinet file support for makecab utility replacement.
 *
@@ -28,8 +28,8 @@
 LPVOID DIAMONDAPI fnFCIALLOC(
     ULONG cb
     )
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cb);
+{      
+    return HeapAlloc(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, cb);
 }
 
 VOID DIAMONDAPI fnFCIFREE(
@@ -37,7 +37,7 @@ VOID DIAMONDAPI fnFCIFREE(
     )
 {
     if (lpMem) {
-        HeapFree(GetProcessHeap(), 0, lpMem);
+        HeapFree(g_ctx.Peb->ProcessHeap, 0, lpMem);
     }
 }
 
@@ -327,7 +327,7 @@ CABDATA *cabCreate(
         return NULL;
     }
 
-    pCabinet = (PCABDATA)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CABDATA));
+    pCabinet = (PCABDATA)HeapAlloc(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, sizeof(CABDATA));
     if (pCabinet == NULL) {
         return NULL;
     }
@@ -352,7 +352,7 @@ CABDATA *cabCreate(
         NULL);
 
     if (pCabinet->hfci == NULL) {
-        HeapFree(GetProcessHeap(), 0, pCabinet);
+        HeapFree(g_ctx.Peb->ProcessHeap, 0, pCabinet);
         pCabinet = NULL;
     }
     return pCabinet;
@@ -425,5 +425,5 @@ VOID cabClose(
         );
 
     FCIDestroy(Cabinet->hfci);
-    HeapFree(GetProcessHeap(), 0, Cabinet);
+    HeapFree(g_ctx.Peb->ProcessHeap, 0, Cabinet);
 }

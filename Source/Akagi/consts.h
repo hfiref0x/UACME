@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.10
+*  VERSION:     2.20
 *
-*  DATE:        16 Apr 2016
+*  DATE:        15 May 2016
 *
 *  Global consts definition file.
 *
@@ -33,9 +33,13 @@
 #define IFILEOP_ELEMONIKER          L"Elevation:Administrator!new:{3ad05575-8857-4850-9277-11b85bdb8e09}"
 #define T_SDDL_ALL_FOR_EVERYONE     L"D:(A;;GA;;;WD)"
 
+#define MANIFEST_EXT                L".manifest"
+#define ELLOCNAK_MSU                L"ellocnak.msu" 
+#define KERNEL32_DLL                L"kernel32.dll"
+#define OLE32_DLL                   L"ole32.dll"
+#define SHELL32_DLL                 L"shell32.dll"
 #define APPHELP_DLL                 L"apphelp.dll"
-#define HIBIKI_DLL                  L"Hibiki.dll"
-#define ELLOCNAK_MSU                L"ellocnak.msu"            
+#define HIBIKI_DLL                  L"Hibiki.dll"           
 #define SLC_DLL                     L"SLC.dll"
 #define NETUTILS_DLL                L"netutils.dll"
 #define ACTIONQUEUE_DLL             L"ActionQueue.dll"
@@ -55,16 +59,17 @@
 #define INETMGR_EXE                 L"InetMgr.exe"
 #define MMC_EXE                     L"mmc.exe"
 #define EXPLORER_EXE                L"explorer.exe"
+#define TASKHOST_EXE                L"taskhost.exe"
+#define TZSYNC_EXE                  L"tzsync.exe"
+#define SYSPREP_EXE                 L"sysprep\\sysprep.exe" //always in this dir (appinfo hardcoded)
+#define SETUPSQM_EXE                L"oobe\\setupsqm.exe"   //always in this dir
+#define MIGWIZ_EXE                  L"migwiz.exe"
+#define SPINSTALL_EXE               L"spinstall.exe"
 #define EVENTVWR_MSC                L"eventvwr.msc"
 #define SYSPREP_DIR                 L"sysprep\\"
 #define INETSRV_DIR                 L"inetsrv\\"
 #define WBEM_DIR                    L"wbem\\"
-#define SYSPREP_EXE                 L"sysprep\\sysprep.exe" //always in this dir (appinfo hardcoded)
-#define SETUPSQM_EXE                L"oobe\\setupsqm.exe"   //always in this dir
-#define MIGWIZ_EXE                  L"migwiz\\migwiz.exe"   //always in this dir
-#define KERNEL32_DLL                L"kernel32.dll"
-#define OLE32_DLL                   L"ole32.dll"
-#define SHELL32_DLL                 L"shell32.dll"
+#define MIGWIZ_DIR                  L"migwiz\\"
 #define RUNAS_VERB                  L"runas"
 
 #define APPCMDLINE                  L"hawawawa"
@@ -78,6 +83,7 @@
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
 #define T_AKAGI_KEY                 L"Software\\Akagi"
 #define T_AKAGI_PARAM               L"LoveLetter"
+#define T_TARGETNOTFOUND            L"Target application not found"
 
 //
 // Global const 

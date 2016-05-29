@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     2.10
+*  VERSION:     2.20
 *
-*  DATE:        16 Apr 2016
+*  DATE:        25 May 2016
 *
 *  Leo Davidson based IFileOperation auto-elevation.
 *

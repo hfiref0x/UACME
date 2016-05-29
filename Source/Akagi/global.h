@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.10
+*  VERSION:     2.20
 *
-*  DATE:        16 Apr 2016
+*  DATE:        01 May 2016
 *
 *  Common header file for the program support routines.
 *
@@ -56,7 +56,6 @@
 #define KONGOU_ID IDR_KONGOU32
 #endif
 
-
 typedef enum _UACBYPASSMETHOD {
     UacMethodSysprep1 = 1,
     UacMethodSysprep2,
@@ -75,6 +74,7 @@ typedef enum _UACBYPASSMETHOD {
     UacMethodGeneric,
     UacMethodGWX,
     UacMethodSysprep4,
+    UacMethodManifest,
     UacMethodMax
 } UACBYPASSMETHOD;
 

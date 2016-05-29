@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.10
+*  VERSION:     2.20
 *
-*  DATE:        16 Apr 2016
+*  DATE:        25 May 2016
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -184,7 +184,7 @@ HANDLE supRunProcessEx(
     }
 
     ccb = (_strlen_w(lpszParameters) * sizeof(WCHAR)) + sizeof(WCHAR);
-    pszBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ccb);
+    pszBuffer = HeapAlloc(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, ccb);
     if (pszBuffer == NULL) {
         return NULL;
     }
@@ -212,7 +212,7 @@ HANDLE supRunProcessEx(
         }
     } while (cond);
 
-    HeapFree(GetProcessHeap(), 0, pszBuffer);
+    HeapFree(g_ctx.Peb->ProcessHeap, 0, pszBuffer);
 
     return pi1.hProcess;
 }
@@ -491,7 +491,7 @@ VOID NTAPI supxLdrEnumModulesCallback(
 }
 
 /*
-* ucmMasqueradeProcess
+* supMasqueradeProcess
 *
 * Purpose:
 *

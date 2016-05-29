@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     2.10
+*  VERSION:     2.20
 *
-*  DATE:        16 Apr 2016
+*  DATE:        22 Apr 2016
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *

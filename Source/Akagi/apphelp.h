@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPHELP.H
 *
-*  VERSION:     2.10
+*  VERSION:     2.20
 *
-*  DATE:        14 Apr 2016
+*  DATE:        20 Apr 2016
 *
 *  Application Compatibility Helper routines and definitions.
 *
