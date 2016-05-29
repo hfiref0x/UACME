@@ -28,13 +28,14 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 13 - Hybrid method, abusing appinfo.dll way of whitelisting MMC console commands and EventViewer missing dependency, works from Windows 7 up to 10rs1 14295;
 * 14 - WinNT/Sirefef method, abusing appinfo.dll way of whitelisting OOBE.exe, works from Windows 7 up to 10th2 10558;
 * 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10rs1 14295;
-* 16 - Hybrid method working together with Microsoft GWX backdoor, work from Windows 7 up to 10rs1 14295;
-* 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, work from Windows 8.1 (9600) up to 10rs1 14342.
+* 16 - Hybrid method working together with Microsoft GWX backdoor, works from Windows 7 up to 10rs1 14295;
+* 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, works from Windows 8.1 (9600) up to 10rs1 14352;
+* 18 - Hybrid method, abuses SxS undocumented backdoor used to fix (1) and appinfo whitelist, works from Windows 7 up to 10rs1 14352.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
 * Method (4) unavailable in 64 bit edition because of Shim restriction;
-* Method (6) unavailable in wow64 environment starting from Windows 8. Also target application unavailable in Windows 10;
+* Method (6) unavailable in wow64 environment starting from Windows 8.
 * Method (11) implemented in x86-32 version;
 * Method (13) implemented only in x64 version.
 
@@ -77,6 +78,9 @@ Methods fixed:
 
 # Malware usage
 * It is currently known that UACMe used by Adware/Multiplug (9), by Win32/Dyre (3), by Win32/Empercrypt (10 & 13). We do  not take any responsibility for this tool usage in the malicious purposes. It is free, open-source and provided AS-IS for everyone.
+
+# Other usage
+* Currently used as "signature" by "THOR APT" scanner (handmade pattern matching fraudware from Germany). We do  not take any responsibility for this tool usage in the fraudware.
 
 # Build 
 
