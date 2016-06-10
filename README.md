@@ -29,8 +29,8 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 14 - WinNT/Sirefef method, abusing appinfo.dll way of whitelisting OOBE.exe, works from Windows 7 up to 10th2 10558;
 * 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10rs1 14295;
 * 16 - Hybrid method working together with Microsoft GWX backdoor, works from Windows 7 up to 10rs1 14295;
-* 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, works from Windows 8.1 (9600) up to 10rs1 14352;
-* 18 - Hybrid method, abuses SxS undocumented backdoor used to fix (1) and appinfo whitelist, works from Windows 7 up to 10rs1 14352.
+* 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, works from Windows 8.1 (9600) up to 10rs1 14361;
+* 18 - Hybrid method, abuses SxS undocumented backdoor used to fix (1) and appinfo whitelist, works from Windows 7 up to 10rs1 14361.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -55,22 +55,24 @@ Run examples:
 
 # Microsoft countermeasures
 Methods fixed:
-* 1 - Fixed with Windows 8.1 release, still work on Windows 7;
-* 2 - Fixed in Windows 10 starting from earlier preview builds;
-* 3 - Fixed in Windows 10 TH2 starting from 1055X builds;
-* 4 - Fixed in Windows 10 starting from first preview builds, earlier OS versions got KB3045645/KB3048097 fix;
-* 5 - Fixed in Windows 10 starting from 10147 build;
-* 6 - Fixed in Windows 10 starting from 10147 build;
-* 7 - Fixed in Windows 10 starting from 10147 build;
-* 8 - Fixed with Windows 8.1 release, still work on Windows 7;
-* 9 - Fixed in Windows 10 starting from 10147 build;
-* 10 - Fixed in Windows 10 TH2 starting from build 10548;
-* 11 - Fixed in Windows 10 starting from first preview builds, earlier OS versions got KB3045645/KB3048097 fix;
-* 12 - Fixed in Windows 10 TH2 starting from 10565 build;
-* 13 - Fixed in Windows 10 RS1 starting from public 14316 build;
-* 14 - Fixed in Windows 10 TH2 starting from 10548 build;
-* 15 - Fixed in Windows 10 RS1 starting from public 14316 build;
-* 16 - Fixed in Windows 10 RS1 starting from public 14316 build.
+* 1 - Windows 8.1 release and above, still work on Windows 7;
+* 2 - Windows 10 starting from earlier preview builds;
+* 3 - Windows 10 TH2 starting from 1055X builds;
+* 4 - Windows 10 starting from first preview builds, earlier OS versions got KB3045645/KB3048097 fix;
+* 5 - Windows 10 starting from 10147 build;
+* 6 - Windows 10 starting from 10147 build;
+* 7 - Windows 10 starting from 10147 build;
+* 8 - Windows 8.1 release and above, still work on Windows 7;
+* 9 - Windows 10 starting from 10147 build;
+* 10 - Windows 10 TH2 starting from build 10548;
+* 11 - Windows 10 starting from first preview builds, earlier OS versions got KB3045645/KB3048097 fix;
+* 12 - Windows 10 TH2 starting from 10565 build;
+* 13 - Windows 10 RS1 starting from public 14316 build;
+* 14 - Windows 10 TH2 starting from 10548 build;
+* 15 - Windows 10 RS1 starting from public 14316 build;
+* 16 - Windows 10 RS1 starting from public 14316 build.
+
+** 17 & 18 are not fixed as at 11 June 2016.
 
 # Protection
 * UAC turned on maximum level and full awareness about every window it will show;
