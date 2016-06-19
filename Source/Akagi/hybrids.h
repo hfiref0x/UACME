@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     2.20
+*  VERSION:     2.30
 *
-*  DATE:        25 May 2016
+*  DATE:        12 June 2016
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -67,4 +67,8 @@ BOOL ucmGWX(
 BOOL ucmAutoElevateManifest(
     PVOID ProxyDll,
     DWORD ProxyDllSize
+    );
+
+BOOL ucmInetMgrMethod(
+    VOID
     );

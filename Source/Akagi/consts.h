@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.20
+*  VERSION:     2.30
 *
-*  DATE:        15 May 2016
+*  DATE:        12 June 2016
 *
 *  Global consts definition file.
 *
@@ -30,7 +30,7 @@
 #define T_CLSID_ShellSecurityEditor L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}"
 #define T_IID_ISecurityEditor       L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}"
 #define ISECURITYEDITOR_ELEMONIKER  L"Elevation:Administrator!new:{4D111E08-CBF7-4f12-A926-2C7920AF52FC}" 
-#define IFILEOP_ELEMONIKER          L"Elevation:Administrator!new:{3ad05575-8857-4850-9277-11b85bdb8e09}"
+#define IFILEOP_ELEMONIKER          L"Elevation:Administrator!new:{3AD05575-8857-4850-9277-11B85BDB8E09}"
 #define T_SDDL_ALL_FOR_EVERYONE     L"D:(A;;GA;;;WD)"
 
 #define MANIFEST_EXT                L".manifest"
@@ -44,6 +44,7 @@
 #define NETUTILS_DLL                L"netutils.dll"
 #define ACTIONQUEUE_DLL             L"ActionQueue.dll"
 #define WDSCORE_DLL                 L"wdscore.dll"
+#define MSCOREE_DLL                 L"MSCOREE.DLL"
 #define DBGCORE_DLL                 L"dbgcore.dll"
 #define SHCORE_DLL                  L"shcore.dll"
 #define CRYPTBASE_DLL               L"cryptbase.dll"
@@ -72,7 +73,9 @@
 #define MIGWIZ_DIR                  L"migwiz\\"
 #define RUNAS_VERB                  L"runas"
 
-#define APPCMDLINE                  L"hawawawa"
+#define INETMGR_SXS                 L"microsoft-windows-iis-managementconsole"
+
+#define APPCMDLINE                  L"ImHereAndWaitingForYouWhereAreYouICantFindYou"
 #define PROGRAMTITLE                L"UACMe"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
@@ -84,6 +87,7 @@
 #define T_AKAGI_KEY                 L"Software\\Akagi"
 #define T_AKAGI_PARAM               L"LoveLetter"
 #define T_TARGETNOTFOUND            L"Target application not found"
+#define T_TARGETALREADYEXIST        L"[UCM] Target file already exists, abort"
 
 //
 // Global const 

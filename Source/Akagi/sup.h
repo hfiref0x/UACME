@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.20
+*  VERSION:     2.30
 *
-*  DATE:        25 May 2016
+*  DATE:        17 June 2016
 *
 *  Common header file for the program support routines.
 *
@@ -17,6 +17,8 @@
 *
 *******************************************************************************/
 #pragma once
+
+typedef BOOL(CALLBACK *UCM_FIND_FILE_CALLBACK)(WIN32_FIND_DATA *fdata, LPWSTR lpDirectory);
 
 BOOLEAN supIsProcess32bit(
     _In_ HANDLE hProcess
@@ -86,6 +88,16 @@ DWORD supExpandEnvironmentStrings(
     LPCWSTR lpSrc,
     LPWSTR lpDst,
     DWORD nSize
+    );
+
+BOOL supScanFiles(
+    _In_ LPWSTR lpDirectory,
+    _In_ LPWSTR lpFileType,
+    _In_ UCM_FIND_FILE_CALLBACK Callback
+    );
+
+VOID supCheckMSEngineVFS(
+    VOID
     );
 
 #define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)

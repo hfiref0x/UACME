@@ -150,7 +150,6 @@
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -161,6 +160,7 @@
       <DebugInformationFormat>None</DebugInformationFormat>
       <StringPooling>
       </StringPooling>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -185,7 +185,6 @@
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -195,6 +194,7 @@
       <EnablePREfast>true</EnablePREfast>
       <StringPooling>
       </StringPooling>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -226,6 +226,7 @@
     <ClCompile Include="..\shared\_strncmp.c" />
     <ClCompile Include="..\shared\_strncmpi.c" />
     <ClCompile Include="..\shared\_strncpy.c" />
+    <ClCompile Include="..\Shared\_strstri.c" />
     <ClCompile Include="carberp.c" />
     <ClCompile Include="gootkit.c" />
     <ClCompile Include="hybrids.c" />

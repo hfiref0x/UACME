@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAKECAB.H
 *
-*  VERSION:     2.20
+*  VERSION:     2.30
 *
-*  DATE:        25 May 2016
+*  DATE:        16 June 2016
 *
 *  Prototypes and definitions for makecab module.
 *
