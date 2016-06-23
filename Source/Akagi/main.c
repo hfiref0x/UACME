@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.30
+*  VERSION:     2.31
 *
-*  DATE:        14 June 2016
+*  DATE:        23 June 2016
 *
 *  Program entry point.
 *
@@ -317,6 +317,7 @@ UINT ucmMain()
         break;
 
     case UacMethodOobe://oobe service
+        //fixed in 10548
         if (g_ctx.dwBuildNumber >= 10548) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -336,6 +337,7 @@ UINT ucmMain()
         break;
 
     case UacMethodSimda:
+        //fixed in 10136
         if (g_ctx.dwBuildNumber >= 10136) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -343,6 +345,7 @@ UINT ucmMain()
         break;
 
     case UacMethodCarberp1:
+        //fixed in 10147
         if (g_ctx.dwBuildNumber >= 10147) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -350,6 +353,7 @@ UINT ucmMain()
         break;
 
     case UacMethodCarberp2:
+        //fixed in 10147
         if (g_ctx.dwBuildNumber >= 10147) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -364,6 +368,7 @@ UINT ucmMain()
         break;
 
     case UacMethodAVrf:
+        //fixed in 10136
         if (g_ctx.dwBuildNumber >= 10136) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -371,6 +376,7 @@ UINT ucmMain()
         break;
 
     case UacMethodWinsat:
+        //fixed in 10548
         if (g_ctx.dwBuildNumber >= 10548) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -394,6 +400,7 @@ UINT ucmMain()
         ucmShowMessage(WIN64ONLY);
         return ERROR_UNSUPPORTED_TYPE;
 #else
+        //fixed in 14316
         if (g_ctx.dwBuildNumber >= 14316) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -402,6 +409,8 @@ UINT ucmMain()
         break;
 
     case UacMethodSirefef:
+
+        //fixed in 10548
         if (g_ctx.dwBuildNumber >= 10548) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -409,6 +418,8 @@ UINT ucmMain()
         break;
 
     case UacMethodGeneric:
+
+        //fixed in 14316
         if (g_ctx.dwBuildNumber >= 14316) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -420,6 +431,8 @@ UINT ucmMain()
             ucmShowMessage(OSTOOOLD);
             return ERROR_UNSUPPORTED_TYPE;
         }
+
+        //fixed in 14316
         if (g_ctx.dwBuildNumber >= 14316) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -430,6 +443,21 @@ UINT ucmMain()
         if (g_ctx.dwBuildNumber < 9600) {
             ucmShowMessage(WINBLUEWANTED);
             return ERROR_UNSUPPORTED_TYPE;
+        }
+        
+        //fixed in 14371
+        if (g_ctx.dwBuildNumber > 14367) { 
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
+        break;
+
+    case UacMethodManifest:
+
+        //fixed in 14371
+        if (g_ctx.dwBuildNumber > 14367) { 
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
         }
         break;
 
