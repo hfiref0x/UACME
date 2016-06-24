@@ -31,7 +31,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 16 - Hybrid method working together with Microsoft GWX backdoor, works from Windows 7 up to 10rs1 14295;
 * 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, works from Windows 8.1 (9600) up to 10rs1 14367;
 * 18 - Hybrid method, abuses SxS undocumented backdoor used to fix (1) and appinfo whitelist, works from Windows 7 up to 10rs1 14367;
-* 19 - Hybrid method, using InetMgr IIS module and based on 10 & 16 MS fixes, works from Windows 7 up to 10rs1 14371.
+* 19 - Hybrid method, using InetMgr IIS module and based on 10 & 16 MS fixes, works from Windows 7 up to 10rs1 14372.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -75,7 +75,7 @@ Methods fixed:
 * 17 - Windows 10 RS1 starting from public 14371 build;
 * 18 - Windows 10 RS1 starting from public 14371 build.
 
-** 19 is not fixed as at 23 June 2016.
+** 19 is not fixed as at 24 June 2016.
 
 # Protection
 * UAC turned on maximum level and full awareness about every window it will show;
