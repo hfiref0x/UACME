@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.30
+*  VERSION:     2.40
 *
-*  DATE:        18 June 2016
+*  DATE:        01 July 2016
 *
 *  Common header file for the program support routines.
 *
@@ -49,11 +49,13 @@
 #define FUBUKI_ID IDR_FUBUKI64
 #define HIBIKI_ID IDR_HIBIKI64
 #define KONGOU_ID IDR_KONGOU64
+//#define HATSUYUKI_ID IDR_HATSUYUKI64
 #else
 #include "bin32res.h"
 #define FUBUKI_ID IDR_FUBUKI32
 #define HIBIKI_ID IDR_HIBIKI32
 #define KONGOU_ID IDR_KONGOU32
+//#define HATSUYUKI_ID IDR_HATSUYUKI32
 #endif
 
 typedef enum _UACBYPASSMETHOD {
@@ -69,13 +71,15 @@ typedef enum _UACBYPASSMETHOD {
     UacMethodWinsat,
     UacMethodShimPatch,
     UacMethodSysprep3,
-    UacMethodMMC,
+    UacMethodMMC1,
     UacMethodSirefef,
     UacMethodGeneric,
     UacMethodGWX,
     UacMethodSysprep4,
     UacMethodManifest,
     UacMethodInetMgr,
+    UacMethodMMC2,
+    //UacMethod21,
     UacMethodMax
 } UACBYPASSMETHOD;
 

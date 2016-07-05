@@ -208,14 +208,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\shared\_strcat.c" />
-    <ClCompile Include="..\shared\_strcmp.c" />
-    <ClCompile Include="..\shared\_strcmpi.c" />
     <ClCompile Include="..\shared\_strcpy.c" />
-    <ClCompile Include="..\shared\_strend.c" />
-    <ClCompile Include="..\shared\_strlen.c" />
-    <ClCompile Include="..\shared\_strncmp.c" />
-    <ClCompile Include="..\shared\_strncmpi.c" />
-    <ClCompile Include="..\shared\_strncpy.c" />
     <ClCompile Include="dllmain.c" />
   </ItemGroup>
   <ItemGroup>

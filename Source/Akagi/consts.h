@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.30
+*  VERSION:     2.40
 *
-*  DATE:        12 June 2016
+*  DATE:        01 July 2016
 *
 *  Global consts definition file.
 *
@@ -39,7 +39,8 @@
 #define OLE32_DLL                   L"ole32.dll"
 #define SHELL32_DLL                 L"shell32.dll"
 #define APPHELP_DLL                 L"apphelp.dll"
-#define HIBIKI_DLL                  L"Hibiki.dll"           
+#define HIBIKI_DLL                  L"Hibiki.dll"
+#define WBEMCOMN_DLL                L"wbemcomn.dll"
 #define SLC_DLL                     L"SLC.dll"
 #define NETUTILS_DLL                L"netutils.dll"
 #define ACTIONQUEUE_DLL             L"ActionQueue.dll"
@@ -66,20 +67,21 @@
 #define SETUPSQM_EXE                L"oobe\\setupsqm.exe"   //always in this dir
 #define MIGWIZ_EXE                  L"migwiz.exe"
 #define SPINSTALL_EXE               L"spinstall.exe"
-#define EVENTVWR_MSC                L"eventvwr.msc"
 #define SYSPREP_DIR                 L"sysprep\\"
 #define INETSRV_DIR                 L"inetsrv\\"
 #define WBEM_DIR                    L"wbem\\"
 #define MIGWIZ_DIR                  L"migwiz\\"
 #define RUNAS_VERB                  L"runas"
+#define EVENTVWR_MSC                L"eventvwr.msc"
+#define RSOP_MSC                    L"rsop.msc"
 
 #define INETMGR_SXS                 L"microsoft-windows-iis-managementconsole"
 
-#define APPCMDLINE                  L"ImHereAndWaitingForYouWhereAreYouICantFindYou"
+#define APPCMDLINE                  L"WindsOfWinter"
 #define PROGRAMTITLE                L"UACMe"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
-#define WIN64ONLY                   L"Thos method only works with x86-64 Windows"
+#define WIN64ONLY                   L"This method only works with x86-64 Windows"
 #define LAZYWOW64UNSUPPORTED        L"Use 32 bit version of this tool on 32 bit OS version"
 #define OSTOOOLD                    L"This method require Windows 7 and above"
 #define WINBLUEWANTED               L"This method require Windows 8 and above"

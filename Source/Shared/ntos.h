@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.40
+*  VERSION:     1.44
 *
-*  DATE:        18 Apr 2016
+*  DATE:        25 June 2016
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -4046,6 +4046,87 @@ NTSTATUS NTAPI LdrUnloadDll(
 */
 
 /*
+** ACTCTX START
+*/
+
+#define ACTCTX_PROCESS_DEFAULT ((void*)NULL)
+#define ACTCTX_EMPTY ((void*)(LONG_PTR)-3)
+#define ACTCTX_SYSTEM_DEFAULT  ((void*)(LONG_PTR)-4)
+#define IS_SPECIAL_ACTCTX(x) (((((LONG_PTR)(x)) - 1) | 7) == -1)
+
+typedef struct _ACTIVATION_CONTEXT *PACTIVATION_CONTEXT;
+typedef const struct _ACTIVATION_CONTEXT *PCACTIVATION_CONTEXT;
+
+#define INVALID_ACTIVATION_CONTEXT ((PACTIVATION_CONTEXT) ((LONG_PTR) -1))
+
+#define RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_USE_ACTIVE_ACTIVATION_CONTEXT (0x00000001)
+#define RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_ACTIVATION_CONTEXT_IS_MODULE  (0x00000002)
+#define RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_ACTIVATION_CONTEXT_IS_ADDRESS (0x00000004)
+#define RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_NO_ADDREF  (0x80000000)
+
+NTSTATUS NTAPI RtlQueryInformationActivationContext(
+    IN ULONG Flags,
+    IN PCACTIVATION_CONTEXT ActivationContext,
+    IN PVOID SubInstanceIndex,
+    IN ACTIVATION_CONTEXT_INFO_CLASS ActivationContextInformationClass,
+    OUT PVOID ActivationContextInformation,
+    IN SIZE_T ActivationContextInformationLength,
+    OUT PSIZE_T ReturnLength OPTIONAL
+);
+
+NTSTATUS NTAPI RtlQueryInformationActiveActivationContext(
+    IN ACTIVATION_CONTEXT_INFO_CLASS ActivationContextInformationClass,
+    OUT PVOID ActivationContextInformation,
+    IN SIZE_T ActivationContextInformationLength,
+    OUT PSIZE_T ReturnLength OPTIONAL
+);
+
+typedef VOID(NTAPI * PACTIVATION_CONTEXT_NOTIFY_ROUTINE)(
+    IN ULONG NotificationType,
+    IN PACTIVATION_CONTEXT ActivationContext,
+    IN const VOID *ActivationContextData,
+    IN PVOID NotificationContext,
+    IN PVOID NotificationData,
+    IN OUT PBOOLEAN DisableThisNotification
+    );
+
+NTSTATUS NTAPI RtlCreateActivationContext(
+    IN ULONG Flags,
+    IN const PACTIVATION_CONTEXT ActivationContextData,
+    IN ULONG ExtraBytes OPTIONAL,
+    IN PACTIVATION_CONTEXT_NOTIFY_ROUTINE NotificationRoutine OPTIONAL,
+    IN PVOID NotificationContext OPTIONAL,
+    OUT PACTIVATION_CONTEXT *ActivationContext
+);
+
+VOID NTAPI RtlAddRefActivationContext(
+    IN PACTIVATION_CONTEXT AppCtx
+);
+
+VOID NTAPI RtlReleaseActivationContext(
+    IN PACTIVATION_CONTEXT AppCtx
+);
+
+NTSTATUS NTAPI RtlZombifyActivationContext(
+    IN PACTIVATION_CONTEXT ActivationContext
+);
+
+NTSTATUS NTAPI RtlGetActiveActivationContext(
+    OUT PACTIVATION_CONTEXT *ActivationContext
+);
+
+BOOLEAN NTAPI RtlIsActivationContextActive(
+    IN PACTIVATION_CONTEXT ActivationContext
+);
+
+
+
+/*
+** ACTCTX END
+*/
+
+
+/*
 ** Csr Runtime START
 */
 
@@ -4763,11 +4844,25 @@ NTSTATUS NTAPI NtClose(
 	_In_ HANDLE Handle
 	);
 
+NTSTATUS NTAPI NtCreateDirectoryObject(
+    _Out_ PHANDLE DirectoryHandle,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_ POBJECT_ATTRIBUTES ObjectAttributes
+    );
+
+NTSTATUS NTAPI NtCreateDirectoryObjectEx(
+    _Out_ PHANDLE DirectoryHandle,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_ POBJECT_ATTRIBUTES ObjectAttributes,
+    _In_ HANDLE ShadowDirectoryHandle,
+    _In_ ULONG Flags
+    );
+
 NTSTATUS NTAPI NtOpenDirectoryObject(
-	_Out_  PHANDLE				DirectoryHandle,
-	_In_   ACCESS_MASK			DesiredAccess,
-	_In_   POBJECT_ATTRIBUTES	ObjectAttributes
-	);
+    _Out_  PHANDLE				DirectoryHandle,
+    _In_   ACCESS_MASK			DesiredAccess,
+    _In_   POBJECT_ATTRIBUTES	ObjectAttributes
+    );
 
 NTSTATUS NTAPI NtQueryDirectoryObject(
 	_In_       HANDLE DirectoryHandle,
@@ -4972,6 +5067,16 @@ NTSTATUS NTAPI NtQueryInformationToken(
 	_Out_	PULONG ReturnLength
 	);
 
+NTSTATUS NTAPI NtCreateKey(
+    _Out_      PHANDLE KeyHandle,
+    _In_       ACCESS_MASK DesiredAccess,
+    _In_       POBJECT_ATTRIBUTES ObjectAttributes,
+    __reserved ULONG TitleIndex,
+    _In_opt_   PUNICODE_STRING Class,
+    _In_       ULONG CreateOptions,
+    _Out_opt_  PULONG Disposition
+    );
+
 NTSTATUS NTAPI NtOpenKey(
 	_Out_	PHANDLE KeyHandle,
 	_In_	ACCESS_MASK DesiredAccess,
@@ -4995,6 +5100,15 @@ NTSTATUS NTAPI NtQueryValueKey(
 	_Out_      PULONG ResultLength
 	);
 
+NTSTATUS NTAPI NtSetValueKey(
+    _In_     HANDLE KeyHandle,
+    _In_     PUNICODE_STRING ValueName,
+    _In_opt_ ULONG TitleIndex,
+    _In_     ULONG Type,
+    _In_     PVOID Data,
+    _In_     ULONG DataSize
+   );
+
 NTSTATUS NTAPI NtDeleteKey(
 	_In_       HANDLE KeyHandle
 	);
@@ -5003,6 +5117,14 @@ NTSTATUS NTAPI NtDeleteValueKey(
 	_In_       HANDLE KeyHandle,
 	_In_       PUNICODE_STRING ValueName
 	);
+
+NTSTATUS NTAPI NtLoadDriver(
+    _In_ PUNICODE_STRING DriverServiceName
+    );
+
+NTSTATUS NTAPI NtUnloadDriver(
+    _In_ PUNICODE_STRING DriverServiceName
+    );
 
 NTSTATUS NTAPI NtOpenJobObject(
 	_Out_	PHANDLE JobHandle,

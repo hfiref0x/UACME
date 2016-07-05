@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.10
+*  VERSION:     2.40
 *
-*  DATE:        16 Apr 2016
+*  DATE:        01 July 2016
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -33,6 +33,7 @@
 #include <ntstatus.h>
 #include "..\shared\minirtl.h"
 #include "unbcl.h"
+#include "wbemcomn.h"
 
 #if (_MSC_VER >= 1900) 
 #ifdef _DEBUG
@@ -54,7 +55,7 @@
 * Stub for fake exports.
 *
 */
-VOID WINAPI DummyFunc(
+VOID __declspec(dllexport) WINAPI DummyFunc(
     VOID
 )
 {
@@ -204,7 +205,7 @@ BOOL ucmQueryCustomParameter(
 *
 * Purpose:
 *
-* Proxy dll entry point, start cmd.exe and exit immediatelly.
+* Proxy dll entry point, process parameter if exist or start cmd.exe and exit immediatelly.
 *
 */
 BOOL WINAPI DllMain(

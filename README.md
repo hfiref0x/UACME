@@ -25,20 +25,21 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 10 - Hybrid method, abusing appinfo.dll way of whitelisting autoelevated applications and KnownDlls cache changes, works from Windows 7 up to 10th2 10532;
 * 11 - WinNT/Gootkit second method based on the memory patching from MS "Fix it" patch shim (and as side effect - arbitrary dll injection), works from Windows 7 up to 8.1.9600;
 * 12 - Windows 10 sysprep method, abusing different dll dependency added in Windows 10 (works up to 10th2 10558);
-* 13 - Hybrid method, abusing appinfo.dll way of whitelisting MMC console commands and EventViewer missing dependency, works from Windows 7 up to 10rs1 14295;
+* 13 - Hybrid method, abusing Microsoft Management Console and EventViewer missing dependency, works from Windows 7 up to 10rs1 14295;
 * 14 - WinNT/Sirefef method, abusing appinfo.dll way of whitelisting OOBE.exe, works from Windows 7 up to 10th2 10558;
 * 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10rs1 14295;
 * 16 - Hybrid method working together with Microsoft GWX backdoor, works from Windows 7 up to 10rs1 14295;
 * 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, works from Windows 8.1 (9600) up to 10rs1 14367;
 * 18 - Hybrid method, abuses SxS undocumented backdoor used to fix (1) and appinfo whitelist, works from Windows 7 up to 10rs1 14367;
-* 19 - Hybrid method, using InetMgr IIS module and based on 10 & 16 MS fixes, works from Windows 7 up to 10rs1 14372.
+* 19 - Hybrid method, using InetMgr IIS module and based on 10 & 16 MS fixes, works from Windows 7 up to 10rs1 14372;
+* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs1 14379.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
 * Method (4) unavailable in 64 bit edition because of Shim restriction;
 * Method (6) unavailable in wow64 environment starting from Windows 8.
 * Method (11) implemented in x86-32 version;
-* Method (13) (19) implemented only in x64 version.
+* Method (13) (19) (20) implemented only in x64 version.
 
 Run examples:
 * akagi32.exe 1
@@ -52,7 +53,8 @@ Run examples:
 * Using (5), (9) methods will permanently compromise security of target keys (UAC Settings key for (5) and IFEO for (9)), if you do tests on your real machine - restore keys security manually after you complete this tool usage;
 * This tool is not intended for AV tests and not tested to work in aggressive AV environment, if you still plan to use it with installed bloatware AV soft - you use it at your own risk;
 * Some AV may flag this tool as HackTool, MSE/WinDefender constantly marks it as malware, nope;
-* If you run this program on real computer remember to remove all program leftovers after usage, for more info about files it drops to system folders see source code.
+* If you run this program on real computer remember to remove all program leftovers after usage, for more info about files it drops to system folders see source code;
+* Since 2.4 all added methods/code will be strictly x64. I don't see any sense in supporting 32 bit versions of Windows in 2016 year.
 
 # Microsoft countermeasures
 Methods fixed:
@@ -76,7 +78,7 @@ Methods fixed:
 * 18 - Windows 10 RS1 starting from public 14371 build;
 * 19 - Windows 10 RS1 starting from public 14376 build.
 
-** Nice work MS, this cat approves it (((((=^_^=
+** 20 not fixed as at 05 July 2016.
 
 # Protection
 * UAC turned on maximum level and full awareness about every window it will show;

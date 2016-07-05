@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     2.30
+*  VERSION:     2.40
 *
-*  DATE:        14 June 2016
+*  DATE:        01 July 2016
 *
 *  Compression support.
 *
@@ -24,10 +24,12 @@
 #ifdef _WIN64
 #include "modules\hibiki64.h"
 #include "modules\fubuki64.h"
+//#include "modules\hatsuyuki64.h"
 #include "modules\kongou64.h"
 #else
 #include "modules\hibiki32.h"
 #include "modules\fubuki32.h"
+//#include "modules\hatsuyuki32.h"
 #include "modules\kongou32.h"
 #endif
 #endif
@@ -221,6 +223,8 @@ VOID CompressPayload(
     PUCHAR Data;
     ULONG FinalCompressedSize = 0;
 
+    //Process Fubuki
+
 #ifdef _WIN64
     Data = CompressBufferLZNT1((PUCHAR)Fubuki64, sizeof(Fubuki64), &FinalCompressedSize);
 #else
@@ -241,6 +245,30 @@ VOID CompressPayload(
 
     FinalCompressedSize = 0;
 
+    //Process Hatsuyuki
+/*
+#ifdef _WIN64
+    Data = CompressBufferLZNT1((PUCHAR)Hatsuyuki64, sizeof(Hatsuyuki64), &FinalCompressedSize);
+#else
+    Data = CompressBufferLZNT1((PUCHAR)Hatsuyuki32, sizeof(Hatsuyuki32), &FinalCompressedSize);
+#endif
+
+    if (Data) {
+
+        EncodeBuffer(Data, FinalCompressedSize);
+
+#ifdef _WIN64
+        supWriteBufferToFile(TEXT("hatsuyuki64.cd"), Data, FinalCompressedSize);
+#else
+        supWriteBufferToFile(TEXT("hatsuyuki32.cd"), Data, FinalCompressedSize);
+#endif
+        VirtualFree(Data, 0, MEM_RELEASE);
+    }*/
+
+    FinalCompressedSize = 0;
+
+    //Process Hibiki
+
 #ifdef _WIN64
     Data = CompressBufferLZNT1((PUCHAR)Hibiki64, sizeof(Hibiki64), &FinalCompressedSize);
 #else
@@ -259,6 +287,8 @@ VOID CompressPayload(
     }
 
     FinalCompressedSize = 0;
+
+    //Process Kongou
 
 #ifdef _WIN64
     Data = CompressBufferLZNT1((PUCHAR)Kongou64, sizeof(Kongou64), &FinalCompressedSize);

