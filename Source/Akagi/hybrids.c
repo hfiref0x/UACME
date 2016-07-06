@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.30
+*  VERSION:     2.40
 *
-*  DATE:        17 June 2016
+*  DATE:        01 July 2016
 *
 *  Hybrid UAC bypass methods.
 *
@@ -339,7 +339,7 @@ BOOL ucmMMCMethod(
 
         //run mmc console
         //because of mmc harcoded backdoor uac will autoelevate mmc with valid and trusted MS command.
-       //yuubari identified multiple exploits in msc commands loading scheme.
+        //yuubari identified multiple exploits in msc commands loading scheme.
         bResult = supRunProcess(MMC_EXE, lpMscFile);
 
     } while (cond);

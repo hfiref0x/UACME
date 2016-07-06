@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.40
 *
-*  DATE:        01 July 2016
+*  DATE:        06 July 2016
 *
 *  Global consts definition file.
 *
@@ -63,7 +63,7 @@
 #define EXPLORER_EXE                L"explorer.exe"
 #define TASKHOST_EXE                L"taskhost.exe"
 #define TZSYNC_EXE                  L"tzsync.exe"
-#define SYSPREP_EXE                 L"sysprep\\sysprep.exe" //always in this dir (appinfo hardcoded)
+#define SYSPREP_EXE                 L"sysprep.exe" 
 #define SETUPSQM_EXE                L"oobe\\setupsqm.exe"   //always in this dir
 #define MIGWIZ_EXE                  L"migwiz.exe"
 #define SPINSTALL_EXE               L"spinstall.exe"
