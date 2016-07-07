@@ -161,6 +161,12 @@
     <ClInclude Include="manifest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="modules\Ikazuchi32.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\Ikazuchi64.h">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">

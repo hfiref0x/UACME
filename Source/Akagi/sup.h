@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.30
+*  VERSION:     2.50
 *
-*  DATE:        17 June 2016
+*  DATE:        07 July 2016
 *
 *  Common header file for the program support routines.
 *
@@ -19,6 +19,12 @@
 #pragma once
 
 typedef BOOL(CALLBACK *UCM_FIND_FILE_CALLBACK)(WIN32_FIND_DATA *fdata, LPWSTR lpDirectory);
+
+typedef struct _SXS_SEARCH_CONTEXT {
+    LPWSTR DllName;
+    LPWSTR PartialPath;
+    LPWSTR FullDllPath;
+} SXS_SEARCH_CONTEXT, *PSXS_SEARCH_CONTEXT;
 
 BOOLEAN supIsProcess32bit(
     _In_ HANDLE hProcess
@@ -98,6 +104,12 @@ BOOL supScanFiles(
 
 VOID supCheckMSEngineVFS(
     VOID
+    );
+
+VOID NTAPI sxsFindDllCallback(
+    _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
+    _In_ PVOID Context,
+    _In_ OUT BOOLEAN *StopEnumeration
     );
 
 #define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)

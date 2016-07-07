@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     2.40
+*  VERSION:     2.50
 *
-*  DATE:        01 July 2016
+*  DATE:        07 July 2016
 *
 *  Compression support.
 *
@@ -24,12 +24,12 @@
 #ifdef _WIN64
 #include "modules\hibiki64.h"
 #include "modules\fubuki64.h"
-//#include "modules\hatsuyuki64.h"
+#include "modules\ikazuchi64.h"
 #include "modules\kongou64.h"
 #else
 #include "modules\hibiki32.h"
 #include "modules\fubuki32.h"
-//#include "modules\hatsuyuki32.h"
+#include "modules\ikazuchi32.h"
 #include "modules\kongou32.h"
 #endif
 #endif
@@ -245,12 +245,12 @@ VOID CompressPayload(
 
     FinalCompressedSize = 0;
 
-    //Process Hatsuyuki
-/*
+    //Process Ikazuchi
+
 #ifdef _WIN64
-    Data = CompressBufferLZNT1((PUCHAR)Hatsuyuki64, sizeof(Hatsuyuki64), &FinalCompressedSize);
+    Data = CompressBufferLZNT1((PUCHAR)Ikazuchi64, sizeof(Ikazuchi64), &FinalCompressedSize);
 #else
-    Data = CompressBufferLZNT1((PUCHAR)Hatsuyuki32, sizeof(Hatsuyuki32), &FinalCompressedSize);
+    Data = CompressBufferLZNT1((PUCHAR)Ikazuchi32, sizeof(Ikazuchi32), &FinalCompressedSize);
 #endif
 
     if (Data) {
@@ -258,12 +258,12 @@ VOID CompressPayload(
         EncodeBuffer(Data, FinalCompressedSize);
 
 #ifdef _WIN64
-        supWriteBufferToFile(TEXT("hatsuyuki64.cd"), Data, FinalCompressedSize);
+        supWriteBufferToFile(TEXT("Ikazuchi64.cd"), Data, FinalCompressedSize);
 #else
-        supWriteBufferToFile(TEXT("hatsuyuki32.cd"), Data, FinalCompressedSize);
+        supWriteBufferToFile(TEXT("Ikazuchi32.cd"), Data, FinalCompressedSize);
 #endif
         VirtualFree(Data, 0, MEM_RELEASE);
-    }*/
+    }
 
     FinalCompressedSize = 0;
 

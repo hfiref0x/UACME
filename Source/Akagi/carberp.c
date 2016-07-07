@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     2.20
+*  VERSION:     2.50
 *
-*  DATE:        22 Apr 2016
+*  DATE:        06 July 2016
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.

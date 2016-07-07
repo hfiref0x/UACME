@@ -78,7 +78,7 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>.\output\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>.\output\$(Platform)\$(Configuration)\</IntDir>
-    <CodeAnalysisRuleSet>..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\SecurityRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>SecurityRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -119,6 +119,9 @@
       <ShowProgress>true</ShowProgress>
       <PreprocessorDefinitions>useRc32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles>akagi.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -142,6 +145,9 @@
     <ResourceCompile>
       <ShowProgress>true</ShowProgress>
     </ResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles>akagi.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -177,6 +183,9 @@
       <ShowProgress>true</ShowProgress>
       <PreprocessorDefinitions>useRc32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles>akagi.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -211,6 +220,9 @@
     <ResourceCompile>
       <ShowProgress>true</ShowProgress>
     </ResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles>akagi.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Shared\cmdline.c" />
@@ -254,6 +266,8 @@
     <ClInclude Include="modules\fubuki64.h" />
     <ClInclude Include="modules\hibiki32.h" />
     <ClInclude Include="modules\hibiki64.h" />
+    <ClInclude Include="modules\Ikazuchi32.h" />
+    <ClInclude Include="modules\Ikazuchi64.h" />
     <ClInclude Include="modules\inazuma32.h" />
     <ClInclude Include="modules\kongou32.h" />
     <ClInclude Include="modules\kongou64.h" />

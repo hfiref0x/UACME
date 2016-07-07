@@ -5,9 +5,9 @@
 *
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     2.20
+*  VERSION:     2.50
 *
-*  DATE:        20 May 2016
+*  DATE:        06 July 2016
 *
 *  Gootkit based AutoElevation using AppCompat.
 *
@@ -36,9 +36,9 @@ pfnSdbCommitIndexes        SdbCommitIndexes;
 pfnSdbDeclareIndex         SdbDeclareIndex;
 
 static const WCHAR  SHIMPATCH_BINARYNAME[] = L"binarypatch01";
-static const WCHAR  SHIMPATCH_EXENAME[] = L"iscsicli.exe";
-static const WCHAR  SHIMPATCH_MSFTFULL[] = L"Microsoft Corporation";
-static const WCHAR  SHIM_SDBINSTALLER[] = L"%ws\\sdbinst.exe";
+static const WCHAR  SHIMPATCH_EXENAME[] =    L"iscsicli.exe";
+static const WCHAR  SHIMPATCH_MSFTFULL[] =   L"Microsoft Corporation";
+static const WCHAR  SHIM_SDBINSTALLER[] =    L"%ws\\sdbinst.exe";
 
 /*
 * ucmInitAppHelp

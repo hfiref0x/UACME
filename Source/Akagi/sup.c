@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.30
+*  VERSION:     2.50
 *
-*  DATE:        17 June 2016
+*  DATE:        06 July 2016
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -314,6 +314,8 @@ BOOL supSetParameter(
         if ((lRet != ERROR_SUCCESS) || (hKey == NULL)) {
             break;
         }
+
+        RegSetValueExW(hKey, T_AKAGI_FLAG, 0, REG_DWORD, (BYTE *)&g_ctx.Flag, sizeof(DWORD));
 
         lRet = RegSetValueExW(hKey, T_AKAGI_PARAM, 0, REG_SZ,
             (LPBYTE)lpParameter, cbParameter);
@@ -647,4 +649,78 @@ VOID supCheckMSEngineVFS(
     if (_strstri(szBuffer, szMsEngVFS) != NULL) {
         ExitProcess((UINT)0);
     }
+}
+
+/*
+* sxsFilePathNoSlash
+*
+* Purpose:
+*
+* same as _filepath except it doesnt return last slash.
+*
+*/
+wchar_t *sxsFilePathNoSlash(
+    const wchar_t *fname, 
+    wchar_t *fpath
+    )
+{
+    wchar_t *p = (wchar_t *)fname, *p0 = (wchar_t*)fname, *p1 = (wchar_t*)fpath;
+
+    if ((fname == 0) || (fpath == NULL))
+        return 0;
+
+    while (*fname != (wchar_t)0) {
+        if (*fname == '\\')
+            p = (wchar_t *)fname;
+        fname++;
+    }
+
+    while (p0 < p) {
+        *p1 = *p0;
+        p1++;
+        p0++;
+    }
+    *p1 = 0;
+
+    return fpath;
+}
+
+/*
+* sxsFindDllCallback
+*
+* Purpose:
+*
+* LdrEnumerateLoadedModules callback used to lookup sxs dlls from loader list.
+*
+*/
+VOID NTAPI sxsFindDllCallback(
+    _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
+    _In_ PVOID Context,
+    _In_ OUT BOOLEAN *StopEnumeration
+    )
+{
+    BOOL bCond = FALSE;
+    BOOLEAN bFound = FALSE;
+    PSXS_SEARCH_CONTEXT sctx = (PSXS_SEARCH_CONTEXT)Context;
+
+    do {
+
+        if ((DataTableEntry->BaseDllName.Buffer == NULL) ||
+            (DataTableEntry->FullDllName.Buffer == NULL))
+            break;
+
+        if (_strcmpi(DataTableEntry->BaseDllName.Buffer, sctx->DllName) != 0)
+            break;
+
+        if (_strstri(DataTableEntry->FullDllName.Buffer, sctx->PartialPath) == NULL)
+            break;
+
+        if (sxsFilePathNoSlash(DataTableEntry->FullDllName.Buffer, sctx->FullDllPath) == NULL)
+            break;
+
+        bFound = TRUE;
+
+    } while (bCond);
+
+    *StopEnumeration = bFound;
 }

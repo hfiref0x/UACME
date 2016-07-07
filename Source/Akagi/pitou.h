@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.H
 *
-*  VERSION:     2.20
+*  VERSION:     2.50
 *
-*  DATE:        25 May 2016
+*  DATE:        06 July 2016
 *
 *  Prototypes and definitions for Leo Davidson method.
 *
@@ -24,7 +24,12 @@ BOOL ucmStandardAutoElevation(
     DWORD ProxyDllSize
     );
 
-BOOL ucmMasqueradedCopyFileCOM(
+BOOL ucmMasqueradedCreateSubDirectoryCOM(
+    LPWSTR ParentDirectory,
+    LPWSTR SubDirectory
+    );
+
+BOOL ucmMasqueradedMoveFileCOM(
     LPWSTR SourceFileName,
     LPWSTR DestinationDir
     );
@@ -32,4 +37,9 @@ BOOL ucmMasqueradedCopyFileCOM(
 BOOL ucmStandardAutoElevation2(
     CONST PVOID ProxyDll,
     DWORD ProxyDllSize
+    );
+
+BOOL ucmMasqueradedRenameElementCOM(
+    LPWSTR OldName,
+    LPWSTR NewName
     );

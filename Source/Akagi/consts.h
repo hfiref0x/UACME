@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.40
+*  VERSION:     2.50
 *
-*  DATE:        06 July 2016
+*  DATE:        07 July 2016
 *
 *  Global consts definition file.
 *
@@ -39,6 +39,7 @@
 #define OLE32_DLL                   L"ole32.dll"
 #define SHELL32_DLL                 L"shell32.dll"
 #define APPHELP_DLL                 L"apphelp.dll"
+#define COMCTL32_DLL                L"comctl32.dll"
 #define HIBIKI_DLL                  L"Hibiki.dll"
 #define WBEMCOMN_DLL                L"wbemcomn.dll"
 #define SLC_DLL                     L"SLC.dll"
@@ -67,6 +68,8 @@
 #define SETUPSQM_EXE                L"oobe\\setupsqm.exe"   //always in this dir
 #define MIGWIZ_EXE                  L"migwiz.exe"
 #define SPINSTALL_EXE               L"spinstall.exe"
+#define CONSENT_EXE                 L"consent.exe"
+#define EVENTVWR_EXE                L"eventvwr.exe"
 #define SYSPREP_DIR                 L"sysprep\\"
 #define INETSRV_DIR                 L"inetsrv\\"
 #define WBEM_DIR                    L"wbem\\"
@@ -75,9 +78,12 @@
 #define EVENTVWR_MSC                L"eventvwr.msc"
 #define RSOP_MSC                    L"rsop.msc"
 
+#define LOCAL_SXS                   L".local"
+#define FAKE_LOCAL_SXS              L".hawawa"
 #define INETMGR_SXS                 L"microsoft-windows-iis-managementconsole"
+#define COMCTL32_SXS                L"microsoft.windows.common-controls"
 
-#define APPCMDLINE                  L"WindsOfWinter"
+#define APPCMDLINE                  L"I'm going to help!"
 #define PROGRAMTITLE                L"UACMe"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
@@ -88,6 +94,7 @@
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
 #define T_AKAGI_KEY                 L"Software\\Akagi"
 #define T_AKAGI_PARAM               L"LoveLetter"
+#define T_AKAGI_FLAG                L"Flag"
 #define T_TARGETNOTFOUND            L"Target application not found"
 #define T_TARGETALREADYEXIST        L"[UCM] Target file already exists, abort"
 

@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.40
+*  VERSION:     2.50
 *
-*  DATE:        01 July 2016
+*  DATE:        07 July 2016
 *
 *  Common header file for the program support routines.
 *
@@ -49,13 +49,13 @@
 #define FUBUKI_ID IDR_FUBUKI64
 #define HIBIKI_ID IDR_HIBIKI64
 #define KONGOU_ID IDR_KONGOU64
-//#define HATSUYUKI_ID IDR_HATSUYUKI64
+#define IKAZUCHI_ID IDR_IKAZUCHI64
 #else
 #include "bin32res.h"
 #define FUBUKI_ID IDR_FUBUKI32
 #define HIBIKI_ID IDR_HIBIKI32
 #define KONGOU_ID IDR_KONGOU32
-//#define HATSUYUKI_ID IDR_HATSUYUKI32
+#define IKAZUCHI_ID IDR_IKAZUCHI32
 #endif
 
 typedef enum _UACBYPASSMETHOD {
@@ -79,12 +79,16 @@ typedef enum _UACBYPASSMETHOD {
     UacMethodManifest,
     UacMethodInetMgr,
     UacMethodMMC2,
-    //UacMethod21,
+    UacMethodSXS,
+    UacMethodSXSConsent,
+    //UacMethod23,
     UacMethodMax
 } UACBYPASSMETHOD;
 
 #include <Windows.h>
 #include <ntstatus.h>
+#include <CommCtrl.h>
+#include <shlobj.h>
 #include "..\shared\ntos.h"
 #include "..\shared\minirtl.h"
 #include "..\Shared\cmdline.h"
@@ -98,6 +102,12 @@ typedef enum _UACBYPASSMETHOD {
 #include "carberp.h"
 #include "hybrids.h"
 
+//default execution flow
+#define AKAGI_FLAG_KILO  0
+
+//suppress all additional output
+#define AKAGI_FLAG_TANGO 1
+
 typedef struct _UACME_CONTEXT {
     BOOL                IsWow64;
     UACBYPASSMETHOD     Method;
@@ -108,6 +118,7 @@ typedef struct _UACME_CONTEXT {
     PVOID               PayloadDll;
     ULONG               PayloadDllSize;
     ULONG               dwBuildNumber;
+    ULONG               Flag;
     WCHAR               szSystemDirectory[MAX_PATH + 1];//with end slash
     WCHAR               szTempDirectory[MAX_PATH + 1]; //with end slash
 } UACMECONTEXT, *PUACMECONTEXT;

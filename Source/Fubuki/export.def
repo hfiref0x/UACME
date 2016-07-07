@@ -53,3 +53,4 @@ ClrCreateManagedInstance    = DummyFunc
 CorBindToRuntimeEx          = DummyFunc
 LoadLibraryShim             = DummyFunc
 DpxNewJob                   = DummyFunc
+InitCommonControlsEx        = DummyFunc
