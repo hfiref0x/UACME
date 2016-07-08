@@ -32,9 +32,9 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, works from Windows 8.1 (9600) up to 10rs1 14367;
 * 18 - Hybrid method, abuses SxS undocumented backdoor used to fix (1) and appinfo whitelist, works from Windows 7 up to 10rs1 14367;
 * 19 - Hybrid method, using InetMgr IIS module and based on 10 & 16 MS fixes, works from Windows 7 up to 10rs1 14372;
-* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs1 14379;
-* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs1 14379;
-* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs1 14379.
+* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs1 14383;
+* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs1 14383;
+* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs1 14383.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -80,7 +80,7 @@ Methods fixed:
 * 18 - Windows 10 RS1 starting from public 14371 build;
 * 19 - Windows 10 RS1 starting from public 14376 build.
 
-** 20, 21, 22 are not fixed as at 07 July 2016.
+** 20, 21, 22 are not fixed as at 08 July 2016.
 
 # Protection
 * UAC turned on maximum level and full awareness about every window it will show;
@@ -101,6 +101,8 @@ Methods fixed:
 
 * Windows 7 UAC whitelist, http://www.pretentiousname.com/misc/win7_uac_whitelist2.html
 * Malicious Application Compatibility Shims, https://www.blackhat.com/docs/eu-15/materials/eu-15-Pierce-Defending-Against-Malicious-Application-Compatibility-Shims-wp.pdf
+* Junfeng Zhang's from WinSxS dev team blog, https://blogs.msdn.microsoft.com/junfeng/
+* KernelMode.Info UACMe thread, http://www.kernelmode.info/forum/viewtopic.php?f=11&t=3643
 
  
 # Authors

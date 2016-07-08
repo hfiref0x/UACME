@@ -23,7 +23,7 @@
 *
 * Purpose:
 *
-* Create directory autoelevated.
+* Rename file/directory autoelevated.
 *
 */
 BOOL ucmMasqueradedRenameElementCOM(
