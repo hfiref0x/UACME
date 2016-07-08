@@ -102,6 +102,7 @@ Methods fixed:
 * Windows 7 UAC whitelist, http://www.pretentiousname.com/misc/win7_uac_whitelist2.html
 * Malicious Application Compatibility Shims, https://www.blackhat.com/docs/eu-15/materials/eu-15-Pierce-Defending-Against-Malicious-Application-Compatibility-Shims-wp.pdf
 * Junfeng Zhang's from WinSxS dev team blog, https://blogs.msdn.microsoft.com/junfeng/
+* Beyond good ol' Run key, series of articles, http://www.hexacorn.com/blog
 * KernelMode.Info UACMe thread, http://www.kernelmode.info/forum/viewtopic.php?f=11&t=3643
 
  
