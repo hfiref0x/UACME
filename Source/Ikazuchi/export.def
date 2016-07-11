@@ -1,3 +1,2 @@
 EXPORTS
-DllRegisterServer           = DummyFunc PRIVATE
 TaskDialogIndirect          = TaskDialogIndirectForward @345

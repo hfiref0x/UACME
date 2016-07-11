@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.46
+*  VERSION:     1.47
 *
-*  DATE:        07 July 2016
+*  DATE:        10 July 2016
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -78,6 +78,13 @@
 #define SYMBOLIC_LINK_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | 0x1)
 
 #define THREAD_ALERT	(0x0004)
+
+#define THREAD_CREATE_FLAGS_CREATE_SUSPENDED 0x00000001
+#define THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH 0x00000002 
+#define THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER 0x00000004
+#define THREAD_CREATE_FLAGS_HAS_SECURITY_DESCRIPTOR 0x00000010 
+#define THREAD_CREATE_FLAGS_ACCESS_CHECK_IN_TARGET 0x00000020 
+#define THREAD_CREATE_FLAGS_INITIAL_THREAD 0x00000080
 
 #define WORKER_FACTORY_RELEASE_WORKER 0x0001
 #define WORKER_FACTORY_WAIT 0x0002
@@ -652,6 +659,90 @@ typedef struct _PS_PROTECTION
         };
     };
 } PS_PROTECTION, *PPS_PROTECTION;
+
+// begin_rev
+#define PS_ATTRIBUTE_NUMBER_MASK 0x0000ffff
+#define PS_ATTRIBUTE_THREAD 0x00010000 
+#define PS_ATTRIBUTE_INPUT 0x00020000 
+#define PS_ATTRIBUTE_ADDITIVE 0x00040000 
+// end_rev
+
+typedef enum _PS_ATTRIBUTE_NUM {
+    PsAttributeParentProcess, 
+    PsAttributeDebugPort, 
+    PsAttributeToken, 
+    PsAttributeClientId, 
+    PsAttributeTebAddress, 
+    PsAttributeImageName, 
+    PsAttributeImageInfo, 
+    PsAttributeMemoryReserve,
+    PsAttributePriorityClass, 
+    PsAttributeErrorMode, 
+    PsAttributeStdHandleInfo, 
+    PsAttributeHandleList,
+    PsAttributeGroupAffinity, 
+    PsAttributePreferredNode, 
+    PsAttributeIdealProcessor,
+    PsAttributeUmsThread,
+    PsAttributeMitigationOptions, 
+    PsAttributeProtectionLevel,
+    PsAttributeSecureProcess, 
+    PsAttributeJobList,
+    PsAttributeMax
+} PS_ATTRIBUTE_NUM;
+
+#define PsAttributeValue(Number, Thread, Input, Unknown) \
+    (((Number) & PS_ATTRIBUTE_NUMBER_MASK) | \
+    ((Thread) ? PS_ATTRIBUTE_THREAD : 0) | \
+    ((Input) ? PS_ATTRIBUTE_INPUT : 0) | \
+    ((Unknown) ? PS_ATTRIBUTE_ADDITIVE : 0))
+
+#define PS_ATTRIBUTE_PARENT_PROCESS \
+    PsAttributeValue(PsAttributeParentProcess, FALSE, TRUE, TRUE)
+#define PS_ATTRIBUTE_DEBUG_PORT \
+    PsAttributeValue(PsAttributeDebugPort, FALSE, TRUE, TRUE)
+#define PS_ATTRIBUTE_TOKEN \
+    PsAttributeValue(PsAttributeToken, FALSE, TRUE, TRUE)
+#define PS_ATTRIBUTE_CLIENT_ID \
+    PsAttributeValue(PsAttributeClientId, TRUE, FALSE, FALSE)
+#define PS_ATTRIBUTE_TEB_ADDRESS \
+    PsAttributeValue(PsAttributeTebAddress, TRUE, FALSE, FALSE)
+#define PS_ATTRIBUTE_IMAGE_NAME \
+    PsAttributeValue(PsAttributeImageName, FALSE, TRUE, FALSE)
+#define PS_ATTRIBUTE_IMAGE_INFO \
+    PsAttributeValue(PsAttributeImageInfo, FALSE, FALSE, FALSE)
+#define PS_ATTRIBUTE_MEMORY_RESERVE \
+    PsAttributeValue(PsAttributeMemoryReserve, FALSE, TRUE, FALSE)
+#define PS_ATTRIBUTE_PRIORITY_CLASS \
+    PsAttributeValue(PsAttributePriorityClass, FALSE, TRUE, FALSE)
+#define PS_ATTRIBUTE_ERROR_MODE \
+    PsAttributeValue(PsAttributeErrorMode, FALSE, TRUE, FALSE)
+#define PS_ATTRIBUTE_STD_HANDLE_INFO \
+    PsAttributeValue(PsAttributeStdHandleInfo, FALSE, TRUE, FALSE)
+#define PS_ATTRIBUTE_HANDLE_LIST \
+    PsAttributeValue(PsAttributeHandleList, FALSE, TRUE, FALSE)
+#define PS_ATTRIBUTE_GROUP_AFFINITY \
+    PsAttributeValue(PsAttributeGroupAffinity, TRUE, TRUE, FALSE)
+#define PS_ATTRIBUTE_PREFERRED_NODE \
+    PsAttributeValue(PsAttributePreferredNode, FALSE, TRUE, FALSE)
+#define PS_ATTRIBUTE_IDEAL_PROCESSOR \
+    PsAttributeValue(PsAttributeIdealProcessor, TRUE, TRUE, FALSE)
+#define PS_ATTRIBUTE_MITIGATION_OPTIONS \
+    PsAttributeValue(PsAttributeMitigationOptions, FALSE, TRUE, TRUE)
+
+
+#define RTL_USER_PROC_PARAMS_NORMALIZED     0x00000001
+#define RTL_USER_PROC_PROFILE_USER          0x00000002
+#define RTL_USER_PROC_PROFILE_KERNEL        0x00000004
+#define RTL_USER_PROC_PROFILE_SERVER        0x00000008
+#define RTL_USER_PROC_RESERVE_1MB           0x00000020
+#define RTL_USER_PROC_RESERVE_16MB          0x00000040
+#define RTL_USER_PROC_CASE_SENSITIVE        0x00000080
+#define RTL_USER_PROC_DISABLE_HEAP_DECOMMIT 0x00000100
+#define RTL_USER_PROC_DLL_REDIRECTION_LOCAL 0x00001000
+#define RTL_USER_PROC_APP_MANIFEST_PRESENT  0x00002000
+#define RTL_USER_PROC_IMAGE_KEY_MISSING     0x00004000
+#define RTL_USER_PROC_OPTIN_PROCESS         0x00020000
 
 /*
 ** Processes END
@@ -3038,6 +3129,31 @@ typedef LDR_DATA_TABLE_ENTRY_COMPATIBLE LDR_DATA_TABLE_ENTRY;
 typedef LDR_DATA_TABLE_ENTRY_COMPATIBLE *PLDR_DATA_TABLE_ENTRY;
 typedef LDR_DATA_TABLE_ENTRY *PCLDR_DATA_TABLE_ENTRY;
 
+typedef struct _LDR_DLL_LOADED_NOTIFICATION_DATA {
+    ULONG Flags;                    //Reserved.
+    PCUNICODE_STRING FullDllName;   //The full path name of the DLL module.
+    PCUNICODE_STRING BaseDllName;   //The base file name of the DLL module.
+    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
+    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
+} LDR_DLL_LOADED_NOTIFICATION_DATA, *PLDR_DLL_LOADED_NOTIFICATION_DATA;
+
+typedef struct _LDR_DLL_UNLOADED_NOTIFICATION_DATA {
+    ULONG Flags;                    //Reserved.
+    PCUNICODE_STRING FullDllName;   //The full path name of the DLL module.
+    PCUNICODE_STRING BaseDllName;   //The base file name of the DLL module.
+    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
+    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
+} LDR_DLL_UNLOADED_NOTIFICATION_DATA, *PLDR_DLL_UNLOADED_NOTIFICATION_DATA;
+
+typedef union _LDR_DLL_NOTIFICATION_DATA {
+    LDR_DLL_LOADED_NOTIFICATION_DATA Loaded;
+    LDR_DLL_UNLOADED_NOTIFICATION_DATA Unloaded;
+} LDR_DLL_NOTIFICATION_DATA, *PLDR_DLL_NOTIFICATION_DATA;
+typedef const LDR_DLL_NOTIFICATION_DATA *PCLDR_DLL_NOTIFICATION_DATA;
+
+#define LDR_DLL_NOTIFICATION_REASON_LOADED   1
+#define LDR_DLL_NOTIFICATION_REASON_UNLOADED 2
+
 /*
 * WDM END
 */
@@ -3548,6 +3664,9 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS
 
 	ULONG EnvironmentSize;
 	ULONG EnvironmentVersion;
+    PVOID PackageDependencyData; //8+
+    ULONG ProcessGroupId;
+   // ULONG LoaderThreads;
 } RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
 
 typedef struct _PEB
@@ -4114,6 +4233,13 @@ VOID(NTAPI *PLDR_LOADED_MODULE_ENUMERATION_CALLBACK_FUNCTION)(
 	_Inout_ BOOLEAN *StopEnumeration
 	);
 
+typedef
+VOID (CALLBACK *PLDR_DLL_NOTIFICATION_FUNCTION)(
+    _In_     ULONG                       NotificationReason,
+    _In_     PCLDR_DLL_NOTIFICATION_DATA NotificationData,
+    _In_opt_ PVOID                       Context
+    );
+
 NTSTATUS NTAPI LdrAccessResource(
 	_In_ PVOID DllHandle,
 	_In_ CONST IMAGE_RESOURCE_DATA_ENTRY* ResourceDataEntry,
@@ -4174,6 +4300,17 @@ NTSTATUS NTAPI LdrQueryProcessModuleInformation(
 NTSTATUS NTAPI LdrUnloadDll(
 	_In_ PVOID DllHandle
 	);
+
+NTSTATUS NTAPI LdrRegisterDllNotification(
+    _In_     ULONG                          Flags,
+    _In_     PLDR_DLL_NOTIFICATION_FUNCTION NotificationFunction,
+    _In_opt_ PVOID                          Context,
+    _Out_    PVOID                          *Cookie
+    );
+
+NTSTATUS NTAPI LdrUnregisterDllNotification(
+    _In_ PVOID Cookie
+    );
 
 /*
 **  LDR END
@@ -4274,6 +4411,32 @@ ULONG NTAPI CsrGetProcessId(
 /*
 ** Runtime Library API START
 */
+
+NTSTATUS NTAPI RtlCreateEnvironment(
+    _In_ BOOLEAN CloneCurrentEnvironment,
+    _Out_ PVOID *Environment
+    );
+
+NTSTATUS NTAPI RtlDestroyEnvironment(
+    _In_ PVOID Environment
+    );
+
+NTSTATUS NTAPI RtlCreateProcessParameters(
+    _Out_ PRTL_USER_PROCESS_PARAMETERS *pProcessParameters,
+    _In_ PUNICODE_STRING ImagePathName,
+    _In_ PUNICODE_STRING DllPath OPTIONAL,
+    _In_ PUNICODE_STRING CurrentDirectory OPTIONAL,
+    _In_ PUNICODE_STRING CommandLine OPTIONAL,
+    _In_ PVOID Environment OPTIONAL,
+    _In_ PUNICODE_STRING WindowTitle OPTIONAL,
+    _In_ PUNICODE_STRING DesktopInfo OPTIONAL,
+    _In_ PUNICODE_STRING ShellInfo OPTIONAL,
+    _In_ PUNICODE_STRING RuntimeData OPTIONAL
+    );
+
+NTSTATUS NTAPI RtlDestroyProcessParameters(
+    _In_ PRTL_USER_PROCESS_PARAMETERS ProcessParameters
+    );
 
 NTSTATUS NTAPI RtlCreateUserProcess(
 	PUNICODE_STRING NtImagePathName,

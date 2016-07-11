@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.50
+*  VERSION:     2.51
 *
-*  DATE:        07 July 2016
+*  DATE:        11 July 2016
 *
 *  Global consts definition file.
 *
@@ -18,7 +18,7 @@
 *******************************************************************************/
 #pragma once
 
-#define AKAGI_XOR_KEY               '.poi'
+#define AKAGI_XOR_KEY               'naka'
 
 #define T_IFEO                      L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"
 #define T_UACKEY                    L"MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system"
@@ -55,6 +55,7 @@
 #define POWRPROF_DLL                L"powrprof.dll"
 #define DEVOBJ_DLL                  L"devobj.dll"
 #define UNBCL_DLL                   L"unbcl.dll"
+#define DISMCORE_DLL                L"dismcore.dll"
 #define CLICONFG_EXE                L"cliconfg.exe"
 #define OOBE_EXE                    L"oobe.exe"
 #define WINSAT_EXE                  L"winsat.exe"
@@ -70,6 +71,7 @@
 #define SPINSTALL_EXE               L"spinstall.exe"
 #define CONSENT_EXE                 L"consent.exe"
 #define EVENTVWR_EXE                L"eventvwr.exe"
+#define PKGMGR_EXE                  L"pkgmgr.exe"
 #define SYSPREP_DIR                 L"sysprep\\"
 #define INETSRV_DIR                 L"inetsrv\\"
 #define WBEM_DIR                    L"wbem\\"
@@ -77,13 +79,14 @@
 #define RUNAS_VERB                  L"runas"
 #define EVENTVWR_MSC                L"eventvwr.msc"
 #define RSOP_MSC                    L"rsop.msc"
+#define PACKAGE_XML                 L"ellocnak.xml"
 
 #define LOCAL_SXS                   L".local"
 #define FAKE_LOCAL_SXS              L".hawawa"
 #define INETMGR_SXS                 L"microsoft-windows-iis-managementconsole"
 #define COMCTL32_SXS                L"microsoft.windows.common-controls"
 
-#define APPCMDLINE                  L"I'm going to help!"
+#define APPCMDLINE                  L"Not a security boundary! Just hack-o-rama. Keep it as is!"
 #define PROGRAMTITLE                L"UACMe"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"

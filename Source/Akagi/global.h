@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.50
+*  VERSION:     2.51
 *
-*  DATE:        07 July 2016
+*  DATE:        10 July 2016
 *
 *  Common header file for the program support routines.
 *
@@ -81,7 +81,8 @@ typedef enum _UACBYPASSMETHOD {
     UacMethodMMC2,
     UacMethodSXS,
     UacMethodSXSConsent,
-    //UacMethod23,
+    UacMethodDISM,
+    //UacMethod24,
     UacMethodMax
 } UACBYPASSMETHOD;
 

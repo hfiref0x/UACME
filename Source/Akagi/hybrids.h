@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     2.50
+*  VERSION:     2.51
 *
-*  DATE:        07 July 2016
+*  DATE:        10 July 2016
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -85,4 +85,9 @@ BOOL ucmSXSMethod(
 
 BOOL ucmSetupAkagiLink(
     VOID
+    );
+
+BOOL ucmDismMethod(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
     );

@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.50
+*  VERSION:     2.51
 *
-*  DATE:        06 July 2016
+*  DATE:        11 July 2016
 *
 *  Program entry point.
 *
@@ -272,10 +272,6 @@ UINT ucmMain()
     WCHAR   szBuffer[MAX_PATH * 2];
     UINT    uResult;
 
-#ifdef GENERATE_COMPRESSED_PAYLOAD
-    CompressPayload();
-#endif
-
     supCheckMSEngineVFS();
 
     uResult = ucmInit();
@@ -508,6 +504,14 @@ UINT ucmMain()
 #endif
         break;
 
+    case UacMethodDISM:
+#ifndef _WIN64
+        ucmShowMessage(WIN64ONLY);
+        return ERROR_UNSUPPORTED_TYPE;
+#else
+#endif
+        break;
+
     }
 
     //prepare command for payload
@@ -731,6 +735,13 @@ UINT ucmMain()
             }
         }
         break;
+
+    case UacMethodDISM:
+        if (ucmDismMethod(g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+            return ERROR_SUCCESS;
+        }
+        break;
+
 #endif
 
     }
@@ -738,7 +749,8 @@ UINT ucmMain()
     return ERROR_ACCESS_DENIED;
 }
 
+
 VOID main()
 {
-     ExitProcess(ucmMain());
+    ExitProcess(ucmMain());
 }
