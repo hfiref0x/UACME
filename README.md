@@ -32,10 +32,10 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, works from Windows 8.1 (9600) up to 10rs1 14367;
 * 18 - Hybrid method, abuses SxS undocumented backdoor used to fix (1) and appinfo whitelist, works from Windows 7 up to 10rs1 14367;
 * 19 - Hybrid method, using InetMgr IIS module and based on 10 & 16 MS fixes, works from Windows 7 up to 10rs1 14372;
-* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs1 14385;
-* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs1 14385;
-* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs1 14385;
-* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs1 14385.
+* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs1 14390;
+* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs1 14390;
+* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs1 14390;
+* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs1 14390.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -81,7 +81,7 @@ Methods fixed:
 * 18 - Windows 10 RS1 starting from public 14371 build;
 * 19 - Windows 10 RS1 starting from public 14376 build.
 
-** 20, 21, 22, 23 are not fixed as at 11 July 2016.
+** 20, 21, 22, 23 are not fixed as at 16 July 2016.
 
 # Protection
 * UAC turned on maximum level and full awareness about every window it will show;
@@ -91,7 +91,8 @@ Methods fixed:
 * It is currently known that UACMe used by Adware/Multiplug (9), by Win32/Dyre (3), by Win32/Empercrypt (10 & 13). We do  not take any responsibility for this tool usage in the malicious purposes. It is free, open-source and provided AS-IS for everyone.
 
 # Other usage
-* Currently used as "signature" by "THOR APT" scanner (handmade pattern matching fraudware from Germany). We do  not take any responsibility for this tool usage in the fraudware.
+* Currently used as "signature" by "THOR APT" scanner (handmade pattern matching fraudware from Germany). We do  not take any responsibility for this tool usage in the fraudware;
+* In July 2016 so-called "security company" Cymmetria released report about script-kiddie malware bundle called "Patchwork" and false flagged it as APT. They stated it was using "UACME method", which in fact is just slightly and unprofessionally modified injector dll from UACMe v1.9 plus using Carberp+Pitou hybrid method in malware self-implemented way. We do not take any responsibility for UACMe usage in the dubious advertising campaigns from third party "security companies".
 
 # VirusTotal reference report
 
@@ -107,7 +108,7 @@ Methods fixed:
 
 * Windows 7 UAC whitelist, http://www.pretentiousname.com/misc/win7_uac_whitelist2.html
 * Malicious Application Compatibility Shims, https://www.blackhat.com/docs/eu-15/materials/eu-15-Pierce-Defending-Against-Malicious-Application-Compatibility-Shims-wp.pdf
-* Junfeng Zhang's from WinSxS dev team blog, https://blogs.msdn.microsoft.com/junfeng/
+* Junfeng Zhang from WinSxS dev team blog, https://blogs.msdn.microsoft.com/junfeng/
 * Beyond good ol' Run key, series of articles, http://www.hexacorn.com/blog
 * KernelMode.Info UACMe thread, http://www.kernelmode.info/forum/viewtopic.php?f=11&t=3643
 
@@ -115,3 +116,8 @@ Methods fixed:
 # Authors
 
 (c) 2014 - 2016 UACMe Project
+
+
+# Discontinued
+
+Project discontinued http://www.kernelmode.info/forum/viewtopic.php?p=28872#p28872. However you are free to fork and continue.
