@@ -3,7 +3,7 @@
 
 # System Requirements
 
-* x86-32/x64 Windows 7/8/8.1/10 (client, some methods however works on server version too).
+* x86-32/x64 Windows 7/8/8.1/10TH1/10TH2/10RS1 (client, some methods however works on server version too).
 * Admin account with UAC set on default settings required.
 
 # Usage
@@ -32,10 +32,10 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, works from Windows 8.1 (9600) up to 10rs1 14367;
 * 18 - Hybrid method, abuses SxS undocumented backdoor used to fix (1) and appinfo whitelist, works from Windows 7 up to 10rs1 14367;
 * 19 - Hybrid method, using InetMgr IIS module and based on 10 & 16 MS fixes, works from Windows 7 up to 10rs1 14372;
-* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs1 14390;
-* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs1 14390;
-* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs1 14390;
-* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs1 14390.
+* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs1 14393;
+* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs1 14393;
+* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs1 14393;
+* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs1 14393.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -81,7 +81,7 @@ Methods fixed:
 * 18 - Windows 10 RS1 starting from public 14371 build;
 * 19 - Windows 10 RS1 starting from public 14376 build.
 
-** 20, 21, 22, 23 are not fixed as at 16 July 2016.
+** 20, 21, 22, 23 are not fixed as at 11 August 2016.
 
 # Protection
 * UAC turned on maximum level and full awareness about every window it will show;
@@ -92,7 +92,7 @@ Methods fixed:
 
 # Other usage
 * Currently used as "signature" by "THOR APT" scanner (handmade pattern matching fraudware from Germany). We do  not take any responsibility for this tool usage in the fraudware;
-* In July 2016 so-called "security company" Cymmetria released report about script-kiddie malware bundle called "Patchwork" and false flagged it as APT. They stated it was using "UACME method", which in fact is just slightly and unprofessionally modified injector dll from UACMe v1.9 plus using Carberp+Pitou hybrid method in malware self-implemented way. We do not take any responsibility for UACMe usage in the dubious advertising campaigns from third party "security companies".
+* In July 2016 so-called "security company" Cymmetria released report about script-kiddie malware bundle called "Patchwork" and false flagged it as APT. They stated it was using "UACME method", which in fact is just slightly and unprofessionally modified injector dll from UACMe v1.9 and was using Carberp/Pitou hybrid method in malware self-implemented way. We do not take any responsibility for UACMe usage in the dubious advertising campaigns from third party "security companies".
 
 # VirusTotal reference report
 
