@@ -81,7 +81,7 @@ Methods fixed:
 * 18 - Windows 10 RS1 starting from public 14371 build;
 * 19 - Windows 10 RS1 starting from public 14376 build.
 
-** 20, 21, 22, 23 are not fixed as at 15 September 2016.
+** 20, 21, 22, 23 are not fixed as at 19 September 2016.
 
 # Protection
 * UAC turned on maximum level and full awareness about every window it will show;
