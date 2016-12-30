@@ -83,6 +83,10 @@ Methods fixed:
 
 ** 20, 21, 22, 23 are not fixed as at 20 December 2016.
 
+If you wondering why this still exist and work here is the explanation, an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
+https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
+
+
 # Protection
 * UAC turned on maximum level and full awareness about every window it will show;
 * Account without administrative privileges.
