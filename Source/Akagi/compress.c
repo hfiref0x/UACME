@@ -89,7 +89,7 @@ PUCHAR DecompressBufferLZNT1(
         CompBuffer,
         CompSize,
         FinalUncompressedSize
-        );
+    );
 
     if (status != STATUS_SUCCESS) { //accept only success value
         if (UncompBuffer) {
@@ -185,46 +185,46 @@ PVOID DecompressPayload(
 *
 */
 CFILE_TYPE GetTargetFileType(
-	VOID *FileBuffer
+    VOID *FileBuffer
     )
 {
-	CFILE_TYPE Result = ftUnknown;
+    CFILE_TYPE Result = ftUnknown;
 
-	if (FileBuffer == NULL)
-		return Result;
+    if (FileBuffer == NULL)
+        return Result;
 
-	//check if file is in compressed format 
-	if (*((BYTE *)FileBuffer) == 'D' &&
-		*((BYTE *)FileBuffer + 1) == 'C' &&
-		*((BYTE *)FileBuffer + 3) == 1
-		)
-	{
-		switch (*((BYTE *)FileBuffer + 2)) {
+    //check if file is in compressed format 
+    if (*((BYTE *)FileBuffer) == 'D' &&
+        *((BYTE *)FileBuffer + 1) == 'C' &&
+        *((BYTE *)FileBuffer + 3) == 1
+        )
+    {
+        switch (*((BYTE *)FileBuffer + 2)) {
 
-		case 'N':
-			Result = ftDCN;
-			break;
+        case 'N':
+            Result = ftDCN;
+            break;
 
-		case 'S':
-			Result = ftDCS;
-			break;
+        case 'S':
+            Result = ftDCS;
+            break;
 
-		default:
-			Result = ftUnknown;
-			break;
+        default:
+            Result = ftUnknown;
+            break;
 
-		}
-	}
-	else {
-		//not compressed, check mz header
-		if (*((BYTE *)FileBuffer) == 'M' &&
-			*((BYTE *)FileBuffer + 1) == 'Z'
-			)
-		{
-			Result = ftMZ;
-		}
-	}
-	return Result;
+        }
+    }
+    else {
+        //not compressed, check mz header
+        if (*((BYTE *)FileBuffer) == 'M' &&
+            *((BYTE *)FileBuffer + 1) == 'Z'
+            )
+        {
+            Result = ftMZ;
+        }
+    }
+    return Result;
 }
 
 /*
@@ -236,38 +236,38 @@ CFILE_TYPE GetTargetFileType(
 *
 */
 BOOL ProcessFileMZ(
-	PVOID SourceFile,
-	SIZE_T SourceFileSize,
-	PVOID *OutputFileBuffer,
-	PSIZE_T OutputFileBufferSize
+    PVOID SourceFile,
+    SIZE_T SourceFileSize,
+    PVOID *OutputFileBuffer,
+    PSIZE_T OutputFileBufferSize
     )
 {
-	BOOL bResult = FALSE;
-	PVOID Ptr;
+    BOOL bResult = FALSE;
+    PVOID Ptr;
 
-	if ((SourceFile == NULL) ||
-		(OutputFileBuffer == NULL) ||
-		(OutputFileBufferSize == NULL) ||
-		(SourceFileSize == 0)
-		)
-	{
-		SetLastError(ERROR_BAD_ARGUMENTS);
-		return FALSE;
-	}
+    if ((SourceFile == NULL) ||
+        (OutputFileBuffer == NULL) ||
+        (OutputFileBufferSize == NULL) ||
+        (SourceFileSize == 0)
+        )
+    {
+        SetLastError(ERROR_BAD_ARGUMENTS);
+        return FALSE;
+    }
 
-	Ptr = HeapAlloc(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, SourceFileSize);
-	if (Ptr) {
-		*OutputFileBuffer = Ptr;
-		*OutputFileBufferSize = SourceFileSize;
-		RtlCopyMemory(Ptr, SourceFile, SourceFileSize);
-		bResult = TRUE;
-	}
-	else {
-		*OutputFileBuffer = NULL;
-		*OutputFileBufferSize = 0;
-		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-	}
-	return bResult;
+    Ptr = HeapAlloc(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, SourceFileSize);
+    if (Ptr) {
+        *OutputFileBuffer = Ptr;
+        *OutputFileBufferSize = SourceFileSize;
+        RtlCopyMemory(Ptr, SourceFile, SourceFileSize);
+        bResult = TRUE;
+    }
+    else {
+        *OutputFileBuffer = NULL;
+        *OutputFileBufferSize = 0;
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    }
+    return bResult;
 }
 
 /*
@@ -279,66 +279,67 @@ BOOL ProcessFileMZ(
 *
 */
 BOOL ProcessFileDCN(
-	PVOID SourceFile,
-	SIZE_T SourceFileSize,
-	PVOID *OutputFileBuffer,
-	PSIZE_T OutputFileBufferSize
+    PVOID SourceFile,
+    SIZE_T SourceFileSize,
+    PVOID *OutputFileBuffer,
+    PSIZE_T OutputFileBufferSize
     )
 {
-	BOOL bResult = FALSE, bCond = FALSE;
+    BOOL bResult = FALSE, bCond = FALSE;
 
-	DELTA_HEADER_INFO   dhi;
-	DELTA_INPUT         Source, Delta;
-	DELTA_OUTPUT        Target;
-	PVOID               Data = NULL;
-	SIZE_T              DataSize = 0;
+    DELTA_HEADER_INFO   dhi;
+    DELTA_INPUT         Source, Delta;
+    DELTA_OUTPUT        Target;
+    PVOID               Data = NULL;
+    SIZE_T              DataSize = 0;
 
-	if ((SourceFile == NULL) ||
-		(OutputFileBuffer == NULL) ||
-		(OutputFileBufferSize == NULL) ||
-		(SourceFileSize == 0)
-		)
-	{
-		SetLastError(ERROR_BAD_ARGUMENTS);
-		return FALSE;
-	}
+    PDCN_HEADER FileHeader = (PDCN_HEADER)SourceFile;
 
-	PDCN_HEADER FileHeader = (PDCN_HEADER)SourceFile;
+    if ((SourceFile == NULL) ||
+        (OutputFileBuffer == NULL) ||
+        (OutputFileBufferSize == NULL) ||
+        (SourceFileSize == 0)
+        )
+    {
+        SetLastError(ERROR_BAD_ARGUMENTS);
+        return FALSE;
+    }
 
-	do {
 
-		RtlSecureZeroMemory(&dhi, sizeof(DELTA_HEADER_INFO));
-		Delta.lpStart = FileHeader->Data;
-		Delta.uSize = SourceFileSize - 4; 
+    do {
+
+        RtlSecureZeroMemory(&dhi, sizeof(DELTA_HEADER_INFO));
+        Delta.lpStart = FileHeader->Data;
+        Delta.uSize = SourceFileSize - 4;
         Delta.Editable = FALSE;
-		if (!GetDeltaInfoB(Delta, &dhi)) {
-			SetLastError(ERROR_BAD_FORMAT);
-			break;
-		}
+        if (!GetDeltaInfoB(Delta, &dhi)) {
+            SetLastError(ERROR_BAD_FORMAT);
+            break;
+        }
 
-		RtlSecureZeroMemory(&Source, sizeof(DELTA_INPUT));
-		RtlSecureZeroMemory(&Target, sizeof(DELTA_OUTPUT));
+        RtlSecureZeroMemory(&Source, sizeof(DELTA_INPUT));
+        RtlSecureZeroMemory(&Target, sizeof(DELTA_OUTPUT));
 
-		bResult = ApplyDeltaB(DELTA_DEFAULT_FLAGS_RAW, Source, Delta, &Target);
-		if (bResult) {
+        bResult = ApplyDeltaB(DELTA_DEFAULT_FLAGS_RAW, Source, Delta, &Target);
+        if (bResult) {
 
-			Data = HeapAlloc(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, Target.uSize);
-			if (Data) {
-				RtlCopyMemory(Data, Target.lpStart, Target.uSize);
-				DataSize = Target.uSize;
-			}
-			DeltaFree(Target.lpStart);
-		}
-		else {
-			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		}
+            Data = HeapAlloc(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, Target.uSize);
+            if (Data) {
+                RtlCopyMemory(Data, Target.lpStart, Target.uSize);
+                DataSize = Target.uSize;
+            }
+            DeltaFree(Target.lpStart);
+        }
+        else {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        }
 
-		*OutputFileBuffer = Data;
-		*OutputFileBufferSize = DataSize;
+        *OutputFileBuffer = Data;
+        *OutputFileBufferSize = DataSize;
 
-	} while (bCond);
+    } while (bCond);
 
-	return bResult;
+    return bResult;
 }
 
 /*
@@ -350,92 +351,92 @@ BOOL ProcessFileDCN(
 *
 */
 BOOL ProcessFileDCS(
-	PVOID SourceFile,
-	SIZE_T SourceFileSize,
-	PVOID *OutputFileBuffer,
-	PSIZE_T OutputFileBufferSize
+    PVOID SourceFile,
+    SIZE_T SourceFileSize,
+    PVOID *OutputFileBuffer,
+    PSIZE_T OutputFileBufferSize
     )
 {
-	BOOL bResult = FALSE, bCond = FALSE;
-	COMPRESSOR_HANDLE hDecompressor = 0;
-	BYTE *DataBufferPtr = NULL, *DataBuffer = NULL;
+    BOOL bResult = FALSE, bCond = FALSE;
+    COMPRESSOR_HANDLE hDecompressor = 0;
+    BYTE *DataBufferPtr = NULL, *DataBuffer = NULL;
 
-	PDCS_HEADER FileHeader = (PDCS_HEADER)SourceFile;
-	PDCS_BLOCK Block;
+    PDCS_HEADER FileHeader = (PDCS_HEADER)SourceFile;
+    PDCS_BLOCK Block;
 
-	DWORD NumberOfBlocks = 0;
-	DWORD BytesRead = 0, BytesWritten = 0, NextOffset;
+    DWORD NumberOfBlocks = 0;
+    DWORD BytesRead = 0, BytesWritten = 0, NextOffset;
 
-	if ((SourceFile == NULL) ||
-		(OutputFileBuffer == NULL) ||
-		(OutputFileBufferSize == NULL) ||
-		(SourceFileSize == 0)
-		)
-	{
-		SetLastError(ERROR_BAD_ARGUMENTS);
-		return FALSE;
-	}
+    if ((SourceFile == NULL) ||
+        (OutputFileBuffer == NULL) ||
+        (OutputFileBufferSize == NULL) ||
+        (SourceFileSize == 0)
+        )
+    {
+        SetLastError(ERROR_BAD_ARGUMENTS);
+        return FALSE;
+    }
 
-	do {
-		SetLastError(0);
+    do {
+        SetLastError(0);
 
-		if (!pCreateDecompressor(COMPRESS_RAW | COMPRESS_ALGORITHM_LZMS, NULL, &hDecompressor))
-			break;
+        if (!pCreateDecompressor(COMPRESS_RAW | COMPRESS_ALGORITHM_LZMS, NULL, &hDecompressor))
+            break;
 
-		if (FileHeader->UncompressedFileSize == 0) 
-			break;
+        if (FileHeader->UncompressedFileSize == 0)
+            break;
 
-		if (FileHeader->NumberOfBlocks == 0) 
-			break;
+        if (FileHeader->NumberOfBlocks == 0)
+            break;
 
-		DataBuffer = HeapAlloc(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, FileHeader->UncompressedFileSize);
-		if (DataBuffer == NULL)
-			break;
+        DataBuffer = HeapAlloc(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, FileHeader->UncompressedFileSize);
+        if (DataBuffer == NULL)
+            break;
 
-		DataBufferPtr = DataBuffer;
-		NumberOfBlocks = FileHeader->NumberOfBlocks;
-		Block = (PDCS_BLOCK)FileHeader->FirstBlock;
+        DataBufferPtr = DataBuffer;
+        NumberOfBlocks = FileHeader->NumberOfBlocks;
+        Block = (PDCS_BLOCK)FileHeader->FirstBlock;
 
-		do {
+        do {
 
-			if (BytesRead + Block->CompressedBlockSize > SourceFileSize) 
-				break;
+            if (BytesRead + Block->CompressedBlockSize > SourceFileSize)
+                break;
 
-			if (BytesWritten + Block->DecompressedBlockSize > FileHeader->UncompressedFileSize)
-				break;
+            if (BytesWritten + Block->DecompressedBlockSize > FileHeader->UncompressedFileSize)
+                break;
 
-			bResult = pDecompress(hDecompressor,
-				Block->CompressedData, Block->CompressedBlockSize - 4,
-				(BYTE *)DataBufferPtr, Block->DecompressedBlockSize,
-				NULL);
+            bResult = pDecompress(hDecompressor,
+                Block->CompressedData, Block->CompressedBlockSize - 4,
+                (BYTE *)DataBufferPtr, Block->DecompressedBlockSize,
+                NULL);
 
-			if (!bResult) 
-				break;
+            if (!bResult)
+                break;
 
-			NumberOfBlocks--;
-			if (NumberOfBlocks == 0)
-				break;
+            NumberOfBlocks--;
+            if (NumberOfBlocks == 0)
+                break;
 
-			DataBufferPtr = (BYTE*)DataBufferPtr + Block->DecompressedBlockSize;
-			NextOffset = Block->CompressedBlockSize + 4;
-			Block = (DCS_BLOCK*)((BYTE *)Block + NextOffset);
-			BytesRead += NextOffset;
-			BytesWritten += Block->DecompressedBlockSize;
+            DataBufferPtr = (BYTE*)DataBufferPtr + Block->DecompressedBlockSize;
+            NextOffset = Block->CompressedBlockSize + 4;
+            Block = (DCS_BLOCK*)((BYTE *)Block + NextOffset);
+            BytesRead += NextOffset;
+            BytesWritten += Block->DecompressedBlockSize;
 
-			if (BytesWritten > FileHeader->UncompressedFileSize)
-				break;
+            if (BytesWritten > FileHeader->UncompressedFileSize)
+                break;
 
-		} while (NumberOfBlocks > 0);
+        } while (NumberOfBlocks > 0);
 
-		*OutputFileBuffer = DataBuffer;
-		*OutputFileBufferSize = FileHeader->UncompressedFileSize;
+        *OutputFileBuffer = DataBuffer;
+        *OutputFileBufferSize = FileHeader->UncompressedFileSize;
 
-	} while (bCond);
+    } while (bCond);
 
-	if (hDecompressor != NULL)
-		pCloseDecompressor(hDecompressor);
+    if (hDecompressor != NULL)
+        pCloseDecompressor(hDecompressor);
 
-	return bResult;
+    return bResult;
 }
 
 /*

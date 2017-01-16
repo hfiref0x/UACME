@@ -39,11 +39,6 @@
 #pragma warning(disable: 6102) // Using %s from failed function call at line %u
 #pragma warning(disable: 6320) // exception-filter expression is the constant EXCEPTION_EXECUTE_HANDLER
 
-#define GENERATE_COMPRESSED_PAYLOAD
-#ifndef _DEBUG
-#undef GENERATE_COMPRESSED_PAYLOAD
-#endif
-
 #ifdef _WIN64
 #include "bin64res.h"
 #define FUBUKI_ID IDR_FUBUKI64

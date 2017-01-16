@@ -79,9 +79,14 @@ Methods fixed:
 * 16 - Windows 10 RS1 starting from public 14316 build;
 * 17 - Windows 10 RS1 starting from public 14371 build;
 * 18 - Windows 10 RS1 starting from public 14371 build;
-* 19 - Windows 10 RS1 starting from public 14376 build.
+* 19 - Windows 10 RS1 starting from public 14376 build;
+* 20 - Windows 10 RS2 starting from public 1500X build (delivery interface altered, method itself still work);
+* 21 - Windows 10 RS2 starting from public 1500X build (delivery interface altered, method itself still work);
+* 22 - Windows 10 RS2 starting from public 1500X build (delivery interface altered, method itself still work);
+* 23 - Windows 10 RS2 starting from public 1500X build (delivery interface altered, method itself still work).
 
-** 20, 21, 22, 23 are not fixed as at 30 December 2016.
+Currently, 16 January 2017 Windows 10 RS2 starting from 1500X builds is the most protected Microsoft OS ever made.
+
 
 If you wondering why this still exist and work here is the explanation, an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
 https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
@@ -100,8 +105,8 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # VirusTotal reference report
 
-* Akagi32 https://www.virustotal.com/en/file/ccf66552293a3ea049b0b87c067b8e93ba0c83304655e088c3c6beb94d19b5a8/analysis/1471497173/
-* Akagi64 https://www.virustotal.com/en/file/c005e79624045e32a75a3ed5015165f7732f3abc45e0e5455d088015f61c2200/analysis/1471497162/
+* Akagi32 https://www.virustotal.com/en/file/4804d5dea63b2ee5629712f79ce9d655823e33cf721640fba22411f116ba867b/analysis/
+* Akagi64 https://www.virustotal.com/en/file/9b0a1c6bbc11cd3e2203b47dcf3e44be6e6a74763dfa56298dfb8dacade477a5/analysis/
 
 # Build 
 

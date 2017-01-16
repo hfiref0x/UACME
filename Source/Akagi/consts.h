@@ -56,6 +56,7 @@
 #define DEVOBJ_DLL                  L"devobj.dll"
 #define UNBCL_DLL                   L"unbcl.dll"
 #define DISMCORE_DLL                L"dismcore.dll"
+#define WOW64LOG_DLL                L"wow64log.dll"
 #define CLICONFG_EXE                L"cliconfg.exe"
 #define OOBE_EXE                    L"oobe.exe"
 #define WINSAT_EXE                  L"winsat.exe"
