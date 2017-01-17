@@ -63,6 +63,9 @@ BOOL ucmSetEnvVariable(
 
 	} while (bCond);
 
+    if (hKey != NULL)
+        RegCloseKey(hKey);
+
 	return bResult;
 }
 

@@ -106,8 +106,8 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # VirusTotal reference report
 
-* Akagi32 https://www.virustotal.com/en/file/f662645187d424cbaad77fb597a2071befd16298f180f89a066fcc3a8ebfebcc/analysis/
-* Akagi64 https://www.virustotal.com/en/file/2ffcae26fce95ab0e87814968ce5d4401d0778020d25114ae01da4d08d64cf17/analysis/
+* Akagi32 https://www.virustotal.com/en/file/d7f2d1ddb7807be1c1f8d8ceb770e9e5ddca2ad638541065e07073d438369660/analysis/
+* Akagi64 https://www.virustotal.com/en/file/82bf545c9af11bdb4ece39f837d168cee56c45f3c3544338fe31189eebb243d1/analysis/
 
 # Build 
 
