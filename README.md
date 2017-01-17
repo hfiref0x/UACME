@@ -121,7 +121,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * Junfeng Zhang from WinSxS dev team blog, https://blogs.msdn.microsoft.com/junfeng/
 * Beyond good ol' Run key, series of articles, http://www.hexacorn.com/blog
 * KernelMode.Info UACMe thread, http://www.kernelmode.info/forum/viewtopic.php?f=11&t=3643
-* Command Injection/Elevation – Environment Variables Revisited, https://breakingmalware.com/vulnerabilities/command-injection-and-elevation-environment-variables-revisited
+* Command Injection/Elevation - Environment Variables Revisited, https://breakingmalware.com/vulnerabilities/command-injection-and-elevation-environment-variables-revisited
 
  
 # Authors
