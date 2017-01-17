@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2016
+*  (C) COPYRIGHT AUTHORS, 2015 - 2017
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.51
+*  VERSION:     2.52
 *
-*  DATE:        11 July 2016
+*  DATE:        17 Jan 2017
 *
 *  Global consts definition file.
 *
@@ -31,7 +31,9 @@
 #define T_IID_ISecurityEditor       L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}"
 #define ISECURITYEDITOR_ELEMONIKER  L"Elevation:Administrator!new:{4D111E08-CBF7-4f12-A926-2C7920AF52FC}" 
 #define IFILEOP_ELEMONIKER          L"Elevation:Administrator!new:{3AD05575-8857-4850-9277-11B85BDB8E09}"
+#define T_CLSID_MYCOMPUTER_COMET    L"\\Comet.{20D04FE0-3AEA-1069-A2D8-08002B30309D}"
 #define T_SDDL_ALL_FOR_EVERYONE     L"D:(A;;GA;;;WD)"
+#define T_PROGRAMDATA               L"ProgramData"
 
 #define MANIFEST_EXT                L".manifest"
 #define ELLOCNAK_MSU                L"ellocnak.msu" 
@@ -56,7 +58,6 @@
 #define DEVOBJ_DLL                  L"devobj.dll"
 #define UNBCL_DLL                   L"unbcl.dll"
 #define DISMCORE_DLL                L"dismcore.dll"
-#define WOW64LOG_DLL                L"wow64log.dll"
 #define CLICONFG_EXE                L"cliconfg.exe"
 #define OOBE_EXE                    L"oobe.exe"
 #define WINSAT_EXE                  L"winsat.exe"
@@ -81,6 +82,8 @@
 #define EVENTVWR_MSC                L"eventvwr.msc"
 #define RSOP_MSC                    L"rsop.msc"
 #define PACKAGE_XML                 L"ellocnak.xml"
+
+#define T_DEFAULT_CMD               L"%systemroot%\\system32\\cmd.exe"
 
 #define LOCAL_SXS                   L".local"
 #define FAKE_LOCAL_SXS              L".hawawa"

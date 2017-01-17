@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.51
+*  VERSION:     2.52
 *
-*  DATE:        10 July 2016
+*  DATE:        17 Jan 2017
 *
 *  Common header file for the program support routines.
 *
@@ -77,7 +77,7 @@ typedef enum _UACBYPASSMETHOD {
     UacMethodSXS,
     UacMethodSXSConsent,
     UacMethodDISM,
-    //UacMethod24,
+    UacMethodComet,
     UacMethodMax
 } UACBYPASSMETHOD;
 
@@ -97,6 +97,7 @@ typedef enum _UACBYPASSMETHOD {
 #include "simda.h"
 #include "carberp.h"
 #include "hybrids.h"
+#include "comet.h"
 
 //default execution flow
 #define AKAGI_FLAG_KILO  0

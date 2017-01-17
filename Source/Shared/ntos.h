@@ -1,12 +1,12 @@
 /************************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2016, translated from Microsoft sources/debugger
+*  (C) COPYRIGHT AUTHORS, 2015 - 2017, translated from Microsoft sources/debugger
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.47
+*  VERSION:     1.51
 *
-*  DATE:        10 July 2016
+*  DATE:        18 Jan 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -109,6 +109,18 @@
 #define TRACELOG_ACCESS_REALTIME      0x0400
 #define TRACELOG_REGISTER_GUIDS       0x0800
 
+//
+// Partition Specific Access Rights.
+//
+
+#define MEMORY_PARTITION_QUERY_ACCESS  0x0001
+#define MEMORY_PARTITION_MODIFY_ACCESS 0x0002
+
+#define MEMORY_PARTITION_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED |         \
+                                     SYNCHRONIZE |                      \
+                                     MEMORY_PARTITION_QUERY_ACCESS |    \
+                                     MEMORY_PARTITION_MODIFY_ACCESS)
+
 #define NtCurrentThread() ( (HANDLE)(LONG_PTR) -2 )
 #define NtCurrentProcess() ( (HANDLE)(LONG_PTR) -1 )
 #define ZwCurrentProcess() NtCurrentProcess()
@@ -127,6 +139,15 @@
 
 #define MAXUSHORT   0xffff     
 #define MAX_USTRING ( sizeof(WCHAR) * (MAXUSHORT/sizeof(WCHAR)) )
+
+typedef struct _EX_RUNDOWN_REF
+{
+    union
+    {
+        ULONG Count;
+        PVOID Ptr;
+    };
+} EX_RUNDOWN_REF, *PEX_RUNDOWN_REF;
 
 typedef struct _UNICODE_STRING {
 	USHORT Length;
@@ -202,6 +223,19 @@ typedef struct _SEMAPHORE_BASIC_INFORMATION {
 
 /*
 ** Semaphore END
+*/
+
+/*
+** Kernel Debugger START
+*/
+
+typedef struct _SYSTEM_KERNEL_DEBUGGER_INFORMATION {
+    BOOLEAN KernelDebuggerEnabled;
+    BOOLEAN KernelDebuggerNotPresent;
+} SYSTEM_KERNEL_DEBUGGER_INFORMATION, *PSYSTEM_KERNEL_DEBUGGER_INFORMATION;
+
+/*
+** Kernel Debugger END
 */
 
 /*
@@ -4171,8 +4205,9 @@ typedef struct _KUSER_SHARED_DATA_COMPAT {
 			ULONG DbgDynProcessorEnabled : 1;
 			ULONG DbgConsoleBrokerEnabled : 1;
 			ULONG DbgSecureBootEnabled : 1;
-			ULONG DbgMultiSessionSku : 1;
-			ULONG SpareBits : 23;
+            ULONG DbgMultiSessionSku : 1;
+            ULONG DbgMultiUsersInSessionSku : 1;
+            ULONG SpareBits : 22;
 		};
 	};
 
@@ -4184,6 +4219,44 @@ typedef struct _KUSER_SHARED_DATA_COMPAT {
 
 /*
 ** KUSER_SHARED_DATA END
+*/
+
+/*
+** FLT MANAGER START
+*/
+
+#define FLTFL_MANDATORY_UNLOAD_IN_PROGRESS  0x1
+#define FLTFL_FILTERING_INITIATED           0x2
+#define FLTFL_NAME_PROVIDER                 0x4
+#define FLTFL_SUPPORTS_PIPES_MAILSLOTS      0x8
+
+#define FLT_OBFL_DRAINING                   0x1
+#define FLT_OBFL_ZOMBIED                    0x2
+#define FLT_OBFL_TYPE_INSTANCE              0x1000000
+#define FLT_OBFL_TYPE_FILTER                0x2000000
+#define FLT_OBFL_TYPE_VOLUME                0x4000000
+
+typedef struct _FLT_OBJECT {
+    ULONG Flags;
+    ULONG PointerCount;
+    EX_RUNDOWN_REF RundownRef;
+    LIST_ENTRY PrimaryLink;
+} FLT_OBJECT, *PFLT_OBJECT;
+
+typedef struct _FLT_SERVER_PORT_OBJECT {
+    LIST_ENTRY FilterLink;
+    PVOID ConnectNotify;
+    PVOID DisconnectNotify;
+    PVOID MessageNotify;
+    PVOID Filter;
+    PVOID Cookie;
+    ULONG Flags;
+    ULONG NumberOfConnections;
+    ULONG MaxConnections;
+} FLT_SERVER_PORT_OBJECT, *PFLT_SERVER_PORT_OBJECT;
+
+/*
+** FLT MANAGER END
 */
 
 /*
@@ -4573,6 +4646,16 @@ NTSTATUS NTAPI RtlExpandEnvironmentStrings_U(
 VOID NTAPI RtlSetLastWin32Error(
 	LONG Win32Error
 	);
+
+
+NTSTATUS NTAPI RtlWow64EnableFsRedirection(
+    _In_ BOOLEAN Wow64FsEnableRedirection
+    );
+
+NTSTATUS NTAPI RtlWow64EnableFsRedirectionEx(
+    _In_ PVOID DisableFsRedirection,
+    _Out_ PVOID *OldFsRedirectionLevel
+    );
 
 typedef NTSTATUS
 (NTAPI * PRTL_HEAP_COMMIT_ROUTINE)(
@@ -5774,6 +5857,14 @@ NTSTATUS NTAPI NtQuerySecurityObject(
 	_In_	ULONG Length,
 	_Out_	PULONG LengthNeeded
 	);
+
+NTSTATUS NTAPI NtQueryLicenseValue(
+    _In_ PUNICODE_STRING ValueName,
+    _Out_opt_ PULONG Type,
+    _Out_writes_bytes_to_opt_(DataSize, *ResultDataSize) PVOID Data,
+    _In_ ULONG DataSize,
+    _Out_ PULONG ResultDataSize
+);
 
 NTSTATUS NtCreateIoCompletion(
 	_Out_		PHANDLE IoCompletionHandle,

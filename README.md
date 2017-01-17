@@ -35,7 +35,8 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs2 14997;
 * 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs2 14997;
 * 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs2 14997;
-* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs2 14997.
+* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs2 14997;
+* 24 - Original Comet method from BreakingMalware, abuses current user environment variables and CompMgmtLauncher.exe, works from Windows 7 up to 10rs2 15007.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -85,7 +86,7 @@ Methods fixed:
 * 22 - Windows 10 RS2 starting from public 1500X build (delivery interface altered, method itself still work);
 * 23 - Windows 10 RS2 starting from public 1500X build (delivery interface altered, method itself still work).
 
-Currently, 16 January 2017 Windows 10 RS2 starting from 1500X builds is the most protected Microsoft OS ever made.
+** 24 is not fixed as at 17 January 2017.
 
 
 If you wondering why this still exist and work here is the explanation, an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
@@ -105,8 +106,8 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # VirusTotal reference report
 
-* Akagi32 https://www.virustotal.com/en/file/4804d5dea63b2ee5629712f79ce9d655823e33cf721640fba22411f116ba867b/analysis/
-* Akagi64 https://www.virustotal.com/en/file/9b0a1c6bbc11cd3e2203b47dcf3e44be6e6a74763dfa56298dfb8dacade477a5/analysis/
+* Akagi32 https://www.virustotal.com/en/file/f662645187d424cbaad77fb597a2071befd16298f180f89a066fcc3a8ebfebcc/analysis/
+* Akagi64 https://www.virustotal.com/en/file/2ffcae26fce95ab0e87814968ce5d4401d0778020d25114ae01da4d08d64cf17/analysis/
 
 # Build 
 
@@ -120,6 +121,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * Junfeng Zhang from WinSxS dev team blog, https://blogs.msdn.microsoft.com/junfeng/
 * Beyond good ol' Run key, series of articles, http://www.hexacorn.com/blog
 * KernelMode.Info UACMe thread, http://www.kernelmode.info/forum/viewtopic.php?f=11&t=3643
+* Command Injection/Elevation – Environment Variables Revisited, https://breakingmalware.com/vulnerabilities/command-injection-and-elevation-environment-variables-revisited
 
  
 # Authors

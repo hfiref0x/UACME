@@ -240,6 +240,7 @@
     <ClCompile Include="..\shared\_strncpy.c" />
     <ClCompile Include="..\Shared\_strstri.c" />
     <ClCompile Include="carberp.c" />
+    <ClCompile Include="comet.c" />
     <ClCompile Include="gootkit.c" />
     <ClCompile Include="hybrids.c" />
     <ClCompile Include="main.c" />
@@ -255,6 +256,7 @@
     <ClInclude Include="..\Shared\_filename.h" />
     <ClInclude Include="apphelp.h" />
     <ClInclude Include="carberp.h" />
+    <ClInclude Include="comet.h" />
     <ClInclude Include="compress.h" />
     <ClInclude Include="consts.h" />
     <ClInclude Include="global.h" />

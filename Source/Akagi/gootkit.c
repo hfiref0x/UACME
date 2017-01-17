@@ -1,13 +1,13 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016,
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017,
 *  (C) MS FixIT Shim Patches revealed by Jon Erickson
 *
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     2.51
+*  VERSION:     2.52
 *
-*  DATE:        11 July 2016
+*  DATE:        17 Jan 2017
 *
 *  Gootkit based AutoElevation using AppCompat.
 *
@@ -487,7 +487,7 @@ BOOL ucmAppcompatElevation(
         if (Method == UacMethodRedirectExe) {
 
             if (lpszPayloadEXE == NULL) {
-                _strcpy_w(szBuffer, L"%systemroot%\\system32\\cmd.exe");
+                _strcpy_w(szBuffer, T_DEFAULT_CMD);
                 bResult = ucmShimRedirectEXE(szBuffer);
             }
             else {

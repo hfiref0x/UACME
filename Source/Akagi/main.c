@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.51
+*  VERSION:     2.52
 *
-*  DATE:        11 July 2016
+*  DATE:        17 Jan 2017
 *
 *  Program entry point.
 *
@@ -485,6 +485,11 @@ UINT ucmMain()
         ucmShowMessage(WIN64ONLY);
         return ERROR_UNSUPPORTED_TYPE;
 #else
+        //fixed in 15007
+        if (g_ctx.dwBuildNumber > 14997) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
 #endif
         break;
 
@@ -493,6 +498,11 @@ UINT ucmMain()
         ucmShowMessage(WIN64ONLY);
         return ERROR_UNSUPPORTED_TYPE;
 #else
+        //fixed in 15007
+        if (g_ctx.dwBuildNumber > 14997) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
 #endif
         break;
 
@@ -501,6 +511,11 @@ UINT ucmMain()
         ucmShowMessage(WIN64ONLY);
         return ERROR_UNSUPPORTED_TYPE;
 #else
+        //fixed in 15007
+        if (g_ctx.dwBuildNumber > 14997) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
 #endif
         break;
 
@@ -509,9 +524,16 @@ UINT ucmMain()
         ucmShowMessage(WIN64ONLY);
         return ERROR_UNSUPPORTED_TYPE;
 #else
+        //fixed in 15007
+        if (g_ctx.dwBuildNumber > 14997) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
 #endif
         break;
 
+    case UacMethodComet:
+        break;
     }
 
     //prepare command for payload
@@ -519,7 +541,7 @@ UINT ucmMain()
     RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
     GetCommandLineParam(GetCommandLine(), 2, szBuffer, MAX_PATH, &paramLen);
     if (paramLen > 0) {
-        if (g_ctx.Method != UacMethodRedirectExe) {
+        if ((g_ctx.Method != UacMethodRedirectExe) && (g_ctx.Method != UacMethodComet)) {
             supSetParameter((LPWSTR)&szBuffer, paramLen * sizeof(WCHAR));
         }
     }
@@ -743,6 +765,11 @@ UINT ucmMain()
         break;
 
 #endif
+    case UacMethodComet:
+        if (ucmCometMethod((paramLen != 0) ? szBuffer : T_DEFAULT_CMD)) {
+            return ERROR_SUCCESS;
+        }
+        break;
 
     }
 
