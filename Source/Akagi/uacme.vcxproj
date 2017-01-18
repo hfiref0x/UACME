@@ -241,6 +241,7 @@
     <ClCompile Include="..\Shared\_strstri.c" />
     <ClCompile Include="carberp.c" />
     <ClCompile Include="comet.c" />
+    <ClCompile Include="enigma0x3.c" />
     <ClCompile Include="gootkit.c" />
     <ClCompile Include="hybrids.c" />
     <ClCompile Include="main.c" />
@@ -259,6 +260,7 @@
     <ClInclude Include="comet.h" />
     <ClInclude Include="compress.h" />
     <ClInclude Include="consts.h" />
+    <ClInclude Include="enigma0x3.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="gootkit.h" />
     <ClInclude Include="hybrids.h" />
@@ -267,6 +269,7 @@
     <ClInclude Include="pitou.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="simda.h" />
+    <ClInclude Include="sirefef.h" />
     <ClInclude Include="sup.h" />
   </ItemGroup>
   <ItemGroup>

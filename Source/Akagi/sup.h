@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.50
+*  VERSION:     2.53
 *
-*  DATE:        07 July 2016
+*  DATE:        18 Jan 2017
 *
 *  Common header file for the program support routines.
 *
@@ -45,10 +45,11 @@ BOOL supRunProcess(
     _In_opt_ LPWSTR lpszParameters
     );
 
-HANDLE supRunProcessEx(
+HANDLE NTAPI supRunProcessEx(
     _In_ LPWSTR lpszParameters,
     _In_opt_ LPWSTR lpCurrentDirectory,
-    _Out_opt_ HANDLE *PrimaryThread
+    _Out_opt_ HANDLE *PrimaryThread,
+    _Inout_opt_ LPWSTR lpApplicationName
     );
 
 void supCopyMemory(
@@ -110,6 +111,11 @@ VOID NTAPI sxsFindDllCallback(
     _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
     _In_ PVOID Context,
     _In_ OUT BOOLEAN *StopEnumeration
+    );
+
+PVOID supNativeGetProcAddress(
+    WCHAR *Module,
+    CHAR *Routine
     );
 
 #define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)

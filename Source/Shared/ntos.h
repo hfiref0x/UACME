@@ -4647,7 +4647,6 @@ VOID NTAPI RtlSetLastWin32Error(
 	LONG Win32Error
 	);
 
-
 NTSTATUS NTAPI RtlWow64EnableFsRedirection(
     _In_ BOOLEAN Wow64FsEnableRedirection
     );
@@ -4655,6 +4654,14 @@ NTSTATUS NTAPI RtlWow64EnableFsRedirection(
 NTSTATUS NTAPI RtlWow64EnableFsRedirectionEx(
     _In_ PVOID DisableFsRedirection,
     _Out_ PVOID *OldFsRedirectionLevel
+    );
+
+PVOID NTAPI RtlEncodePointer(
+    PVOID Ptr
+    );
+
+PVOID NTAPI RtlDecodePointer(
+    PVOID Ptr
     );
 
 typedef NTSTATUS

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2016
+*  (C) COPYRIGHT AUTHORS, 2015 - 2017
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.50
+*  VERSION:     2.53
 *
-*  DATE:        06 July 2016
+*  DATE:        18 Jan 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -163,10 +163,11 @@ BOOL supRunProcess(
 * Start new process in suspended state.
 *
 */
-HANDLE supRunProcessEx(
+HANDLE NTAPI supRunProcessEx(
     _In_ LPWSTR lpszParameters,
     _In_opt_ LPWSTR lpCurrentDirectory,
-    _Out_opt_ HANDLE *PrimaryThread
+    _Out_opt_ HANDLE *PrimaryThread,
+    _Inout_opt_ LPWSTR lpApplicationName
     )
 {
     BOOL cond = FALSE;
@@ -174,7 +175,8 @@ HANDLE supRunProcessEx(
     SIZE_T ccb;
     STARTUPINFOW sti1;
     PROCESS_INFORMATION pi1;
-
+    DWORD dwFlags = CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS;
+    
     if (PrimaryThread) {
         *PrimaryThread = NULL;
     }
@@ -182,7 +184,7 @@ HANDLE supRunProcessEx(
     if (lpszParameters == NULL) {
         return NULL;
     }
-
+    
     ccb = (_strlen_w(lpszParameters) * sizeof(WCHAR)) + sizeof(WCHAR);
     pszBuffer = HeapAlloc(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, ccb);
     if (pszBuffer == NULL) {
@@ -194,11 +196,10 @@ HANDLE supRunProcessEx(
     RtlSecureZeroMemory(&pi1, sizeof(pi1));
     RtlSecureZeroMemory(&sti1, sizeof(sti1));
     GetStartupInfoW(&sti1);
-
+    
     do {
 
-        if (!CreateProcessW(NULL, pszBuffer, NULL, NULL, FALSE,
-            CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS | CREATE_SUSPENDED,
+        if (!CreateProcessAsUser(NULL, lpApplicationName, pszBuffer, NULL, NULL, FALSE, dwFlags | CREATE_SUSPENDED,
             NULL, lpCurrentDirectory, &sti1, &pi1))
         {
             break;
@@ -213,7 +214,7 @@ HANDLE supRunProcessEx(
     } while (cond);
 
     HeapFree(g_ctx.Peb->ProcessHeap, 0, pszBuffer);
-
+    
     return pi1.hProcess;
 }
 
@@ -723,4 +724,33 @@ VOID NTAPI sxsFindDllCallback(
     } while (bCond);
 
     *StopEnumeration = bFound;
+}
+
+/*
+* supNativeGetProcAddress
+*
+* Purpose:
+*
+* Simplified native GetProcAddress.
+*
+*/
+PVOID supNativeGetProcAddress(
+    WCHAR *Module,
+    CHAR *Routine
+)
+{
+    PVOID            DllImageBase = NULL, ProcedureAddress = NULL;
+    UNICODE_STRING   DllName;
+    ANSI_STRING      str;
+
+    RtlSecureZeroMemory(&DllName, sizeof(DllName));
+    RtlInitUnicodeString(&DllName, Module);
+    if (!NT_SUCCESS(LdrGetDllHandle(NULL, NULL, &DllName, &DllImageBase)))
+        return NULL;
+
+    RtlInitString(&str, Routine);
+    if (!NT_SUCCESS(LdrGetProcedureAddress(DllImageBase, &str, 0, &ProcedureAddress)))
+        return NULL;
+
+    return ProcedureAddress;
 }

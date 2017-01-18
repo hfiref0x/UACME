@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.51
+*  VERSION:     2.53
 *
-*  DATE:        10 July 2016
+*  DATE:        18 Jan 2017
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -258,7 +258,7 @@ BOOL WINAPI DllMain(
                 _strcpy(cmdbuf, sysdir);
                 _strcat(cmdbuf, TEXT("cmd.exe"));
 
-                if (CreateProcessW(cmdbuf, NULL, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL,
+                if (CreateProcessAsUserW(NULL, cmdbuf, NULL, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL,
                     sysdir, &startupInfo, &processInfo))
                 {
                     CloseHandle(processInfo.hProcess);

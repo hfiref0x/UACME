@@ -90,6 +90,9 @@
     <ClCompile Include="comet.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="enigma0x3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -141,6 +144,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="comet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sirefef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="enigma0x3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.52
+*  VERSION:     2.53
 *
-*  DATE:        17 Jan 2017
+*  DATE:        18 Jan 2017
 *
 *  Global consts definition file.
 *
@@ -37,6 +37,7 @@
 
 #define MANIFEST_EXT                L".manifest"
 #define ELLOCNAK_MSU                L"ellocnak.msu" 
+#define NTDLL_DLL                   L"ntdll.dll"
 #define KERNEL32_DLL                L"kernel32.dll"
 #define OLE32_DLL                   L"ole32.dll"
 #define SHELL32_DLL                 L"shell32.dll"
@@ -73,6 +74,7 @@
 #define SPINSTALL_EXE               L"spinstall.exe"
 #define CONSENT_EXE                 L"consent.exe"
 #define EVENTVWR_EXE                L"eventvwr.exe"
+#define COMPMGMTLAUNCHER_EXE        L"CompMgmtLauncher.exe"
 #define PKGMGR_EXE                  L"pkgmgr.exe"
 #define SYSPREP_DIR                 L"sysprep\\"
 #define INETSRV_DIR                 L"inetsrv\\"
