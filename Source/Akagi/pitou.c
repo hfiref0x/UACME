@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     2.50
+*  VERSION:     2.53
 *
-*  DATE:        07 July 2016
+*  DATE:        18 Jan 2017
 *
 *  Leo Davidson based IFileOperation auto-elevation.
 *
@@ -66,8 +66,7 @@ BOOL ucmMasqueradedRenameElementCOM(
             break;
         }
 
-        FileOperation1->lpVtbl->SetOperationFlags(FileOperation1,
-            FOF_NOCONFIRMATION | FOF_SILENT | FOFX_SHOWELEVATIONPROMPT | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION);
+        FileOperation1->lpVtbl->SetOperationFlags(FileOperation1, g_ctx.IFileOperationFlags);
 
         r = SHCreateItemFromParsingName(OldName, NULL, &IID_IShellItem, &psiDestDir);
         if (r != S_OK) {
@@ -150,8 +149,7 @@ BOOL ucmMasqueradedCreateSubDirectoryCOM(
             break;
         }
 
-        FileOperation1->lpVtbl->SetOperationFlags(FileOperation1,
-            FOF_NOCONFIRMATION | FOF_SILENT | FOFX_SHOWELEVATIONPROMPT | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION);
+        FileOperation1->lpVtbl->SetOperationFlags(FileOperation1, g_ctx.IFileOperationFlags);
 
         r = SHCreateItemFromParsingName(ParentDirectory, NULL, &IID_IShellItem, &psiDestDir);
         if (r != S_OK) {
@@ -237,8 +235,7 @@ BOOL ucmMasqueradedMoveFileCOM(
             break;
         }
 
-        FileOperation1->lpVtbl->SetOperationFlags(FileOperation1,
-            FOF_NOCONFIRMATION | FOF_SILENT | FOFX_SHOWELEVATIONPROMPT | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION);
+        FileOperation1->lpVtbl->SetOperationFlags(FileOperation1, g_ctx.IFileOperationFlags);
 
         r = SHCreateItemFromParsingName(SourceFileName, NULL, &IID_IShellItem, &isrc);
         if (r != S_OK) {

@@ -118,6 +118,7 @@ typedef struct _UACME_CONTEXT {
     ULONG               PayloadDllSize;
     ULONG               dwBuildNumber;
     ULONG               Flag;
+    ULONG               IFileOperationFlags;
     WCHAR               szSystemDirectory[MAX_PATH + 1];//with end slash
     WCHAR               szTempDirectory[MAX_PATH + 1]; //with end slash
 } UACMECONTEXT, *PUACMECONTEXT;

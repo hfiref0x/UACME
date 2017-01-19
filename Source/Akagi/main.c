@@ -186,6 +186,13 @@ UINT ucmInit(
 
         g_ctx.IsWow64 = supIsProcess32bit(GetCurrentProcess());
 
+        if (g_ctx.dwBuildNumber > 14997) {
+            g_ctx.IFileOperationFlags = FOF_NOCONFIRMATION | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION;
+        }
+        else {
+            g_ctx.IFileOperationFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOFX_SHOWELEVATIONPROMPT | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION;
+        }
+
         //flashes and sparks
         dc1 = GetDC(TempWindow);
         index = ChoosePixelFormat(dc1, &pfd);
@@ -485,11 +492,6 @@ UINT ucmMain()
         ucmShowMessage(WIN64ONLY);
         return ERROR_UNSUPPORTED_TYPE;
 #else
-        //fixed in 15007
-        if (g_ctx.dwBuildNumber > 14997) {
-            if (ucmShowQuestion(UACFIX) == IDNO)
-                return ERROR_UNSUPPORTED_TYPE;
-        }
 #endif
         break;
 
@@ -498,11 +500,6 @@ UINT ucmMain()
         ucmShowMessage(WIN64ONLY);
         return ERROR_UNSUPPORTED_TYPE;
 #else
-        //fixed in 15007
-        if (g_ctx.dwBuildNumber > 14997) {
-            if (ucmShowQuestion(UACFIX) == IDNO)
-                return ERROR_UNSUPPORTED_TYPE;
-        }
 #endif
         break;
 
@@ -511,11 +508,6 @@ UINT ucmMain()
         ucmShowMessage(WIN64ONLY);
         return ERROR_UNSUPPORTED_TYPE;
 #else
-        //fixed in 15007
-        if (g_ctx.dwBuildNumber > 14997) {
-            if (ucmShowQuestion(UACFIX) == IDNO)
-                return ERROR_UNSUPPORTED_TYPE;
-        }
 #endif
         break;
 
@@ -524,11 +516,6 @@ UINT ucmMain()
         ucmShowMessage(WIN64ONLY);
         return ERROR_UNSUPPORTED_TYPE;
 #else
-        //fixed in 15007
-        if (g_ctx.dwBuildNumber > 14997) {
-            if (ucmShowQuestion(UACFIX) == IDNO)
-                return ERROR_UNSUPPORTED_TYPE;
-        }
 #endif
         break;
 

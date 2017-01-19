@@ -32,10 +32,10 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, works from Windows 8.1 (9600) up to 10rs1 14367;
 * 18 - Hybrid method, abuses SxS undocumented backdoor used to fix (1) and appinfo whitelist, works from Windows 7 up to 10rs1 14367;
 * 19 - Hybrid method, using InetMgr IIS module and based on 10 & 16 MS fixes, works from Windows 7 up to 10rs1 14372;
-* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs2 14997;
-* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs2 14997;
-* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs2 14997;
-* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs2 14997;
+* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs2 15007;
+* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs2 15007;
+* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs2 15007;
+* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs2 15007;
 * 24 - Original Comet method from BreakingMalware, abuses current user environment variables and CompMgmtLauncher.exe, works from Windows 7 up to 10rs2 15007;
 * 25 - Original method from Enigma0x3, abuses shell command execution logic used by autoelevated applications, works from Windows 7 up to 10rs2 15007.
 
@@ -81,14 +81,9 @@ Methods fixed:
 * 16 - Windows 10 RS1 starting from public 14316 build;
 * 17 - Windows 10 RS1 starting from public 14371 build;
 * 18 - Windows 10 RS1 starting from public 14371 build;
-* 19 - Windows 10 RS1 starting from public 14376 build;
-* 20 - Windows 10 RS2 starting from public 1500X build (delivery interface altered, method itself still work);
-* 21 - Windows 10 RS2 starting from public 1500X build (delivery interface altered, method itself still work);
-* 22 - Windows 10 RS2 starting from public 1500X build (delivery interface altered, method itself still work);
-* 23 - Windows 10 RS2 starting from public 1500X build (delivery interface altered, method itself still work).
+* 19 - Windows 10 RS1 starting from public 14376 build.
 
-** 24, 25 are not fixed as at 18 January 2017.
-
+** 20, 21, 22, 23, 24, 25 are not fixed as at 18 January 2017.
 
 If you wondering why this still exist and work here is the explanation, an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
 https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
@@ -107,8 +102,8 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # VirusTotal reference report
 
-* Akagi32 https://www.virustotal.com/en/file/2c3639e512a4726e3a7d6a82a23db8dda079482584bc4987b66efe45a652981e/analysis/
-* Akagi64 https://www.virustotal.com/en/file/4a90948c7ac0c09d7340f5cfb0801285fe5ca4d2ed713c5e82b2799bb80feea1/analysis/
+* Akagi32 https://www.virustotal.com/en/file/caf744d38820accb48a6e50216e547ed2bb3979604416dbcfcc991ce5e18f4ca/analysis/
+* Akagi64 https://www.virustotal.com/en/file/609e9b15114e54ffc40c05a8980cc90f436a4a77c69f3e32fe391c0b130ff1c5/analysis/
 
 # Build 
 
