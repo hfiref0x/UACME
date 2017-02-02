@@ -32,12 +32,12 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, works from Windows 8.1 (9600) up to 10rs1 14367;
 * 18 - Hybrid method, abuses SxS undocumented backdoor used to fix (1) and appinfo whitelist, works from Windows 7 up to 10rs1 14367;
 * 19 - Hybrid method, using InetMgr IIS module and based on 10 & 16 MS fixes, works from Windows 7 up to 10rs1 14372;
-* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs2 15019;
-* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs2 15019;
-* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs2 15019;
-* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs2 15019;
-* 24 - Original Comet method from BreakingMalware, abuses current user environment variables and CompMgmtLauncher.exe, works from Windows 7 up to 10rs2 15019;
-* 25 - Original method from Enigma0x3, abuses shell command execution logic used by autoelevated applications, works from Windows 7 up to 10rs2 15019.
+* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs2 15025;
+* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs2 15025;
+* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs2 15025;
+* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs2 15025;
+* 24 - Original Comet method from BreakingMalware, abuses current user environment variables and CompMgmtLauncher.exe, works from Windows 7 up to 10rs2 15025;
+* 25 - Original method from Enigma0x3, abuses shell command execution logic used by autoelevated applications, works from Windows 7 up to 10rs2 15025.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -83,7 +83,7 @@ Methods fixed:
 * 18 - Windows 10 RS1 starting from public 14371 build;
 * 19 - Windows 10 RS1 starting from public 14376 build.
 
-** 20, 21, 22, 23, 24, 25 are not fixed as at 28 January 2017.
+** 20, 21, 22, 23, 24, 25 are not fixed as at 02 February 2017.
 
 If you wondering why this still exist and work here is the explanation, an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
 https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
