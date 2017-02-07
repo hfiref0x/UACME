@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.53
+*  VERSION:     2.54
 *
-*  DATE:        18 Jan 2017
+*  DATE:        07 Feb 2017
 *
 *  Global consts definition file.
 *
@@ -26,6 +26,8 @@
 #define CMD_EXTRACT_SYSTEM32        L"/c wusa %ws /extract:%%windir%%\\system32"
 #define CMD_EXTRACT_WINSAT          L"/c wusa %ws /extract:%%windir%%\\system32\\sysprep"
 #define CMD_EXTRACT_MIGWIZ          L"/c wusa %ws /extract:%%windir%%\\system32\\migwiz"
+
+#define T_SCHTASKS_CMD              L"/run /tn \"\\Microsoft\\Windows\\DiskCleanup\\SilentCleanup\" /i"
 
 #define T_CLSID_ShellSecurityEditor L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}"
 #define T_IID_ISecurityEditor       L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}"
@@ -59,6 +61,8 @@
 #define DEVOBJ_DLL                  L"devobj.dll"
 #define UNBCL_DLL                   L"unbcl.dll"
 #define DISMCORE_DLL                L"dismcore.dll"
+#define LOGPROVIDER_DLL             L"LogProvider.dll"
+#define PROVPROVIDER_DLL            L"ProvProvider.dll"
 #define CLICONFG_EXE                L"cliconfg.exe"
 #define OOBE_EXE                    L"oobe.exe"
 #define WINSAT_EXE                  L"winsat.exe"
@@ -74,6 +78,7 @@
 #define SPINSTALL_EXE               L"spinstall.exe"
 #define CONSENT_EXE                 L"consent.exe"
 #define EVENTVWR_EXE                L"eventvwr.exe"
+#define SCHTASKS_EXE                L"schtasks.exe"
 #define COMPMGMTLAUNCHER_EXE        L"CompMgmtLauncher.exe"
 #define PKGMGR_EXE                  L"pkgmgr.exe"
 #define SYSPREP_DIR                 L"sysprep\\"
@@ -100,6 +105,7 @@
 #define LAZYWOW64UNSUPPORTED        L"Use 32 bit version of this tool on 32 bit OS version"
 #define OSTOOOLD                    L"This method require Windows 7 and above"
 #define WINBLUEWANTED               L"This method require Windows 8 and above"
+#define WIN10ONLY                   L"This method require Windows 10 and above"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
 #define T_AKAGI_KEY                 L"Software\\Akagi"
 #define T_AKAGI_PARAM               L"LoveLetter"

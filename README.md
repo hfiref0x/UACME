@@ -37,7 +37,8 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs2 15025;
 * 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs2 15025;
 * 24 - Original Comet method from BreakingMalware, abuses current user environment variables and CompMgmtLauncher.exe, works from Windows 7 up to 10rs2 15025;
-* 25 - Original method from Enigma0x3, abuses shell command execution logic used by autoelevated applications, works from Windows 7 up to 10rs2 15025.
+* 25 - Original method from Enigma0x3, abuses shell command execution logic used by autoelevated applications, works from Windows 7 up to 10rs2 15025;
+* 26 - Original method from Enigma0x3, abuses race condition with quite idiotic cleanmgr.exe behavior, works on from Windows 10th1 10240 up to 10rs2 15025.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -83,7 +84,7 @@ Methods fixed:
 * 18 - Windows 10 RS1 starting from public 14371 build;
 * 19 - Windows 10 RS1 starting from public 14376 build.
 
-** 20, 21, 22, 23, 24, 25 are not fixed as at 02 February 2017.
+** 20, 21, 22, 23, 24, 25, 26 are not fixed as at 08 February 2017.
 
 If you wondering why this still exist and work here is the explanation, an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
 https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
@@ -102,8 +103,8 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # VirusTotal reference report
 
-* Akagi32 https://www.virustotal.com/en/file/caf744d38820accb48a6e50216e547ed2bb3979604416dbcfcc991ce5e18f4ca/analysis/
-* Akagi64 https://www.virustotal.com/en/file/609e9b15114e54ffc40c05a8980cc90f436a4a77c69f3e32fe391c0b130ff1c5/analysis/
+* Akagi32 https://www.virustotal.com/en/file/8100847e1066b04615a7ab2c2b919b70d75e96d1900b2f7a03896579f5f1982b/analysis/
+* Akagi64 https://www.virustotal.com/en/file/5e453253add4e1b2a0a63c3a2ea2a45631f99e45d2e1dce96159766a30c73333/analysis/
 
 # Build 
 
@@ -119,6 +120,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * KernelMode.Info UACMe thread, http://www.kernelmode.info/forum/viewtopic.php?f=11&t=3643
 * Command Injection/Elevation - Environment Variables Revisited, https://breakingmalware.com/vulnerabilities/command-injection-and-elevation-environment-variables-revisited
 * "Fileless" UAC Bypass Using eventvwr.exe and Registry Hijacking, https://enigma0x3.net/2016/08/15/fileless-uac-bypass-using-eventvwr-exe-and-registry-hijacking/
+* Bypassing UAC on Windows 10 using Disk Cleanup, https://enigma0x3.net/2016/07/22/bypassing-uac-on-windows-10-using-disk-cleanup/
 
  
 # Authors

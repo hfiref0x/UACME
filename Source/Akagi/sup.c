@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.53
 *
-*  DATE:        18 Jan 2017
+*  DATE:        19 Jan 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -506,10 +506,9 @@ VOID supMasqueradeProcess(
     VOID
     )
 {
-    SIZE_T  sz = 0x1000;
-    PPEB    Peb = g_ctx.Peb;
+    SIZE_T  sz;
     DWORD   cch;
-    WCHAR   szBuffer[MAX_PATH + 1];
+    WCHAR   szBuffer[MAX_PATH * 2];
 
     RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
     cch = GetWindowsDirectory(szBuffer, MAX_PATH);
@@ -518,18 +517,19 @@ VOID supMasqueradeProcess(
         _strcat(szBuffer, L"\\explorer.exe");
 
         g_lpszExplorer = NULL;
+        sz = 0x1000;
         NtAllocateVirtualMemory(NtCurrentProcess(), &g_lpszExplorer, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if (g_lpszExplorer) {
             _strcpy(g_lpszExplorer, szBuffer);
 
-            RtlEnterCriticalSection(Peb->FastPebLock);
+            RtlEnterCriticalSection(g_ctx.Peb->FastPebLock);
 
-            RtlInitUnicodeString(&Peb->ProcessParameters->ImagePathName, g_lpszExplorer);
-            RtlInitUnicodeString(&Peb->ProcessParameters->CommandLine, APPCMDLINE);
+            RtlInitUnicodeString(&g_ctx.Peb->ProcessParameters->ImagePathName, g_lpszExplorer);
+            RtlInitUnicodeString(&g_ctx.Peb->ProcessParameters->CommandLine, APPCMDLINE);
 
-            RtlLeaveCriticalSection(Peb->FastPebLock);
+            RtlLeaveCriticalSection(g_ctx.Peb->FastPebLock);
 
-            LdrEnumerateLoadedModules(0, &supxLdrEnumModulesCallback, (PVOID)Peb);
+            LdrEnumerateLoadedModules(0, &supxLdrEnumModulesCallback, (PVOID)g_ctx.Peb);
         }
     }
 }
@@ -705,6 +705,9 @@ VOID NTAPI sxsFindDllCallback(
     PSXS_SEARCH_CONTEXT sctx = (PSXS_SEARCH_CONTEXT)Context;
 
     do {
+
+        if ((sctx == NULL) || (DataTableEntry == NULL))
+            break;
 
         if ((DataTableEntry->BaseDllName.Buffer == NULL) ||
             (DataTableEntry->FullDllName.Buffer == NULL))

@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.53
 *
-*  DATE:        18 Jan 2017
+*  DATE:        20 Jan 2017
 *
 *  Common header file for the program support routines.
 *
@@ -79,6 +79,7 @@ typedef enum _UACBYPASSMETHOD {
     UacMethodDISM,
     UacMethodComet,
     UacMethodEnigma0x3,
+    UacMethodEnigma0x3_2,
     UacMethodMax
 } UACBYPASSMETHOD;
 
@@ -122,5 +123,12 @@ typedef struct _UACME_CONTEXT {
     WCHAR               szSystemDirectory[MAX_PATH + 1];//with end slash
     WCHAR               szTempDirectory[MAX_PATH + 1]; //with end slash
 } UACMECONTEXT, *PUACMECONTEXT;
+
+typedef UINT(WINAPI *pfnEntryPoint)();
+
+typedef struct _UACME_THREAD_CONTEXT {
+    TEB_ACTIVE_FRAME Frame;
+    pfnEntryPoint ucmMain;
+} UACME_THREAD_CONTEXT, *PUACME_THREAD_CONTEXT;
 
 extern UACMECONTEXT g_ctx;
