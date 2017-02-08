@@ -164,10 +164,12 @@ DWORD ucmDiskCleanupWorkerThread(
         do {
 
             status = NtNotifyChangeDirectoryFile(hDirectory, hEvent, NULL, NULL,
-                &IoStatusBlock, Buffer, (ULONG)sz, FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_FILE_NAME, TRUE);
+                &IoStatusBlock, Buffer, (ULONG)sz, FILE_NOTIFY_CHANGE_FILE_NAME, TRUE);
 
             if (status == STATUS_PENDING)
                 NtWaitForSingleObject(hEvent, TRUE, NULL);          
+
+            NtSetEvent(hEvent, NULL);
 
             pInfo = (FILE_NOTIFY_INFORMATION*)Buffer;
             for (;;) {
@@ -204,8 +206,6 @@ DWORD ucmDiskCleanupWorkerThread(
                 pInfo = (FILE_NOTIFY_INFORMATION*)(((LPBYTE)pInfo) + pInfo->NextEntryOffset);
                 if (pInfo->NextEntryOffset == 0)
                     break;
-
-                NtSetEvent(hEvent, NULL);
             }
 
         } while (NT_SUCCESS(status));

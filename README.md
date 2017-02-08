@@ -60,7 +60,7 @@ Run examples:
 * This tool is not intended for AV tests and not tested to work in aggressive AV environment, if you still plan to use it with installed bloatware AV soft - you use it at your own risk;
 * Some AV may flag this tool as HackTool, MSE/WinDefender constantly marks it as malware, nope;
 * If you run this program on real computer remember to remove all program leftovers after usage, for more info about files it drops to system folders see source code;
-* Since 2.4 all added methods/code will be strictly x64. I don't see any sense in supporting 32 bit versions of Windows in 2016 year.
+* Since 2.4 all added methods/code will be strictly x64. I don't see any sense in supporting 32 bit versions of Windows.
 
 # Microsoft countermeasures
 Methods fixed:
@@ -103,8 +103,8 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # VirusTotal reference report
 
-* Akagi32 https://www.virustotal.com/en/file/8100847e1066b04615a7ab2c2b919b70d75e96d1900b2f7a03896579f5f1982b/analysis/
-* Akagi64 https://www.virustotal.com/en/file/5e453253add4e1b2a0a63c3a2ea2a45631f99e45d2e1dce96159766a30c73333/analysis/
+* Akagi32 https://www.virustotal.com/en/file/bc76b81567cdf3ead8e57164d466212849c4965fa6fa832ed10e5bb571e8d58b/analysis/
+* Akagi64 https://www.virustotal.com/en/file/6eb88048b0b9a0e195a8cfe4b9832761f76cab238f6bf62c5c6ac3a3c27fcf3c/analysis/
 
 # Build 
 

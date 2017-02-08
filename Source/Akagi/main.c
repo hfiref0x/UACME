@@ -532,6 +532,11 @@ UINT ucmMain()
             return ERROR_UNSUPPORTED_TYPE;
         }
 #endif
+        //ban usage under wow64 (dismhost is x64 and x64 dlls are not present in 32bit version of this tool).
+        if (g_ctx.IsWow64) {
+            ucmShowMessage(WOW64STRING);
+            return ERROR_UNSUPPORTED_TYPE;
+        }
         break;
 
     }
@@ -547,8 +552,7 @@ UINT ucmMain()
         {
             supSetParameter((LPWSTR)&szBuffer, paramLen * sizeof(WCHAR));
         }
-    }
-    
+    }    
 
     //check environment and execute method if it met requirements
     switch (g_ctx.Method) {
