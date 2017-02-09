@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.55
 *
-*  DATE:        08 Feb 2017
+*  DATE:        10 Feb 2017
 *
 *  Prototypes and definitions for ExpLife method.
 *
@@ -39,12 +39,16 @@ typedef struct IARPUninstallStringLauncherVtbl {
     HRESULT(STDMETHODCALLTYPE *LaunchUninstallStringAndWait)(
         __RPC__in IARPUninstallStringLauncher * This,
         _In_ HKEY hKey,
-        _In_ LPCOLESTR UninstallGuid,
-        _In_ BOOL bFlag,
+        _In_ LPCOLESTR Item,
+        _In_ BOOL bModify,
         _In_ HWND hWnd
         );
 
-    //incomplete, we don't care
+    HRESULT(STDMETHODCALLTYPE *RemoveBrokenItemFromInstalledProgramsList)(
+        __RPC__in IARPUninstallStringLauncher * This,
+        _In_ HKEY hKey,
+        _In_ LPCOLESTR Item
+        );
 
     END_INTERFACE
 
