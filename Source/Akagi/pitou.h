@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       PITOU.H
 *
-*  VERSION:     2.50
+*  VERSION:     2.55
 *
-*  DATE:        06 July 2016
+*  DATE:        08 Feb 2017
 *
 *  Prototypes and definitions for Leo Davidson method.
 *
@@ -42,4 +42,11 @@ BOOL ucmStandardAutoElevation2(
 BOOL ucmMasqueradedRenameElementCOM(
     LPWSTR OldName,
     LPWSTR NewName
+    );
+
+HRESULT ucmMasqueradedCoGetObjectElevate(
+    _In_ LPWSTR clsid,
+    _In_ DWORD dwClassContext,
+    _In_ REFIID riid,
+    _Outptr_ void **ppv
     );

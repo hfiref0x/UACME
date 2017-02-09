@@ -233,6 +233,7 @@
   <ItemGroup>
     <ClCompile Include="..\Shared\cmdline.c" />
     <ClCompile Include="..\Shared\strtoul.c" />
+    <ClCompile Include="..\Shared\ultohex.c" />
     <ClCompile Include="..\Shared\ultostr.c" />
     <ClCompile Include="..\Shared\_filename.c" />
     <ClCompile Include="..\shared\_strcat.c" />
@@ -248,6 +249,7 @@
     <ClCompile Include="carberp.c" />
     <ClCompile Include="comet.c" />
     <ClCompile Include="enigma0x3.c" />
+    <ClCompile Include="explife.c" />
     <ClCompile Include="gootkit.c" />
     <ClCompile Include="hybrids.c" />
     <ClCompile Include="main.c" />
@@ -267,6 +269,7 @@
     <ClInclude Include="compress.h" />
     <ClInclude Include="consts.h" />
     <ClInclude Include="enigma0x3.h" />
+    <ClInclude Include="explife.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="gootkit.h" />
     <ClInclude Include="hybrids.h" />

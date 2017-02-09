@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.53
+*  VERSION:     2.55
 *
-*  DATE:        19 Jan 2017
+*  DATE:        09 Feb 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -97,6 +97,7 @@ BOOL supWriteBufferToFile(
 {
     HANDLE hFile;
     DWORD bytesIO;
+    WCHAR szLog[MAX_PATH];
 
     if (
         (lpFileName == NULL) ||
@@ -111,6 +112,15 @@ BOOL supWriteBufferToFile(
         GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
 
     if (hFile == INVALID_HANDLE_VALUE) {
+        
+        bytesIO = GetLastError();
+
+        RtlSecureZeroMemory(szLog, sizeof(szLog));
+        _strcpy(szLog, TEXT("[UCM] CreateFile failed with code: "));
+        ultostr(bytesIO, _strend(szLog));
+        _strcat(szLog, TEXT("\n"));
+        OutputDebugString(szLog);
+
         return FALSE;
     }
 

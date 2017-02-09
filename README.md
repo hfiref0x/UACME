@@ -32,13 +32,14 @@ Keys (watch debug ouput with dbgview or similar for more info):
 * 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, works from Windows 8.1 (9600) up to 10rs1 14367;
 * 18 - Hybrid method, abuses SxS undocumented backdoor used to fix (1) and appinfo whitelist, works from Windows 7 up to 10rs1 14367;
 * 19 - Hybrid method, using InetMgr IIS module and based on 10 & 16 MS fixes, works from Windows 7 up to 10rs1 14372;
-* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs2 15025;
-* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs2 15025;
-* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs2 15025;
-* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs2 15025;
+* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs2 15031;
+* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs2 15031;
+* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs2 15031;
+* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs2 15031;
 * 24 - Original Comet method from BreakingMalware, abuses current user environment variables and CompMgmtLauncher.exe, works from Windows 7 up to 10rs2 15025;
 * 25 - Original method from Enigma0x3, abuses shell command execution logic used by autoelevated applications, works from Windows 7 up to 10rs2 15025;
-* 26 - Original method from Enigma0x3, abuses race condition with quite idiotic cleanmgr.exe behavior, works on from Windows 10th1 10240 up to 10rs2 15025.
+* 26 - Original method from Enigma0x3, abuses race condition with quite idiotic cleanmgr.exe behavior, works on from Windows 10th1 10240 up to 10rs2 15025;
+* 27 - Original method from ExpLife, uses IARPUninstallStringLauncher undocumented COM interface, works from Windows 7 up to 10rs2 15031.
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -46,6 +47,7 @@ Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8.
 * Method (11) implemented in x86-32 version;
 * Method (13) (19) and above implemented only in x64 version.
+* Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone.
 
 Run examples:
 * akagi32.exe 1
@@ -82,9 +84,12 @@ Methods fixed:
 * 16 - Windows 10 RS1 starting from public 14316 build;
 * 17 - Windows 10 RS1 starting from public 14371 build;
 * 18 - Windows 10 RS1 starting from public 14371 build;
-* 19 - Windows 10 RS1 starting from public 14376 build.
+* 19 - Windows 10 RS1 starting from public 14376 build;
+* 24 - Windows 10 RS2 starting from public 15031 build;
+* 25 - Windows 10 RS2 starting from public 15031 build;
+* 26 - Windows 10 RS2 starting from public 15031 build (fix partial, see Notes above).
 
-** 20, 21, 22, 23, 24, 25, 26 are not fixed as at 08 February 2017.
+** 20, 21, 22, 23, 27 are not fixed as at 09 February 2017.
 
 If you wondering why this still exist and work here is the explanation, an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
 https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
@@ -103,8 +108,8 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # VirusTotal reference report
 
-* Akagi32 https://www.virustotal.com/en/file/bc76b81567cdf3ead8e57164d466212849c4965fa6fa832ed10e5bb571e8d58b/analysis/
-* Akagi64 https://www.virustotal.com/en/file/6eb88048b0b9a0e195a8cfe4b9832761f76cab238f6bf62c5c6ac3a3c27fcf3c/analysis/
+* Akagi32 https://www.virustotal.com/en/file/9bc91fedd02769705f7b8716a2e40e34fc081c1a12493a7826eb4243f371e589/analysis/
+* Akagi64 https://www.virustotal.com/en/file/4de0aeb3a2ec4ad6bacd0b35b47c6ba709199a8d0687cc6e4a421fdb64ba6108/analysis/
 
 # Build 
 
@@ -121,7 +126,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * Command Injection/Elevation - Environment Variables Revisited, https://breakingmalware.com/vulnerabilities/command-injection-and-elevation-environment-variables-revisited
 * "Fileless" UAC Bypass Using eventvwr.exe and Registry Hijacking, https://enigma0x3.net/2016/08/15/fileless-uac-bypass-using-eventvwr-exe-and-registry-hijacking/
 * Bypassing UAC on Windows 10 using Disk Cleanup, https://enigma0x3.net/2016/07/22/bypassing-uac-on-windows-10-using-disk-cleanup/
-
+* Using IARPUninstallStringLauncher COM interface to bypass UAC, http://www.freebuf.com/articles/system/116611.html
  
 # Authors
 
