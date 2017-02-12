@@ -3,7 +3,7 @@
 
 # System Requirements
 
-* x86-32/x64 Windows 7/8/8.1/10TH1/10TH2/10RS1 (client, some methods however works on server version too).
+* x86-32/x64 Windows 7/8/8.1/10TH1/10TH2/10RS1/10RS2 (client, some methods however works on server version too).
 * Admin account with UAC set on default settings required.
 
 # Usage
@@ -13,33 +13,325 @@ Run executable from command line: akagi32 [Key] [Param] or akagi64 [Key] [Param]
 First param is number of method to use, second is optional command (executable file name including full path) to run. Second param can be empty - in this case program will execute elevated cmd.exe from system32 folder.
 
 Keys (watch debug ouput with dbgview or similar for more info):
-* 1 - Leo Davidson sysprep method, this will work only on Windows 7 and Windows 8, used in multiple malware;
-* 2 - Tweaked Leo Davidson sysprep method, this will work only on Windows 8.1.9600;
-* 3 - Leo Davidson method tweaked by WinNT/Pitou developers, works from Windows 7 up to 10th2 10532;
-* 4 - Application Compatibility Shim RedirectEXE method, from WinNT/Gootkit. Works from Windows 7 up to 8.1.9600;
-* 5 - ISecurityEditor WinNT/Simda method, used to turn off UAC, works from Windows 7 up to Windows 10th1 100136;
-* 6 - Wusa method used by Win32/Carberp, tweaked to work with Windows 8/8.1 also;
-* 7 - Wusa method, tweaked to work from Windows 7 up to 10th1 10136;
-* 8 - Slightly modified Leo Davidson method used by Win32/Tilon, works only on Windows 7;
-* 9 - Hybrid method, combination of WinNT/Simda and Win32/Carberp + AVrf, works from Windows 7 up to 10th1 10136;
-* 10 - Hybrid method, abusing appinfo.dll way of whitelisting autoelevated applications and KnownDlls cache changes, works from Windows 7 up to 10th2 10532;
-* 11 - WinNT/Gootkit second method based on the memory patching from MS "Fix it" patch shim (and as side effect - arbitrary dll injection), works from Windows 7 up to 8.1.9600;
-* 12 - Windows 10 sysprep method, abusing different dll dependency added in Windows 10 (works up to 10th2 10558);
-* 13 - Hybrid method, abusing Microsoft Management Console and EventViewer missing dependency, works from Windows 7 up to 10rs1 14295;
-* 14 - WinNT/Sirefef method, abusing appinfo.dll way of whitelisting OOBE.exe, works from Windows 7 up to 10th2 10558;
-* 15 - Win32/Addrop method, also used in Metasploit uacbypass module, works from Windows 7 up to 10rs1 14295;
-* 16 - Hybrid method working together with Microsoft GWX backdoor, works from Windows 7 up to 10rs1 14295;
-* 17 - Hybrid method, abuses appinfo whitelist/logic/API choice&usage, works from Windows 8.1 (9600) up to 10rs1 14367;
-* 18 - Hybrid method, abuses SxS undocumented backdoor used to fix (1) and appinfo whitelist, works from Windows 7 up to 10rs1 14367;
-* 19 - Hybrid method, using InetMgr IIS module and based on 10 & 16 MS fixes, works from Windows 7 up to 10rs1 14372;
-* 20 - Hybrid method, abusing Microsoft Management Console and incorrect dll loading scheme, works from Windows 7 up to 10rs2 15031;
-* 21 - Hybrid method, abusing SxS DotLocal and targeting sysprep, works from Windows 7 up to 10rs2 15031;
-* 22 - Hybrid method, abusing SxS DotLocal and targeting consent to gain system privileges, works from Windows 7 up to 10rs2 15031;
-* 23 - Hybrid method, abusing Package Manager and DISM, works from Windows 7 up to 10rs2 15031;
-* 24 - Original Comet method from BreakingMalware, abuses current user environment variables and CompMgmtLauncher.exe, works from Windows 7 up to 10rs2 15025;
-* 25 - Original method from Enigma0x3, abuses shell command execution logic used by autoelevated applications, works from Windows 7 up to 10rs2 15025;
-* 26 - Original method from Enigma0x3, abuses race condition with quite idiotic cleanmgr.exe behavior, works on from Windows 10th1 10240 up to 10rs2 15025;
-* 27 - Original method from ExpLife, uses IARPUninstallStringLauncher undocumented COM interface, works from Windows 7 up to 10rs2 15031.
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;}
+.tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;}
+.tg .tg-214n{font-size:11px;text-align:center}
+.tg .tg-kr94{font-size:12px;text-align:center}
+.tg .tg-pi53{font-weight:bold;font-size:12px;text-align:center}
+</style>
+<table class="tg">
+  <tr>
+    <th class="tg-kr94">#</th>
+    <th class="tg-pi53">Author</th>
+    <th class="tg-pi53">Type</th>
+    <th class="tg-pi53">Method</th>
+    <th class="tg-pi53">Target</th>
+    <th class="tg-pi53">Components</th>
+    <th class="tg-pi53">Initial Windows working build<br></th>
+    <th class="tg-pi53">Fixed Windows build<br></th>
+    <th class="tg-pi53">Fix info<br></th>
+  </tr>
+  <tr>
+    <td class="tg-214n">1</td>
+    <td class="tg-214n">Leo Davidson<br></td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\sysprep\sysprep.exe</td>
+    <td class="tg-214n">Cryptbase.dll</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">9600<br></td>
+    <td class="tg-214n">sysprep.exe hardened LoadFrom manifest<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">2</td>
+    <td class="tg-214n">Leo Davidson<br>derivative<br></td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\sysprep\sysprep.exe</td>
+    <td class="tg-214n">ShCore.dll<br></td>
+    <td class="tg-214n">9600<br></td>
+    <td class="tg-214n">&gt;9600<br></td>
+    <td class="tg-214n">ShCore.dll added to \KnownDlls</td>
+  </tr>
+  <tr>
+    <td class="tg-214n">3</td>
+    <td class="tg-214n">Leo Davidson, WinNT/Pitou<br></td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\oobe\setupsqm.exe</td>
+    <td class="tg-214n">WdsCore.dll</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">10532</td>
+    <td class="tg-214n">Fix is result of OOBE redesign<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">4</td>
+    <td class="tg-214n">Jon Ericson, WinNT/Gootkit, mzH<br></td>
+    <td class="tg-214n">AppCompat <br></td>
+    <td class="tg-214n">RedirectEXE Shim<br></td>
+    <td class="tg-214n">systemroot\system32\cliconfg.exe</td>
+    <td class="tg-214n">-</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">9600</td>
+    <td class="tg-214n">Sbdinst.exe autoelevation removed, KB3045645/KB3048097</td>
+  </tr>
+  <tr>
+    <td class="tg-214n">5</td>
+    <td class="tg-214n">WinNT/Simda</td>
+    <td class="tg-214n">Elevated COM interface<br></td>
+    <td class="tg-214n">ISecurityEditor</td>
+    <td class="tg-214n">Registry Keys<br></td>
+    <td class="tg-214n">-</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">10136</td>
+    <td class="tg-214n">COM interface altered<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">6</td>
+    <td class="tg-214n">Win32/Carberp</td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">WUSA</td>
+    <td class="tg-214n">systemroot\ehome\mcx2prov.exe<br>systemroot\system32\migwiz\migwiz.exe<br></td>
+    <td class="tg-214n">WdsCore.dll<br>CryptBase.dll<br>CryptSP.dll<br></td>
+    <td class="tg-214n">7600<br></td>
+    <td class="tg-214n">10147<br></td>
+    <td class="tg-214n">WUSA /extract option removed<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">7</td>
+    <td class="tg-214n">Win32/Carberp derivative</td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">WUSA</td>
+    <td class="tg-214n">systemroot\system32\cliconfg.exe<br></td>
+    <td class="tg-214n">ntwdblib.dll<br></td>
+    <td class="tg-214n">7600<br></td>
+    <td class="tg-214n">10147</td>
+    <td class="tg-214n">WUSA /extract option removed<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">8</td>
+    <td class="tg-214n">Leo Davidson<br>Win32/Tilon<br></td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\sysprep\sysprep.exe</td>
+    <td class="tg-214n">Actionqueue.dll</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">9600</td>
+    <td class="tg-214n">sysprep.exe hardened LoadFrom manifest</td>
+  </tr>
+  <tr>
+    <td class="tg-214n">9</td>
+    <td class="tg-214n">Leo Davidson<br>WinNT/Simda<br>Win32/Carberp<br>derivative<br></td>
+    <td class="tg-214n">Application Verifier<br></td>
+    <td class="tg-214n">IFileOperation<br>ISecurityEditor<br>WUSA<br></td>
+    <td class="tg-214n">IFEO registry keys <br>systemroot\system32\cliconfg.exe<br></td>
+    <td class="tg-214n">Attacker defined Application Verifier Dll<br></td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">10147</td>
+    <td class="tg-214n">WUSA /extract option removed<br>ISecurityEditor interface altered<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">10</td>
+    <td class="tg-214n">WinNT/Pitou<br>Win32/Carberp<br>derivative<br></td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation<br>WUSA<br></td>
+    <td class="tg-214n">systemroot\system32\&lt;New&gt;or&lt;Existing&gt;\&lt;autoelevated&gt;.exe, e.g.<br>systemroot\system32\sysprep\winsat.exe<br></td>
+    <td class="tg-214n">Attacker defined dll, <br>e.g. PowProf.dll<br>DevObj.dll<br></td>
+    <td class="tg-214n">7600<br></td>
+    <td class="tg-214n">10548</td>
+    <td class="tg-214n">AppInfo elevated application path control hardedning<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">11</td>
+    <td class="tg-214n">Jon Ericson, WinNT/Gootkit, mzH</td>
+    <td class="tg-214n">AppCompat</td>
+    <td class="tg-214n">Shim Memory Patch<br></td>
+    <td class="tg-214n">systemroot\system32\iscsicli.exe</td>
+    <td class="tg-214n">Attacker prepared shellcode<br></td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">9600</td>
+    <td class="tg-214n">Sbdinst.exe autoelevation removed, KB3045645/KB3048097</td>
+  </tr>
+  <tr>
+    <td class="tg-214n">12</td>
+    <td class="tg-214n">Leo Davidson<br>derivative<br></td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\sysprep\sysprep.exe</td>
+    <td class="tg-214n">dbgcore.dll</td>
+    <td class="tg-214n">10240</td>
+    <td class="tg-214n">10565</td>
+    <td class="tg-214n">sysprep.exe manifest updated<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">13</td>
+    <td class="tg-214n">Leo Davidson<br>derivative</td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\mmc.exe<br>EventVwr.msc<br></td>
+    <td class="tg-214n">elsext.dll</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">14316</td>
+    <td class="tg-214n">Missing dependency removed<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">14</td>
+    <td class="tg-214n">Leo Davidson<br>WinNT/Sirefef<br>derivative<br></td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system\credwiz.exe<br>systemroot\system32\wbem\oobe.exe</td>
+    <td class="tg-214n">netutils.dll</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">10548</td>
+    <td class="tg-214n">AppInfo elevated application path control hardedning</td>
+  </tr>
+  <tr>
+    <td class="tg-214n">15</td>
+    <td class="tg-214n">Leo Davidson<br>Win32/Addrop<br>Metasploit<br>derivative<br></td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\cliconfg.exe</td>
+    <td class="tg-214n">ntwdblib.dll</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">14316</td>
+    <td class="tg-214n">Cliconfg.exe autoelevation removed<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">16</td>
+    <td class="tg-214n">Leo Davidson<br>derivative<br></td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\GWX\GWXUXWorker.exe -&gt; systemroot\system32\inetsrv\inetmgr.exe<br><br></td>
+    <td class="tg-214n">SLC.dll</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">14316</td>
+    <td class="tg-214n">AppInfo elevated application path control and<br>inetmgr executable hardening</td>
+  </tr>
+  <tr>
+    <td class="tg-214n">17<br></td>
+    <td class="tg-214n">Leo Davidson derivative<br></td>
+    <td class="tg-214n">Dll Hijack (Import Forwarding)<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\sysprep\sysprep.exe</td>
+    <td class="tg-214n">unbcl.dll</td>
+    <td class="tg-214n">9600</td>
+    <td class="tg-214n">14371</td>
+    <td class="tg-214n">sysprep.exe manifest updated<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">18</td>
+    <td class="tg-214n">Leo Davidson<br>derivative<br></td>
+    <td class="tg-214n">Dll Hijack (Manifest)<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\taskhost.exe<br>systemroot\system32\tzsync.exe<br></td>
+    <td class="tg-214n">Attacker defined dll<br></td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">14371</td>
+    <td class="tg-214n">Manifest parsing logic reviewed<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">19</td>
+    <td class="tg-214n">Leo Davidson<br>derivative<br></td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\inetsrv\inetmgr.exe</td>
+    <td class="tg-214n">MsCoree.dll</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">14376</td>
+    <td class="tg-214n">inetmgr.exe executable manifest hardening<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">20</td>
+    <td class="tg-214n">Leo Davidson<br>derivative</td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\mmc.exe<br>Rsop.msc<br></td>
+    <td class="tg-214n">WbemComn.dll</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n"></td>
+    <td class="tg-214n"></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">21</td>
+    <td class="tg-214n">Leo Davidson<br>derivative<br></td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation<br>SxS DotLocal<br></td>
+    <td class="tg-214n">systemroot\system32\sysprep\sysprep.exe</td>
+    <td class="tg-214n">comctl32.dll</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n"></td>
+    <td class="tg-214n"></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">22</td>
+    <td class="tg-214n">Leo Davidson<br>derivative</td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation<br>SxS DotLocal</td>
+    <td class="tg-214n">systemroot\system32\consent.exe</td>
+    <td class="tg-214n">comctl32.dll</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n"></td>
+    <td class="tg-214n"></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">23</td>
+    <td class="tg-214n">Leo Davidson<br>derivative</td>
+    <td class="tg-214n">Dll Hijack<br></td>
+    <td class="tg-214n">IFileOperation</td>
+    <td class="tg-214n">systemroot\system32\pkgmgr.exe</td>
+    <td class="tg-214n">DismCore.dll</td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n"></td>
+    <td class="tg-214n"></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">24</td>
+    <td class="tg-214n">BreakingMalware</td>
+    <td class="tg-214n">Shell API<br></td>
+    <td class="tg-214n">Environment variables expansion<br></td>
+    <td class="tg-214n">systemroot\system32\CompMgmtLauncher.exe</td>
+    <td class="tg-214n">Attacker defined application<br></td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">15031</td>
+    <td class="tg-214n">CompMgmtLauncher.exe autoelevation removed<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">25</td>
+    <td class="tg-214n">Enigma0x3<br></td>
+    <td class="tg-214n">Shell API<br></td>
+    <td class="tg-214n">Registry key manipulation<br></td>
+    <td class="tg-214n">systemroot\system32\EventVwr.exe<br>systemroot\system32\CompMgmtLauncher.exe</td>
+    <td class="tg-214n">Attacker defined application<br></td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n">15031</td>
+    <td class="tg-214n">EventVwr.exe redesigned<br>CompMgmtLauncher.exe autoelevation removed</td>
+  </tr>
+  <tr>
+    <td class="tg-214n">26</td>
+    <td class="tg-214n">Enigma0x3</td>
+    <td class="tg-214n">Race Condition<br></td>
+    <td class="tg-214n">File overwrite<br></td>
+    <td class="tg-214n">%temp%\GUID\dismhost.exe</td>
+    <td class="tg-214n">LogProvider.dll</td>
+    <td class="tg-214n">10240</td>
+    <td class="tg-214n">15031</td>
+    <td class="tg-214n">File security permission altered<br></td>
+  </tr>
+  <tr>
+    <td class="tg-214n">27<br></td>
+    <td class="tg-214n">ExpLife<br></td>
+    <td class="tg-214n">Elevated COM interface<br></td>
+    <td class="tg-214n">IARPUninstallStringLauncher</td>
+    <td class="tg-214n">Attacker defined application<br></td>
+    <td class="tg-214n">Attacker defined components<br></td>
+    <td class="tg-214n">7600</td>
+    <td class="tg-214n"></td>
+    <td class="tg-214n"></td>
+  </tr>
+</table>
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -62,34 +354,7 @@ Run examples:
 * This tool is not intended for AV tests and not tested to work in aggressive AV environment, if you still plan to use it with installed bloatware AV soft - you use it at your own risk;
 * Some AV may flag this tool as HackTool, MSE/WinDefender constantly marks it as malware, nope;
 * If you run this program on real computer remember to remove all program leftovers after usage, for more info about files it drops to system folders see source code;
-* Since 2.4 all added methods/code will be strictly x64. I don't see any sense in supporting 32 bit versions of Windows.
-
-# Microsoft countermeasures
-Methods fixed:
-* 1 - Windows 8.1 release and above, still work on Windows 7;
-* 2 - Windows 10 starting from earlier preview builds;
-* 3 - Windows 10 TH2 starting from 1055X builds;
-* 4 - Windows 10 starting from first preview builds, earlier OS versions got KB3045645/KB3048097 fix;
-* 5 - Windows 10 starting from 10147 build;
-* 6 - Windows 10 starting from 10147 build;
-* 7 - Windows 10 starting from 10147 build;
-* 8 - Windows 8.1 release and above, still work on Windows 7;
-* 9 - Windows 10 starting from 10147 build;
-* 10 - Windows 10 TH2 starting from build 10548;
-* 11 - Windows 10 starting from first preview builds, earlier OS versions got KB3045645/KB3048097 fix;
-* 12 - Windows 10 TH2 starting from 10565 build;
-* 13 - Windows 10 RS1 starting from public 14316 build;
-* 14 - Windows 10 TH2 starting from 10548 build;
-* 15 - Windows 10 RS1 starting from public 14316 build;
-* 16 - Windows 10 RS1 starting from public 14316 build;
-* 17 - Windows 10 RS1 starting from public 14371 build;
-* 18 - Windows 10 RS1 starting from public 14371 build;
-* 19 - Windows 10 RS1 starting from public 14376 build;
-* 24 - Windows 10 RS2 starting from public 15031 build;
-* 25 - Windows 10 RS2 starting from public 15031 build;
-* 26 - Windows 10 RS2 starting from public 15031 build (fix partial, see Notes above).
-
-** 20, 21, 22, 23, 27 are not fixed as at 09 February 2017.
+* Most of methods created for x64, with no x86-32 support in mind. I don't see any sense in supporting 32 bit versions of Windows or wow64, however with small tweaks most of them will run under wow64 as well.
 
 If you wondering why this still exist and work here is the explanation, an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
 https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
@@ -100,7 +365,9 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * Account without administrative privileges.
 
 # Malware usage
-* It is currently known that UACMe used by Adware/Multiplug (9), by Win32/Dyre (3), by Win32/Empercrypt (10 & 13). We do  not take any responsibility for this tool usage in the malicious purposes. It is free, open-source and provided AS-IS for everyone.
+* It is currently known that UACMe used by Adware/Multiplug (9), by Win32/Dyre (3), by Win32/Empercrypt (10 & 13). We do  not take any responsibility for this tool usage in the malicious purposes. It is free, open-source and provided 
+
+AS-IS for everyone.
 
 # Other usage
 * Currently used as "signature" by "THOR APT" scanner (handmade pattern matching fraudware from Germany). We do  not take any responsibility for this tool usage in the fraudware;
@@ -131,8 +398,3 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 # Authors
 
 (c) 2014 - 2017 UACMe Project
-
-
-# Discontinued
-
-Project discontinued http://www.kernelmode.info/forum/viewtopic.php?p=28872#p28872. However you are free to fork and continue.
