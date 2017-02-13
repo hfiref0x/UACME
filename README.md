@@ -95,7 +95,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
       * Fixed in: Windows 10 TH2 (10548) 
         * How: AppInfo elevated application path control hardedning
 11. Author: Jon Ericson, WinNT/Gootkit, mzH
-      * Type: App Compat
+      * Type: AppCompat
       * Method: Shim Memory Patch
       * Target(s): systemroot\system32\iscsicli.exe
       * Component(s): Attacker prepared shellcode
