@@ -17,7 +17,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 1. Author: Leo Davidson
    * Type: Dll Hijack
    * Method: IFileOperation
-   * Target(s): systemroot\system32\sysprep\sysprep.exe
+   * Target(s): \system32\sysprep\sysprep.exe
    * Component(s): cryptbase.dll
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 8.1 (9600)
@@ -25,7 +25,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 2. Author: Leo Davidson derivative
    * Type: Dll Hijack
    * Method: IFileOperation
-   * Target(s): systemroot\system32\sysprep\sysprep.exe
+   * Target(s): \system32\sysprep\sysprep.exe
    * Component(s): ShCore.dll
    * Works from: Windows 8.1 (9600)
    * Fixed in: Windows 10 TP (> 9600)
@@ -33,7 +33,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 3. Author: Leo Davidson derivative by WinNT/Pitou
    * Type: Dll Hijack
    * Method: IFileOperation
-   * Target(s): systemroot\system32\oobe\setupsqm.exe
+   * Target(s): \system32\oobe\setupsqm.exe
    * Component(s): WdsCore.dll
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TH1 (10558)
@@ -41,7 +41,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 4. Author: Jon Ericson, WinNT/Gootkit, mzH
    * Type: AppCompat
    * Method: RedirectEXE Shim
-   * Target(s): systemroot\system32\cliconfg.exe
+   * Target(s): \system32\cliconfg.exe
    * Component(s): -
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TP (> 9600)
@@ -57,7 +57,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 6. Author: Win32/Carberp
    * Type: Dll Hijack
    * Method: WUSA
-   * Target(s): systemroot\ehome\mcx2prov.exe, systemroot\system32\migwiz\migwiz.exe
+   * Target(s): \ehome\mcx2prov.exe, \system32\migwiz\migwiz.exe
    * Component(s): WdsCore.dll, CryptBase.dll, CryptSP.dll
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TH1 (10147)
@@ -65,7 +65,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 7. Author: Win32/Carberp derivative
    * Type: Dll Hijack
    * Method: WUSA
-   * Target(s): systemroot\system32\cliconfg.exe
+   * Target(s): \system32\cliconfg.exe
    * Component(s): ntwdblib.dll
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TH1 (10147)
@@ -73,7 +73,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 8. Author: Leo Davidson derivative by Win32/Tilon
    * Type: Dll Hijack
    * Method: IFileOperation
-   * Target(s): systemroot\system32\sysprep\sysprep.exe
+   * Target(s): \system32\sysprep\sysprep.exe
    * Component(s): Actionqueue.dll
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 8.1 (9600)
@@ -81,7 +81,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 9. Author: Leo Davidson, WinNT/Simda, Win32/Carberp derivative
    * Type: Dll Hijack
    * Method: IFileOperation, ISecurityEditor, WUSA
-   * Target(s): IFEO registry keys, systemroot\system32\cliconfg.exe
+   * Target(s): IFEO registry keys, \system32\cliconfg.exe
    * Component(s): Attacker defined Application Verifier Dll
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TH1 (10147)
@@ -89,15 +89,15 @@ Keys (watch debug ouput with dbgview or similar for more info):
 10. Author: WinNT/Pitou, Win32/Carberp derivative
       * Type: Dll Hijack
       * Method: IFileOperation, WUSA
-      * Target(s): systemroot\system32\{New}or{Existing}\{autoelevated}.exe, e.g. winsat.exe
+      * Target(s): \system32\\{New}or{Existing}\\{autoelevated}.exe, e.g. winsat.exe
       * Component(s): Attacker defined dll, e.g. PowProf.dll, DevObj.dll
       * Works from: Windows 7 (7600)
       * Fixed in: Windows 10 TH2 (10548) 
-        * How: AppInfo elevated application path control hardedning
+        * How: AppInfo elevated application path control hardening
 11. Author: Jon Ericson, WinNT/Gootkit, mzH
       * Type: AppCompat
       * Method: Shim Memory Patch
-      * Target(s): systemroot\system32\iscsicli.exe
+      * Target(s): \system32\iscsicli.exe
       * Component(s): Attacker prepared shellcode
       * Works from: Windows 7 (7600)
       * Fixed in: Windows 8.1 (9600)
@@ -105,7 +105,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 12. Author: Leo Davidson derivative
       * Type: Dll Hijack
       * Method: IFileOperation
-      * Target(s): systemroot\system32\sysprep\sysprep.exe
+      * Target(s): \system32\sysprep\sysprep.exe
       * Component(s): dbgcore.dll
       * Works from: Windows 10 TH1 (10240)
       * Fixed in: Windows 10 TH2 (10565)
@@ -113,7 +113,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 13. Author: Leo Davidson derivative
      * Type: Dll Hijack
      * Method: IFileOperation
-     * Target(s): systemroot\system32\mmc.exe EventVwr.msc
+     * Target(s): \system32\mmc.exe EventVwr.msc
      * Component(s): elsext.dll
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS1 (14316)
@@ -121,15 +121,15 @@ Keys (watch debug ouput with dbgview or similar for more info):
 14. Author: Leo Davidson, WinNT/Sirefef derivative
      * Type: Dll Hijack
      * Method: IFileOperation
-     * Target(s): systemroot\system\credwiz.exe, systemroot\system32\wbem\oobe.exe
+     * Target(s): \system\credwiz.exe, \system32\wbem\oobe.exe
      * Component(s): netutils.dll
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 TH2 (10548)
-        * How: AppInfo elevated application path control hardedning
+        * How: AppInfo elevated application path control hardening
 15. Author: Leo Davidson, Win32/Addrop, Metasploit derivative
      * Type: Dll Hijack
      * Method: IFileOperation
-     * Target(s): systemroot\system32\cliconfg.exe
+     * Target(s): \system32\cliconfg.exe
      * Component(s): ntwdblib.dll
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS1 (14316)
@@ -137,7 +137,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 16. Author: Leo Davidson derivative
      * Type: Dll Hijack
      * Method: IFileOperation
-     * Target(s): systemroot\system32\GWX\GWXUXWorker.exe, systemroot\system32\inetsrv\inetmgr.exe
+     * Target(s): \system32\GWX\GWXUXWorker.exe, \system32\inetsrv\inetmgr.exe
      * Component(s): SLC.dll
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS1 (14316)
@@ -145,7 +145,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 17. Author: Leo Davidson derivative
      * Type: Dll Hijack (Import forwarding)
      * Method: IFileOperation
-     * Target(s): systemroot\system32\sysprep\sysprep.exe
+     * Target(s): \system32\sysprep\sysprep.exe
      * Component(s): unbcl.dll
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS1 (14371)
@@ -153,7 +153,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 18. Author: Leo Davidson derivative
      * Type: Dll Hijack (Manifest)
      * Method: IFileOperation
-     * Target(s): systemroot\system32\taskhost.exe, systemroot\system32\tzsync.exe (any ms exe without manifest)
+     * Target(s): \system32\taskhost.exe, \system32\tzsync.exe (any ms exe without manifest)
      * Component(s): Attacker defined dll
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS1 (14371)
@@ -161,7 +161,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 19. Author: Leo Davidson derivative
      * Type: Dll Hijack
      * Method: IFileOperation
-     * Target(s): systemroot\system32\inetsrv\inetmgr.exe
+     * Target(s): \system32\inetsrv\inetmgr.exe
      * Component(s): MsCoree.dll
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS1 (14376)
@@ -169,7 +169,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 20. Author: Leo Davidson derivative
      * Type: Dll Hijack
      * Method: IFileOperation
-     * Target(s): systemroot\system32\mmc.exe, Rsop.msc
+     * Target(s): \system32\mmc.exe, Rsop.msc
      * Component(s): WbemComn.dll
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
@@ -177,7 +177,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 21. Author: Leo Davidson derivative
      * Type: Dll Hijack
      * Method: IFileOperation, SxS DotLocal
-     * Target(s): systemroot\system32\sysprep\sysprep.exe
+     * Target(s): \system32\sysprep\sysprep.exe
      * Component(s): comctl32.dll
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
@@ -185,7 +185,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 22. Author: Leo Davidson derivative
      * Type: Dll Hijack
      * Method: IFileOperation, SxS DotLocal
-     * Target(s): systemroot\system32\consent.exe
+     * Target(s): \system32\consent.exe
      * Component(s): comctl32.dll
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
@@ -193,7 +193,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 23. Author: Leo Davidson derivative
      * Type: Dll Hijack
      * Method: IFileOperation
-     * Target(s): systemroot\system32\pkgmgr.exe
+     * Target(s): \system32\pkgmgr.exe
      * Component(s): DismCore.dll
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
@@ -201,7 +201,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 24. Author: BreakingMalware
      * Type: Shell API
      * Method: Environment variables expansion
-     * Target(s): systemroot\system32\CompMgmtLauncher.exe
+     * Target(s): \system32\CompMgmtLauncher.exe
      * Component(s): Attacker defined application
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS2 (15031)
@@ -209,7 +209,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 25. Author: Enigma0x3
      * Type: Shell API
      * Method: Registry key manipulation
-     * Target(s): systemroot\system32\EventVwr.exe, systemroot\system32\CompMgmtLauncher.exe
+     * Target(s): \system32\EventVwr.exe, \system32\CompMgmtLauncher.exe
      * Component(s): Attacker defined application
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS2 (15031)
@@ -217,7 +217,7 @@ Keys (watch debug ouput with dbgview or similar for more info):
 26. Author: Enigma0x3
      * Type: Race Condition
      * Method: File overwrite
-     * Target(s): &temp%\GUID\dismhost.exe
+     * Target(s): %temp%\GUID\dismhost.exe
      * Component(s): LogProvider.dll
      * Works from: Windows 10 TH1 (10240)
      * Fixed in: Windows 10 RS2 (15031)
