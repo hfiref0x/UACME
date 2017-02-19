@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.53
+*  VERSION:     1.55
 *
-*  DATE:        06 Feb 2017
+*  DATE:        18 Feb 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -4385,6 +4385,17 @@ NTSTATUS NTAPI LdrUnregisterDllNotification(
     _In_ PVOID Cookie
     );
 
+NTSTATUS NTAPI LdrResSearchResource(
+    _In_    PVOID DllHandle,
+    _In_    CONST ULONG_PTR* ResourceIdPath,
+    _In_    ULONG ResourceIdPathLength,
+    _In_    ULONG Flags,
+    _Out_   LPVOID *Resource,
+    _Out_   ULONG_PTR *ResourceSize,
+    _In_    PVOID Reserved1,
+    _In_    PVOID Reserved2
+    );
+
 /*
 **  LDR END
 */
@@ -4463,7 +4474,15 @@ BOOLEAN NTAPI RtlIsActivationContextActive(
     IN PACTIVATION_CONTEXT ActivationContext
 );
 
-
+NTSTATUS NTAPI RtlQueryActivationContextApplicationSettings(
+    _In_opt_      DWORD dwFlags,
+    _In_opt_      HANDLE hActCtx,
+    _In_opt_      PCWSTR settingsNameSpace,
+    _In_          PCWSTR settingName,
+    _Out_writes_bytes_to_opt_(dwBuffer, *pdwWrittenOrRequired) PWSTR pvBuffer,
+    _In_      SIZE_T dwBuffer,
+    _Out_opt_ SIZE_T *pdwWrittenOrRequired
+);
 
 /*
 ** ACTCTX END
@@ -5211,6 +5230,21 @@ NTSTATUS NTAPI RtlDeleteCriticalSection(
 ** Critical Section END
 */
 
+/*
+** UAC Elevation Start
+*/
+
+#define DBG_FLAG_ELEVATION_ENABLED 1
+#define DBG_FLAG_VIRTUALIZATION_ENABLED 2
+#define DBG_FLAG_INSTALLER_DETECT_ENABLED 3
+
+NTSTATUS NTAPI RtlQueryElevationFlags(
+    _Inout_ ULONG *ElevationFlags
+    );
+
+/*
+** UAC Elevation END
+*/
 
 /*
 ** Loader API START

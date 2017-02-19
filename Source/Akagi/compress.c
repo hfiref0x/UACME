@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     2.50
+*  VERSION:     2.56
 *
-*  DATE:        07 July 2016
+*  DATE:        15 Feb 2017
 *
 *  Compression support.
 *
@@ -143,8 +143,8 @@ PVOID DecompressPayload(
                 break;
 
             //validate uncompressed data
-            if (!supVerifyMappedImageMatchesChecksum(UncompressedData, FinalDecompressedSize)) {
-                OutputDebugString(TEXT("Invalid file checksum"));
+            if (!supVerifyMappedImageMatchesChecksum(UncompressedData, FinalDecompressedSize)) {               
+                supDebugPrint(TEXT("DecompressPayload"), RtlNtStatusToDosError(STATUS_IMAGE_CHECKSUM_MISMATCH));
                 break;
             }
 

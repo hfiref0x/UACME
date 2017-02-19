@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     2.50
+*  VERSION:     2.56
 *
-*  DATE:        06 July 2016
+*  DATE:        15 Feb 2017
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -99,7 +99,7 @@ BOOL ucmWusaMethod(
     }
 
     if (!PathFileExists(szTargetProcess)) {
-        OutputDebugString(T_TARGETNOTFOUND);
+        supDebugPrint(TEXT("ucmWusaMethod"), ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
 

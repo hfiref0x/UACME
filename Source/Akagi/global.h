@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.55
 *
-*  DATE:        08 Feb 2017
+*  DATE:        10 Feb 2017
 *
 *  Common header file for the program support routines.
 *
@@ -43,13 +43,11 @@
 #include "bin64res.h"
 #define FUBUKI_ID IDR_FUBUKI64
 #define HIBIKI_ID IDR_HIBIKI64
-#define KONGOU_ID IDR_KONGOU64
 #define IKAZUCHI_ID IDR_IKAZUCHI64
 #else
 #include "bin32res.h"
 #define FUBUKI_ID IDR_FUBUKI32
 #define HIBIKI_ID IDR_HIBIKI32
-#define KONGOU_ID IDR_KONGOU32
 #define IKAZUCHI_ID IDR_IKAZUCHI32
 #endif
 

@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.55
+*  VERSION:     2.56
 *
-*  DATE:        09 Feb 2017
+*  DATE:        14 Feb 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -97,7 +97,6 @@ BOOL supWriteBufferToFile(
 {
     HANDLE hFile;
     DWORD bytesIO;
-    WCHAR szLog[MAX_PATH];
 
     if (
         (lpFileName == NULL) ||
@@ -111,16 +110,8 @@ BOOL supWriteBufferToFile(
     hFile = CreateFileW(lpFileName,
         GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
 
-    if (hFile == INVALID_HANDLE_VALUE) {
-        
-        bytesIO = GetLastError();
-
-        RtlSecureZeroMemory(szLog, sizeof(szLog));
-        _strcpy(szLog, TEXT("[UCM] CreateFile failed with code: "));
-        ultostr(bytesIO, _strend(szLog));
-        _strcat(szLog, TEXT("\n"));
-        OutputDebugString(szLog);
-
+    if (hFile == INVALID_HANDLE_VALUE) {       
+        supDebugPrint(TEXT("CreateFile"), GetLastError());
         return FALSE;
     }
 
@@ -128,6 +119,152 @@ BOOL supWriteBufferToFile(
     CloseHandle(hFile);
 
     return (bytesIO == BufferSize);
+}
+
+/*
+* supDebugPrint
+*
+* Purpose:
+*
+* Write formatted debug output.
+*
+*/
+VOID supDebugPrint(
+    LPWSTR ApiName,
+    DWORD status
+)
+{
+    LPWSTR lpBuffer;
+    SIZE_T sz;
+
+    sz = MAX_PATH;
+    if (ApiName) 
+        sz += _strlen(ApiName);
+
+    lpBuffer = HeapAlloc(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, sz);
+    if (lpBuffer) {
+        _strcpy(lpBuffer, TEXT("[UCM] "));
+        if (ApiName) {
+            _strcat(lpBuffer, ApiName);
+        }
+        _strcat(lpBuffer, TEXT(" code = "));
+        ultostr(status, _strend(lpBuffer));
+        _strcat(lpBuffer, TEXT("\n"));
+        OutputDebugString(lpBuffer);
+        HeapFree(g_ctx.Peb->ProcessHeap, 0, lpBuffer);
+    }
+}
+
+/*
+* supReadFileToBuffer
+*
+* Purpose:
+*
+* Read file to buffer. Release memory when it no longer needed.
+*
+*/
+PBYTE supReadFileToBuffer(
+    _In_ LPWSTR lpFileName,
+    _Inout_opt_ LPDWORD lpBufferSize
+    )
+{
+    BOOL        bCond = FALSE;
+    NTSTATUS    status;
+    HANDLE      hFile = NULL, hRoot = NULL;
+    PBYTE       Buffer = NULL;
+    SIZE_T      sz = 0;
+
+    UNICODE_STRING              usName;
+    OBJECT_ATTRIBUTES           attr;
+    IO_STATUS_BLOCK             iost;
+    FILE_STANDARD_INFORMATION   fi;
+
+    do {
+
+        RtlSecureZeroMemory(&usName, sizeof(usName));
+
+        if (lpFileName == NULL)
+            return NULL;
+
+        if (!RtlDosPathNameToNtPathName_U(
+            NtCurrentPeb()->ProcessParameters->CurrentDirectory.DosPath.Buffer, &usName, NULL, NULL))
+        {
+            break;
+        }
+
+        InitializeObjectAttributes(&attr, &usName, OBJ_CASE_INSENSITIVE, 0, NULL);
+        status = NtCreateFile(&hRoot, FILE_LIST_DIRECTORY | SYNCHRONIZE,
+            &attr,
+            &iost,
+            NULL,
+            0,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            FILE_OPEN,
+            FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
+            NULL,
+            0
+        );
+
+        RtlFreeUnicodeString(&usName);
+
+        if (!NT_SUCCESS(status)) {
+            supDebugPrint(TEXT("OpenDirectory"), RtlNtStatusToDosError(status));
+            break;
+        }
+
+        RtlInitUnicodeString(&usName, lpFileName);
+        InitializeObjectAttributes(&attr, &usName, OBJ_CASE_INSENSITIVE, hRoot, NULL);
+
+        status = NtCreateFile(&hFile, 
+            FILE_READ_DATA | SYNCHRONIZE, 
+            &attr, 
+            &iost, 
+            NULL, 
+            FILE_ATTRIBUTE_NORMAL,
+            FILE_SHARE_READ,
+            FILE_OPEN, 
+            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, 
+            NULL, 
+            0
+        );
+
+        if (!NT_SUCCESS(status)) {
+            supDebugPrint(TEXT("CreateFile"), RtlNtStatusToDosError(status));
+            break;
+        }
+
+        RtlSecureZeroMemory(&fi, sizeof(fi));
+        status = NtQueryInformationFile(hFile, &iost, &fi, sizeof(FILE_STANDARD_INFORMATION), FileStandardInformation);
+        if (!NT_SUCCESS(status))
+            break;
+
+        sz = (SIZE_T)fi.EndOfFile.LowPart;
+        status = NtAllocateVirtualMemory(NtCurrentProcess(), &Buffer, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (NT_SUCCESS(status)) {
+
+            status = NtReadFile(hFile, NULL, NULL, NULL, &iost, Buffer, fi.EndOfFile.LowPart, NULL, NULL);
+            if (NT_SUCCESS(status)) {
+                if (lpBufferSize)
+                    *lpBufferSize = fi.EndOfFile.LowPart;
+            }
+            else {
+                sz = 0;
+                NtFreeVirtualMemory(NtCurrentProcess(), &Buffer, &sz, MEM_RELEASE);
+                Buffer = NULL;
+            }
+        }
+
+    } while (bCond);
+
+    if (hRoot != NULL) {
+        NtClose(hRoot);
+    }
+
+    if (hFile != NULL) {
+        NtClose(hFile);
+    }
+
+    return Buffer;
 }
 
 /*

@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.55
+*  VERSION:     2.56
 *
-*  DATE:        08 Feb 2017
+*  DATE:        13 Feb 2017
 *
 *  Program entry point.
 *
@@ -62,8 +62,8 @@ UINT ucmInit(
     VOID
     )
 {
-    BOOL cond = FALSE;
-    DWORD Result = ERROR_SUCCESS;
+    BOOL        cond = FALSE;
+    DWORD       Result = ERROR_SUCCESS;
     PVOID       Ptr;
     MSG         msg1;
     WNDCLASSEX  wincls;
@@ -93,9 +93,18 @@ UINT ucmInit(
     };
 
     do {
-
-        if (FAILED(CoInitialize(NULL)))
+        //we could read this from usershareddata but why not use it
+        bytesIO = 0;
+        RtlQueryElevationFlags(&bytesIO);
+        if ((bytesIO & DBG_FLAG_ELEVATION_ENABLED) == 0) {
+            Result = ERROR_ELEVATION_REQUIRED;
             break;
+        }
+
+        if (FAILED(CoInitialize(NULL))) {
+            Result = ERROR_INTERNAL_ERROR;
+            break;
+        }
 
         InitCommonControls();
 
@@ -283,6 +292,10 @@ UINT ucmMain()
 
     uResult = ucmInit();
     switch (uResult) {
+
+    case ERROR_ELEVATION_REQUIRED:
+        ucmShowMessage(TEXT("Please enable UAC for this account."));
+        break;
 
     case ERROR_UNSUPPORTED_TYPE:
         ucmShowMessage(TEXT("Admin account with limited token required."));

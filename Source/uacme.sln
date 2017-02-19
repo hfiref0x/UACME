@@ -38,6 +38,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Akatsuki", "Akatsuki\Akatsu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Naka", "Naka\Naka.vcxproj", "{3BEF8A16-981F-4C65-8AE7-C612B46BE446}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Yuubari", "Yuubari\Yuubari.vcxproj", "{304D5A8A-EF98-4E21-8F4D-91E66E0BECAC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -95,6 +97,12 @@ Global
 		{3BEF8A16-981F-4C65-8AE7-C612B46BE446}.Release|Win32.Build.0 = Release|Win32
 		{3BEF8A16-981F-4C65-8AE7-C612B46BE446}.Release|x64.ActiveCfg = Release|x64
 		{3BEF8A16-981F-4C65-8AE7-C612B46BE446}.Release|x64.Build.0 = Release|x64
+		{304D5A8A-EF98-4E21-8F4D-91E66E0BECAC}.Debug|Win32.ActiveCfg = Debug|x64
+		{304D5A8A-EF98-4E21-8F4D-91E66E0BECAC}.Debug|x64.ActiveCfg = Debug|x64
+		{304D5A8A-EF98-4E21-8F4D-91E66E0BECAC}.Debug|x64.Build.0 = Debug|x64
+		{304D5A8A-EF98-4E21-8F4D-91E66E0BECAC}.Release|Win32.ActiveCfg = Release|x64
+		{304D5A8A-EF98-4E21-8F4D-91E66E0BECAC}.Release|x64.ActiveCfg = Release|x64
+		{304D5A8A-EF98-4E21-8F4D-91E66E0BECAC}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.53
+*  VERSION:     2.56
 *
-*  DATE:        18 Jan 2017
+*  DATE:        10 Feb 2017
 *
 *  Common header file for the program support routines.
 *
@@ -38,6 +38,11 @@ BOOL supWriteBufferToFile(
     _In_ LPWSTR lpFileName,
     _In_ PVOID Buffer,
     _In_ DWORD BufferSize
+    );
+
+PBYTE supReadFileToBuffer(
+    _In_ LPWSTR lpFileName,
+    _Inout_opt_ LPDWORD lpBufferSize
     );
 
 BOOL supRunProcess(
@@ -116,6 +121,11 @@ VOID NTAPI sxsFindDllCallback(
 PVOID supNativeGetProcAddress(
     WCHAR *Module,
     CHAR *Routine
+    );
+
+VOID supDebugPrint(
+    LPWSTR ApiName,
+    DWORD status
     );
 
 #define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)

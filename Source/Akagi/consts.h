@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.55
+*  VERSION:     2.56
 *
-*  DATE:        08 Feb 2017
+*  DATE:        10 Feb 2017
 *
 *  Global consts definition file.
 *
@@ -85,6 +85,12 @@
 #define RSOP_MSC                    L"rsop.msc"
 #define PACKAGE_XML                 L"ellocnak.xml"
 
+#ifdef _WIN64
+#define KONGOU_CD                   L"Kongou64.cd"
+#else
+#define KONGOU_CD                   L"Kongou32.cd"
+#endif
+
 #define T_DEFAULT_CMD               L"%systemroot%\\system32\\cmd.exe"
 
 #define LOCAL_SXS                   L".local"
@@ -105,8 +111,6 @@
 #define T_AKAGI_KEY                 L"Software\\Akagi"
 #define T_AKAGI_PARAM               L"LoveLetter"
 #define T_AKAGI_FLAG                L"Flag"
-#define T_TARGETNOTFOUND            L"Target application not found"
-#define T_TARGETALREADYEXIST        L"[UCM] Target file already exists, abort"
 
 //COM objects elevation
 #define ISECURITYEDITOR_ELEMONIKER           L"Elevation:Administrator!new:{4D111E08-CBF7-4f12-A926-2C7920AF52FC}" 

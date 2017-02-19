@@ -269,11 +269,6 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * Currently used as "signature" by "THOR APT" scanner (handmade pattern matching fraudware from Germany). We do  not take any responsibility for this tool usage in the fraudware;
 * In July 2016 so-called "security company" Cymmetria released report about script-kiddie malware bundle called "Patchwork" and false flagged it as APT. They stated it was using "UACME method", which in fact is just slightly and unprofessionally modified injector dll from UACMe v1.9 and was using Carberp/Pitou hybrid method in malware self-implemented way. We do not take any responsibility for UACMe usage in the dubious advertising campaigns from third party "security companies".
 
-# VirusTotal reference report
-
-* Akagi32 https://www.virustotal.com/en/file/9bc91fedd02769705f7b8716a2e40e34fc081c1a12493a7826eb4243f371e589/analysis/
-* Akagi64 https://www.virustotal.com/en/file/4de0aeb3a2ec4ad6bacd0b35b47c6ba709199a8d0687cc6e4a421fdb64ba6108/analysis/
-
 # Build 
 
 * UACMe comes with full source code, written in C;

