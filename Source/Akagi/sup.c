@@ -141,7 +141,7 @@ VOID supDebugPrint(
     if (ApiName) 
         sz += _strlen(ApiName);
 
-    lpBuffer = HeapAlloc(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, sz);
+    lpBuffer = HeapAlloc(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, sz * sizeof(WCHAR));
     if (lpBuffer) {
         _strcpy(lpBuffer, TEXT("[UCM] "));
         if (ApiName) {
