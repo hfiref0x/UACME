@@ -1,0 +1,2 @@
+EXPORTS
+TaskDialogIndirect          = TaskDialogIndirectForward @345

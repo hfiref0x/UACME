@@ -71,21 +71,21 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>.\output\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>.\output\$(Platform)\$(Configuration)\</IntDir>
-    <CodeAnalysisRuleSet>..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\SecurityRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>SecurityRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>.\output\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>.\output\$(Platform)\$(Configuration)\</IntDir>
-    <CodeAnalysisRuleSet>..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\SecurityRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>SecurityRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>.\output\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>.\output\$(Platform)\$(Configuration)\</IntDir>
-    <CodeAnalysisRuleSet>..\..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\SecurityRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>SecurityRules.ruleset</CodeAnalysisRuleSet>
     <TargetName>$(ProjectName)32</TargetName>
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
@@ -119,6 +119,9 @@
       <ShowProgress>true</ShowProgress>
       <PreprocessorDefinitions>useRc32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles>akagi.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -142,6 +145,9 @@
     <ResourceCompile>
       <ShowProgress>true</ShowProgress>
     </ResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles>akagi.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -150,7 +156,6 @@
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -161,6 +166,7 @@
       <DebugInformationFormat>None</DebugInformationFormat>
       <StringPooling>
       </StringPooling>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -177,6 +183,12 @@
       <ShowProgress>true</ShowProgress>
       <PreprocessorDefinitions>useRc32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles>akagi.manifest</AdditionalManifestFiles>
+    </Manifest>
+    <PostBuildEvent>
+      <Command>\Utils\StripDebug.exe .\output\$(Platform)\$(Configuration)\Akagi32.exe</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -185,7 +197,6 @@
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -195,6 +206,7 @@
       <EnablePREfast>true</EnablePREfast>
       <StringPooling>
       </StringPooling>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -211,10 +223,17 @@
     <ResourceCompile>
       <ShowProgress>true</ShowProgress>
     </ResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles>akagi.manifest</AdditionalManifestFiles>
+    </Manifest>
+    <PostBuildEvent>
+      <Command>\Utils\StripDebug.exe .\output\$(Platform)\$(Configuration)\Akagi64.exe</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Shared\cmdline.c" />
     <ClCompile Include="..\Shared\strtoul.c" />
+    <ClCompile Include="..\Shared\ultohex.c" />
     <ClCompile Include="..\Shared\ultostr.c" />
     <ClCompile Include="..\Shared\_filename.c" />
     <ClCompile Include="..\shared\_strcat.c" />
@@ -226,7 +245,11 @@
     <ClCompile Include="..\shared\_strncmp.c" />
     <ClCompile Include="..\shared\_strncmpi.c" />
     <ClCompile Include="..\shared\_strncpy.c" />
+    <ClCompile Include="..\Shared\_strstri.c" />
     <ClCompile Include="carberp.c" />
+    <ClCompile Include="comet.c" />
+    <ClCompile Include="enigma0x3.c" />
+    <ClCompile Include="explife.c" />
     <ClCompile Include="gootkit.c" />
     <ClCompile Include="hybrids.c" />
     <ClCompile Include="main.c" />
@@ -242,23 +265,20 @@
     <ClInclude Include="..\Shared\_filename.h" />
     <ClInclude Include="apphelp.h" />
     <ClInclude Include="carberp.h" />
+    <ClInclude Include="comet.h" />
     <ClInclude Include="compress.h" />
     <ClInclude Include="consts.h" />
+    <ClInclude Include="enigma0x3.h" />
+    <ClInclude Include="explife.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="gootkit.h" />
     <ClInclude Include="hybrids.h" />
     <ClInclude Include="makecab.h" />
     <ClInclude Include="manifest.h" />
-    <ClInclude Include="modules\fubuki32.h" />
-    <ClInclude Include="modules\fubuki64.h" />
-    <ClInclude Include="modules\hibiki32.h" />
-    <ClInclude Include="modules\hibiki64.h" />
-    <ClInclude Include="modules\inazuma32.h" />
-    <ClInclude Include="modules\kongou32.h" />
-    <ClInclude Include="modules\kongou64.h" />
     <ClInclude Include="pitou.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="simda.h" />
+    <ClInclude Include="sirefef.h" />
     <ClInclude Include="sup.h" />
   </ItemGroup>
   <ItemGroup>

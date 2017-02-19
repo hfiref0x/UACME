@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAKECAB.C
 *
-*  VERSION:     2.20
+*  VERSION:     2.50
 *
-*  DATE:        25 May 2016
+*  DATE:        06 July 2016
 *
 *  Simplified Cabinet file support for makecab utility replacement.
 *
@@ -274,9 +274,12 @@ BOOL DIAMONDAPI fnFCIGETTEMPFILE(
 
     UNREFERENCED_PARAMETER(pv);
 
+    RtlSecureZeroMemory(szTempPath, sizeof(szTempPath));
+    RtlSecureZeroMemory(szTempFile, sizeof(szTempFile));
+
     if (GetTempPathA(MAX_PATH, szTempPath) != 0) {
-        if (GetTempFileNameA(szTempPath, "emcau", 0, szTempFile) != 0) {
-            DeleteFileA(szTempPath);
+        if (GetTempFileNameA(szTempPath, "ucm", 0, szTempFile) != 0) {
+            DeleteFileA(szTempFile);
             cch = cbTempName / sizeof(CHAR);
             _strncpy_a(pszTempName, cch, szTempFile, _strlen_a(szTempFile));
             bSucceeded = TRUE;

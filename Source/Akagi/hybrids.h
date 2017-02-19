@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     2.20
+*  VERSION:     2.51
 *
-*  DATE:        25 May 2016
+*  DATE:        10 July 2016
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -43,6 +43,7 @@ BOOL ucmWinSATMethod(
     );
 
 BOOL ucmMMCMethod(
+    UACBYPASSMETHOD Method,
     LPWSTR lpTargetDll,
     PVOID ProxyDll,
     DWORD ProxyDllSize
@@ -65,6 +66,28 @@ BOOL ucmGWX(
     );
 
 BOOL ucmAutoElevateManifest(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+    );
+
+BOOL ucmInetMgrMethod(
+    VOID
+    );
+
+BOOL ucmSXSMethod(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize,
+    LPWSTR lpTargetDirectory,
+    LPWSTR lpTargetApplication,
+    LPWSTR lpLaunchApplication,
+    BOOL bConsentItself
+    );
+
+BOOL ucmSetupAkagiLink(
+    VOID
+    );
+
+BOOL ucmDismMethod(
     PVOID ProxyDll,
     DWORD ProxyDllSize
     );

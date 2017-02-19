@@ -40,28 +40,7 @@
     <ClCompile Include="..\shared\_strcat.c">
       <Filter>minirtl</Filter>
     </ClCompile>
-    <ClCompile Include="..\shared\_strcmp.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strcmpi.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
     <ClCompile Include="..\shared\_strcpy.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strend.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strlen.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strncmp.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strncmpi.c">
-      <Filter>minirtl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\_strncpy.c">
       <Filter>minirtl</Filter>
     </ClCompile>
   </ItemGroup>

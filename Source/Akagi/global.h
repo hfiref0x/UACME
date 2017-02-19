@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.20
+*  VERSION:     2.55
 *
-*  DATE:        01 May 2016
+*  DATE:        10 Feb 2017
 *
 *  Common header file for the program support routines.
 *
@@ -39,21 +39,16 @@
 #pragma warning(disable: 6102) // Using %s from failed function call at line %u
 #pragma warning(disable: 6320) // exception-filter expression is the constant EXCEPTION_EXECUTE_HANDLER
 
-#define GENERATE_COMPRESSED_PAYLOAD
-#ifndef _DEBUG
-#undef GENERATE_COMPRESSED_PAYLOAD
-#endif
-
 #ifdef _WIN64
 #include "bin64res.h"
 #define FUBUKI_ID IDR_FUBUKI64
 #define HIBIKI_ID IDR_HIBIKI64
-#define KONGOU_ID IDR_KONGOU64
+#define IKAZUCHI_ID IDR_IKAZUCHI64
 #else
 #include "bin32res.h"
 #define FUBUKI_ID IDR_FUBUKI32
 #define HIBIKI_ID IDR_HIBIKI32
-#define KONGOU_ID IDR_KONGOU32
+#define IKAZUCHI_ID IDR_IKAZUCHI32
 #endif
 
 typedef enum _UACBYPASSMETHOD {
@@ -69,17 +64,28 @@ typedef enum _UACBYPASSMETHOD {
     UacMethodWinsat,
     UacMethodShimPatch,
     UacMethodSysprep3,
-    UacMethodMMC,
+    UacMethodMMC1,
     UacMethodSirefef,
     UacMethodGeneric,
     UacMethodGWX,
     UacMethodSysprep4,
     UacMethodManifest,
+    UacMethodInetMgr,
+    UacMethodMMC2,
+    UacMethodSXS,
+    UacMethodSXSConsent,
+    UacMethodDISM,
+    UacMethodComet,
+    UacMethodEnigma0x3,
+    UacMethodEnigma0x3_2,
+    UacMethodExpLife,
     UacMethodMax
 } UACBYPASSMETHOD;
 
 #include <Windows.h>
 #include <ntstatus.h>
+#include <CommCtrl.h>
+#include <shlobj.h>
 #include "..\shared\ntos.h"
 #include "..\shared\minirtl.h"
 #include "..\Shared\cmdline.h"
@@ -90,8 +96,17 @@ typedef enum _UACBYPASSMETHOD {
 #include "pitou.h"
 #include "gootkit.h"
 #include "simda.h"
+#include "explife.h"
 #include "carberp.h"
 #include "hybrids.h"
+#include "comet.h"
+#include "enigma0x3.h"
+
+//default execution flow
+#define AKAGI_FLAG_KILO  0
+
+//suppress all additional output
+#define AKAGI_FLAG_TANGO 1
 
 typedef struct _UACME_CONTEXT {
     BOOL                IsWow64;
@@ -103,8 +118,17 @@ typedef struct _UACME_CONTEXT {
     PVOID               PayloadDll;
     ULONG               PayloadDllSize;
     ULONG               dwBuildNumber;
+    ULONG               Flag;
+    ULONG               IFileOperationFlags;
     WCHAR               szSystemDirectory[MAX_PATH + 1];//with end slash
     WCHAR               szTempDirectory[MAX_PATH + 1]; //with end slash
 } UACMECONTEXT, *PUACMECONTEXT;
+
+typedef UINT(WINAPI *pfnEntryPoint)();
+
+typedef struct _UACME_THREAD_CONTEXT {
+    TEB_ACTIVE_FRAME Frame;
+    pfnEntryPoint ucmMain;
+} UACME_THREAD_CONTEXT, *PUACME_THREAD_CONTEXT;
 
 extern UACMECONTEXT g_ctx;

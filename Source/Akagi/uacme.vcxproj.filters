@@ -16,9 +16,6 @@
     <Filter Include="minirtl">
       <UniqueIdentifier>{1caf2f34-af91-46be-aa2e-1893b0be628c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\modules">
-      <UniqueIdentifier>{32e582cb-c743-4874-aeb2-0a4baea4fed3}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -87,6 +84,21 @@
     <ClCompile Include="..\Shared\cmdline.c">
       <Filter>minirtl</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\_strstri.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="comet.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="enigma0x3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="explife.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\ultohex.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -131,32 +143,23 @@
     <ClInclude Include="consts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="modules\fubuki32.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="modules\fubuki64.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="modules\hibiki32.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="modules\hibiki64.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="modules\inazuma32.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="modules\kongou32.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="modules\kongou64.h">
-      <Filter>Header Files\modules</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Shared\_filename.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="manifest.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="comet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sirefef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="enigma0x3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="explife.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\_filename.h">
+      <Filter>minirtl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
