@@ -2,7 +2,7 @@
 *
 *  (C) COPYRIGHT AUTHORS, 2017, translated from Microsoft sources/debugger
 *
-*  TITLE:       NTOS.H
+*  TITLE:       NTSXS.H
 *
 *  VERSION:     1.00
 *
@@ -352,8 +352,8 @@ NTSTATUS NTAPI RtlQueryInformationActiveActivationContext(
 NTSTATUS NTAPI RtlCreateActivationContext(
     _In_ ULONG Flags,
     _In_ const PACTIVATION_CONTEXT ActivationContextData,
-    _In_opt_ ULONG ExtraBytes ,
-    _In_opt_ PACTIVATION_CONTEXT_NOTIFY_ROUTINE NotificationRoutine ,
+    _In_opt_ ULONG ExtraBytes,
+    _In_opt_ PACTIVATION_CONTEXT_NOTIFY_ROUTINE NotificationRoutine,
     _In_opt_ PVOID NotificationContext,
     _Out_ PACTIVATION_CONTEXT *ActivationContext
 );

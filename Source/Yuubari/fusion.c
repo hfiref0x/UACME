@@ -389,9 +389,6 @@ VOID FusionCheckFile(
         }
         _strcat(FileName, fdata->cFileName);
 
-        if (_strcmpi(fdata->cFileName, L"inetmgr.exe") == 0)
-            Beep(0, 0);
-
         if (RtlDosPathNameToNtPathName_U(FileName, &usFileName, NULL, NULL) == FALSE)
             break;
 
@@ -583,7 +580,8 @@ VOID FusionCheckFile(
         }
 
         //
-        // Key autoElevate could be not found, but application still can be in whitelist.
+        // Even if autoElevate key could be not found, application still can be in whitelist.
+        // As in case of inetmgr.exe on RS1+, so check if it has redirection dlls.
         //
         OutputCallback(&FusionCommonData);
 
