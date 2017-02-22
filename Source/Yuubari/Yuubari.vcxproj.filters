@@ -16,6 +16,9 @@
     <Filter Include="minirtl">
       <UniqueIdentifier>{336547cc-9eeb-4b6e-affd-aa70e6f7bfba}</UniqueIdentifier>
     </Filter>
+    <Filter Include="testunits">
+      <UniqueIdentifier>{c345b77b-4418-4498-8377-bcbbbc11aa76}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -72,6 +75,9 @@
     <ClCompile Include="logger.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tests\test_fusion.c">
+      <Filter>testunits</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -117,6 +123,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tests\test_fusion.h">
+      <Filter>testunits</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\ntsxs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

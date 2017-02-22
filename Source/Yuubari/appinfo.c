@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.0F
+*  VERSION:     1.10
 *
-*  DATE:        14 Feb 2017
+*  DATE:        19 Feb 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -236,17 +236,9 @@ BOOL CALLBACK SymEnumSymbolsProc(
     _In_opt_ PVOID UserContext
     )
 {
-#ifdef _DEBUG
-    WCHAR szBuffer[MAX_PATH * 5];
-#endif
     UNREFERENCED_PARAMETER(SymbolSize);
     UNREFERENCED_PARAMETER(UserContext);
-#ifdef _DEBUG   
-    RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-    wsprintf(szBuffer, L"%08X %4u %s, %08X\n",
-        pSymInfo->Address, SymbolSize, pSymInfo->Name, pSymInfo->Value);
-    OutputDebugStringW(szBuffer);
-#endif
+
     SymbolAddToList(pSymInfo->Name, pSymInfo->Address);
     return TRUE;
 }

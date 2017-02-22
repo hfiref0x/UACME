@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUSION.C
 *
-*  VERSION:     1.0F
+*  VERSION:     1.10
 *
-*  DATE:        18 Feb 2017
+*  DATE:        21 Feb 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -19,18 +19,330 @@
 ptrWTGetSignatureInfo WTGetSignatureInfo = NULL;
 
 /*
-* CheckFile
+* SxsGetSectionDataTypeBySize
+*
+* Purpose:
+*
+* Return data type determinated by data size.
+*
+*/
+ULONG SxsGetSectionDataTypeBySize(
+    _In_ ULONG DataSize
+)
+{
+    switch (DataSize) {
+    case sizeof(ACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION) :
+        return dtAssemblyInfo;
+        break;
+    case sizeof(ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION) :
+        return dtDllRedirection;
+    case sizeof(ACTIVATION_CONTEXT_DATA_WINDOW_CLASS_REDIRECTION) :
+        return dtWindowClassRedirection;
+    case sizeof(ACTIVATION_CONTEXT_DATA_COM_PROGID_REDIRECTION) :
+        return dtComDataTypeLibraryRedirection;
+    case sizeof(ACTIVATION_CONTEXT_DATA_APPLICATION_SETTINGS) :
+        return dtApplicationSettings;
+    default:
+        break;
+    }
+    return dtUnknown;
+}
+
+/*
+* SxsGetTocHeaderFromActivationContext
+*
+* Purpose:
+*
+* Locate and return pointer to Toc header in activation context.
+*
+*/
+NTSTATUS SxsGetTocHeaderFromActivationContext(
+    _In_ PACTIVATION_CONTEXT ActivationContext,
+    _Out_ PACTIVATION_CONTEXT_DATA_TOC_HEADER *TocHeader,
+    _Out_opt_ PACTIVATION_CONTEXT_DATA *ActivationContextData
+)
+{
+    BOOL bCond = FALSE;
+    NTSTATUS result = STATUS_UNSUCCESSFUL;
+    ACTIVATION_CONTEXT_DATA *ContextData = NULL;
+    ACTIVATION_CONTEXT_DATA_TOC_HEADER *Header;
+    WCHAR szLog[0x100];
+
+    if (ActivationContext == NULL)
+        return STATUS_INVALID_PARAMETER_1;
+    if (TocHeader == NULL)
+        return STATUS_INVALID_PARAMETER_2;
+
+    __try {
+
+        do {
+
+            ContextData = ActivationContext->ActivationContextData;
+
+            if (ContextData->Magic != ACTIVATION_CONTEXT_DATA_MAGIC) {
+                wsprintf(szLog, TEXT("ActivationContext Magic = %lx invalid"), ContextData->Magic);
+                break;
+            }
+
+            if (
+                (ContextData->HeaderSize != sizeof(ACTIVATION_CONTEXT_DATA)) ||
+                (ContextData->HeaderSize > ContextData->TotalSize)
+                )
+            {
+                wsprintf(szLog, TEXT("Unexpected data HeaderSize = %lu"), ContextData->HeaderSize);
+                break;
+            }
+
+            if (ContextData->DefaultTocOffset > ContextData->TotalSize) {
+                wsprintf(szLog, TEXT("Unexpected Toc offset %lx"), ContextData->DefaultTocOffset);
+                break;
+            }
+
+            Header = (ACTIVATION_CONTEXT_DATA_TOC_HEADER *)(((LPBYTE)ContextData) + ContextData->DefaultTocOffset);
+            if (Header->HeaderSize != sizeof(ACTIVATION_CONTEXT_DATA_TOC_HEADER)) {
+                wsprintf(szLog, TEXT("Unexpected Toc HeaderSize %lu"), Header->HeaderSize);
+                break;
+            }
+
+            if ((Header->FirstEntryOffset != 0) && (Header->EntryCount == 0)) {
+                wsprintf(szLog, TEXT("Unexpected EntryCount %lu"), Header->EntryCount);
+                break;
+            }
+
+            if ((Header->EntryCount > 0) && (Header->FirstEntryOffset == 0)) {
+                wsprintf(szLog, TEXT("Unexpected Toc FirstEntryOffset %lu"), Header->FirstEntryOffset);
+                break;
+            }
+
+            if (Header->FirstEntryOffset > ContextData->TotalSize) {
+                wsprintf(szLog, TEXT("Toc FirstEntry offset = %lu invalid"), Header->FirstEntryOffset);
+                break;
+            }
+
+            *TocHeader = Header;
+            if (ActivationContextData != NULL)
+                *ActivationContextData = ContextData;
+
+            result = STATUS_SUCCESS;
+
+        } while (bCond);
+        
+        if (!NT_SUCCESS(result)) {
+            OutputDebugString(szLog);
+            return STATUS_SXS_CORRUPTION;
+        }
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+        return STATUS_SXS_CORRUPTION;
+    }
+    return result;
+}
+
+/*
+* SxsGetStringSectionRedirectionDlls
+*
+* Purpose:
+*
+* Extract redirection dlls from string section entry.
+*
+*/
+NTSTATUS SxsGetStringSectionRedirectionDlls(
+    _In_ ACTIVATION_CONTEXT_STRING_SECTION_HEADER *SectionHeader,
+    _In_ ACTIVATION_CONTEXT_STRING_SECTION_ENTRY *StringEntry,
+    _Inout_ PDLL_REDIRECTION_LIST DllList
+)
+{
+    ULONG SegmentIndex, EntrySize;
+    NTSTATUS result = STATUS_SXS_KEY_NOT_FOUND;
+    ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION *DataDll = NULL;
+    ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION_PATH_SEGMENT *DllPathSegment = NULL;
+    DLL_REDIRECTION_LIST_ENTRY *DllListEntry = NULL;
+    WCHAR *wszDllName = NULL;
+
+    __try {
+
+        if (DllList == NULL)
+            return STATUS_INVALID_PARAMETER;
+
+        EntrySize = *(DWORD*)(((LPBYTE)SectionHeader) + StringEntry->Offset);
+
+        if (SxsGetSectionDataTypeBySize(EntrySize) != dtDllRedirection)
+            return STATUS_SXS_WRONG_SECTION_TYPE;
+
+        DataDll = (ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION*)(((LPBYTE)SectionHeader) + StringEntry->Offset);
+        if (DataDll->PathSegmentOffset) {
+            DllPathSegment = (ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION_PATH_SEGMENT*)(((LPBYTE)SectionHeader) + DataDll->PathSegmentOffset);
+            if (DllPathSegment) {
+                for (SegmentIndex = 0; SegmentIndex < DataDll->PathSegmentCount; SegmentIndex++) {
+                    if ((DllPathSegment->Length) && (DllPathSegment->Offset)) {
+                        DllListEntry = RtlAllocateHeap(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, sizeof(DLL_REDIRECTION_LIST_ENTRY));
+                        if (DllListEntry) {
+                            wszDllName = RtlAllocateHeap(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, DllPathSegment->Length);
+                            if (wszDllName) {
+                                RtlCopyMemory(wszDllName, (((PBYTE)SectionHeader) + DllPathSegment->Offset), DllPathSegment->Length);
+                                RtlInitUnicodeString(&DllListEntry->DllName, wszDllName);
+                            }
+                            RtlInterlockedPushEntrySList(&DllList->Header, &DllListEntry->ListEntry);
+                        }
+                    }
+                    DllPathSegment = (ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION_PATH_SEGMENT*)(((LPBYTE)SectionHeader) + DataDll->Size);
+                }
+            }
+            result = STATUS_SUCCESS;
+        }
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+        return STATUS_SXS_CORRUPTION;
+    }
+
+    return result;
+}
+
+/*
+* SxsGetDllRedirectionFromActivationContext
+*
+* Purpose:
+*
+* Query redirection dll list from activation context data.
+*
+*/
+NTSTATUS SxsGetDllRedirectionFromActivationContext(
+    _In_ PACTIVATION_CONTEXT ActivationContext,
+    _In_ PDLL_REDIRECTION_LIST DllList
+)
+{
+    BOOL bCond = FALSE;
+    ULONG i, j;
+    NTSTATUS result = STATUS_UNSUCCESSFUL, status;
+    ACTIVATION_CONTEXT_DATA *ContextData = NULL;
+    ACTIVATION_CONTEXT_DATA_TOC_HEADER *TocHeader = NULL;
+    ACTIVATION_CONTEXT_DATA_TOC_ENTRY *TocEntry = NULL;
+    ACTIVATION_CONTEXT_STRING_SECTION_HEADER *SectionHeader = NULL;
+    ACTIVATION_CONTEXT_STRING_SECTION_ENTRY *StringEntry = NULL;
+
+    WCHAR szLog[0x100];
+
+    __try {
+
+        if (ActivationContext == NULL)
+            return STATUS_INVALID_PARAMETER_1;
+        if (DllList == NULL)
+            return STATUS_INVALID_PARAMETER_2;
+
+        do {
+
+            if (!NT_SUCCESS(SxsGetTocHeaderFromActivationContext(ActivationContext, &TocHeader, &ContextData)))
+                break;
+
+            TocEntry = (ACTIVATION_CONTEXT_DATA_TOC_ENTRY*)(((LPBYTE)ContextData) + TocHeader->FirstEntryOffset);
+
+            RtlInitializeSListHead(&DllList->Header);
+
+            i = 1;
+            while (i < TocHeader->EntryCount) {
+                if (TocEntry->Format == ACTIVATION_CONTEXT_SECTION_FORMAT_STRING) {
+                    SectionHeader = (ACTIVATION_CONTEXT_STRING_SECTION_HEADER*)(((LPBYTE)ContextData) + TocEntry->Offset);
+                    if (SectionHeader->Magic != ACTIVATION_CONTEXT_STRING_SECTION_MAGIC) {
+                        wsprintf(szLog, TEXT("Section Magic = %lx invalid"), SectionHeader->Magic);
+                        OutputDebugString(szLog);
+                        break;
+                    }
+                    if (SectionHeader->HeaderSize != sizeof(ACTIVATION_CONTEXT_STRING_SECTION_HEADER)) {
+                        wsprintf(szLog, TEXT("Unexpected Section HeaderSize = %lu"), SectionHeader->HeaderSize);
+                        OutputDebugString(szLog);
+                        break;
+                    }
+
+                    StringEntry = (ACTIVATION_CONTEXT_STRING_SECTION_ENTRY*)(((LPBYTE)SectionHeader) + SectionHeader->ElementListOffset);
+                    status = SxsGetStringSectionRedirectionDlls(SectionHeader, StringEntry, DllList);
+                    if (status == STATUS_SXS_CORRUPTION)
+                        continue;
+
+                    for (j = 1; j < SectionHeader->ElementCount; j++) {
+                        StringEntry = (ACTIVATION_CONTEXT_STRING_SECTION_ENTRY*)(((LPBYTE)StringEntry) + sizeof(ACTIVATION_CONTEXT_STRING_SECTION_ENTRY));
+                        status = SxsGetStringSectionRedirectionDlls(SectionHeader, StringEntry, DllList);
+                        if (status == STATUS_SXS_CORRUPTION)
+                            continue;
+                    }
+                }
+                TocEntry = (ACTIVATION_CONTEXT_DATA_TOC_ENTRY*)(((LPBYTE)TocEntry) + sizeof(ACTIVATION_CONTEXT_DATA_TOC_ENTRY));
+                i += 1;
+            } //while (i < TocHeader->EntryCount)
+
+            DllList->Depth = RtlQueryDepthSList(&DllList->Header);
+            if (DllList->Depth == 0)
+                result = STATUS_SXS_SECTION_NOT_FOUND;
+            else
+                result = STATUS_SUCCESS;
+
+        } while (bCond);
+
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+        return STATUS_SXS_CORRUPTION;
+    }
+
+    return result;
+}
+
+/*
+* FusionProbeForRedirectedDlls
+*
+* Purpose:
+*
+* Probe activation context for redirection dlls and output them if found.
+*
+*/
+NTSTATUS FusionProbeForRedirectedDlls(
+    ACTIVATION_CONTEXT *ActivationContext,
+    FUSIONCALLBACK OutputCallback
+    )
+{
+    NTSTATUS status;
+    SLIST_ENTRY *ListEntry;
+    DLL_REDIRECTION_LIST_ENTRY *DllData = NULL;
+    UAC_FUSION_DATA_DLL FusionRedirectedDll;
+    DLL_REDIRECTION_LIST DllList;
+
+    RtlSecureZeroMemory(&DllList, sizeof(DllList));
+    status = SxsGetDllRedirectionFromActivationContext(ActivationContext, &DllList);
+    if (NT_SUCCESS(status)) {
+        while (DllList.Depth) {
+            ListEntry = RtlInterlockedPopEntrySList(&DllList.Header);
+            if (ListEntry) {
+                DllData = (PDLL_REDIRECTION_ENTRY)ListEntry;
+                if (DllData) {
+                    RtlSecureZeroMemory(&FusionRedirectedDll, sizeof(FusionRedirectedDll));
+
+                    FusionRedirectedDll.DataType = UacFusionDataRedirectedDllType;
+                    FusionRedirectedDll.Name = DllData->DllName.Buffer;
+
+                    OutputCallback((UAC_FUSION_DATA*)&FusionRedirectedDll);
+
+                    RtlFreeUnicodeString(&DllData->DllName);
+                    RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, DllData);
+                }
+            }
+            DllList.Depth--;
+        }
+        RtlInterlockedFlushSList(&DllList.Header);
+    }
+    return status;
+}
+
+/*
+* FusionCheckFile
 *
 * Purpose:
 *
 * Query file manifest data related to security.
 *
 */
-VOID CheckFile(
+VOID FusionCheckFile(
     LPWSTR lpDirectory,
     WIN32_FIND_DATA *fdata,
     FUSIONCALLBACK OutputCallback
-    )
+)
 {
     BOOL                bCond = FALSE;
     DWORD               lastError;
@@ -43,13 +355,13 @@ VOID CheckFile(
     UNICODE_STRING      usFileName;
     IO_STATUS_BLOCK     iosb;
 
-    ULONG_PTR   IdPath[3], ResourceSize = 0;
-    WCHAR       szValue[100];
     ACTCTX      ctx;
 
     SIGNATURE_INFO sigData;
-    UAC_FUSION_DATA CallbackData;
+    UAC_FUSION_DATA FusionCommonData;
     ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION ctxrl;
+    ULONG_PTR   IdPath[3], ResourceSize = 0;
+    WCHAR       szValue[100];
 
     usFileName.Buffer = NULL;
 
@@ -77,15 +389,18 @@ VOID CheckFile(
         }
         _strcat(FileName, fdata->cFileName);
 
+        if (_strcmpi(fdata->cFileName, L"inetmgr.exe") == 0)
+            Beep(0, 0);
+
         if (RtlDosPathNameToNtPathName_U(FileName, &usFileName, NULL, NULL) == FALSE)
             break;
 
         InitializeObjectAttributes(&attr, &usFileName,
             OBJ_CASE_INSENSITIVE, NULL, NULL);
         RtlSecureZeroMemory(&iosb, sizeof(iosb));
-        
+
         //
-        // Open file and map it
+        // Open file and map it.
         //
         status = NtCreateFile(&hFile, SYNCHRONIZE | FILE_READ_DATA,
             &attr, &iosb, NULL, 0, FILE_SHARE_READ, FILE_OPEN,
@@ -106,26 +421,34 @@ VOID CheckFile(
         if (!NT_SUCCESS(status))
             break;
 
+        RtlSecureZeroMemory(&FusionCommonData, sizeof(FusionCommonData));
+        FusionCommonData.Name = FileName;
+
         //
-        //Look for embedded manifest resource
+        // Look for embedded manifest resource
         //
         IdPath[0] = (ULONG_PTR)RT_MANIFEST;
-        IdPath[1] = 1;
+        IdPath[1] = (ULONG_PTR)CREATEPROCESS_MANIFEST_RESOURCE_ID;
         IdPath[2] = 0;
         pt = NULL;
         ResourceSize = 0;
         status = LdrResSearchResource(DllBase, (ULONG_PTR*)&IdPath, 3, 0, &pt, &ResourceSize, NULL, NULL);
-        if (!NT_SUCCESS(status)) {
-            lastError = RtlNtStatusToDosError(status);
-            switch (lastError) {
-            case ERROR_RESOURCE_TYPE_NOT_FOUND:
-                OutputDebugString(TEXT("GetLastError(LdrResSearchResource): resource type not found\r\n"));
+
+        FusionCommonData.IsFusion = NT_SUCCESS(status);
+
+        //
+        // File has no manifest embedded.
+        //
+        if (FusionCommonData.IsFusion != TRUE) {
+            switch (status) {
+            case STATUS_RESOURCE_TYPE_NOT_FOUND:
+                OutputDebugString(TEXT("LdrResSearchResource: resource type not found\r\n"));
                 break;
-            case ERROR_RESOURCE_DATA_NOT_FOUND:
-                OutputDebugString(TEXT("GetLastError(LdrResSearchResource): resource data not found\r\n"));
+            case STATUS_RESOURCE_DATA_NOT_FOUND:
+                OutputDebugString(TEXT("LdrResSearchResource: resource data not found\r\n"));
                 break;
-            case ERROR_RESOURCE_NAME_NOT_FOUND:
-                OutputDebugString(TEXT("GetLastError(LdrResSearchResource): resource name not found\r\n"));
+            case STATUS_RESOURCE_NAME_NOT_FOUND:
+                OutputDebugString(TEXT("LdrResSearchResource: resource name not found\r\n"));
                 break;
             default:
                 break;
@@ -152,97 +475,123 @@ VOID CheckFile(
                     if (NT_SUCCESS(status)) {
                         if (sigData.fOSBinary != FALSE) {
 
-                            RtlSecureZeroMemory(&CallbackData, sizeof(CallbackData));
-                            CallbackData.Name = FileName;
-                            CallbackData.IsOSBinary = TRUE;
+                            RtlSecureZeroMemory(&FusionCommonData, sizeof(FusionCommonData));
+                            FusionCommonData.Name = FileName;
+                            FusionCommonData.IsOSBinary = TRUE;
 
                             //
                             // Check if signature valid or trusted
                             //
-                            CallbackData.IsSignatureValidOrTrusted = ((sigData.SignatureState == SIGNATURE_STATE_TRUSTED) ||
+                            FusionCommonData.IsSignatureValidOrTrusted = ((sigData.SignatureState == SIGNATURE_STATE_TRUSTED) ||
                                 (sigData.SignatureState == SIGNATURE_STATE_VALID));
 
-                            OutputCallback(&CallbackData);
+                            OutputCallback(&FusionCommonData);
                         }
                     }
                 }
                 else { //WTGetSignatureInfo != NULL
+
                     //
-                    // On Windows 7 this API is not available, just output result
+                    // On Windows 7 this API is not available, just output result.
                     //
-                    RtlSecureZeroMemory(&CallbackData, sizeof(CallbackData));
-                    CallbackData.Name = FileName;
-                    OutputCallback(&CallbackData);
+                    RtlSecureZeroMemory(&FusionCommonData, sizeof(FusionCommonData));
+                    FusionCommonData.Name = FileName;
+                    OutputCallback(&FusionCommonData);
                 }
             }
+
+            //break the global loop
             break;
         }
 
         //
-        // Create activation context for current file
+        // File has manifest, create activation context for it.
         //
         RtlSecureZeroMemory(&ctx, sizeof(ctx));
         ctx.cbSize = sizeof(ACTCTX);
         ctx.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_HMODULE_VALID;
-        ctx.lpResourceName = MAKEINTRESOURCE(1);
+        ctx.lpResourceName = CREATEPROCESS_MANIFEST_RESOURCE_ID;
         ctx.lpSource = FileName;
         ctx.hModule = (HMODULE)DllBase;
 
         hActCtx = CreateActCtx(&ctx);
-        if (hActCtx == INVALID_HANDLE_VALUE)
+        if (hActCtx == INVALID_HANDLE_VALUE) {
+            lastError = GetLastError();
+            RtlSecureZeroMemory(szValue, sizeof(szValue));
+            _strcpy(szValue, TEXT("Unexpected activation context failure ="));
+            ultostr(lastError, _strend(szValue));
+            _strcat(szValue, TEXT("\r\n"));
+            OutputDebugString(szValue);
             break;
+        }
 
         //
-        // Query autoelevate setting and run level information
+        // Query run level information.
+        //
+        RtlSecureZeroMemory(&ctxrl, sizeof(ctxrl));
+        status = RtlQueryInformationActivationContext(
+            RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_NO_ADDREF,
+            hActCtx, NULL, RunlevelInformationInActivationContext, (PVOID)&ctxrl, sizeof(ctxrl), NULL);
+
+        if (NT_SUCCESS(status))
+            FusionCommonData.RunLevel = ctxrl.RunLevel;
+
+        //
+        // DotNet application highly vulnerable for Dll Hijacking attacks.
+        // Always check if file is DotNet origin.
+        //
+        FusionCommonData.IsDotNet = supIsCorImageFile(DllBase);
+
+        //
+        // Query autoelevate setting and run level information.
         //
         l = 0;
         RtlSecureZeroMemory(&szValue, sizeof(szValue));
         status = RtlQueryActivationContextApplicationSettings(0, hActCtx, NULL, TEXT("autoElevate"), (PWSTR)&szValue, sizeof(szValue), &l);
         if (NT_SUCCESS(status)) {
-            RtlSecureZeroMemory(&CallbackData, sizeof(CallbackData));
-            CallbackData.Name = FileName;
-            CallbackData.IsFusion = TRUE;
-            CallbackData.AutoElevate = (_strcmpi(szValue, TEXT("true")) == 0); //actually appinfo only looks for 'T' or 't' symbol for performance reasons perhaps
-            
-            //
-            //Query run level information
-            //
-            RtlSecureZeroMemory(&ctxrl, sizeof(ctxrl));        
-            status = RtlQueryInformationActivationContext(
-                RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_NO_ADDREF,
-                hActCtx, NULL, RunlevelInformationInActivationContext, (PVOID)&ctxrl, sizeof(ctxrl), NULL);
 
-            if (NT_SUCCESS(status)) {
-                switch (ctxrl.RunLevel) {
-                case ACTCTX_RUN_LEVEL_AS_INVOKER:
-                    CallbackData.RequestedExecutionLevel = TEXT("asInvoker");
-                    break;
-                case ACTCTX_RUN_LEVEL_HIGHEST_AVAILABLE:
-                    CallbackData.RequestedExecutionLevel = TEXT("highestAvailable");
-                    break;
-                case ACTCTX_RUN_LEVEL_REQUIRE_ADMIN:
-                    CallbackData.RequestedExecutionLevel = TEXT("requireAdministrator");
-                    break;
-                case ACTCTX_RUN_LEVEL_UNSPECIFIED:
-                default:
-                    CallbackData.RequestedExecutionLevel = TEXT("unspecified");
-                    break;
-                }
-            }
-            CallbackData.IsDotNet = supIsCorImageFile(DllBase);
-            OutputCallback(&CallbackData);
+            //
+            // Actually appinfo only looks for 'T' or 't' symbol 
+            // for performance reasons perhaps
+            //
+            if (_strcmpi(szValue, TEXT("true")) == 0)
+                FusionCommonData.AutoElevateState = AutoElevateEnabled;
+            else
+                //
+                // Several former autoelevate applications has autoelevated strictly 
+                // disabled in manifest as part of their UAC fixes.
+                //
+                if (_strcmpi(szValue, TEXT("false")) == 0)
+                    FusionCommonData.AutoElevateState = AutoElevateDisabled;
         }
         else {
-            //some shit happened, if not expected - debug print it
-            lastError = RtlNtStatusToDosError(status);
-            if (lastError != ERROR_SXS_KEY_NOT_FOUND) {
+            //
+            // Query settings failed, check if it known error like sxs key not exist.         
+            //
+            if (status != STATUS_SXS_KEY_NOT_FOUND) {
                 RtlSecureZeroMemory(szValue, sizeof(szValue));
-                _strcpy(szValue, TEXT("GetLastError(QueryActivationContext)="));
-                ultostr(lastError, _strend(szValue));
+                _strcpy(szValue, TEXT("QueryActivationContext error ="));
+                ultostr(status, _strend(szValue));
                 _strcat(szValue, TEXT("\r\n"));
                 OutputDebugString(szValue);
+
+                //
+                // Don't output anything, just break, it is unexpected situation.
+                //
+                break;
             }
         }
+
+        //
+        // Key autoElevate could be not found, but application still can be in whitelist.
+        //
+        OutputCallback(&FusionCommonData);
+
+        //
+        // Print redirection dlls from activation context
+        //
+        FusionProbeForRedirectedDlls((PACTIVATION_CONTEXT)hActCtx, OutputCallback);
+
 
     } while (bCond);
 
@@ -266,17 +615,17 @@ VOID CheckFile(
 }
 
 /*
-* ScanFiles
+* FusionScanFiles
 *
 * Purpose:
 *
 * Scan directory for files of given type.
 *
 */
-VOID ScanFiles(
+VOID FusionScanFiles(
     LPWSTR lpDirectory,
     FUSIONCALLBACK OutputCallback
-    )
+)
 {
     HANDLE hFile;
     LPWSTR lpLookupDirectory = NULL;
@@ -293,7 +642,7 @@ VOID ScanFiles(
         hFile = FindFirstFile(lpLookupDirectory, &fdata);
         if (hFile != INVALID_HANDLE_VALUE) {
             do {
-                CheckFile(lpDirectory, &fdata, OutputCallback);
+                FusionCheckFile(lpDirectory, &fdata, OutputCallback);
             } while (FindNextFile(hFile, &fdata));
             FindClose(hFile);
         }
@@ -302,17 +651,17 @@ VOID ScanFiles(
 }
 
 /*
-* ScanDirectory
+* FusionScanDirectory
 *
 * Purpose:
 *
 * Recursively scan directories.
 *
 */
-VOID ScanDirectory(
+VOID FusionScanDirectory(
     LPWSTR lpDirectory,
     FUSIONCALLBACK OutputCallback
-    )
+)
 {
     SIZE_T              l;
     HANDLE              hDirectory;
@@ -323,7 +672,7 @@ VOID ScanDirectory(
     if ((lpDirectory == NULL) || (OutputCallback == NULL))
         return;
 
-    ScanFiles(lpDirectory, OutputCallback);
+    FusionScanFiles(lpDirectory, OutputCallback);
 
     RtlSecureZeroMemory(dirbuf, sizeof(dirbuf));
     RtlSecureZeroMemory(textbuf, sizeof(textbuf));
@@ -352,7 +701,7 @@ VOID ScanDirectory(
             {
                 _strcpy(textbuf, dirbuf);
                 _strcat(textbuf, fdata.cFileName);
-                ScanDirectory(textbuf, OutputCallback);
+                FusionScanDirectory(textbuf, OutputCallback);
             }
         } while (FindNextFile(hDirectory, &fdata));
         FindClose(hDirectory);

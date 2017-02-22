@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     1.0F
+*  VERSION:     1.10
 *
-*  DATE:        18 Feb 2017
+*  DATE:        20 Feb 2017
 *
 *  Common header file for the program support routines.
 *
@@ -45,6 +45,7 @@
 #include <ntstatus.h>
 #include <CommCtrl.h>
 #include "..\shared\ntos.h"
+#include "..\Shared\ntsxs.h"
 #include "..\shared\minirtl.h"
 #include "..\Shared\_filename.h"
 #include "logger.h"
@@ -55,3 +56,6 @@
 #include "basic.h"
 #include "comobj.h"
 #include "fusion.h"
+#ifdef _DEBUG
+#include "tests\test_fusion.h"
+#endif

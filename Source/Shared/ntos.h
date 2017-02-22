@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.55
+*  VERSION:     1.57
 *
-*  DATE:        18 Feb 2017
+*  DATE:        21 Feb 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -4344,8 +4344,8 @@ NTSTATUS NTAPI LdrFindEntryForAddress(
 	);
 
 NTSTATUS NTAPI LdrGetDllHandle(
-	_In_opt_ PCWSTR DllPath OPTIONAL,
-	_In_opt_ PULONG DllCharacteristics OPTIONAL,
+	_In_opt_ PCWSTR DllPath,
+	_In_opt_ PULONG DllCharacteristics,
 	_In_ PCUNICODE_STRING DllName,
 	_Out_ PVOID *DllHandle
 	);
@@ -4386,108 +4386,19 @@ NTSTATUS NTAPI LdrUnregisterDllNotification(
     );
 
 NTSTATUS NTAPI LdrResSearchResource(
-    _In_    PVOID DllHandle,
-    _In_    CONST ULONG_PTR* ResourceIdPath,
-    _In_    ULONG ResourceIdPathLength,
-    _In_    ULONG Flags,
-    _Out_   LPVOID *Resource,
-    _Out_   ULONG_PTR *ResourceSize,
-    _In_    PVOID Reserved1,
-    _In_    PVOID Reserved2
+    _In_        PVOID DllHandle,
+    _In_        CONST ULONG_PTR* ResourceIdPath,
+    _In_        ULONG ResourceIdPathLength,
+    _In_        ULONG Flags,
+    _Out_       LPVOID *Resource,
+    _Out_       ULONG_PTR *ResourceSize,
+    _In_opt_    PVOID Reserved1,
+    _In_opt_    PVOID Reserved2
     );
 
 /*
 **  LDR END
 */
-
-/*
-** ACTCTX START
-*/
-
-#define ACTCTX_PROCESS_DEFAULT ((void*)NULL)
-#define ACTCTX_EMPTY ((void*)(LONG_PTR)-3)
-#define ACTCTX_SYSTEM_DEFAULT  ((void*)(LONG_PTR)-4)
-#define IS_SPECIAL_ACTCTX(x) (((((LONG_PTR)(x)) - 1) | 7) == -1)
-
-typedef struct _ACTIVATION_CONTEXT *PACTIVATION_CONTEXT;
-typedef const struct _ACTIVATION_CONTEXT *PCACTIVATION_CONTEXT;
-
-#define INVALID_ACTIVATION_CONTEXT ((PACTIVATION_CONTEXT) ((LONG_PTR) -1))
-
-#define RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_USE_ACTIVE_ACTIVATION_CONTEXT (0x00000001)
-#define RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_ACTIVATION_CONTEXT_IS_MODULE  (0x00000002)
-#define RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_ACTIVATION_CONTEXT_IS_ADDRESS (0x00000004)
-#define RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_NO_ADDREF  (0x80000000)
-
-NTSTATUS NTAPI RtlQueryInformationActivationContext(
-    IN ULONG Flags,
-    IN PCACTIVATION_CONTEXT ActivationContext,
-    IN PVOID SubInstanceIndex,
-    IN ACTIVATION_CONTEXT_INFO_CLASS ActivationContextInformationClass,
-    OUT PVOID ActivationContextInformation,
-    IN SIZE_T ActivationContextInformationLength,
-    OUT PSIZE_T ReturnLength OPTIONAL
-);
-
-NTSTATUS NTAPI RtlQueryInformationActiveActivationContext(
-    IN ACTIVATION_CONTEXT_INFO_CLASS ActivationContextInformationClass,
-    OUT PVOID ActivationContextInformation,
-    IN SIZE_T ActivationContextInformationLength,
-    OUT PSIZE_T ReturnLength OPTIONAL
-);
-
-typedef VOID(NTAPI * PACTIVATION_CONTEXT_NOTIFY_ROUTINE)(
-    IN ULONG NotificationType,
-    IN PACTIVATION_CONTEXT ActivationContext,
-    IN const VOID *ActivationContextData,
-    IN PVOID NotificationContext,
-    IN PVOID NotificationData,
-    IN OUT PBOOLEAN DisableThisNotification
-    );
-
-NTSTATUS NTAPI RtlCreateActivationContext(
-    IN ULONG Flags,
-    IN const PACTIVATION_CONTEXT ActivationContextData,
-    IN ULONG ExtraBytes OPTIONAL,
-    IN PACTIVATION_CONTEXT_NOTIFY_ROUTINE NotificationRoutine OPTIONAL,
-    IN PVOID NotificationContext OPTIONAL,
-    OUT PACTIVATION_CONTEXT *ActivationContext
-);
-
-VOID NTAPI RtlAddRefActivationContext(
-    IN PACTIVATION_CONTEXT AppCtx
-);
-
-VOID NTAPI RtlReleaseActivationContext(
-    IN PACTIVATION_CONTEXT AppCtx
-);
-
-NTSTATUS NTAPI RtlZombifyActivationContext(
-    IN PACTIVATION_CONTEXT ActivationContext
-);
-
-NTSTATUS NTAPI RtlGetActiveActivationContext(
-    OUT PACTIVATION_CONTEXT *ActivationContext
-);
-
-BOOLEAN NTAPI RtlIsActivationContextActive(
-    IN PACTIVATION_CONTEXT ActivationContext
-);
-
-NTSTATUS NTAPI RtlQueryActivationContextApplicationSettings(
-    _In_opt_      DWORD dwFlags,
-    _In_opt_      HANDLE hActCtx,
-    _In_opt_      PCWSTR settingsNameSpace,
-    _In_          PCWSTR settingName,
-    _Out_writes_bytes_to_opt_(dwBuffer, *pdwWrittenOrRequired) PWSTR pvBuffer,
-    _In_      SIZE_T dwBuffer,
-    _Out_opt_ SIZE_T *pdwWrittenOrRequired
-);
-
-/*
-** ACTCTX END
-*/
-
 
 /*
 ** Csr Runtime START
@@ -4516,14 +4427,14 @@ NTSTATUS NTAPI RtlDestroyEnvironment(
 NTSTATUS NTAPI RtlCreateProcessParameters(
     _Out_ PRTL_USER_PROCESS_PARAMETERS *pProcessParameters,
     _In_ PUNICODE_STRING ImagePathName,
-    _In_ PUNICODE_STRING DllPath OPTIONAL,
-    _In_ PUNICODE_STRING CurrentDirectory OPTIONAL,
-    _In_ PUNICODE_STRING CommandLine OPTIONAL,
-    _In_ PVOID Environment OPTIONAL,
-    _In_ PUNICODE_STRING WindowTitle OPTIONAL,
-    _In_ PUNICODE_STRING DesktopInfo OPTIONAL,
-    _In_ PUNICODE_STRING ShellInfo OPTIONAL,
-    _In_ PUNICODE_STRING RuntimeData OPTIONAL
+    _In_opt_ PUNICODE_STRING DllPath,
+    _In_opt_ PUNICODE_STRING CurrentDirectory,
+    _In_opt_ PUNICODE_STRING CommandLine,
+    _In_opt_ PVOID Environment,
+    _In_opt_ PUNICODE_STRING WindowTitle,
+    _In_opt_ PUNICODE_STRING DesktopInfo,
+    _In_opt_ PUNICODE_STRING ShellInfo,
+    _In_opt_ PUNICODE_STRING RuntimeData
     );
 
 NTSTATUS NTAPI RtlDestroyProcessParameters(
@@ -4544,16 +4455,16 @@ NTSTATUS NTAPI RtlCreateUserProcess(
 	);
 
 NTSTATUS NTAPI RtlCreateUserThread(
-	HANDLE Process,
-	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
-	BOOLEAN CreateSuspended,
-	ULONG StackZeroBits,
-	SIZE_T MaximumStackSize OPTIONAL,
-	SIZE_T InitialStackSize OPTIONAL,
-	PUSER_THREAD_START_ROUTINE StartAddress,
-	PVOID Parameter,
-	PHANDLE Thread,
-	PCLIENT_ID ClientId
+	_In_ HANDLE Process,
+    _In_opt_ PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
+    _In_ BOOLEAN CreateSuspended,
+    _In_ ULONG StackZeroBits,
+    _In_opt_ SIZE_T MaximumStackSize,
+    _In_opt_ SIZE_T InitialStackSize,
+    _In_ PUSER_THREAD_START_ROUTINE StartAddress,
+    _In_opt_ PVOID Parameter,
+	_Out_opt_ PHANDLE Thread,
+	_Out_opt_ PCLIENT_ID ClientId
 	);
 
 VOID NTAPI RtlExitUserThread(
@@ -5016,6 +4927,17 @@ typedef enum _RTL_PATH_TYPE {
 RTL_PATH_TYPE NTAPI RtlDetermineDosPathNameType_U(
     PCWSTR DosFileName
     );
+
+#define HASH_STRING_ALGORITHM_DEFAULT   (0)
+#define HASH_STRING_ALGORITHM_X65599    (1)
+#define HASH_STRING_ALGORITHM_INVALID   (0xffffffff)
+
+NTSTATUS NTAPI RtlHashUnicodeString(
+    _In_ const UNICODE_STRING *String,
+    _In_ BOOLEAN CaseInSensitive,
+    _In_ ULONG HashAlgorithm,
+    _Out_ PULONG HashValue
+);
 
 ULONG DbgPrint(
 	_In_ PCH Format,

@@ -119,10 +119,12 @@
     <ClCompile Include="logger.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="sup.c" />
+    <ClCompile Include="tests\test_fusion.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Shared\minirtl.h" />
     <ClInclude Include="..\Shared\ntos.h" />
+    <ClInclude Include="..\Shared\ntsxs.h" />
     <ClInclude Include="..\Shared\rtltypes.h" />
     <ClInclude Include="..\Shared\_filename.h" />
     <ClInclude Include="appinfo.h" />
@@ -135,6 +137,7 @@
     <ClInclude Include="patterns.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sup.h" />
+    <ClInclude Include="tests\test_fusion.h" />
     <ClInclude Include="wintrustex.h" />
   </ItemGroup>
   <ItemGroup>

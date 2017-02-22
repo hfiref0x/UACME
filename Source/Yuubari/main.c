@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.0F
+*  VERSION:     1.10
 *
-*  DATE:        18 Feb 2017
+*  DATE:        21 Feb 2017
 *
 *  Program entry point.
 *
@@ -76,6 +76,8 @@ VOID AppInfoDataOutputCallback(
         _strcpy(lpLog, Text);
         _strcat(lpLog, Data->Name);
         LoggerWrite(g_LogFile, lpLog, TRUE);
+
+        cuiPrintText(g_ConOut, lpLog, g_ConsoleOutput, TRUE);
         HeapFree(GetProcessHeap(), 0, lpLog);
     }
 }
@@ -118,6 +120,7 @@ VOID WINAPI BasicDataOutputCallback(
             }
         }
         LoggerWrite(g_LogFile, lpLog, TRUE);
+        cuiPrintText(g_ConOut, lpLog, g_ConsoleOutput, TRUE);
         HeapFree(GetProcessHeap(), 0, lpLog);
     }
 }
@@ -138,6 +141,10 @@ VOID WINAPI RegistryOutputCallback(
         return;
 
     LoggerWrite(g_LogFile, Data->Name, TRUE);
+
+    //output current registry key to show that we are alive
+    cuiPrintText(g_ConOut, Data->Key, g_ConsoleOutput, TRUE);
+
     LoggerWrite(g_LogFile, Data->AppId, TRUE);
     LoggerWrite(g_LogFile, Data->LocalizedString, TRUE);
     LoggerWrite(g_LogFile, Data->Key, TRUE);
@@ -157,40 +164,88 @@ VOID WINAPI FusionOutputCallback(
     )
 {
     LPWSTR lpText;
+    LPWSTR lpLog = NULL;
+    SIZE_T sz = 0;
 
     if (Data == NULL)
         return;
 
-    LoggerWrite(g_LogFile, Data->Name, TRUE);
-    if (Data->IsFusion) {
-        LoggerWrite(g_LogFile, Data->RequestedExecutionLevel, TRUE);
-        if (Data->AutoElevate) {
-            lpText = TEXT("autoElevate=TRUE");
+    if (Data->DataType == UacFusionDataCommonType) {
+
+        //FileName
+        LoggerWrite(g_LogFile, TEXT("\r\n"), FALSE);
+        LoggerWrite(g_LogFile, Data->Name, TRUE);
+
+        // Output current filename, to show that we are alive
+        cuiPrintText(g_ConOut, Data->Name, g_ConsoleOutput, TRUE);
+
+        //
+        // If application has autoElevate attribute, report full info
+        //
+        if (Data->IsFusion) {
+            switch (Data->RunLevel) {
+            case ACTCTX_RUN_LEVEL_AS_INVOKER:
+                lpText = TEXT("asInvoker");
+                break;
+            case ACTCTX_RUN_LEVEL_HIGHEST_AVAILABLE:
+                lpText = TEXT("highestAvailable");
+                break;
+            case ACTCTX_RUN_LEVEL_REQUIRE_ADMIN:
+                lpText = TEXT("requireAdministrator");
+                break;
+            case ACTCTX_RUN_LEVEL_UNSPECIFIED:
+            default:
+                lpText = TEXT("unspecified");
+                break;
+            }
+            //RequestedExecutionLevel 
+            LoggerWrite(g_LogFile, lpText, TRUE);
+
+            //autoElevate state
+            if (Data->AutoElevateState != AutoElevateUnspecified) {
+                switch (Data->AutoElevateState) {
+                case AutoElevateEnabled:
+                    lpText = TEXT("autoElevate=TRUE");
+                    break;
+                case AutoElevateDisabled:
+                    lpText = TEXT("autoElevate=FALSE");
+                    break;
+                default:
+                    break;
+                }
+                LoggerWrite(g_LogFile, lpText, TRUE);
+            }
         }
         else {
-            lpText = TEXT("autoElevate=FALSE");
-        }
-        LoggerWrite(g_LogFile, lpText, TRUE);
-    }
-    else {
-        lpText = TEXT("Binary without embedded manifest");
-        LoggerWrite(g_LogFile, lpText, TRUE);
-        if (Data->IsOSBinary) {
-            if (Data->IsSignatureValidOrTrusted != TRUE) {
-                lpText = TEXT("Warning: signature not valid or trusted");
-                LoggerWrite(g_LogFile, lpText, TRUE);
-            }
-            else {
-                lpText = TEXT("OS binary with valid digital signature");
-                LoggerWrite(g_LogFile, lpText, TRUE);
+            // no embedded manifest
+            lpText = TEXT("Binary without embedded manifest");
+            LoggerWrite(g_LogFile, lpText, TRUE);
+            if (Data->IsOSBinary) {
+                if (Data->IsSignatureValidOrTrusted != TRUE) {
+                    lpText = TEXT("Warning: signature not valid or trusted");
+                    LoggerWrite(g_LogFile, lpText, TRUE);
+                }
+                else {
+                    lpText = TEXT("OS binary with valid digital signature");
+                    LoggerWrite(g_LogFile, lpText, TRUE);
+                }
             }
         }
+        if (Data->IsDotNet) {
+            lpText = TEXT("DotNet");
+            LoggerWrite(g_LogFile, lpText, TRUE);
+        }
     }
-    if (Data->IsDotNet) {
-        lpText = TEXT("DotNet");
-        LoggerWrite(g_LogFile, lpText, TRUE);
+    if (Data->DataType == UacFusionDataRedirectedDllType) {
+        sz = (_strlen(Data->Name) * sizeof(WCHAR)) + MAX_PATH;
+        lpLog = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
+        if (lpLog) {
+            _strcpy(lpLog, TEXT("DllRedirection: "));
+            _strcat(lpLog, Data->Name);
+            LoggerWrite(g_LogFile, lpLog, TRUE);
+            HeapFree(GetProcessHeap(), 0, lpLog);
+        }
     }
-    LoggerWrite(g_LogFile, TEXT("\n"), TRUE);
 }
 
 /*
@@ -205,7 +260,7 @@ VOID ListBasicSettings(
     VOID
     )
 {
-    cuiPrintText(g_ConOut, TEXT("[UacView] Enumerating basic UAC settings"), g_ConsoleOutput, TRUE);
+    cuiPrintText(g_ConOut, TEXT("\n[UacView] Enumerating basic UAC settings\n"), g_ConsoleOutput, TRUE);
     ScanBasicUacData((BASICDATACALLBACK)BasicDataOutputCallback);
     LoggerWrite(g_LogFile, TEXT("================================================\n"), TRUE);
 }
@@ -222,7 +277,7 @@ VOID ListCOMFromRegistry(
     VOID
     )
 {
-    cuiPrintText(g_ConOut, TEXT("[UacView] Enumerating registry for autoelevated COM objects"), g_ConsoleOutput, TRUE);
+    cuiPrintText(g_ConOut, TEXT("\n[UacView] Enumerating registry for autoelevated COM objects\n"), g_ConsoleOutput, TRUE);
     ScanRegistry(HKEY_CLASSES_ROOT, (REGCALLBACK)RegistryOutputCallback);
     LoggerWrite(g_LogFile, TEXT("================================================\n"), TRUE);
 }
@@ -252,12 +307,12 @@ VOID ListFusion(
     }
 
     //scan Windows first
-    cuiPrintText(g_ConOut, TEXT("[UacView] Enumerating autoelevated applications in Windows directory"), g_ConsoleOutput, TRUE);
-    ScanDirectory(USER_SHARED_DATA->NtSystemRoot, (FUSIONCALLBACK)FusionOutputCallback);
+    cuiPrintText(g_ConOut, TEXT("\n[UacView] Enumerating autoelevated applications in Windows directory\n"), g_ConsoleOutput, TRUE);
+    FusionScanDirectory(USER_SHARED_DATA->NtSystemRoot, (FUSIONCALLBACK)FusionOutputCallback);
     LoggerWrite(g_LogFile, TEXT("================================================\n"), TRUE);
 
     //scan program files next
-    cuiPrintText(g_ConOut, TEXT("[UacView] Enumerating autoelevated applications in Program Files directory"), g_ConsoleOutput, TRUE);
+    cuiPrintText(g_ConOut, TEXT("\n[UacView] Enumerating autoelevated applications in Program Files directory\n"), g_ConsoleOutput, TRUE);
     RtlSecureZeroMemory(szPath, sizeof(szPath));
     if (SUCCEEDED(SHGetFolderPath(NULL,
         CSIDL_PROGRAM_FILES,
@@ -265,7 +320,7 @@ VOID ListFusion(
         SHGFP_TYPE_CURRENT,
         (LPWSTR)&szPath)))
     {
-        ScanDirectory(szPath, (FUSIONCALLBACK)FusionOutputCallback);
+        FusionScanDirectory(szPath, (FUSIONCALLBACK)FusionOutputCallback);
     }
     LoggerWrite(g_LogFile, TEXT("================================================\n"), TRUE);
 }
@@ -284,7 +339,7 @@ VOID ListAppInfo(
 {
     WCHAR szFileName[MAX_PATH * 2];
 
-    cuiPrintText(g_ConOut, TEXT("[UacView] Enumerating appinfo data"), g_ConsoleOutput, TRUE);
+    cuiPrintText(g_ConOut, TEXT("\n[UacView] Enumerating appinfo data\n"), g_ConsoleOutput, TRUE);
 
     _strcpy(szFileName, USER_SHARED_DATA->NtSystemRoot);
     _strcat(szFileName, TEXT("\\system32\\appinfo.dll"));
@@ -307,6 +362,7 @@ VOID ListAppInfo(
 VOID main()
 {
     DWORD l;
+
     WCHAR szLogFile[MAX_PATH];
 
     __security_init_cookie();
@@ -317,11 +373,15 @@ VOID main()
         g_ConsoleOutput = TRUE;
         SetConsoleMode(g_ConOut, ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_OUTPUT);
 
+        cuiPrintText(g_ConOut, TEXT("[UacView] Tool for gathering information about UAC, v1.1.0 (22/02/2017)\n"), g_ConsoleOutput, TRUE);
+
         RtlGetNtVersionNumbers(NULL, NULL, (ULONG*)&l);
         l &= 0x00003fff;
         if (l > 14393) {
-            cuiPrintText(g_ConOut, TEXT("[UacView] Not all features available for this build"), g_ConsoleOutput, TRUE);
+            cuiPrintText(g_ConOut, TEXT("\n[UacView] Not all features available for this build\n"), g_ConsoleOutput, TRUE);
         }
+
+        //TestActivationContext();
 
         RtlSecureZeroMemory(szLogFile, sizeof(szLogFile));
         _strcpy(szLogFile, TEXT("uac"));
@@ -329,6 +389,10 @@ VOID main()
         _strcat(szLogFile, TEXT(".log"));
 
         g_LogFile = LoggerCreate(szLogFile);
+        if (g_LogFile != INVALID_HANDLE_VALUE) {
+            cuiPrintText(g_ConOut, TEXT("Output will be logged to file"), g_ConsoleOutput, TRUE);
+            cuiPrintText(g_ConOut, szLogFile, g_ConsoleOutput, TRUE);
+        }
 
         ListBasicSettings();
         ListCOMFromRegistry();
@@ -337,6 +401,7 @@ VOID main()
 
         if (g_LogFile != INVALID_HANDLE_VALUE)
             CloseHandle(g_LogFile);
+
     }
     ExitProcess(0);
 }
