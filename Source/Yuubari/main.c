@@ -377,6 +377,10 @@ VOID main()
 
         RtlGetNtVersionNumbers(NULL, NULL, (ULONG*)&l);
         l &= 0x00003fff;
+        if (l < 7600) {
+            cuiPrintText(g_ConOut, TEXT("[UacView] Unsupported Windows version."), g_ConsoleOutput, TRUE);
+            ExitProcess(0);
+        }
         if (l > 14393) {
             cuiPrintText(g_ConOut, TEXT("\n[UacView] Not all features available for this build\n"), g_ConsoleOutput, TRUE);
         }

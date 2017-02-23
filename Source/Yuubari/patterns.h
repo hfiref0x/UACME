@@ -2,7 +2,7 @@
 *
 *  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
-*  TITLE:       TABLES.H
+*  TITLE:       PATTERNS.H
 *
 *  VERSION:     1.10
 *
@@ -44,3 +44,4 @@ unsigned char ptMmcBlock_10240[] = {
 unsigned char ptMmcBlock_10586_14393[] = { 
     0x49, 0x8B, 0x16, 0x49, 0x8B, 0xCD, 0xFF, 0x15 
 };
+

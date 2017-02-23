@@ -33,7 +33,6 @@ ULONG SxsGetSectionDataTypeBySize(
     switch (DataSize) {
     case sizeof(ACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION) :
         return dtAssemblyInfo;
-        break;
     case sizeof(ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION) :
         return dtDllRedirection;
     case sizeof(ACTIVATION_CONTEXT_DATA_WINDOW_CLASS_REDIRECTION) :
@@ -528,10 +527,14 @@ VOID FusionCheckFile(
         RtlSecureZeroMemory(&ctxrl, sizeof(ctxrl));
         status = RtlQueryInformationActivationContext(
             RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_NO_ADDREF,
-            hActCtx, NULL, RunlevelInformationInActivationContext, (PVOID)&ctxrl, sizeof(ctxrl), NULL);
-
-        if (NT_SUCCESS(status))
+            hActCtx, NULL, RunlevelInformationInActivationContext, 
+            (PVOID)&ctxrl, sizeof(ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION), NULL);
+        if (NT_SUCCESS(status)) {
             FusionCommonData.RunLevel = ctxrl.RunLevel;
+        }
+        else {
+            FusionCommonData.RunLevel = ACTCTX_RUN_LEVEL_UNSPECIFIED;
+        }
 
         //
         // DotNet application highly vulnerable for Dll Hijacking attacks.
@@ -540,7 +543,7 @@ VOID FusionCheckFile(
         FusionCommonData.IsDotNet = supIsCorImageFile(DllBase);
 
         //
-        // Query autoelevate setting and run level information.
+        // Query autoelevate setting.
         //
         l = 0;
         RtlSecureZeroMemory(&szValue, sizeof(szValue));
