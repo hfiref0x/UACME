@@ -273,34 +273,25 @@ BOOL GetSupportedPattern(
 }
 
 /*
-* QueryAiGlobalData
+* QueryAiMmcBlock
 *
 * Purpose:
 *
-* Locate mmc block and load symbols.
+* Locate mmc block.
 *
 */
-VOID QueryAiGlobalData(
-    PBYTE DllBase,
-    SIZE_T DllVirtualSize
+VOID QueryAiMmcBlock(
+    _In_ PBYTE DllBase,
+    _In_ SIZE_T DllVirtualSize
     )
 {
-    BOOL        bCond = FALSE;
     ULONG       PatternSize;
     ULONG_PTR   rel = 0;
-    HANDLE      hSym = GetCurrentProcess();
     PVOID       Pattern = NULL, PatternData = NULL, TestPtr = NULL;
-
-    WCHAR       szFullSymbolInfo[MAX_PATH * 2];
-    WCHAR       szSymbolName[MAX_PATH];
 
     if (DllBase == NULL)
         return;
 
-    g_AiData.DllBase = DllBase;
-    g_AiData.DllVirtualSize = DllVirtualSize;
-
-    //query MmcBlock
     g_AiData.MmcBlock = NULL;
     if (GetSupportedPattern(g_MmcPatterns, &PatternData, &PatternSize)) {
         Pattern = supFindPattern(DllBase, DllVirtualSize, PatternData, PatternSize);
@@ -312,6 +303,27 @@ VOID QueryAiGlobalData(
             }
         }
     }
+}
+
+/*
+* QueryAiGlobalData
+*
+* Purpose:
+*
+* Load symbols for Appinfo global variables.
+*
+*/
+VOID QueryAiGlobalData(
+    VOID
+    )
+{
+    BOOL    bCond = FALSE;
+    HANDLE  hSym = GetCurrentProcess();
+    WCHAR   szFullSymbolInfo[MAX_PATH * 2];
+    WCHAR   szSymbolName[MAX_PATH];
+
+    if (g_AiData.DllBase == NULL)
+        return;
 
     do {
         pSymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_UNDNAME);
@@ -330,8 +342,8 @@ VOID QueryAiGlobalData(
 
         _strcat(szFullSymbolInfo, TEXT("*https://msdl.microsoft.com/download/symbols"));
         if (pSymInitializeW(hSym, szFullSymbolInfo, FALSE)) {
-            if (pSymLoadModuleExW(hSym, NULL, TEXT("appinfo.dll"), NULL, (DWORD64)DllBase, 0, NULL, 0)) {
-                if (pSymEnumSymbolsW(hSym, (DWORD64)DllBase, NULL, SymEnumSymbolsProc, NULL)) {
+            if (pSymLoadModuleExW(hSym, NULL, TEXT("appinfo.dll"), NULL, (DWORD64)g_AiData.DllBase, 0, NULL, 0)) {
+                if (pSymEnumSymbolsW(hSym, (DWORD64)g_AiData.DllBase, NULL, SymEnumSymbolsProc, NULL)) {
                     g_AiData.lpAutoApproveEXEList = (PVOID)SymbolAddressFromName(TEXT("g_lpAutoApproveEXEList"));
                     g_AiData.lpIncludedPFDirs = (PVOID)SymbolAddressFromName(TEXT("g_lpIncludedPFDirs"));
                     g_AiData.lpIncludedWindowsDirs = (PVOID)SymbolAddressFromName(TEXT("g_lpIncludedWindowsDirs"));
@@ -339,7 +351,7 @@ VOID QueryAiGlobalData(
                     g_AiData.lpExemptedAutoApproveExes = (PVOID)SymbolAddressFromName(TEXT("g_lpExemptedAutoApproveExes"));
                     g_AiData.lpExcludedWindowsDirs = (PVOID)SymbolAddressFromName(TEXT("g_lpExcludedWindowsDirs"));
                 }
-                pSymUnloadModule64(hSym, (DWORD64)DllBase);
+                pSymUnloadModule64(hSym, (DWORD64)g_AiData.DllBase);
             }
             pSymCleanup(hSym);
         }
@@ -389,7 +401,6 @@ BOOL IsCrossPtr(
     return FALSE;
 }
 
-
 /*
 * ListMMCFiles
 *
@@ -410,6 +421,8 @@ VOID ListMMCFiles(
 
     if (OutputCallback == NULL)
         return;
+
+    QueryAiMmcBlock(g_AiData.DllBase, g_AiData.DllVirtualSize);
 
     if (g_AiData.MmcBlock == NULL)
         return;
@@ -584,9 +597,6 @@ VOID ScanAppInfo(
     if (OutputCallback == NULL)
         return;
 
-    if (!InitDbgHelp())
-        return;
-
     RtlSecureZeroMemory(&usFileName, sizeof(usFileName));
     RtlSecureZeroMemory(&g_AiData, sizeof(g_AiData));
 
@@ -621,16 +631,20 @@ VOID ScanAppInfo(
         if (!NT_SUCCESS(status))
             break;
 
-        QueryAiGlobalData(DllBase, DllVirtualSize);
+        g_AiData.DllBase = DllBase;
+        g_AiData.DllVirtualSize = DllVirtualSize;
 
         ListMMCFiles(OutputCallback);
-        ListAutoApproveEXE(OutputCallback);
 
-        ListStringDataUnsorted(AiIncludedPFDirs, g_AiData.lpIncludedPFDirs, OutputCallback);
-        ListStringDataUnsorted(AilpIncludedWindowsDirs, g_AiData.lpIncludedWindowsDirs, OutputCallback);
-        ListStringDataUnsorted(AiIncludedSystemDirs, g_AiData.lpIncludedSystemDirs, OutputCallback);
-        ListStringDataUnsorted(AiExemptedAutoApproveExes, g_AiData.lpExemptedAutoApproveExes, OutputCallback);
-        ListStringDataUnsorted(AiExcludedWindowsDirs, g_AiData.lpExcludedWindowsDirs, OutputCallback);
+        if (InitDbgHelp()) {
+            QueryAiGlobalData();
+            ListAutoApproveEXE(OutputCallback);
+            ListStringDataUnsorted(AiIncludedPFDirs, g_AiData.lpIncludedPFDirs, OutputCallback);
+            ListStringDataUnsorted(AilpIncludedWindowsDirs, g_AiData.lpIncludedWindowsDirs, OutputCallback);
+            ListStringDataUnsorted(AiIncludedSystemDirs, g_AiData.lpIncludedSystemDirs, OutputCallback);
+            ListStringDataUnsorted(AiExemptedAutoApproveExes, g_AiData.lpExemptedAutoApproveExes, OutputCallback);
+            ListStringDataUnsorted(AiExcludedWindowsDirs, g_AiData.lpExcludedWindowsDirs, OutputCallback);
+        }
 
     } while (bCond);
 

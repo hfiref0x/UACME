@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTSXS.H
 *
-*  VERSION:     1.00
+*  VERSION:     1.01
 *
-*  DATE:        20 Feb 2017
+*  DATE:        22 Feb 2017
 *
 *  Common header file for the SxS related API functions and definitions.
 *
@@ -55,12 +55,12 @@ typedef enum _ACTIVATION_CONTEXT_DATA_TYPE {
 } ACTIVATION_CONTEXT_DATA_TYPE;
 
 typedef VOID(NTAPI * PACTIVATION_CONTEXT_NOTIFY_ROUTINE)(
-    IN ULONG NotificationType,
-    IN PACTIVATION_CONTEXT ActivationContext,
-    IN const VOID *ActivationContextData,
-    IN PVOID NotificationContext,
-    IN PVOID NotificationData,
-    IN OUT PBOOLEAN DisableThisNotification
+    _In_ ULONG NotificationType,
+    _In_ PACTIVATION_CONTEXT ActivationContext,
+    _In_ const VOID *ActivationContextData,
+    _In_ PVOID NotificationContext,
+    _In_ PVOID NotificationData,
+    _Inout_ PBOOLEAN DisableThisNotification
     );
 
 typedef struct _ACTIVATION_CONTEXT_DATA {
@@ -321,16 +321,6 @@ typedef struct _ACTIVATION_CONTEXT_STACK {
     ULONG NextCookieSequenceNumber;
     ULONG StackId;
 } ACTIVATION_CONTEXT_STACK, *PACTIVATION_CONTEXT_STACK;
-
-#pragma warning(suppress: 28301)
-typedef VOID(NTAPI * PACTIVATION_CONTEXT_NOTIFY_ROUTINE)(
-    _In_ ULONG NotificationType,
-    _In_ PACTIVATION_CONTEXT ActivationContext,
-    _In_ const VOID *ActivationContextData,
-    _In_ PVOID NotificationContext,
-    _In_ PVOID NotificationData,
-    _Inout_ PBOOLEAN DisableThisNotification
-    );
 
 NTSTATUS NTAPI RtlQueryInformationActivationContext(
     _In_ ULONG Flags,

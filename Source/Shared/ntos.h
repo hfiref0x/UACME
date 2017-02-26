@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.57
+*  VERSION:     1.58
 *
-*  DATE:        21 Feb 2017
+*  DATE:        23 Feb 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -4396,6 +4396,40 @@ NTSTATUS NTAPI LdrResSearchResource(
     _In_opt_    PVOID Reserved2
     );
 
+NTSTATUS NTAPI LdrOpenImageFileOptionsKey(
+    _In_ PCUNICODE_STRING ImagePathName,
+    _In_ BOOLEAN Wow64Path,
+    _Out_ PHANDLE KeyHandle
+);
+
+NTSTATUS NTAPI LdrQueryImageFileExecutionOptions(
+    _In_ PCUNICODE_STRING ImagePathName,
+    _In_ PCWSTR OptionName,
+    _In_ ULONG Type,
+    _Out_ PVOID Buffer,
+    _In_ ULONG BufferSize,
+    _Out_opt_ PULONG ResultSize
+    );
+
+NTSTATUS NTAPI LdrQueryImageFileExecutionOptionsEx(
+    _In_ PCUNICODE_STRING ImagePathName,
+    _In_ PCWSTR OptionName,
+    _In_ ULONG Type,
+    _Out_ PVOID Buffer,
+    _In_ ULONG BufferSize,
+    _Out_opt_ PULONG ResultSize,
+    _In_ BOOLEAN Wow64Path
+    );
+
+NTSTATUS NTAPI LdrQueryImageFileKeyOption(
+    _In_ HANDLE KeyHandle,
+    _In_ PCWSTR OptionName,
+    _In_ ULONG Type,
+    _Out_ PVOID Buffer,
+    _In_ ULONG BufferSize,
+    _Out_opt_ PULONG ResultSize
+    );
+
 /*
 **  LDR END
 */
@@ -4455,7 +4489,7 @@ NTSTATUS NTAPI RtlCreateUserProcess(
 	);
 
 NTSTATUS NTAPI RtlCreateUserThread(
-	_In_ HANDLE Process,
+    _In_ HANDLE Process,
     _In_opt_ PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
     _In_ BOOLEAN CreateSuspended,
     _In_ ULONG StackZeroBits,
@@ -4463,9 +4497,9 @@ NTSTATUS NTAPI RtlCreateUserThread(
     _In_opt_ SIZE_T InitialStackSize,
     _In_ PUSER_THREAD_START_ROUTINE StartAddress,
     _In_opt_ PVOID Parameter,
-	_Out_opt_ PHANDLE Thread,
-	_Out_opt_ PCLIENT_ID ClientId
-	);
+    _Out_opt_ PHANDLE Thread,
+    _Out_opt_ PCLIENT_ID ClientId
+    );
 
 VOID NTAPI RtlExitUserThread(
 	IN NTSTATUS ExitStatus
@@ -5166,21 +5200,6 @@ NTSTATUS NTAPI RtlQueryElevationFlags(
 
 /*
 ** UAC Elevation END
-*/
-
-/*
-** Loader API START
-*/
-
-NTSTATUS NTAPI LdrGetProcedureAddress(
-	_In_ PVOID DllHandle,
-	_In_opt_ CONST ANSI_STRING* ProcedureName,
-	_In_opt_ ULONG ProcedureNumber,
-	_Out_ PVOID *ProcedureAddress
-	);
-
-/*
-** Loader API END
 */
 
 /*
