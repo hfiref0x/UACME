@@ -12,7 +12,7 @@ Run executable from command line: akagi32 [Key] [Param] or akagi64 [Key] [Param]
 
 First param is number of method to use, second is optional command (executable file name including full path) to run. Second param can be empty - in this case program will execute elevated cmd.exe from system32 folder.
 
-Keys (watch debug ouput with dbgview or similar for more info):
+Keys (watch debug output with dbgview or similar for more info):
 
 1. Author: Leo Davidson
    * Type: Dll Hijack
