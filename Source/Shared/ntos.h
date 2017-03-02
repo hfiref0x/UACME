@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.58
+*  VERSION:     1.59
 *
-*  DATE:        23 Feb 2017
+*  DATE:        28 Feb 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -4386,14 +4386,14 @@ NTSTATUS NTAPI LdrUnregisterDllNotification(
     );
 
 NTSTATUS NTAPI LdrResSearchResource(
-    _In_        PVOID DllHandle,
-    _In_        CONST ULONG_PTR* ResourceIdPath,
-    _In_        ULONG ResourceIdPathLength,
+    _In_        PVOID File,
+    _In_        CONST ULONG_PTR* ResIds,
+    _In_        ULONG ResIdCount,
     _In_        ULONG Flags,
     _Out_       LPVOID *Resource,
-    _Out_       ULONG_PTR *ResourceSize,
-    _In_opt_    PVOID Reserved1,
-    _In_opt_    PVOID Reserved2
+    _Out_       ULONG *Size,
+    _In_opt_    USHORT *FoundLanguage,
+    _In_opt_    ULONG *FoundLanguageLength
     );
 
 NTSTATUS NTAPI LdrOpenImageFileOptionsKey(

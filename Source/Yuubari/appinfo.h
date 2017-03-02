@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPINFO.H
 *
-*  VERSION:     1.0F
+*  VERSION:     1.20
 *
-*  DATE:        17 Feb 2017
+*  DATE:        01 Mar 2017
 *
 *  Header file for the AppInfo scan.
 *
@@ -53,7 +53,8 @@ typedef struct _UAC_MMC_BLOCK {
 typedef struct _UAC_PATTERN {
     PVOID PatternData;
     ULONG PatternSize;
-    ULONG AppInfoBuild;
+    ULONG AppInfoBuildMin;
+    ULONG AppInfoBuildMax;
 } UAC_PATTERN, *PUAC_PATTERN;
 
 typedef struct _UAC_AI_GLOBALS {

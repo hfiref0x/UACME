@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMOBJ.C
 *
-*  VERSION:     1.0F
+*  VERSION:     1.20
 *
-*  DATE:        14 Feb 2017
+*  DATE:        01 Mar 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -16,26 +16,29 @@
 *******************************************************************************/
 #include "global.h"
 #include <Shlwapi.h>
+#include <shlobj.h>
+#include <Rpc.h>
 #pragma comment(lib, "Shlwapi.lib")
+#pragma comment(lib, "Rpcrt4.lib")
 
-VOID ScanRegistry(
-    HKEY RootKey,
-    REGCALLBACK OutputCallback
+VOID CopScanRegistry(
+    _In_ HKEY RootKey,
+    _In_ REGCALLBACK OutputCallback
 );
 
 /*
-* QuerySubKey
+* CopQuerySubKey
 *
 * Purpose:
 *
 * Query subkey elevated COM object name.
 *
 */
-VOID QuerySubKey(
-    HKEY RootKey,
-    LPWSTR lpKeyName,
-    BOOL ElevationKey,
-    REGCALLBACK OutputCallback
+VOID CopQuerySubKey(
+    _In_ HKEY RootKey,
+    _In_ LPWSTR lpKeyName,
+    _In_ BOOL ElevationKey,
+    _In_ REGCALLBACK OutputCallback
     )
 {
     BOOL    bCond = FALSE;
@@ -146,7 +149,7 @@ VOID QuerySubKey(
                 }
 
                 Data.Key = supQueryKeyName(RootKey, NULL);
-
+                Data.DataType = UacCOMDataCommonType;
                 OutputCallback(&Data);
 
                 if (Data.Key) {
@@ -165,24 +168,24 @@ VOID QuerySubKey(
                 HeapFree(GetProcessHeap(), 0, lpName);
         }
         else {
-            ScanRegistry(hSubKey, OutputCallback);
+            CopScanRegistry(hSubKey, OutputCallback);
         }
         RegCloseKey(hSubKey);
     }
 }
 
 /*
-* EnumSubKey
+* CopEnumSubKey
 *
 * Purpose:
 *
 * Enumerate key subkeys, check elevation flag.
 *
 */
-VOID EnumSubKey(
-    HKEY hKey,
-    DWORD dwKeyIndex,
-    REGCALLBACK OutputCallback
+VOID CopEnumSubKey(
+    _In_ HKEY hKey,
+    _In_ DWORD dwKeyIndex,
+    _In_ REGCALLBACK OutputCallback
     )
 {
     BOOL    bElevation = FALSE;
@@ -215,7 +218,7 @@ VOID EnumSubKey(
             if (_strcmpi(lpKeyName, TEXT("Elevation")) == 0)
                 bElevation = TRUE;
 
-            QuerySubKey(hKey, lpKeyName, bElevation, OutputCallback);
+            CopQuerySubKey(hKey, lpKeyName, bElevation, OutputCallback);
         }
 
     } while (lRet == ERROR_MORE_DATA);
@@ -226,16 +229,16 @@ VOID EnumSubKey(
 }
 
 /*
-* ScanRegistry
+* CopScanRegistry
 *
 * Purpose:
 *
 * Recursively scan registry looking for autoelevated COM entries.
 *
 */
-VOID ScanRegistry(
-    HKEY RootKey,
-    REGCALLBACK OutputCallback
+VOID CopScanRegistry(
+    _In_ HKEY RootKey,
+    _In_ REGCALLBACK OutputCallback
     )
 {
     BOOL    bCond = FALSE;
@@ -260,10 +263,197 @@ VOID ScanRegistry(
             break;
 
         for (i = 0; i < dwcSubKeys; i++)
-            EnumSubKey(hKey, i, OutputCallback);
+            CopEnumSubKey(hKey, i, OutputCallback);
 
     } while (bCond);
 
     if (hKey != NULL)
         RegCloseKey(hKey);
+}
+
+/*
+* CopEnumInterfaces
+*
+* Purpose:
+*
+* Remember list of available interfaces, excluding IUnknown.
+*
+*/
+BOOL CopEnumInterfaces(
+    _In_ INTERFACE_INFO_LIST *InterfaceList
+    )
+{
+    BOOL        bResult = FALSE;
+    HKEY        hKey = NULL;
+    LRESULT     lRet;
+    RPC_STATUS  RpcStatus = 0;
+    LPWSTR      lpKeyName = NULL;
+    DWORD       i, k, cSubKeys = 0, cMaxLength = 0, cchKey;
+    IID         iid;
+
+    INTERFACE_INFO *infoBuffer;
+
+    __try {
+
+        lRet = RegOpenKeyEx(HKEY_CLASSES_ROOT, TEXT("Interface"), 0, KEY_READ, &hKey);
+        if (lRet != ERROR_SUCCESS)
+            __leave;
+
+        lRet = RegQueryInfoKey(hKey, NULL, NULL, NULL, &cSubKeys, &cMaxLength, NULL,
+            NULL, NULL, NULL, NULL, NULL);
+        if ((lRet != ERROR_SUCCESS) || (cSubKeys == 0))
+            __leave;
+
+        infoBuffer = (INTERFACE_INFO*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cSubKeys * sizeof(INTERFACE_INFO));
+        if (infoBuffer == NULL)
+            __leave;
+
+        cMaxLength = (cMaxLength + 1) * sizeof(WCHAR);
+        lpKeyName = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
+        if (lpKeyName == NULL)
+            __leave;
+
+        for (k = 0, i = 0; i < cSubKeys; i++) {
+            
+            cchKey = cMaxLength / sizeof(WCHAR);          
+            if (RegEnumKeyEx(hKey, i, lpKeyName, &cchKey, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
+                
+                if (IIDFromString(lpKeyName, &iid) == S_OK) {
+                    
+                    //skip IUnknown
+                    if (UuidCompare((UUID*)&iid, (UUID*)&IID_IUnknown, &RpcStatus) == 0)
+                        continue;
+
+                    cchKey = MAX_PATH * sizeof(WCHAR);
+                    infoBuffer[k].iid = iid;
+                    
+                    RegGetValue(hKey, lpKeyName, TEXT(""), RRF_RT_REG_SZ, NULL, 
+                        (LPWSTR)&infoBuffer[k].szInterfaceName, &cchKey);
+
+                    k++;
+                }
+            }
+        }
+        InterfaceList->cEntries = k;
+        InterfaceList->List = infoBuffer;
+        bResult = TRUE;
+    }
+    __finally {
+        if (hKey)
+            RegCloseKey(hKey);
+
+        if (lpKeyName)
+            HeapFree(GetProcessHeap(), 0, lpKeyName);
+    }
+
+    return bResult;
+}
+
+/*
+* CopScanAutoApprovalList
+*
+* Purpose:
+*
+* Query list of autoapproval COM objects.
+* This key was added in RS1 specially for consent.exe comfort
+*
+*/
+VOID CopScanAutoApprovalList(
+    _In_ REGCALLBACK OutputCallback
+    )
+{
+    HKEY    hKey = NULL;
+    LRESULT lRet;
+    LPWSTR  lpValue = NULL;
+    DWORD   i, j, cValues = 0, cMaxLength = 0, cchValue;
+    
+    UAC_INTERFACE_DATA Data;
+    CLSID clsid;
+    INTERFACE_INFO_LIST InterfaceList;
+
+    IUnknown *Interface = NULL;
+    IUnknown *TestObject = NULL;
+
+    if (CoInitialize(NULL) != S_OK)
+        return;
+
+    RtlSecureZeroMemory(&InterfaceList, sizeof(InterfaceList));
+
+    __try {
+
+        if (!CopEnumInterfaces(&InterfaceList))
+            __leave;
+
+        lRet = RegOpenKeyEx(HKEY_LOCAL_MACHINE, T_UAC_COM_AUTOAPPROVAL_LIST, 0, KEY_READ, &hKey);
+        if (lRet != ERROR_SUCCESS)
+            __leave;
+
+        lRet = RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, NULL, NULL,
+            &cValues, &cMaxLength, NULL, NULL, NULL);
+        if ((lRet != ERROR_SUCCESS) || (cValues == 0))
+            __leave;
+
+        cMaxLength = (cMaxLength + 1) * sizeof(WCHAR);
+        lpValue = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
+        if (lpValue == NULL)
+            __leave;
+
+        for (i = 0; i < cValues; i++) {
+            cchValue = cMaxLength / sizeof(WCHAR);
+            if (RegEnumValue(hKey, i, lpValue, &cchValue, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
+                if (CLSIDFromString(lpValue, &clsid) == S_OK)
+                    if (SUCCEEDED(CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER,
+                        &IID_IUnknown, (LPVOID)&Interface)))
+                    {
+                        for (j = 0; j < InterfaceList.cEntries; j++) {
+                            Interface->lpVtbl->QueryInterface(Interface, &InterfaceList.List[j].iid, &TestObject);
+                            if (TestObject != NULL) {
+                                TestObject->lpVtbl->Release(TestObject);
+
+                                RtlSecureZeroMemory(&Data, sizeof(Data));
+                                Data.DataType = UacCOMDataInterfaceType;
+                                Data.Name = InterfaceList.List[j].szInterfaceName;
+                                Data.Clsid = clsid;
+                                Data.IID = InterfaceList.List[j].iid;
+                                OutputCallback((UAC_REGISTRY_DATA*)&Data);
+                            }
+                        }
+                        Interface->lpVtbl->Release(Interface);
+                    }
+            }
+        }
+    }
+    __finally {
+
+        if (hKey)
+            RegCloseKey(hKey);
+
+        if (lpValue)
+            HeapFree(GetProcessHeap(), 0, lpValue);
+
+        if (InterfaceList.List)
+            HeapFree(GetProcessHeap(), 0, InterfaceList.List);
+
+        CoUninitialize();
+    }
+}
+
+/*
+* CoListInformation
+*
+* Purpose:
+*
+* Scan registry looking for autoelevated COM.
+*
+*/
+VOID CoListInformation(
+    _In_ REGCALLBACK OutputCallback
+)
+{
+    //
+    // AutoApproval COM list added since RS1.
+    //
+    if (g_VerboseOutput) CopScanAutoApprovalList(OutputCallback);
+
+    CopScanRegistry(HKEY_CLASSES_ROOT, OutputCallback);
 }

@@ -101,6 +101,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Shared\cmdline.c" />
     <ClCompile Include="..\Shared\strtoi.c" />
     <ClCompile Include="..\Shared\ultostr.c" />
     <ClCompile Include="..\Shared\_filename.c" />
@@ -122,6 +123,7 @@
     <ClCompile Include="tests\test_fusion.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Shared\cmdline.h" />
     <ClInclude Include="..\Shared\minirtl.h" />
     <ClInclude Include="..\Shared\ntos.h" />
     <ClInclude Include="..\Shared\ntsxs.h" />
@@ -130,6 +132,7 @@
     <ClInclude Include="appinfo.h" />
     <ClInclude Include="basic.h" />
     <ClInclude Include="comobj.h" />
+    <ClInclude Include="consts.h" />
     <ClInclude Include="cui.h" />
     <ClInclude Include="fusion.h" />
     <ClInclude Include="global.h" />

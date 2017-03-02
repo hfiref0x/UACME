@@ -4,9 +4,9 @@
 *
 *  TITLE:       BASIC.H
 *
-*  VERSION:     1.0F
+*  VERSION:     1.11
 *
-*  DATE:        14 Feb 2017
+*  DATE:        27 Feb 2017
 *
 *  Header file for the basic UAC info scan.
 *
@@ -20,10 +20,8 @@
 
 typedef struct _UAC_BASIC_DATA {
     LPWSTR Name;
-    LPWSTR Desc;
     DWORD Value;
     BOOL IsValueBool;
-    BOOL IsDescUsed;
 } UAC_BASIC_DATA, *PUAC_BASIC_DATA;
 
 typedef VOID(WINAPI *BASICDATACALLBACK)(UAC_BASIC_DATA *Data);

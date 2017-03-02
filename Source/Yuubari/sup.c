@@ -184,3 +184,32 @@ PVOID supFindPattern(
 
     return NULL;
 }
+
+/*
+* supRegReadDword
+*
+* Purpose:
+*
+* Read DWORD value from given key.
+*
+*/
+LRESULT supRegReadDword(
+    _In_ HKEY hKey,
+    _In_ LPWSTR lpValueName,
+    _In_ LPDWORD Value
+)
+{
+    LRESULT lResult;
+    DWORD dwValue = 0, bytesIO;
+
+    bytesIO = sizeof(DWORD);
+    lResult = RegQueryValueEx(hKey, lpValueName,
+        NULL, NULL,
+        (LPBYTE)&dwValue, &bytesIO);
+
+    if (lResult == ERROR_SUCCESS) {
+        if (Value)
+            *Value = dwValue;
+    }
+    return lResult;
+}

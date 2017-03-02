@@ -33,16 +33,15 @@ pfnSymCleanup           pSymCleanup = NULL;
 //
 // Should be = supported Windows builds
 //
-#define SUPPORTED_PATTERNS_COUNT 7
+#define SUPPORTED_PATTERNS_COUNT 6
 
 UAC_PATTERN g_MmcPatterns[SUPPORTED_PATTERNS_COUNT] = {
-    { ptMmcBlock_7600, sizeof(ptMmcBlock_7600), 7600 },
-    { ptMmcBlock_7601, sizeof(ptMmcBlock_7601), 7601 },
-    { ptMmcBlock_9200, sizeof(ptMmcBlock_9200), 9200 },
-    { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 9600 },
-    { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 10240 },
-    { ptMmcBlock_10586_14393, sizeof(ptMmcBlock_10586_14393), 10586 },
-    { ptMmcBlock_10586_14393, sizeof(ptMmcBlock_10586_14393), 14393 }
+    { ptMmcBlock_7600, sizeof(ptMmcBlock_7600), 7600, 7600 },
+    { ptMmcBlock_7601, sizeof(ptMmcBlock_7601), 7601, 7601 },
+    { ptMmcBlock_9200, sizeof(ptMmcBlock_9200), 9200, 9200 },
+    { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 9600, 9600 },
+    { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 10240, 10240 },
+    { ptMmcBlock_10586_15046, sizeof(ptMmcBlock_10586_15046), 10586, 15046 }
 };
 
 #define TestChar(x)  ((x >= L'A') && (x <= L'z')) 
@@ -263,7 +262,9 @@ BOOL GetSupportedPattern(
         return FALSE;
 
     for (i = 0; i < SUPPORTED_PATTERNS_COUNT; i++) {
-        if (Patterns[i].AppInfoBuild == g_AiData.AppInfoBuildNumber) {
+        if ((g_AiData.AppInfoBuildNumber >= Patterns[i].AppInfoBuildMin) && 
+            (g_AiData.AppInfoBuildNumber <= Patterns[i].AppInfoBuildMax)) 
+        {
             *OutputPattern = Patterns[i].PatternData;
             *OutputPatternSize = Patterns[i].PatternSize;
             return TRUE;

@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUSION.C
 *
-*  VERSION:     1.10
+*  VERSION:     1.20
 *
-*  DATE:        21 Feb 2017
+*  DATE:        01 Mar 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -293,8 +293,9 @@ NTSTATUS SxsGetDllRedirectionFromActivationContext(
 *
 */
 NTSTATUS FusionProbeForRedirectedDlls(
-    ACTIVATION_CONTEXT *ActivationContext,
-    FUSIONCALLBACK OutputCallback
+    _In_ LPWSTR lpFileName,
+    _In_ ACTIVATION_CONTEXT *ActivationContext,
+    _In_ FUSIONCALLBACK OutputCallback
     )
 {
     NTSTATUS status;
@@ -303,28 +304,33 @@ NTSTATUS FusionProbeForRedirectedDlls(
     UAC_FUSION_DATA_DLL FusionRedirectedDll;
     DLL_REDIRECTION_LIST DllList;
 
-    RtlSecureZeroMemory(&DllList, sizeof(DllList));
-    status = SxsGetDllRedirectionFromActivationContext(ActivationContext, &DllList);
-    if (NT_SUCCESS(status)) {
-        while (DllList.Depth) {
-            ListEntry = RtlInterlockedPopEntrySList(&DllList.Header);
-            if (ListEntry) {
-                DllData = (PDLL_REDIRECTION_ENTRY)ListEntry;
-                if (DllData) {
-                    RtlSecureZeroMemory(&FusionRedirectedDll, sizeof(FusionRedirectedDll));
+    __try {
+        RtlSecureZeroMemory(&DllList, sizeof(DllList));
+        status = SxsGetDllRedirectionFromActivationContext(ActivationContext, &DllList);
+        if (NT_SUCCESS(status)) {
+            while (DllList.Depth) {
+                ListEntry = RtlInterlockedPopEntrySList(&DllList.Header);
+                if (ListEntry) {
+                    DllData = (PDLL_REDIRECTION_ENTRY)ListEntry;
+                    if (DllData) {
+                        RtlSecureZeroMemory(&FusionRedirectedDll, sizeof(FusionRedirectedDll));
 
-                    FusionRedirectedDll.DataType = UacFusionDataRedirectedDllType;
-                    FusionRedirectedDll.Name = DllData->DllName.Buffer;
+                        FusionRedirectedDll.DataType = UacFusionDataRedirectedDllType;
+                        FusionRedirectedDll.FileName = lpFileName;
+                        FusionRedirectedDll.DllName = DllData->DllName.Buffer;
+                        OutputCallback((UAC_FUSION_DATA*)&FusionRedirectedDll);
 
-                    OutputCallback((UAC_FUSION_DATA*)&FusionRedirectedDll);
-
-                    RtlFreeUnicodeString(&DllData->DllName);
-                    RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, DllData);
+                        RtlFreeUnicodeString(&DllData->DllName);
+                        RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, DllData);
+                    }
                 }
+                DllList.Depth--;
             }
-            DllList.Depth--;
+            RtlInterlockedFlushSList(&DllList.Header);
         }
-        RtlInterlockedFlushSList(&DllList.Header);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+        return STATUS_SXS_CORRUPTION;
     }
     return status;
 }
@@ -353,14 +359,14 @@ VOID FusionCheckFile(
     OBJECT_ATTRIBUTES   attr;
     UNICODE_STRING      usFileName;
     IO_STATUS_BLOCK     iosb;
+    ULONG_PTR           IdPath[3], ResourceSize = 0;
 
     ACTCTX      ctx;
 
     SIGNATURE_INFO sigData;
     UAC_FUSION_DATA FusionCommonData;
     ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION ctxrl;
-    ULONG_PTR   IdPath[3], ResourceSize = 0;
-    WCHAR       szValue[100];
+    WCHAR           szValue[100];
 
     usFileName.Buffer = NULL;
 
@@ -428,7 +434,7 @@ VOID FusionCheckFile(
         IdPath[2] = 0;
         pt = NULL;
         ResourceSize = 0;
-        status = LdrResSearchResource(DllBase, (ULONG_PTR*)&IdPath, 3, 0, &pt, &ResourceSize, NULL, NULL);
+        status = LdrResSearchResource(DllBase, (ULONG_PTR*)&IdPath, 3, 0, &pt, (ULONG*)&ResourceSize, NULL, NULL);
 
         FusionCommonData.IsFusion = NT_SUCCESS(status);
 
@@ -591,7 +597,7 @@ VOID FusionCheckFile(
         //
         // Print redirection dlls from activation context
         //
-        FusionProbeForRedirectedDlls((PACTIVATION_CONTEXT)hActCtx, OutputCallback);
+        FusionProbeForRedirectedDlls(FileName, (PACTIVATION_CONTEXT)hActCtx, OutputCallback);
 
 
     } while (bCond);

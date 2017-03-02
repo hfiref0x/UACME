@@ -341,7 +341,7 @@ NTSTATUS NTAPI RtlQueryInformationActiveActivationContext(
 
 NTSTATUS NTAPI RtlCreateActivationContext(
     _In_ ULONG Flags,
-    _In_ const PACTIVATION_CONTEXT ActivationContextData,
+    _In_ const PACTIVATION_CONTEXT_DATA ActivationContextData,
     _In_opt_ ULONG ExtraBytes,
     _In_opt_ PACTIVATION_CONTEXT_NOTIFY_ROUTINE NotificationRoutine,
     _In_opt_ PVOID NotificationContext,

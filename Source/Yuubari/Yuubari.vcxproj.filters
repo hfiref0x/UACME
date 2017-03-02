@@ -78,6 +78,9 @@
     <ClCompile Include="tests\test_fusion.c">
       <Filter>testunits</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\cmdline.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -130,6 +133,12 @@
     </ClInclude>
     <ClInclude Include="..\Shared\ntsxs.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="consts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\cmdline.h">
+      <Filter>minirtl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

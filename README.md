@@ -234,9 +234,9 @@ Keys (watch debug ouput with dbgview or similar for more info):
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
 * Method (4) unavailable in 64 bit edition because of Shim restriction;
-* Method (6) unavailable in wow64 environment starting from Windows 8.
+* Method (6) unavailable in wow64 environment starting from Windows 8;
 * Method (11) implemented in x86-32 version;
-* Method (13) (19) and above implemented only in x64 version.
+* Method (13) (19) and above implemented only in x64 version;
 * Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone.
 
 Run examples:

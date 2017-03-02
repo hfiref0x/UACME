@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     1.10
+*  VERSION:     1.20
 *
-*  DATE:        20 Feb 2017
+*  DATE:        01 Mar 2017
 *
 *  Common header file for the program support routines.
 *
@@ -48,6 +48,8 @@
 #include "..\Shared\ntsxs.h"
 #include "..\shared\minirtl.h"
 #include "..\Shared\_filename.h"
+#include "..\Shared\cmdline.h"
+#include "consts.h"
 #include "logger.h"
 #include "wintrustex.h"
 #include "sup.h"
@@ -59,3 +61,6 @@
 #ifdef _DEBUG
 #include "tests\test_fusion.h"
 #endif
+
+extern ULONG g_NtBuildNumber;
+extern BOOL g_VerboseOutput;

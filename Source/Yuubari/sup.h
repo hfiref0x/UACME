@@ -43,3 +43,9 @@ PVOID supFindPattern(
     CONST PBYTE Pattern,
     SIZE_T PatternSize
     );
+
+LRESULT supRegReadDword(
+    _In_ HKEY hKey,
+    _In_ LPWSTR lpValueName,
+    _In_ LPDWORD Value
+    );

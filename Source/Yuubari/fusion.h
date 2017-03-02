@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUSION.H
 *
-*  VERSION:     1.10
+*  VERSION:     1.20
 *
-*  DATE:        21 Feb 2017
+*  DATE:        01 Mar 2017
 *
 *  Header file for the autoelevated applications scan.
 *
@@ -40,7 +40,8 @@ typedef struct _UAC_FUSION_DATA {
 
 typedef struct _UAC_FUSION_DATA_DLL {
     DWORD DataType;
-    LPWSTR Name;
+    LPWSTR FileName;
+    LPWSTR DllName;
 } UAC_FUSION_DATA_DLL, *PUAC_FUSION_DATA_DLL;
 
 typedef struct _DLL_REDIRECTION_LIST_ENTRY {
