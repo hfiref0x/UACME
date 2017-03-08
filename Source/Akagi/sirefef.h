@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIREFEF.H
 *
-*  VERSION:     2.53
+*  VERSION:     2.57
 *
-*  DATE:        18 Jan 2017
+*  DATE:        01 Mar 2017
 *
 *  Prototypes and definitions for Sirefef/ZeroAccess method.
 *
@@ -57,6 +57,7 @@ typedef HANDLE(NTAPI *pfnCreateRemoteThread)(
     _Out_opt_ LPDWORD lpThreadId
     );
 
+#pragma warning(suppress: 28301)
 typedef DWORD(WINAPI *pfnWaitForSingleObject)(
     _In_ HANDLE hHandle,
     _In_ DWORD dwMilliseconds

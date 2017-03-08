@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     2.56
+*  VERSION:     2.57
 *
-*  DATE:        15 Feb 2017
+*  DATE:        01 Mar 2017
 *
 *  Compression support.
 *
@@ -74,6 +74,12 @@ PUCHAR DecompressBufferLZNT1(
 {
     PUCHAR UncompBuffer = NULL;
     NTSTATUS status;
+
+    if (FinalUncompressedSize)
+        *FinalUncompressedSize = 0;
+
+    if (UncompressedBufferSize == 0)
+        return NULL;
 
     UncompBuffer = (PUCHAR)VirtualAlloc(NULL, UncompressedBufferSize,
         MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);

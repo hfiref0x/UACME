@@ -22,6 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{49552A
 		Shared\cmdline.c = Shared\cmdline.c
 		shared\minirtl.h = shared\minirtl.h
 		shared\ntos.h = shared\ntos.h
+		Shared\ntsxs.h = Shared\ntsxs.h
 		shared\rtltypes.h = shared\rtltypes.h
 		Shared\strtoul.c = Shared\strtoul.c
 	EndProjectSection

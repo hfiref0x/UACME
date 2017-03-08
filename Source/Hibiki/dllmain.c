@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.10
+*  VERSION:     2.57
 *
-*  DATE:        14 Apr 2016
+*  DATE:        07 Mar 2017
 *
 *  AVrf entry point, Hibiki Kai Ni.
 *
@@ -30,8 +30,8 @@
 
 #include <windows.h>
 #include <ntstatus.h>
-#include "..\shared\ntos.h"
-#include "..\shared\minirtl.h"
+#include "shared\ntos.h"
+#include "shared\minirtl.h"
 
 
 #if (_MSC_VER >= 1900) 

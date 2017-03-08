@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.10
+*  VERSION:     1.21
 *
-*  DATE:        19 Feb 2017
+*  DATE:        04 Mar 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -30,18 +30,14 @@ pfnSymUnloadModule64    pSymUnloadModule64 = NULL;
 pfnSymFromAddrW         pSymFromAddrW = NULL;
 pfnSymCleanup           pSymCleanup = NULL;
 
-//
-// Should be = supported Windows builds
-//
 #define SUPPORTED_PATTERNS_COUNT 6
-
 UAC_PATTERN g_MmcPatterns[SUPPORTED_PATTERNS_COUNT] = {
     { ptMmcBlock_7600, sizeof(ptMmcBlock_7600), 7600, 7600 },
     { ptMmcBlock_7601, sizeof(ptMmcBlock_7601), 7601, 7601 },
     { ptMmcBlock_9200, sizeof(ptMmcBlock_9200), 9200, 9200 },
     { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 9600, 9600 },
     { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 10240, 10240 },
-    { ptMmcBlock_10586_15046, sizeof(ptMmcBlock_10586_15046), 10586, 15046 }
+    { ptMmcBlock_10586_15048, sizeof(ptMmcBlock_10586_15048), 10586, 15048 }
 };
 
 #define TestChar(x)  ((x >= L'A') && (x <= L'z')) 

@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMET.H
 *
-*  VERSION:     2.52
+*  VERSION:     2.57
 *
-*  DATE:        17 Jan 2017
+*  DATE:        07 Mar 2017
 *
 *  Prototypes and definitions for Comet method.
 *
@@ -19,5 +19,5 @@
 #pragma once
 
 BOOL ucmCometMethod(
-    LPWSTR lpszPayload
+    _In_ LPWSTR lpszPayload
     );

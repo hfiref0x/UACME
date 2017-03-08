@@ -16,6 +16,9 @@
     <Filter Include="minirtl">
       <UniqueIdentifier>{1caf2f34-af91-46be-aa2e-1893b0be628c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="testunits">
+      <UniqueIdentifier>{c4fc1dcf-e216-4458-a377-e7203d627128}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -99,6 +102,9 @@
     <ClCompile Include="..\Shared\ultohex.c">
       <Filter>minirtl</Filter>
     </ClCompile>
+    <ClCompile Include="tests\test.c">
+      <Filter>testunits</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -160,6 +166,9 @@
     </ClInclude>
     <ClInclude Include="..\Shared\_filename.h">
       <Filter>minirtl</Filter>
+    </ClInclude>
+    <ClInclude Include="tests\test.h">
+      <Filter>testunits</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

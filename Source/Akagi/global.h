@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.55
+*  VERSION:     2.57
 *
-*  DATE:        10 Feb 2017
+*  DATE:        28 Feb 2017
 *
 *  Common header file for the program support routines.
 *
@@ -79,6 +79,9 @@ typedef enum _UACBYPASSMETHOD {
     UacMethodEnigma0x3,
     UacMethodEnigma0x3_2,
     UacMethodExpLife,
+#ifdef _DEBUG
+    UacMethodTest,
+#endif
     UacMethodMax
 } UACBYPASSMETHOD;
 
@@ -101,6 +104,7 @@ typedef enum _UACBYPASSMETHOD {
 #include "hybrids.h"
 #include "comet.h"
 #include "enigma0x3.h"
+#include "tests\test.h"
 
 //default execution flow
 #define AKAGI_FLAG_KILO  0

@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.53
+*  VERSION:     2.57
 *
-*  DATE:        18 Jan 2017
+*  DATE:        03 Mar 2017
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -29,9 +29,9 @@
 #pragma warning(disable: 6102) // Using %s from failed function call at line %u
 
 #include <windows.h>
-#include "..\Shared\ntos.h"
+#include "shared\ntos.h"
 #include <ntstatus.h>
-#include "..\shared\minirtl.h"
+#include "shared\minirtl.h"
 #include "unbcl.h"
 #include "wbemcomn.h"
 

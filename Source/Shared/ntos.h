@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.59
+*  VERSION:     1.60
 *
-*  DATE:        28 Feb 2017
+*  DATE:        02 Mar 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -5200,6 +5200,89 @@ NTSTATUS NTAPI RtlQueryElevationFlags(
 
 /*
 ** UAC Elevation END
+*/
+
+
+/*
+*  Memory parition START
+*/
+
+typedef enum _MEMORY_PARTITION_INFORMATION_CLASS {
+    SystemMemoryPartitionInformation = 0,
+    SystemMemoryPartitionMoveMemory = 1,
+    SystemMemoryPartitionAddPagefile = 2,
+    SystemMemoryPartitionCombineMemory = 3,
+    SystemMemoryPartitionInitialAddMemory = 4
+} MEMORY_PARTITION_INFORMATION_CLASS;
+
+typedef struct _MEMORY_PARTITION_PAGE_RANGE {
+    ULONG_PTR StartPage;
+    ULONG_PTR NumberOfPages;
+} MEMORY_PARTITION_PAGE_RANGE, *PMEMORY_PARTITION_PAGE_RANGE;
+
+typedef struct _MEMORY_PARTITION_INITIAL_ADD_INFORMATION {
+    ULONG Flags;
+    ULONG NumberOfRanges;
+    ULONG_PTR NumberOfPagesAdded;
+    MEMORY_PARTITION_PAGE_RANGE PartitionRanges[1];
+} MEMORY_PARTITION_INITIAL_ADD_INFORMATION, *PMEMORY_PARTITION_INITIAL_ADD_INFORMATION;
+
+typedef struct _MEMORY_PARTITION_PAGE_COMBINE_INFORMATION {
+    PVOID StopHandle;
+    ULONG Flags;
+    ULONG_PTR TotalNumberOfPages;
+} MEMORY_PARTITION_PAGE_COMBINE_INFORMATION, *PMEMORY_PARTITION_PAGE_COMBINE_INFORMATION;
+
+typedef struct _MEMORY_PARTITION_PAGEFILE_INFORMATION {
+    UNICODE_STRING PageFileName;
+    LARGE_INTEGER MinimumSize;
+    LARGE_INTEGER MaximumSize;
+    ULONG Flags;
+} MEMORY_PARTITION_PAGEFILE_INFORMATION, *PMEMORY_PARTITION_PAGEFILE_INFORMATION;
+
+typedef struct _MEMORY_PARTITION_TRANSFER_INFORMATION {
+    ULONG_PTR NumberOfPages;
+    ULONG NumaNode;
+    ULONG Flags;
+} MEMORY_PARTITION_TRANSFER_INFORMATION, *PMEMORY_PARTITION_TRANSFER_INFORMATION;
+
+typedef struct _MEMORY_PARTITION_CONFIGURATION_INFORMATION {
+    ULONG Flags;
+    ULONG NumaNode;
+    ULONG Channel;
+    ULONG NumberOfNumaNodes;
+    ULONG_PTR ResidentAvailablePages;
+    ULONG_PTR CommittedPages;
+    ULONG_PTR CommitLimit;
+    ULONG_PTR PeakCommitment;
+    ULONG_PTR TotalNumberOfPages;
+    ULONG_PTR AvailablePages;
+    ULONG_PTR ZeroPages;
+    ULONG_PTR FreePages;
+    ULONG_PTR StandbyPages;
+} MEMORY_PARTITION_CONFIGURATION_INFORMATION, *PMEMORY_PARTITION_CONFIGURATION_INFORMATION;
+
+NTSTATUS NTAPI NtOpenPartition(
+    _Out_ PHANDLE PartitionHandle,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_ POBJECT_ATTRIBUTES ObjectAttributes
+    );
+
+NTSTATUS NTAPI NtManagePartition(
+    _In_ MEMORY_PARTITION_INFORMATION_CLASS PartitionInformationClass,
+    _Inout_ PVOID PartitionInformation,
+    _In_ ULONG PartitionInformationLength
+    );
+
+NTSTATUS NTAPI NtCreatePartition(
+    _Out_ PHANDLE PartitionHandle,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
+    _In_ ULONG PreferredNode
+    );
+
+/*
+*  Memory partition END
 */
 
 /*

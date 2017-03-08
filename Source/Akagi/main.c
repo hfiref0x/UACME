@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.56
+*  VERSION:     2.57
 *
-*  DATE:        13 Feb 2017
+*  DATE:        28 Feb 2017
 *
 *  Program entry point.
 *
@@ -850,6 +850,11 @@ UINT ucmMain()
             return ERROR_SUCCESS;
         }
         break;      
+#ifdef _DEBUG
+    case UacMethodTest:
+        UACMeTest();
+        break;
+#endif
     }
 
     return ERROR_ACCESS_DENIED;
@@ -902,6 +907,7 @@ VOID main()
         uctx.ucmMain = (pfnEntryPoint)ucmMain;
         RtlPushFrame((PTEB_ACTIVE_FRAME)&uctx);
 
+#pragma warning(suppress: 28159)
         k = ~GetTickCount();
         g_ExCookie = RtlRandomEx(&k);
 

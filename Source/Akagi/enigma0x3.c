@@ -4,7 +4,7 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.54
+*  VERSION:     2.57
 *
 *  DATE:        07 Feb 2017
 *
@@ -256,9 +256,10 @@ BOOL ucmDiskCleanupRaceCondition(
         shinfo.lpParameters = T_SCHTASKS_CMD;
         shinfo.nShow = SW_SHOW;
         if (ShellExecuteExW(&shinfo)) {
-            if (shinfo.hProcess)
+            if (shinfo.hProcess != NULL) {
                 WaitForSingleObject(shinfo.hProcess, INFINITE);
                 CloseHandle(shinfo.hProcess);
+            }
         }
         //
         // Because cleanmgr.exe is slow we need to wait enough time until it will try to launch dismhost.exe

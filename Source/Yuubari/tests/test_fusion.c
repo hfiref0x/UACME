@@ -4,9 +4,9 @@
 *
 *  TITLE:       TEST_FUSION.C
 *
-*  VERSION:     1.10
+*  VERSION:     1.21
 *
-*  DATE:        20 Feb 2017
+*  DATE:        03 Mar 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -14,8 +14,8 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
-#include "..\global.h"
-#include "..\fusion.h"
+#include "global.h"
+#include "fusion.h"
 
 BYTE TestArray[1024 * 32] = { 0 };
 

