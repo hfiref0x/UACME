@@ -230,6 +230,14 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
+28. Author: Exploit/Sandworm
+     * Type: Whitelisted component
+     * Method: InfDefaultInstall
+     * Target(s): Attacker defined application
+     * Component(s): Attacker defined components
+     * Works from: Windows 7 (7600)
+     * Fixed in: Windows 8.1 (9600)
+        * How: InfDefaultInstall.exe removed from g_lpAutoApproveEXEList (MS14-060)
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;

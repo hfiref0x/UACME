@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.57
+*  VERSION:     2.58
 *
-*  DATE:        28 Feb 2017
+*  DATE:        13 Mar 2017
 *
 *  Common header file for the program support routines.
 *
@@ -79,6 +79,7 @@ typedef enum _UACBYPASSMETHOD {
     UacMethodEnigma0x3,
     UacMethodEnigma0x3_2,
     UacMethodExpLife,
+    UacMethodSandworm,
 #ifdef _DEBUG
     UacMethodTest,
 #endif
@@ -104,6 +105,7 @@ typedef enum _UACBYPASSMETHOD {
 #include "hybrids.h"
 #include "comet.h"
 #include "enigma0x3.h"
+#include "sandworm.h"
 #include "tests\test.h"
 
 //default execution flow

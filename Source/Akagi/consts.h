@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.56
+*  VERSION:     2.58
 *
-*  DATE:        10 Feb 2017
+*  DATE:        13 Mar 2017
 *
 *  Global consts definition file.
 *
@@ -70,12 +70,12 @@
 #define SYSPREP_EXE                 L"sysprep.exe" 
 #define SETUPSQM_EXE                L"oobe\\setupsqm.exe"   //always in this dir
 #define MIGWIZ_EXE                  L"migwiz.exe"
-#define SPINSTALL_EXE               L"spinstall.exe"
 #define CONSENT_EXE                 L"consent.exe"
 #define EVENTVWR_EXE                L"eventvwr.exe"
 #define SCHTASKS_EXE                L"schtasks.exe"
 #define COMPMGMTLAUNCHER_EXE        L"CompMgmtLauncher.exe"
 #define PKGMGR_EXE                  L"pkgmgr.exe"
+#define INFDEFAULTINSTALL_EXE       L"InfDefaultInstall.exe"
 #define SYSPREP_DIR                 L"sysprep\\"
 #define INETSRV_DIR                 L"inetsrv\\"
 #define WBEM_DIR                    L"wbem\\"
@@ -84,6 +84,7 @@
 #define EVENTVWR_MSC                L"eventvwr.msc"
 #define RSOP_MSC                    L"rsop.msc"
 #define PACKAGE_XML                 L"ellocnak.xml"
+#define PACKAGE_INF                 L"ellocnak.inf"
 
 #ifdef _WIN64
 #define KONGOU_CD                   L"Kongou64.cd"

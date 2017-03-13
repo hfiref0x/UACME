@@ -105,6 +105,9 @@
     <ClCompile Include="tests\test.c">
       <Filter>testunits</Filter>
     </ClCompile>
+    <ClCompile Include="sandworm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -169,6 +172,9 @@
     </ClInclude>
     <ClInclude Include="tests\test.h">
       <Filter>testunits</Filter>
+    </ClInclude>
+    <ClInclude Include="sandworm.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -4,15 +4,15 @@
 *
 *  TITLE:       PATTERNS.H
 *
-*  VERSION:     1.21
+*  VERSION:     1.22
 *
-*  DATE:        04 Mar 2017
+*  DATE:        11 Mar 2017
 *
 *  Patterns for supported AppInfo versions.
 *
 *  Minimum client: 7600
 *
-*  Maximum client: 15048
+*  Maximum client: 15055
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -41,7 +41,7 @@ unsigned char ptMmcBlock_9600[] = {
 unsigned char ptMmcBlock_10240[] = { 
     0x49, 0x8B, 0x14, 0x24, 0x49, 0x8B, 0xCE, 0xFF, 0x15 
 };
-unsigned char ptMmcBlock_10586_15048[] = { 
+unsigned char ptMmcBlock_10586_15055[] = { 
     0x49, 0x8B, 0x16, 0x49, 0x8B, 0xCD, 0xFF, 0x15 
 };
 

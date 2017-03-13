@@ -260,6 +260,7 @@
     <ClCompile Include="makecab.c" />
     <ClCompile Include="compress.c" />
     <ClCompile Include="pitou.c" />
+    <ClCompile Include="sandworm.c" />
     <ClCompile Include="simda.c" />
     <ClCompile Include="sup.c" />
     <ClCompile Include="tests\test.c" />
@@ -282,6 +283,7 @@
     <ClInclude Include="manifest.h" />
     <ClInclude Include="pitou.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="sandworm.h" />
     <ClInclude Include="simda.h" />
     <ClInclude Include="sirefef.h" />
     <ClInclude Include="sup.h" />

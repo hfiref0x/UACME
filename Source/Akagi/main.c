@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.57
+*  VERSION:     2.58
 *
-*  DATE:        28 Feb 2017
+*  DATE:        13 Mar 2017
 *
 *  Program entry point.
 *
@@ -561,7 +561,10 @@ UINT ucmMain()
             return ERROR_UNSUPPORTED_TYPE;
         }
 #endif
-        //ban usage under wow64 (dismhost is x64 and x64 dlls are not present in 32bit version of this tool).
+        //
+        // Ban usage under wow64 
+        // (dismhost is x64 and x64 dlls are not present in 32bit version of this tool).
+        //
         if (g_ctx.IsWow64) {
             ucmShowMessage(WOW64STRING);
             return ERROR_UNSUPPORTED_TYPE;
@@ -571,6 +574,15 @@ UINT ucmMain()
     case UacMethodExpLife:
         break;
 
+    case UacMethodSandworm:
+        //
+        // Fixed by KB2919355
+        //
+        if (g_ctx.dwBuildNumber >= 9600) {
+            if (ucmShowQuestion(UACFIX) == IDNO)
+                return ERROR_UNSUPPORTED_TYPE;
+        }
+        break;
     }
 
     //prepare command for payload
@@ -855,6 +867,19 @@ UINT ucmMain()
         UACMeTest();
         break;
 #endif
+
+    case UacMethodSandworm:
+#ifndef _DEBUG
+        if (g_ctx.IsWow64) {
+            ucmShowMessage(WOW64STRING);
+            return ERROR_UNSUPPORTED_TYPE;
+        }
+#endif	
+        if (ucmSandwormMethod()) {
+            return ERROR_SUCCESS;
+        }
+        break;
+
     }
 
     return ERROR_ACCESS_DENIED;
