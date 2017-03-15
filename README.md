@@ -238,6 +238,15 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 8.1 (9600)
         * How: InfDefaultInstall.exe removed from g_lpAutoApproveEXEList (MS14-060)
+29. Author: Enigma0x3
+     * Type: Shell API
+     * Method: Registry key manipulation
+     * Target(s): \system32\sdctl.exe
+     * Component(s): Attacker defined application
+     * Works from: Windows 10 (10240)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+
 
 Note:
 * Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
@@ -293,6 +302,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * "Fileless" UAC Bypass Using eventvwr.exe and Registry Hijacking, https://enigma0x3.net/2016/08/15/fileless-uac-bypass-using-eventvwr-exe-and-registry-hijacking/
 * Bypassing UAC on Windows 10 using Disk Cleanup, https://enigma0x3.net/2016/07/22/bypassing-uac-on-windows-10-using-disk-cleanup/
 * Using IARPUninstallStringLauncher COM interface to bypass UAC, http://www.freebuf.com/articles/system/116611.html
+* Bypassing UAC using App Paths, https://enigma0x3.net/2017/03/14/bypassing-uac-using-app-paths/
  
 # Authors
 

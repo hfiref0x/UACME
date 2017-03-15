@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.H
 *
-*  VERSION:     2.54
+*  VERSION:     2.59
 *
-*  DATE:        07 Feb 2017
+*  DATE:        15 Mar 2017
 *
 *  Prototypes and definitions for Enigma0x3 autoelevation method.
 *
@@ -25,4 +25,10 @@ BOOL ucmHijackShellCommandMethod(
 
 BOOL ucmDiskCleanupRaceCondition(
     VOID
+    );
+
+BOOL ucmAppPathMethod(
+    _In_opt_ LPWSTR lpszPayload,
+    _In_ LPWSTR lpszAppPathTarget,
+    _In_ LPWSTR lpszTargetApp
     );
