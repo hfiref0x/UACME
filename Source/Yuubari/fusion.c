@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUSION.C
 *
-*  VERSION:     1.20
+*  VERSION:     1.24
 *
-*  DATE:        01 Mar 2017
+*  DATE:        20 Mar 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -299,7 +299,7 @@ NTSTATUS FusionProbeForRedirectedDlls(
     )
 {
     NTSTATUS status;
-    SLIST_ENTRY *ListEntry;
+    SLIST_ENTRY *ListEntry = NULL;
     DLL_REDIRECTION_LIST_ENTRY *DllData = NULL;
     UAC_FUSION_DATA_DLL FusionRedirectedDll;
     DLL_REDIRECTION_LIST DllList;
@@ -312,17 +312,15 @@ NTSTATUS FusionProbeForRedirectedDlls(
                 ListEntry = RtlInterlockedPopEntrySList(&DllList.Header);
                 if (ListEntry) {
                     DllData = (PDLL_REDIRECTION_ENTRY)ListEntry;
-                    if (DllData) {
-                        RtlSecureZeroMemory(&FusionRedirectedDll, sizeof(FusionRedirectedDll));
+                    RtlSecureZeroMemory(&FusionRedirectedDll, sizeof(FusionRedirectedDll));
 
-                        FusionRedirectedDll.DataType = UacFusionDataRedirectedDllType;
-                        FusionRedirectedDll.FileName = lpFileName;
-                        FusionRedirectedDll.DllName = DllData->DllName.Buffer;
-                        OutputCallback((UAC_FUSION_DATA*)&FusionRedirectedDll);
+                    FusionRedirectedDll.DataType = UacFusionDataRedirectedDllType;
+                    FusionRedirectedDll.FileName = lpFileName;
+                    FusionRedirectedDll.DllName = DllData->DllName.Buffer;
+                    OutputCallback((UAC_FUSION_DATA*)&FusionRedirectedDll);
 
-                        RtlFreeUnicodeString(&DllData->DllName);
-                        RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, DllData);
-                    }
+                    RtlFreeUnicodeString(&DllData->DllName);
+                    RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, DllData);
                 }
                 DllList.Depth--;
             }
@@ -353,13 +351,14 @@ VOID FusionCheckFile(
     DWORD               lastError;
     NTSTATUS            status;
     HANDLE              hFile = NULL, hSection = NULL, hActCtx = NULL;
-    LPWSTR              FileName = NULL, pt;
+    LPWSTR              FileName = NULL, pt = NULL;
     PBYTE               DllBase = NULL;
     SIZE_T              DllVirtualSize, sz, l;
     OBJECT_ATTRIBUTES   attr;
     UNICODE_STRING      usFileName;
     IO_STATUS_BLOCK     iosb;
-    ULONG_PTR           IdPath[3], ResourceSize = 0;
+    ULONG               ResourceSize = 0;
+    ULONG_PTR           IdPath[3];
 
     ACTCTX      ctx;
 
@@ -432,8 +431,6 @@ VOID FusionCheckFile(
         IdPath[0] = (ULONG_PTR)RT_MANIFEST;
         IdPath[1] = (ULONG_PTR)CREATEPROCESS_MANIFEST_RESOURCE_ID;
         IdPath[2] = 0;
-        pt = NULL;
-        ResourceSize = 0;
         status = LdrResSearchResource(DllBase, (ULONG_PTR*)&IdPath, 3, 0, &pt, (ULONG*)&ResourceSize, NULL, NULL);
 
         FusionCommonData.IsFusion = NT_SUCCESS(status);
@@ -441,7 +438,7 @@ VOID FusionCheckFile(
         //
         // File has no manifest embedded.
         //
-        if (FusionCommonData.IsFusion != TRUE) {
+        if (FusionCommonData.IsFusion == FALSE) {
             switch (status) {
             case STATUS_RESOURCE_TYPE_NOT_FOUND:
                 OutputDebugString(TEXT("LdrResSearchResource: resource type not found\r\n"));

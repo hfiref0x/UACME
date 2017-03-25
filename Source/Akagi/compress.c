@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     2.57
+*  VERSION:     2.70
 *
-*  DATE:        01 Mar 2017
+*  DATE:        25 Mar 2017
 *
 *  Compression support.
 *
@@ -35,7 +35,7 @@ pfnDecompress pDecompress = NULL;
 VOID EncodeBuffer(
     PVOID Buffer,
     ULONG BufferSize
-    )
+)
 {
     ULONG k, c;
     PUCHAR ptr;
@@ -62,7 +62,7 @@ VOID EncodeBuffer(
 *
 * Decompress buffer compressed with LZ algorithm.
 *
-* Use VirtualFree to release returned buffer when it no longer needed.
+* Use NtFreeVirtualMemory to release returned buffer when it no longer needed.
 *
 */
 PUCHAR DecompressBufferLZNT1(
@@ -70,10 +70,11 @@ PUCHAR DecompressBufferLZNT1(
     _In_ ULONG CompSize,
     _In_ ULONG UncompressedBufferSize,
     _Inout_ PULONG FinalUncompressedSize
-    )
+)
 {
-    PUCHAR UncompBuffer = NULL;
-    NTSTATUS status;
+    SIZE_T      Size;
+    PUCHAR      UncompBuffer = NULL;
+    NTSTATUS    status;
 
     if (FinalUncompressedSize)
         *FinalUncompressedSize = 0;
@@ -81,12 +82,17 @@ PUCHAR DecompressBufferLZNT1(
     if (UncompressedBufferSize == 0)
         return NULL;
 
-    UncompBuffer = (PUCHAR)VirtualAlloc(NULL, UncompressedBufferSize,
-        MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    Size = (SIZE_T)UncompressedBufferSize;
+    status = NtAllocateVirtualMemory(
+        NtCurrentProcess(),
+        &UncompBuffer,
+        0,
+        &Size,
+        MEM_COMMIT | MEM_RESERVE,
+        PAGE_READWRITE);
 
-    if (UncompBuffer == NULL) {
+    if ((!NT_SUCCESS(status)) || (UncompBuffer == NULL))
         return NULL;
-    }
 
     status = RtlDecompressBuffer(
         COMPRESSION_FORMAT_LZNT1,
@@ -98,10 +104,9 @@ PUCHAR DecompressBufferLZNT1(
     );
 
     if (status != STATUS_SUCCESS) { //accept only success value
-        if (UncompBuffer) {
-            VirtualFree(UncompBuffer, 0, MEM_RELEASE);
-            UncompBuffer = NULL;
-        }
+        Size = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &UncompBuffer, &Size, MEM_RELEASE);       
+        UncompBuffer = NULL;
     }
 
     return UncompBuffer;
@@ -119,11 +124,13 @@ PVOID DecompressPayload(
     _In_ PVOID CompressedBuffer,
     _In_ ULONG CompressedBufferSize,
     _Inout_ PULONG DecompressedBufferSize
-    )
+)
 {
-    BOOL     cond = FALSE, bResult;
-    PUCHAR   Data = NULL, UncompressedData = NULL, Ptr;
-    ULONG    FinalDecompressedSize = 0, k, c;
+    BOOL        cond = FALSE, bResult;
+    ULONG       FinalDecompressedSize = 0, k, c;
+    NTSTATUS    status;
+    SIZE_T      Size;
+    PUCHAR      Data = NULL, UncompressedData = NULL, Ptr;
 
     __try {
 
@@ -131,26 +138,34 @@ PVOID DecompressPayload(
 
         do {
 
-            Data = VirtualAlloc(NULL, CompressedBufferSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-            if (Data == NULL)
+            Size = (SIZE_T)CompressedBufferSize;
+            status = NtAllocateVirtualMemory(
+                NtCurrentProcess(),
+                &Data,
+                0,
+                &Size,
+                MEM_COMMIT | MEM_RESERVE,
+                PAGE_READWRITE);
+
+            if ( (!NT_SUCCESS(status)) || (Data == NULL) ) 
                 break;
 
-            supCopyMemory(Data, CompressedBufferSize, CompressedBuffer, CompressedBufferSize);
+            supCopyMemory(Data, (SIZE_T)CompressedBufferSize, CompressedBuffer, (SIZE_T)CompressedBufferSize);
 
             EncodeBuffer(Data, CompressedBufferSize);
 
             Ptr = Data;
             c = *(PULONG)&Ptr[0]; //query original size
             Ptr += sizeof(ULONG); //skip header
-            k = CompressedBufferSize - sizeof(ULONG); //new compressed size without header
+            k = (ULONG)(CompressedBufferSize - sizeof(ULONG)); //new compressed size without header
 
             UncompressedData = DecompressBufferLZNT1(Ptr, k, c, &FinalDecompressedSize);
             if (UncompressedData == NULL)
                 break;
 
             //validate uncompressed data
-            if (!supVerifyMappedImageMatchesChecksum(UncompressedData, FinalDecompressedSize)) {               
-                supDebugPrint(TEXT("DecompressPayload"), RtlNtStatusToDosError(STATUS_IMAGE_CHECKSUM_MISMATCH));
+            if (!supVerifyMappedImageMatchesChecksum(UncompressedData, FinalDecompressedSize)) {
+                supDebugPrint(TEXT("DecompressPayload"), ERROR_DATA_CHECKSUM_ERROR);
                 break;
             }
 
@@ -164,12 +179,14 @@ PVOID DecompressPayload(
     }
 
     if (Data != NULL) {
-        VirtualFree(Data, 0, MEM_RELEASE);
+        Size = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &Data, &Size, MEM_RELEASE);
     }
 
     if (bResult == FALSE) {
         if (UncompressedData != NULL) {
-            VirtualFree(UncompressedData, 0, MEM_RELEASE);
+            Size = 0;
+            NtFreeVirtualMemory(NtCurrentProcess(), &UncompressedData, &Size, MEM_RELEASE);
             UncompressedData = NULL;
         }
         FinalDecompressedSize = 0;
@@ -192,7 +209,7 @@ PVOID DecompressPayload(
 */
 CFILE_TYPE GetTargetFileType(
     VOID *FileBuffer
-    )
+)
 {
     CFILE_TYPE Result = ftUnknown;
 
@@ -238,7 +255,7 @@ CFILE_TYPE GetTargetFileType(
 *
 * Purpose:
 *
-* Copy Portable Executable to the output buffer, caller must free it with HeapFree.
+* Copy Portable Executable to the output buffer, caller must free it with supHeapFree.
 *
 */
 BOOL ProcessFileMZ(
@@ -246,7 +263,7 @@ BOOL ProcessFileMZ(
     SIZE_T SourceFileSize,
     PVOID *OutputFileBuffer,
     PSIZE_T OutputFileBufferSize
-    )
+)
 {
     BOOL bResult = FALSE;
     PVOID Ptr;
@@ -261,7 +278,7 @@ BOOL ProcessFileMZ(
         return FALSE;
     }
 
-    Ptr = HeapAlloc(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, SourceFileSize);
+    Ptr = supHeapAlloc(SourceFileSize);
     if (Ptr) {
         *OutputFileBuffer = Ptr;
         *OutputFileBufferSize = SourceFileSize;
@@ -281,7 +298,7 @@ BOOL ProcessFileMZ(
 *
 * Purpose:
 *
-* Unpack DCN file to the buffer, caller must free it with HeapFree.
+* Unpack DCN file to the buffer, caller must free it with supHeapFree.
 *
 */
 BOOL ProcessFileDCN(
@@ -289,7 +306,7 @@ BOOL ProcessFileDCN(
     SIZE_T SourceFileSize,
     PVOID *OutputFileBuffer,
     PSIZE_T OutputFileBufferSize
-    )
+)
 {
     BOOL bResult = FALSE, bCond = FALSE;
 
@@ -311,7 +328,6 @@ BOOL ProcessFileDCN(
         return FALSE;
     }
 
-
     do {
 
         RtlSecureZeroMemory(&dhi, sizeof(DELTA_HEADER_INFO));
@@ -329,7 +345,7 @@ BOOL ProcessFileDCN(
         bResult = ApplyDeltaB(DELTA_DEFAULT_FLAGS_RAW, Source, Delta, &Target);
         if (bResult) {
 
-            Data = HeapAlloc(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, Target.uSize);
+            Data = supHeapAlloc(Target.uSize);
             if (Data) {
                 RtlCopyMemory(Data, Target.lpStart, Target.uSize);
                 DataSize = Target.uSize;
@@ -353,7 +369,7 @@ BOOL ProcessFileDCN(
 *
 * Purpose:
 *
-* Unpack DCS file to the buffer, caller must free it with HeapFree.
+* Unpack DCS file to the buffer, caller must free it with supHeapFree.
 *
 */
 BOOL ProcessFileDCS(
@@ -361,7 +377,7 @@ BOOL ProcessFileDCS(
     SIZE_T SourceFileSize,
     PVOID *OutputFileBuffer,
     PSIZE_T OutputFileBufferSize
-    )
+)
 {
     BOOL bResult = FALSE, bCond = FALSE;
     COMPRESSOR_HANDLE hDecompressor = 0;
@@ -395,7 +411,7 @@ BOOL ProcessFileDCS(
         if (FileHeader->NumberOfBlocks == 0)
             break;
 
-        DataBuffer = HeapAlloc(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, FileHeader->UncompressedFileSize);
+        DataBuffer = supHeapAlloc(FileHeader->UncompressedFileSize);
         if (DataBuffer == NULL)
             break;
 
@@ -456,7 +472,7 @@ BOOL ProcessFileDCS(
 */
 BOOL InitCabinetDecompressionAPI(
     VOID
-    )
+)
 {
     HANDLE hCabinetDll;
 

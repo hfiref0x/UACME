@@ -4,9 +4,9 @@
 *
 *  TITLE:       CUI.C
 *
-*  VERSION:     1.10
+*  VERSION:     1.11
 *
-*  DATE:        04 Feb 2017
+*  DATE:        20 Mar 2017
 *
 *  Console output.
 *
@@ -55,7 +55,7 @@ VOID cuiPrintTextA(
 
 		consoleIO = _strlen_a(Buffer);
 
-		if (ConsoleOutputEnabled == TRUE) {
+		if (ConsoleOutputEnabled != FALSE) {
 			WriteConsoleA(hOutConsole, Buffer, (DWORD)consoleIO, &bytesIO, NULL);
 		}
 		else {
@@ -93,7 +93,7 @@ VOID cuiPrintTextW(
     if ((consoleIO == 0) || (consoleIO > MAX_PATH * 4))
         return;
 
-    consoleIO = consoleIO * sizeof(WCHAR) + 4 + sizeof(UNICODE_NULL);
+    consoleIO = (4 + sizeof(UNICODE_NULL) + consoleIO) * sizeof(WCHAR);
     Buffer = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, consoleIO);
     if (Buffer) {
 
@@ -102,7 +102,7 @@ VOID cuiPrintTextW(
 
         consoleIO = _strlen(Buffer);
 
-        if (ConsoleOutputEnabled == TRUE) {
+        if (ConsoleOutputEnabled != FALSE) {
             WriteConsole(hOutConsole, Buffer, (DWORD)consoleIO, &bytesIO, NULL);
         }
         else {

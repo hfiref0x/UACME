@@ -1,0 +1,5 @@
+EXPORTS
+Wow64LogSystemService   = DummyFunc
+Wow64LogInitialize      = DummyFunc
+Wow64LogTerminate       = DummyFunc
+Wow64LogMessageArgList  = DummyFunc

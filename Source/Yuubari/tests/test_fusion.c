@@ -36,7 +36,7 @@ VOID TestActivationContext(
     WCHAR szLog[MAX_PATH];
 
     DLL_REDIRECTION_LIST DllList;
-    PSLIST_ENTRY ListEntry;
+    PSLIST_ENTRY ListEntry = NULL;
     DLL_REDIRECTION_LIST_ENTRY *DllData = NULL;
 
     RtlSecureZeroMemory(szLog, sizeof(szLog));
@@ -93,11 +93,8 @@ VOID TestActivationContext(
                 ListEntry = RtlInterlockedPopEntrySList(&DllList.Header);
                 if (ListEntry) {
                     DllData = (PDLL_REDIRECTION_ENTRY)ListEntry;
-                    if (DllData) {
-
-                        RtlFreeUnicodeString(&DllData->DllName);
-                        RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, DllData);
-                    }
+                    RtlFreeUnicodeString(&DllData->DllName);
+                    RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, DllData);
                     DllList.Depth--;
                 }
             }

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2016
+*  (C) COPYRIGHT AUTHORS, 2015 - 2017
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     2.51
+*  VERSION:     2.70
 *
-*  DATE:        10 July 2016
+*  DATE:        25 Mar 2017
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -18,9 +18,15 @@
 *******************************************************************************/
 #pragma once
 
-typedef BOOL(WINAPI *pfnShellExecuteExW)(SHELLEXECUTEINFOW *pExecInfo);
-typedef DWORD(WINAPI *pfnWaitForSingleObject)(HANDLE hHandle, DWORD dwMilliseconds);
-typedef BOOL(WINAPI *pfnCloseHandle)(HANDLE hObject);
+typedef BOOL(WINAPI *pfnShellExecuteExW)(
+    SHELLEXECUTEINFOW *pExecInfo);
+
+typedef DWORD(WINAPI *pfnWaitForSingleObject)(
+    HANDLE hHandle,
+    DWORD dwMilliseconds);
+
+typedef BOOL(WINAPI *pfnCloseHandle)(
+    HANDLE hObject);
 
 typedef struct _ELOAD_PARAMETERS_SIREFEF {
     WCHAR                   szVerb[MAX_PATH];
@@ -32,47 +38,41 @@ typedef struct _ELOAD_PARAMETERS_SIREFEF {
 
 BOOL ucmAvrfMethod(
     CONST PVOID AvrfDll,
-    DWORD AvrfDllSize
-    );
+    DWORD AvrfDllSize);
 
 BOOL ucmWinSATMethod(
     LPWSTR lpTargetDll,
     PVOID ProxyDll,
     DWORD ProxyDllSize,
-    BOOL UseWusa
-    );
+    BOOL UseWusa);
 
 BOOL ucmMMCMethod(
-    UACBYPASSMETHOD Method,
+    UCM_METHOD Method,
     LPWSTR lpTargetDll,
     PVOID ProxyDll,
-    DWORD ProxyDllSize
-    );
+    DWORD ProxyDllSize);
 
 BOOL ucmSirefefMethod(
     PVOID ProxyDll,
-    DWORD ProxyDllSize
-    );
+    DWORD ProxyDllSize);
 
 BOOL ucmGenericAutoelevation(
     LPWSTR lpTargetApp,
     LPWSTR lpTargetDll,
     PVOID ProxyDll,
-    DWORD ProxyDllSize
-    );
+    DWORD ProxyDllSize);
 
 BOOL ucmGWX(
-    VOID
-    );
+    PVOID ProxyDll,
+    DWORD ProxyDllSize);
 
 BOOL ucmAutoElevateManifest(
     PVOID ProxyDll,
-    DWORD ProxyDllSize
-    );
+    DWORD ProxyDllSize);
 
 BOOL ucmInetMgrMethod(
-    VOID
-    );
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 BOOL ucmSXSMethod(
     PVOID ProxyDll,
@@ -80,14 +80,15 @@ BOOL ucmSXSMethod(
     LPWSTR lpTargetDirectory,
     LPWSTR lpTargetApplication,
     LPWSTR lpLaunchApplication,
-    BOOL bConsentItself
-    );
+    BOOL bConsentItself);
 
 BOOL ucmSetupAkagiLink(
-    VOID
-    );
+    VOID);
 
 BOOL ucmDismMethod(
     PVOID ProxyDll,
-    DWORD ProxyDllSize
-    );
+    DWORD ProxyDllSize);
+
+BOOL ucmWow64LoggerMethod(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize);

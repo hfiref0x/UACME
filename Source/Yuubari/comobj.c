@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMOBJ.C
 *
-*  VERSION:     1.20
+*  VERSION:     1.24
 *
-*  DATE:        01 Mar 2017
+*  DATE:        20 Mar 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -39,7 +39,7 @@ VOID CopQuerySubKey(
     _In_ LPWSTR lpKeyName,
     _In_ BOOL ElevationKey,
     _In_ REGCALLBACK OutputCallback
-    )
+)
 {
     BOOL    bCond = FALSE;
     LRESULT lRet;
@@ -186,7 +186,7 @@ VOID CopEnumSubKey(
     _In_ HKEY hKey,
     _In_ DWORD dwKeyIndex,
     _In_ REGCALLBACK OutputCallback
-    )
+)
 {
     BOOL    bElevation = FALSE;
     LRESULT lRet;
@@ -239,7 +239,7 @@ VOID CopEnumSubKey(
 VOID CopScanRegistry(
     _In_ HKEY RootKey,
     _In_ REGCALLBACK OutputCallback
-    )
+)
 {
     BOOL    bCond = FALSE;
     HKEY    hKey = NULL;
@@ -281,14 +281,15 @@ VOID CopScanRegistry(
 */
 BOOL CopEnumInterfaces(
     _In_ INTERFACE_INFO_LIST *InterfaceList
-    )
+)
 {
     BOOL        bResult = FALSE;
     HKEY        hKey = NULL;
     LRESULT     lRet;
     RPC_STATUS  RpcStatus = 0;
     LPWSTR      lpKeyName = NULL;
-    DWORD       i, k, cSubKeys = 0, cMaxLength = 0, cchKey;
+    SIZE_T      k;
+    DWORD       i, cSubKeys = 0, cMaxLength = 0, cchKey;
     IID         iid;
 
     INTERFACE_INFO *infoBuffer;
@@ -308,33 +309,33 @@ BOOL CopEnumInterfaces(
         if (infoBuffer == NULL)
             __leave;
 
-        cMaxLength = (cMaxLength + 1) * sizeof(WCHAR);
+        cMaxLength = (DWORD)((cMaxLength + 1) * sizeof(WCHAR));
         lpKeyName = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
         if (lpKeyName == NULL)
             __leave;
 
         for (k = 0, i = 0; i < cSubKeys; i++) {
-            
-            cchKey = cMaxLength / sizeof(WCHAR);          
+
+            cchKey = (DWORD)(cMaxLength / sizeof(WCHAR));
             if (RegEnumKeyEx(hKey, i, lpKeyName, &cchKey, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
-                
+
                 if (IIDFromString(lpKeyName, &iid) == S_OK) {
-                    
+
                     //skip IUnknown
                     if (UuidCompare((UUID*)&iid, (UUID*)&IID_IUnknown, &RpcStatus) == 0)
                         continue;
 
                     cchKey = MAX_PATH * sizeof(WCHAR);
                     infoBuffer[k].iid = iid;
-                    
-                    RegGetValue(hKey, lpKeyName, TEXT(""), RRF_RT_REG_SZ, NULL, 
+
+                    RegGetValue(hKey, lpKeyName, TEXT(""), RRF_RT_REG_SZ, NULL,
                         (LPWSTR)&infoBuffer[k].szInterfaceName, &cchKey);
 
                     k++;
                 }
             }
         }
-        InterfaceList->cEntries = k;
+        InterfaceList->cEntries = (ULONG)k;
         InterfaceList->List = infoBuffer;
         bResult = TRUE;
     }
@@ -360,13 +361,14 @@ BOOL CopEnumInterfaces(
 */
 VOID CopScanAutoApprovalList(
     _In_ REGCALLBACK OutputCallback
-    )
+)
 {
     HKEY    hKey = NULL;
     LRESULT lRet;
+    SIZE_T  j;
     LPWSTR  lpValue = NULL;
-    DWORD   i, j, cValues = 0, cMaxLength = 0, cchValue;
-    
+    DWORD   i, cValues = 0, cMaxLength = 0, cchValue;
+
     UAC_INTERFACE_DATA Data;
     CLSID clsid;
     INTERFACE_INFO_LIST InterfaceList;
@@ -393,13 +395,13 @@ VOID CopScanAutoApprovalList(
         if ((lRet != ERROR_SUCCESS) || (cValues == 0))
             __leave;
 
-        cMaxLength = (cMaxLength + 1) * sizeof(WCHAR);
+        cMaxLength = (DWORD)((cMaxLength + 1) * sizeof(WCHAR));
         lpValue = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
         if (lpValue == NULL)
             __leave;
 
         for (i = 0; i < cValues; i++) {
-            cchValue = cMaxLength / sizeof(WCHAR);
+            cchValue = (DWORD)(cMaxLength / sizeof(WCHAR));
             if (RegEnumValue(hKey, i, lpValue, &cchValue, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
                 if (CLSIDFromString(lpValue, &clsid) == S_OK)
                     if (SUCCEEDED(CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER,

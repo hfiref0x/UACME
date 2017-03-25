@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.56
+*  VERSION:     2.70
 *
-*  DATE:        14 Feb 2017
+*  DATE:        25 Mar 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -15,6 +15,34 @@
 *
 *******************************************************************************/
 #include "global.h"
+
+/*
+* supHeapAlloc
+*
+* Purpose:
+*
+* Wrapper for RtlAllocateHeap with ucmHeap.
+*
+*/
+PVOID FORCEINLINE supHeapAlloc(
+    _In_ SIZE_T Size)
+{
+    return RtlAllocateHeap(g_ctx.ucmHeap, HEAP_ZERO_MEMORY, Size);
+}
+
+/*
+* supHeapFree
+*
+* Purpose:
+*
+* Wrapper for RtlFreeHeap with ucmHeap.
+*
+*/
+BOOL FORCEINLINE supHeapFree(
+    _In_ PVOID Memory)
+{
+    return RtlFreeHeap(g_ctx.ucmHeap, 0, Memory);
+}
 
 /*
 * supIsProcess32bit
@@ -26,7 +54,7 @@
 */
 BOOLEAN supIsProcess32bit(
     _In_ HANDLE hProcess
-    )
+)
 {
     NTSTATUS status;
     PROCESS_EXTENDED_BASIC_INFORMATION pebi;
@@ -55,7 +83,7 @@ BOOLEAN supIsProcess32bit(
 */
 BOOL supGetElevationType(
     TOKEN_ELEVATION_TYPE *lpType
-    )
+)
 {
     HANDLE hToken = NULL;
     NTSTATUS status;
@@ -93,7 +121,7 @@ BOOL supWriteBufferToFile(
     _In_ LPWSTR lpFileName,
     _In_ PVOID Buffer,
     _In_ DWORD BufferSize
-    )
+)
 {
     HANDLE hFile;
     DWORD bytesIO;
@@ -107,10 +135,10 @@ BOOL supWriteBufferToFile(
         return FALSE;
     }
 
-    hFile = CreateFileW(lpFileName,
+    hFile = CreateFile(lpFileName,
         GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
 
-    if (hFile == INVALID_HANDLE_VALUE) {       
+    if (hFile == INVALID_HANDLE_VALUE) {
         supDebugPrint(TEXT("CreateFile"), GetLastError());
         return FALSE;
     }
@@ -138,10 +166,10 @@ VOID supDebugPrint(
     SIZE_T sz;
 
     sz = MAX_PATH;
-    if (ApiName) 
+    if (ApiName)
         sz += _strlen(ApiName);
 
-    lpBuffer = HeapAlloc(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, sz * sizeof(WCHAR));
+    lpBuffer = supHeapAlloc(sz * sizeof(WCHAR));
     if (lpBuffer) {
         _strcpy(lpBuffer, TEXT("[UCM] "));
         if (ApiName) {
@@ -151,8 +179,10 @@ VOID supDebugPrint(
         ultostr(status, _strend(lpBuffer));
         _strcat(lpBuffer, TEXT("\n"));
         OutputDebugString(lpBuffer);
-        HeapFree(g_ctx.Peb->ProcessHeap, 0, lpBuffer);
+        supHeapFree(lpBuffer);
     }
+
+    SetLastError(status);
 }
 
 /*
@@ -166,7 +196,7 @@ VOID supDebugPrint(
 PBYTE supReadFileToBuffer(
     _In_ LPWSTR lpFileName,
     _Inout_opt_ LPDWORD lpBufferSize
-    )
+)
 {
     BOOL        bCond = FALSE;
     NTSTATUS    status;
@@ -215,16 +245,16 @@ PBYTE supReadFileToBuffer(
         RtlInitUnicodeString(&usName, lpFileName);
         InitializeObjectAttributes(&attr, &usName, OBJ_CASE_INSENSITIVE, hRoot, NULL);
 
-        status = NtCreateFile(&hFile, 
-            FILE_READ_DATA | SYNCHRONIZE, 
-            &attr, 
-            &iost, 
-            NULL, 
+        status = NtCreateFile(&hFile,
+            FILE_READ_DATA | SYNCHRONIZE,
+            &attr,
+            &iost,
+            NULL,
             FILE_ATTRIBUTE_NORMAL,
             FILE_SHARE_READ,
-            FILE_OPEN, 
-            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, 
-            NULL, 
+            FILE_OPEN,
+            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
+            NULL,
             0
         );
 
@@ -278,7 +308,7 @@ PBYTE supReadFileToBuffer(
 BOOL supRunProcess(
     _In_ LPWSTR lpszProcessName,
     _In_opt_ LPWSTR lpszParameters
-    )
+)
 {
     BOOL bResult;
     SHELLEXECUTEINFOW shinfo;
@@ -315,42 +345,46 @@ HANDLE NTAPI supRunProcessEx(
     _In_opt_ LPWSTR lpCurrentDirectory,
     _Out_opt_ HANDLE *PrimaryThread,
     _Inout_opt_ LPWSTR lpApplicationName
-    )
+)
 {
     BOOL cond = FALSE;
     LPWSTR pszBuffer = NULL;
     SIZE_T ccb;
-    STARTUPINFOW sti1;
+    STARTUPINFO sti1;
     PROCESS_INFORMATION pi1;
     DWORD dwFlags = CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS;
-    
-    if (PrimaryThread) {
+
+    if (PrimaryThread)
         *PrimaryThread = NULL;
-    }
 
-    if (lpszParameters == NULL) {
+    if (lpszParameters == NULL)
         return NULL;
-    }
-    
-    ccb = (_strlen_w(lpszParameters) * sizeof(WCHAR)) + sizeof(WCHAR);
-    pszBuffer = HeapAlloc(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, ccb);
-    if (pszBuffer == NULL) {
-        return NULL;
-    }
 
-    _strcpy_w(pszBuffer, lpszParameters);
+    ccb = (1 + _strlen(lpszParameters)) * sizeof(WCHAR);
+    pszBuffer = supHeapAlloc(ccb);
+    if (pszBuffer == NULL)
+        return NULL;
+
+    _strcpy(pszBuffer, lpszParameters);
 
     RtlSecureZeroMemory(&pi1, sizeof(pi1));
     RtlSecureZeroMemory(&sti1, sizeof(sti1));
-    GetStartupInfoW(&sti1);
-    
+    GetStartupInfo(&sti1);
+
     do {
 
-        if (!CreateProcessAsUser(NULL, lpApplicationName, pszBuffer, NULL, NULL, FALSE, dwFlags | CREATE_SUSPENDED,
-            NULL, lpCurrentDirectory, &sti1, &pi1))
-        {
-            break;
-        }
+        if (!CreateProcessAsUser(
+            NULL,
+            lpApplicationName,
+            pszBuffer,
+            NULL,
+            NULL,
+            FALSE,
+            dwFlags | CREATE_SUSPENDED,
+            NULL,
+            lpCurrentDirectory,
+            &sti1,
+            &pi1)) break;
 
         if (PrimaryThread) {
             *PrimaryThread = pi1.hThread;
@@ -360,8 +394,8 @@ HANDLE NTAPI supRunProcessEx(
         }
     } while (cond);
 
-    HeapFree(g_ctx.Peb->ProcessHeap, 0, pszBuffer);
-    
+    supHeapFree(pszBuffer);
+
     return pi1.hProcess;
 }
 
@@ -383,7 +417,7 @@ void supCopyMemory(
     _In_ size_t cbdest,
     _In_ const void *src,
     _In_ size_t cbsrc
-    )
+)
 {
     char *d = (char*)dest;
     char *s = (char*)src;
@@ -409,7 +443,7 @@ void supCopyMemory(
 */
 DWORD supQueryEntryPointRVA(
     _In_ LPWSTR lpImageFile
-    )
+)
 {
     PVOID                       ImageBase;
     PIMAGE_DOS_HEADER           pdosh;
@@ -447,7 +481,7 @@ DWORD supQueryEntryPointRVA(
 BOOL supSetParameter(
     LPWSTR lpParameter,
     DWORD cbParameter
-    )
+)
 {
     BOOL cond = FALSE, bResult = FALSE;
     HKEY hKey;
@@ -463,7 +497,7 @@ BOOL supSetParameter(
             break;
         }
 
-        RegSetValueExW(hKey, T_AKAGI_FLAG, 0, REG_DWORD, (BYTE *)&g_ctx.Flag, sizeof(DWORD));
+        RegSetValueExW(hKey, T_AKAGI_FLAG, 0, REG_DWORD, (BYTE *)&g_ctx.AkagiFlag, sizeof(DWORD));
 
         lRet = RegSetValueExW(hKey, T_AKAGI_PARAM, 0, REG_SZ,
             (LPBYTE)lpParameter, cbParameter);
@@ -491,7 +525,7 @@ USHORT supChkSum(
     ULONG PartialSum,
     PUSHORT Source,
     ULONG Length
-    )
+)
 {
     while (Length--) {
         PartialSum += *Source++;
@@ -511,7 +545,7 @@ USHORT supChkSum(
 BOOLEAN supVerifyMappedImageMatchesChecksum(
     _In_ PVOID BaseAddress,
     _In_ ULONG FileLength
-    )
+)
 {
     PUSHORT AdjustSum;
     PIMAGE_NT_HEADERS NtHeaders;
@@ -550,7 +584,7 @@ BOOLEAN supVerifyMappedImageMatchesChecksum(
 */
 VOID ucmShowMessage(
     LPWSTR lpszMsg
-    )
+)
 {
     if (lpszMsg) {
         MessageBoxW(GetDesktopWindow(),
@@ -568,7 +602,7 @@ VOID ucmShowMessage(
 */
 INT ucmShowQuestion(
     LPWSTR lpszMsg
-    )
+)
 {
     return MessageBoxW(GetDesktopWindow(), lpszMsg, PROGRAMTITLE, MB_YESNO);
 }
@@ -585,7 +619,7 @@ PBYTE supLdrQueryResourceData(
     _In_ ULONG_PTR ResourceId,
     _In_ PVOID DllHandle,
     _In_ PULONG DataSize
-    )
+)
 {
     NTSTATUS                   status;
     ULONG_PTR                  IdPath[3];
@@ -626,7 +660,7 @@ VOID NTAPI supxLdrEnumModulesCallback(
     _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
     _In_ PVOID Context,
     _In_ OUT BOOLEAN *StopEnumeration
-    )
+)
 {
     PPEB Peb = (PPEB)Context;
 
@@ -651,17 +685,19 @@ VOID NTAPI supxLdrEnumModulesCallback(
 */
 VOID supMasqueradeProcess(
     VOID
-    )
+)
 {
-    SIZE_T  sz;
     DWORD   cch;
+    PPEB    Peb = NtCurrentPeb();
+    SIZE_T  sz;
     WCHAR   szBuffer[MAX_PATH * 2];
 
     RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
     cch = GetWindowsDirectory(szBuffer, MAX_PATH);
     if ((cch != 0) && (cch < MAX_PATH)) {
 
-        _strcat(szBuffer, L"\\explorer.exe");
+        _strcat(szBuffer, L"\\");
+        _strcat(szBuffer, EXPLORER_EXE);
 
         g_lpszExplorer = NULL;
         sz = 0x1000;
@@ -669,14 +705,14 @@ VOID supMasqueradeProcess(
         if (g_lpszExplorer) {
             _strcpy(g_lpszExplorer, szBuffer);
 
-            RtlEnterCriticalSection(g_ctx.Peb->FastPebLock);
+            RtlEnterCriticalSection(Peb->FastPebLock);
 
-            RtlInitUnicodeString(&g_ctx.Peb->ProcessParameters->ImagePathName, g_lpszExplorer);
-            RtlInitUnicodeString(&g_ctx.Peb->ProcessParameters->CommandLine, APPCMDLINE);
+            RtlInitUnicodeString(&Peb->ProcessParameters->ImagePathName, g_lpszExplorer);
+            RtlInitUnicodeString(&Peb->ProcessParameters->CommandLine, APPCMDLINE);
 
-            RtlLeaveCriticalSection(g_ctx.Peb->FastPebLock);
+            RtlLeaveCriticalSection(Peb->FastPebLock);
 
-            LdrEnumerateLoadedModules(0, &supxLdrEnumModulesCallback, (PVOID)g_ctx.Peb);
+            LdrEnumerateLoadedModules(0, &supxLdrEnumModulesCallback, (PVOID)Peb);
         }
     }
 }
@@ -693,7 +729,7 @@ DWORD supExpandEnvironmentStrings(
     LPCWSTR lpSrc,
     LPWSTR lpDst,
     DWORD nSize
-    )
+)
 {
     NTSTATUS Status;
     UNICODE_STRING Source, Destination;
@@ -717,7 +753,7 @@ DWORD supExpandEnvironmentStrings(
         &Source,
         &Destination,
         &Length
-        );
+    );
     if (NT_SUCCESS(Status) || Status == STATUS_BUFFER_TOO_SMALL) {
         return(Length / sizeof(WCHAR));
     }
@@ -728,49 +764,6 @@ DWORD supExpandEnvironmentStrings(
 }
 
 /*
-* supScanFiles
-*
-* Purpose:
-*
-* Find files of the given type and run callback over them.
-*
-*/
-BOOL supScanFiles(
-    _In_ LPWSTR lpDirectory,
-    _In_ LPWSTR lpFileType,
-    _In_ UCM_FIND_FILE_CALLBACK Callback
-    )
-{
-    BOOL bStopEnumeration = FALSE;
-    HANDLE hFile;
-    WCHAR textbuf[MAX_PATH * 2];
-    WIN32_FIND_DATA fdata;
-
-    if ((Callback == NULL) || (lpDirectory == NULL) || (lpFileType == NULL))
-        return FALSE;
-
-    RtlSecureZeroMemory(textbuf, sizeof(textbuf));
-
-    _strncpy(textbuf, MAX_PATH, lpDirectory, MAX_PATH);
-    _strcat(textbuf, L"\\");
-    _strncpy(_strend(textbuf), 20, lpFileType, 20);
-
-    RtlSecureZeroMemory(&fdata, sizeof(fdata));
-    hFile = FindFirstFile(textbuf, &fdata);
-    if (hFile != INVALID_HANDLE_VALUE) {
-        do {
-
-            bStopEnumeration = Callback(&fdata, lpDirectory);
-            if (bStopEnumeration)
-                break;
-
-        } while (FindNextFile(hFile, &fdata));
-        FindClose(hFile);
-    }
-    return bStopEnumeration;
-}
-
-/*
 * supCheckMSEngineVFS
 *
 * Purpose:
@@ -778,8 +771,8 @@ BOOL supScanFiles(
 * Detect Microsoft Security Engine emulation by it own VFS artefact.
 *
 * Microsoft AV provides special emulated environment for scanned application where it
-* fakes general system information, process environment structures/data to make sure 
-* API calls are transparent for scanned code. It also use simple Virtual File System 
+* fakes general system information, process environment structures/data to make sure
+* API calls are transparent for scanned code. It also use simple Virtual File System
 * allowing this AV track file system changes and if needed continue emulation on new target.
 *
 * This method implemented in commercial malware presumable since 2013.
@@ -787,7 +780,7 @@ BOOL supScanFiles(
 */
 VOID supCheckMSEngineVFS(
     VOID
-    )
+)
 {
     WCHAR szBuffer[MAX_PATH];
     WCHAR szMsEngVFS[12] = { L':', L'\\', L'm', L'y', L'a', L'p', L'p', L'.', L'e', L'x', L'e', 0 };
@@ -808,9 +801,9 @@ VOID supCheckMSEngineVFS(
 *
 */
 wchar_t *sxsFilePathNoSlash(
-    const wchar_t *fname, 
+    const wchar_t *fname,
     wchar_t *fpath
-    )
+)
 {
     wchar_t *p = (wchar_t *)fname, *p0 = (wchar_t*)fname, *p1 = (wchar_t*)fpath;
 
@@ -845,7 +838,7 @@ VOID NTAPI sxsFindDllCallback(
     _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
     _In_ PVOID Context,
     _In_ OUT BOOLEAN *StopEnumeration
-    )
+)
 {
     BOOL bCond = FALSE;
     BOOLEAN bFound = FALSE;

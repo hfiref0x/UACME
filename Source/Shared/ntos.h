@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.60
+*  VERSION:     1.63
 *
-*  DATE:        02 Mar 2017
+*  DATE:        25 Mar 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -271,6 +271,16 @@ typedef struct _SYSTEM_FILECACHE_INFORMATION {
 /*
 ** Processes START
 */
+
+typedef struct _SYSTEM_TIMEOFDAY_INFORMATION {
+    LARGE_INTEGER BootTime;
+    LARGE_INTEGER CurrentTime;
+    LARGE_INTEGER TimeZoneBias;
+    ULONG TimeZoneId;
+    ULONG Reserved;
+    ULONGLONG BootTimeBias;
+    ULONGLONG SleepTimeBias;
+} SYSTEM_TIMEOFDAY_INFORMATION, *PSYSTEM_TIMEOFDAY_INFORMATION;
 
 #ifndef KPRIORITY
 typedef LONG KPRIORITY;
@@ -4080,21 +4090,22 @@ typedef struct _LPC_CLIENT_DIED_MSG {
 	LARGE_INTEGER CreateTime;
 } LPC_CLIENT_DIED_MSG, *PLPC_CLIENT_DIED_MSG;
 
+//#pragma pack(push, 1)
 typedef struct _PORT_VIEW {
 	ULONG Length;
 	HANDLE SectionHandle;
 	ULONG SectionOffset;
-	ULONG ViewSize;
+	SIZE_T ViewSize;
 	PVOID ViewBase;
 	PVOID ViewRemoteBase;
 } PORT_VIEW, *PPORT_VIEW;
 
 typedef struct _REMOTE_PORT_VIEW {
 	ULONG Length;
-	ULONG ViewSize;
+	SIZE_T ViewSize;
 	PVOID ViewBase;
 } REMOTE_PORT_VIEW, *PREMOTE_PORT_VIEW;
-
+//#pragma pack(pop)
 /*
 ** ALPC END
 */
@@ -4434,12 +4445,54 @@ NTSTATUS NTAPI LdrQueryImageFileKeyOption(
 **  LDR END
 */
 
+typedef PVOID PHEAD;
+
+typedef struct _HANDLEENTRY {
+    PHEAD   phead;  // Pointer to the Object.
+    PVOID   pOwner; // PTI or PPI
+    BYTE    bType;  // Object handle type
+    BYTE    bFlags; // Flags
+    WORD    wUniq;  // Access count.
+} HANDLEENTRY, *PHANDLEENTRY;
+
+typedef struct _SERVERINFO {
+    WORD            wRIPFlags;
+    WORD            wSRVIFlags;
+    WORD            wRIPPID;
+    WORD            wRIPError;
+    ULONG           cHandleEntries;
+    // incomplete
+} SERVERINFO, *PSERVERINFO;
+
+typedef struct _SHAREDINFO {
+    PSERVERINFO		psi;
+    PHANDLEENTRY	aheList;
+    ULONG			HeEntrySize;
+    // incomplete
+} SHAREDINFO, *PSHAREDINFO;
+
+typedef struct _USERCONNECT
+{
+    ULONG ulVersion;
+    ULONG ulCurrentVersion;
+    DWORD dwDispatchCount;
+    SHAREDINFO siClient;
+} USERCONNECT, *PUSERCONNECT;
+
 /*
 ** Csr Runtime START
 */
 
 ULONG NTAPI CsrGetProcessId(
 	);
+
+NTSTATUS NTAPI CsrClientConnectToServer(
+    _In_ PWSTR ObjectDirectory,  
+    _In_ ULONG ServerDllIndex,
+    _Inout_ PVOID ConnectionInformation,
+    _Inout_ ULONG *ConnectionInformationLength, 
+    _Out_ PBOOLEAN CalledFromServer
+);
 
 /*
 ** Csr Runtime END
@@ -4538,6 +4591,11 @@ VOID NTAPI RtlPopFrame(
 PTEB_ACTIVE_FRAME NTAPI RtlGetFrame(
 	VOID
 	);
+
+BOOLEAN NTAPI RtlCreateUnicodeString(
+    _Out_ PUNICODE_STRING DestinationString,
+    _In_  PCWSTR          SourceString
+    );
 
 VOID NTAPI RtlInitUnicodeString(
 	_Inout_	PUNICODE_STRING DestinationString,
@@ -5208,11 +5266,11 @@ NTSTATUS NTAPI RtlQueryElevationFlags(
 */
 
 typedef enum _MEMORY_PARTITION_INFORMATION_CLASS {
-    SystemMemoryPartitionInformation = 0,
-    SystemMemoryPartitionMoveMemory = 1,
-    SystemMemoryPartitionAddPagefile = 2,
-    SystemMemoryPartitionCombineMemory = 3,
-    SystemMemoryPartitionInitialAddMemory = 4
+    SystemMemoryPartitionInformation,
+    SystemMemoryPartitionMoveMemory,
+    SystemMemoryPartitionAddPagefile,
+    SystemMemoryPartitionCombineMemory,
+    SystemMemoryPartitionInitialAddMemory
 } MEMORY_PARTITION_INFORMATION_CLASS;
 
 typedef struct _MEMORY_PARTITION_PAGE_RANGE {
@@ -5269,9 +5327,11 @@ NTSTATUS NTAPI NtOpenPartition(
     );
 
 NTSTATUS NTAPI NtManagePartition(
+    _In_ HANDLE TargetHandle,
+    _In_ HANDLE SourceHandle,
     _In_ MEMORY_PARTITION_INFORMATION_CLASS PartitionInformationClass,
     _Inout_ PVOID PartitionInformation,
-    _In_ ULONG PartitionInformationLength
+    _In_ SIZE_T PartitionInformationLength
     );
 
 NTSTATUS NTAPI NtCreatePartition(
@@ -6137,3 +6197,26 @@ NTSTATUS NTAPI NtWaitForSingleObject(
 NTSTATUS NTAPI NtYieldExecution(
     VOID
     );
+
+NTSTATUS NTAPI NtCreateMailslotFile(
+    _Out_ PHANDLE FileHandle,
+    _In_ ULONG DesiredAccess,
+    _In_ POBJECT_ATTRIBUTES ObjectAttributes,
+    _Out_ PIO_STATUS_BLOCK IoStatusBlock,
+    _In_ ULONG CreateOptions,
+    _In_ ULONG MailslotQuota,
+    _In_ ULONG MaximumMessageSize,
+    _In_ PLARGE_INTEGER ReadTimeout
+);
+
+NTSTATUS NTAPI NtSecureConnectPort(
+    _Out_ PHANDLE PortHandle,
+    _In_ PUNICODE_STRING PortName,
+    _In_ PSECURITY_QUALITY_OF_SERVICE SecurityQos,
+    _Inout_opt_ PPORT_VIEW ClientView,
+    _In_opt_ PSID RequiredServerSid,
+    _Inout_opt_ PREMOTE_PORT_VIEW ServerView,
+    _Out_opt_ PULONG MaxMessageLength,
+    _Inout_opt_ PVOID ConnectionInformation,
+    _Inout_opt_ PULONG ConnectionInformationLength
+);

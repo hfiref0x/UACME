@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIREFEF.H
 *
-*  VERSION:     2.57
+*  VERSION:     2.70
 *
-*  DATE:        01 Mar 2017
+*  DATE:        25 Mar 2017
 *
 *  Prototypes and definitions for Sirefef/ZeroAccess method.
 *
@@ -20,14 +20,12 @@
 
 typedef BOOL(NTAPI *pfnSfCopyFileElevated)(
     LPWSTR SourceFileName,
-    LPWSTR DestinationDir
-    );
+    LPWSTR DestinationDir);
 
 typedef BOOL(NTAPI *pfnCopyFileW)(
     _In_ LPCWSTR lpExistingFileName,
     _In_ LPCWSTR lpNewFileName,
-    _In_ BOOL bFailIfExists
-    );
+    _In_ BOOL bFailIfExists);
 
 typedef NTSTATUS(NTAPI *pfnNtAllocateVirtualMemory)(
     _In_        HANDLE ProcessHandle,
@@ -35,17 +33,14 @@ typedef NTSTATUS(NTAPI *pfnNtAllocateVirtualMemory)(
     _In_        ULONG_PTR ZeroBits,
     _Inout_     PSIZE_T RegionSize,
     _In_        ULONG AllocationType,
-    _In_        ULONG Protect
-    );
+    _In_        ULONG Protect);
 
 typedef NTSTATUS(NTAPI *pfnNtTerminateProcess)(
     _In_opt_	HANDLE ProcessHandle,
-    _In_		NTSTATUS ExitStatus
-    );
+    _In_		NTSTATUS ExitStatus);
 
 typedef NTSTATUS(NTAPI *pfnNtClose)(
-    _In_ HANDLE Handle
-    );
+    _In_ HANDLE Handle);
 
 typedef HANDLE(NTAPI *pfnCreateRemoteThread)(
     _In_ HANDLE hProcess,
@@ -54,14 +49,12 @@ typedef HANDLE(NTAPI *pfnCreateRemoteThread)(
     _In_ LPTHREAD_START_ROUTINE lpStartAddress,
     _In_opt_ LPVOID lpParameter,
     _In_ DWORD dwCreationFlags,
-    _Out_opt_ LPDWORD lpThreadId
-    );
+    _Out_opt_ LPDWORD lpThreadId);
 
 #pragma warning(suppress: 28301)
 typedef DWORD(WINAPI *pfnWaitForSingleObject)(
     _In_ HANDLE hHandle,
-    _In_ DWORD dwMilliseconds
-    );
+    _In_ DWORD dwMilliseconds);
 
 typedef BOOL(WINAPI *pfnCreateProcessW)(
     _In_opt_ LPCWSTR lpApplicationName,
@@ -73,23 +66,20 @@ typedef BOOL(WINAPI *pfnCreateProcessW)(
     _In_opt_ LPVOID lpEnvironment,
     _In_opt_ LPCWSTR lpCurrentDirectory,
     _In_ LPSTARTUPINFOW lpStartupInfo,
-    _Out_ LPPROCESS_INFORMATION lpProcessInformation
-    );
+    _Out_ LPPROCESS_INFORMATION lpProcessInformation);
 
 typedef BOOL(WINAPI *pfnWriteProcessMemory)(
     _In_ HANDLE hProcess,
     _In_ LPVOID lpBaseAddress,
     _In_reads_bytes_(nSize) LPCVOID lpBuffer,
     _In_ SIZE_T nSize,
-    _Out_opt_ SIZE_T * lpNumberOfBytesWritten
-    );
+    _Out_opt_ SIZE_T * lpNumberOfBytesWritten);
 
 typedef HANDLE(NTAPI *pfnRunProcessEx)(
     _In_ LPWSTR lpszParameters,
     _In_opt_ LPWSTR lpCurrentDirectory,
     _Out_opt_ HANDLE *PrimaryThread,
-    _Inout_opt_ LPWSTR lpApplicationName
-    );
+    _Inout_opt_ LPWSTR lpApplicationName);
 
 
 typedef struct _ZA_CONTROL_CONTEXT {

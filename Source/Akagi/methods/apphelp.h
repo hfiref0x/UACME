@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016, translated from Microsoft Documentation
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017, translated from Microsoft Documentation
 *
 *  TITLE:       APPHELP.H
 *
-*  VERSION:     2.20
+*  VERSION:     2.70
 *
-*  DATE:        20 Apr 2016
+*  DATE:        25 Mar 2017
 *
 *  Application Compatibility Helper routines and definitions.
 *
@@ -17,6 +17,12 @@
 *
 *******************************************************************************/
 #pragma once
+
+#ifdef _WIN64
+#pragma comment(lib, "lib\\apphelp64.lib")
+#else
+#pragma comment(lib, "lib\\apphelp32.lib")
+#endif
 
 typedef DWORD TAGID;
 typedef DWORD TAGREF;
@@ -79,63 +85,54 @@ typedef struct _PATCHBITS {
     BYTE	Pattern[1];
 } PATCHBITS, *PPATCHBITS;
 
-typedef PDB(WINAPI *pfnSdbCreateDatabase)(
+#define IMPORT_API __declspec(dllimport)
+
+IMPORT_API PDB WINAPI SdbCreateDatabase(
     _In_  LPCWSTR pwszPath,
-    _In_  PATH_TYPE eType
-    );
+    _In_  PATH_TYPE eType);
 
-typedef void(WINAPI *pfnSdbCloseDatabaseWrite)(
-    _Inout_  PDB pdb
-    );
+IMPORT_API void WINAPI SdbCloseDatabaseWrite(
+    _Inout_  PDB pdb);
 
-typedef TAGID(WINAPI *pfnSdbBeginWriteListTag)(
+IMPORT_API TAGID WINAPI SdbBeginWriteListTag(
     _In_  PDB pdb,
-    _In_  TAG tTag
-    );
+    _In_  TAG tTag);
 
-typedef BOOL(WINAPI *pfnSdbWriteStringTag)(
+IMPORT_API BOOL WINAPI SdbWriteStringTag(
     _In_  PDB pdb,
     _In_  TAG tTag,
-    _In_  LPCWSTR pwszData
-    );
+    _In_  LPCWSTR pwszData);
 
-typedef BOOL(WINAPI *pfnSdbEndWriteListTag)(
+IMPORT_API BOOL WINAPI SdbEndWriteListTag(
     _Inout_  PDB pdb,
-    _In_     TAGID tiList
-    );
+    _In_     TAGID tiList);
 
-typedef BOOL(WINAPI *pfnSdbWriteBinaryTag)(
+IMPORT_API BOOL WINAPI SdbWriteBinaryTag(
     _In_  PDB pdb,
     _In_  TAG tTag,
     _In_  PBYTE pBuffer,
-    _In_  DWORD dwSize
-    );
+    _In_  DWORD dwSize);
 
-typedef BOOL(WINAPI *pfnSdbWriteDWORDTag)(
+IMPORT_API BOOL WINAPI SdbWriteDWORDTag(
     _In_  PDB pdb,
     _In_  TAG tTag,
-    _In_  DWORD dwData
-    );
+    _In_  DWORD dwData);
 
-typedef BOOL(WINAPI *pfnSdbStartIndexing)(
+IMPORT_API BOOL WINAPI SdbStartIndexing(
     _In_  PDB pdb,
-    _In_  INDEXID iiWhich
-    );
+    _In_  INDEXID iiWhich);
 
-typedef void (WINAPI *pfnSdbStopIndexing)(
+IMPORT_API VOID WINAPI SdbStopIndexing(
     _In_  PDB pdb,
-    _In_  INDEXID iiWhich
-    );
+    _In_  INDEXID iiWhich);
 
-typedef BOOL(WINAPI *pfnSdbCommitIndexes)(
-    _Inout_  PDB pdb
-    );
+IMPORT_API BOOL WINAPI SdbCommitIndexes(
+    _Inout_  PDB pdb);
 
-typedef BOOL(WINAPI *pfnSdbDeclareIndex)(
+IMPORT_API BOOL WINAPI SdbDeclareIndex(
     _In_   PDB pdb,
     _In_   TAG tWhich,
     _In_   TAG tKey,
     _In_   DWORD dwEntries,
     _In_   BOOL bUniqueKey,
-    _Out_  INDEXID *piiIndex
-    );
+    _Out_  INDEXID *piiIndex);

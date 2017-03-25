@@ -19,24 +19,18 @@
     <Filter Include="testunits">
       <UniqueIdentifier>{c4fc1dcf-e216-4458-a377-e7203d627128}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\methods">
+      <UniqueIdentifier>{8adb74b4-1781-4684-84d2-61c8379b56f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\methods">
+      <UniqueIdentifier>{6a18d07e-0b0d-455a-b4c2-1379f5934479}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sup.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pitou.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gootkit.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="simda.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="carberp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\_strcat.c">
@@ -69,9 +63,6 @@
     <ClCompile Include="..\Shared\strtoul.c">
       <Filter>minirtl</Filter>
     </ClCompile>
-    <ClCompile Include="hybrids.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="makecab.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -90,23 +81,41 @@
     <ClCompile Include="..\Shared\_strstri.c">
       <Filter>minirtl</Filter>
     </ClCompile>
-    <ClCompile Include="comet.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="enigma0x3.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="explife.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Shared\ultohex.c">
       <Filter>minirtl</Filter>
     </ClCompile>
     <ClCompile Include="tests\test.c">
       <Filter>testunits</Filter>
     </ClCompile>
-    <ClCompile Include="sandworm.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="methods\methods.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\carberp.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\comet.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\enigma0x3.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\explife.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\gootkit.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\hybrids.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\pitou.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\sandworm.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\simda.c">
+      <Filter>Source Files\methods</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -119,28 +128,10 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pitou.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gootkit.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="simda.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="apphelp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="carberp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\shared\minirtl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\rtltypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="hybrids.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="makecab.h">
@@ -155,26 +146,47 @@
     <ClInclude Include="manifest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="comet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sirefef.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="enigma0x3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="explife.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Shared\_filename.h">
       <Filter>minirtl</Filter>
     </ClInclude>
     <ClInclude Include="tests\test.h">
       <Filter>testunits</Filter>
     </ClInclude>
-    <ClInclude Include="sandworm.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="methods\methods.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\carberp.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\comet.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\enigma0x3.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\explife.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\gootkit.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\hybrids.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\pitou.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\sandworm.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\simda.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\sirefef.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\apphelp.h">
+      <Filter>Header Files\methods</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

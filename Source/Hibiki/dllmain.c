@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.57
+*  VERSION:     2.70
 *
-*  DATE:        07 Mar 2017
+*  DATE:        21 Mar 2017
 *
 *  AVrf entry point, Hibiki Kai Ni.
 *
@@ -43,6 +43,7 @@
 #endif
 #endif
 
+#define Msg            "Hibiki at your service, Admiral"
 #define T_AKAGI_KEY    L"\\Software\\Akagi"
 #define T_AKAGI_PARAM  L"LoveLetter"
 
@@ -483,8 +484,6 @@ VOID ucmRegisterProvider(
     g_avrfProvider.ProviderDlls = avrfDlls;
     g_avrfProvider.ProviderDllLoadCallback = (RTL_VERIFIER_DLL_LOAD_CALLBACK)&ucmLoadCallback;
 }
-
-#define Msg "Hibiki at your service, Admiral"
 
 /*
 * DllMain

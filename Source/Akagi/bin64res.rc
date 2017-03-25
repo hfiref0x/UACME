@@ -1,6 +1,7 @@
 #include "bin64res.h"
 #include "winres.h"
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-IDR_FUBUKI64 RCDATA "bin\fubuki64.cd"
-IDR_HIBIKI64 RCDATA "bin\hibiki64.cd"
-IDR_IKAZUCHI64 RCDATA "bin\ikazuchi64.cd"
+IDR_FUBUKI64 RCDATA "bin\\fubuki64.cd"
+IDR_HIBIKI64 RCDATA "bin\\hibiki64.cd"
+IDR_IKAZUCHI64 RCDATA "bin\\ikazuchi64.cd"
+IDR_AKATSUKI64 RCDATA "bin\\akatsuki64.cd"

@@ -180,7 +180,7 @@ PVOID supFindPattern(
             return p;
 
         p++;
-    } while (BufferSize - (p - Buffer) > 0);
+    } while (BufferSize - (p - Buffer) > 0); //-V555
 
     return NULL;
 }

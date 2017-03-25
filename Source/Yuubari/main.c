@@ -201,7 +201,7 @@ VOID WINAPI FusionOutputCallback(
         //
         // Display only binaries with autoelevation flags if not in verbose output
         //
-        if ((Data->AutoElevateState == AutoElevateUnspecified) && (g_VerboseOutput != TRUE)) 
+        if ((Data->AutoElevateState == AutoElevateUnspecified) && (g_VerboseOutput == FALSE)) 
             return;
 
         //
@@ -253,7 +253,7 @@ VOID WINAPI FusionOutputCallback(
             lpText = TEXT("Binary without embedded manifest");
             LoggerWrite(g_LogFile, lpText, TRUE);
             if (Data->IsOSBinary) {
-                if (Data->IsSignatureValidOrTrusted != TRUE) {
+                if (Data->IsSignatureValidOrTrusted == FALSE) {
                     lpText = TEXT("Warning: signature not valid or trusted");
                     LoggerWrite(g_LogFile, lpText, TRUE);
                 }

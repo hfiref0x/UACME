@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2016
+*  (C) COPYRIGHT AUTHORS, 2015 - 2017
 *
 *  TITLE:       CARBERP.H
 *
-*  VERSION:     2.20
+*  VERSION:     2.70
 *
-*  DATE:        20 Apr 2016
+*  DATE:        25 Mar 2017
 *
 *  Prototypes and definitions for Carberp method.
 *
@@ -19,17 +19,14 @@
 #pragma once
 
 BOOL ucmWusaMethod(
-    UACBYPASSMETHOD Method,
+    _In_ UCM_METHOD Method,
     PVOID ProxyDll,
-    DWORD ProxyDllSize
-    );
+    DWORD ProxyDllSize);
 
 BOOL ucmWusaExtractPackage(
-    LPWSTR lpCommandLine
-    );
+    _In_ LPWSTR lpTargetDirectory);
 
 BOOL ucmCreateCabinetForSingleFile(
-    LPWSTR lpSourceDll,
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
-    );
+    _In_ LPWSTR lpSourceDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);

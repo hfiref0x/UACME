@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.57
+*  VERSION:     2.70
 *
-*  DATE:        07 Mar 2017
+*  DATE:        22 Mar 2017
 *
 *  Naka, support payload compressor.
 *
@@ -167,7 +167,7 @@ PUCHAR CompressBufferLZNT1(
         }
 
         //original size + safe buffer + sizeof header
-        CompBufferSize = SrcSize + 0x1000 + sizeof(ULONG);
+        CompBufferSize = (ULONG)(SrcSize + 0x1000 + sizeof(ULONG));
         CompBuffer = (PUCHAR)VirtualAlloc(NULL, CompBufferSize,
             MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
@@ -208,7 +208,7 @@ PUCHAR CompressBufferLZNT1(
 
 void CompressPayload(
     LPWSTR lpInputFile
-    )
+)
 {
     BOOL bCond = FALSE;
     PUCHAR Data = NULL, FileData = NULL;
@@ -257,7 +257,7 @@ void CompressPayload(
 
     } while (bCond);
 
-    if (NewName != NULL) 
+    if (NewName != NULL)
         LocalFree(NewName);
     if (FileData != NULL)
         LocalFree(FileData);
@@ -271,7 +271,6 @@ void main()
     LPWSTR  lpInputFile = NULL;
     LPWSTR *szArglist;
     INT     nArgs = 0;
-    
 
     szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
     if (szArglist) {

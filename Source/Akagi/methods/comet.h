@@ -1,14 +1,14 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017
+*  (C) COPYRIGHT AUTHORS, 2016 - 2017
 *
-*  TITLE:       SANDWORM.H
+*  TITLE:       COMET.H
 *
-*  VERSION:     2.58
+*  VERSION:     2.70
 *
-*  DATE:        08 Feb 2017
+*  DATE:        25 Mar 2017
 *
-*  Prototypes and definitions for Sandworm method.
+*  Prototypes and definitions for Comet method.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -18,6 +18,5 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmSandwormMethod(
-    VOID
-);
+BOOL ucmCometMethod(
+    _In_ LPWSTR lpszPayload);

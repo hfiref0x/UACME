@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2016
+*  (C) COPYRIGHT AUTHORS, 2015 - 2017
 *
 *  TITLE:       MAKECAB.H
 *
-*  VERSION:     2.30
+*  VERSION:     2.70
 *
-*  DATE:        16 June 2016
+*  DATE:        25 Mar 2017
 *
 *  Prototypes and definitions for makecab module.
 *
@@ -28,16 +28,12 @@ typedef struct _CABDATA {
 } CABDATA, *PCABDATA;
 
 CABDATA *cabCreate(
-    _In_ LPWSTR lpszCabName
-    );
+    _In_ LPWSTR lpszCabName);
 
 BOOL cabAddFile(
     _In_ CABDATA *Cabinet,
     _In_ LPWSTR lpszFileName,
-    _In_ LPWSTR lpszInternalName
-    );
+    _In_ LPWSTR lpszInternalName);
 
 VOID cabClose(
-    _In_ CABDATA *Cabinet
-    );
-
+    _In_ CABDATA *Cabinet);

@@ -147,7 +147,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IFileOperation
      * Target(s): \system32\sysprep\sysprep.exe
      * Component(s): unbcl.dll
-     * Works from: Windows 7 (7600)
+     * Works from: Windows 8.1 (9600)
      * Fixed in: Windows 10 RS1 (14371)
         * How: sysprep.exe manifest updated
 18. Author: Leo Davidson derivative
@@ -246,15 +246,30 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 10 (10240)
      * Fixed in: unfixed :see_no_evil:
         * How: -
-
+30. Author: Leo Davidson derivative, lhc645
+     * Type: Dll Hijack
+     * Method: WOW64 logger
+     * Target(s): \syswow64\{any elevated exe, e.g wusa.exe}
+     * Component(s): wow64log.dll
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+31. Author: Enigma0x3
+     * Type: Shell API
+     * Method: Registry key manipulation
+     * Target(s): \system32\sdctl.exe
+     * Component(s): Attacker defined application
+     * Works from: Windows 10 (10240)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
 
 Note:
-* Several methods require process injection, so they won't work from wow64, use x64 edition of this tool;
-* Method (4) unavailable in 64 bit edition because of Shim restriction;
 * Method (6) unavailable in wow64 environment starting from Windows 8;
 * Method (11) implemented in x86-32 version;
 * Method (13) (19) and above implemented only in x64 version;
-* Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone.
+* Method (14) require process injection, wow64 unsupported, use x64 version of this tool;
+* Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone;
+* Method (30) require x64 because it abuses WOW64 subsystem feature.
 
 Run examples:
 * akagi32.exe 1
@@ -303,6 +318,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * Bypassing UAC on Windows 10 using Disk Cleanup, https://enigma0x3.net/2016/07/22/bypassing-uac-on-windows-10-using-disk-cleanup/
 * Using IARPUninstallStringLauncher COM interface to bypass UAC, http://www.freebuf.com/articles/system/116611.html
 * Bypassing UAC using App Paths, https://enigma0x3.net/2017/03/14/bypassing-uac-using-app-paths/
+* "Fileless" UAC Bypass using sdclt.exe, https://enigma0x3.net/2017/03/17/fileless-uac-bypass-using-sdclt-exe/
  
 # Authors
 

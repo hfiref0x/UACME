@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.57
+*  VERSION:     2.70
 *
-*  DATE:        07 Mar 2017
+*  DATE:        21 Mar 2017
 *
 *  Proxy dll entry point, Ikazuchi.
 *
@@ -460,7 +460,7 @@ BOOL ucmQueryCustomParameter(
         hKey = NULL;
 
         lpParameter = (LPWSTR)((PKEY_VALUE_PARTIAL_INFORMATION)lpData)->Data;
-        if (lpParameter != NULL) {
+        if (lpParameter != NULL) { //-V547
 
             RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
             RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
@@ -508,10 +508,10 @@ BOOL WINAPI DllMain(
     _In_ LPVOID lpvReserved
 )
 {
-    DWORD					cch;
-    TCHAR					cmdbuf[MAX_PATH * 2], sysdir[MAX_PATH + 1];
-    STARTUPINFO				startupInfo;
-    PROCESS_INFORMATION		processInfo;
+    DWORD                   cch;
+    TCHAR                   cmdbuf[MAX_PATH * 2], sysdir[MAX_PATH + 1];
+    STARTUPINFO             startupInfo;
+    PROCESS_INFORMATION     processInfo;
 
     UNREFERENCED_PARAMETER(hinstDLL);
     UNREFERENCED_PARAMETER(lpvReserved);
