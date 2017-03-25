@@ -249,7 +249,7 @@ Keys (watch debug output with dbgview or similar for more info):
 30. Author: Leo Davidson derivative, lhc645
      * Type: Dll Hijack
      * Method: WOW64 logger
-     * Target(s): \syswow64\{any elevated exe, e.g wusa.exe}
+     * Target(s): \syswow64\\{any elevated exe, e.g wusa.exe}
      * Component(s): wow64log.dll
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
