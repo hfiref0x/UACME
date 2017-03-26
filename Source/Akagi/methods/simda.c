@@ -35,8 +35,8 @@ DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
 {
     HRESULT          r = E_FAIL;
     BOOL             cond = FALSE;
-    IID		         xIID_ISecurityEditor;
-    CLSID	         xCLSID_ShellSecurityEditor;
+    IID              xIID_ISecurityEditor;
+    CLSID            xCLSID_ShellSecurityEditor;
     ISecurityEditor *SecurityEditor1 = NULL;
     LPOLESTR         pps;
 

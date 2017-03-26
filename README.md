@@ -36,7 +36,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Target(s): \system32\oobe\setupsqm.exe
    * Component(s): WdsCore.dll
    * Works from: Windows 7 (7600)
-   * Fixed in: Windows 10 TH1 (10558)
+   * Fixed in: Windows 10 TH2 (10558)
       * How: side effect of OOBE redesign
 4. Author: Jon Ericson, WinNT/Gootkit, mzH
    * Type: AppCompat
