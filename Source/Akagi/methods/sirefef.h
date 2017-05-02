@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIREFEF.H
 *
-*  VERSION:     2.70
+*  VERSION:     2.71
 *
-*  DATE:        25 Mar 2017
+*  DATE:        19 Apr 2017
 *
 *  Prototypes and definitions for Sirefef/ZeroAccess method.
 *
@@ -94,7 +94,6 @@ typedef struct _ZA_CONTROL_CONTEXT {
     pfnCopyFileW pCopyFileW;
     pfnCreateRemoteThread pCreateRemoteThread;
     pfnWaitForSingleObject pWaitForSingleObject;
-    pfnCreateProcessW pCreateProcess;
     pfnWriteProcessMemory pWriteProcessMemory;
 
     LPVOID ElevatedProcedure;

@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.63
+*  VERSION:     1.65
 *
-*  DATE:        25 Mar 2017
+*  DATE:        05 Apr 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -28,6 +28,9 @@
 
 #define ALIGN_UP(count,size) \
             (ALIGN_DOWN( (ULONG_PTR)(count)+(ULONG_PTR)(size)-1, (ULONG_PTR)(size) ))
+
+#define ARGUMENT_PRESENT(ArgumentPointer)    (\
+    (CHAR *)((ULONG_PTR)(ArgumentPointer)) != (CHAR *)(NULL) )
 
 //Access Rights
 
@@ -5682,6 +5685,11 @@ NTSTATUS NTAPI NtQueryInformationFile(
 	_In_	ULONG Length,
 	_In_	FILE_INFORMATION_CLASS FileInformationClass
 	);
+
+NTSTATUS NTAPI NtQueryFullAttributesFile(
+    __in    POBJECT_ATTRIBUTES ObjectAttributes,
+    __out   PFILE_NETWORK_OPEN_INFORMATION FileInformation
+);
 
 NTSTATUS NTAPI NtFsControlFile(
 	_In_     HANDLE FileHandle,

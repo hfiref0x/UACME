@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.70
 *
-*  DATE:        25 Mar 2017
+*  DATE:        19 Apr 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -347,11 +347,11 @@ HANDLE NTAPI supRunProcessEx(
     _Inout_opt_ LPWSTR lpApplicationName
 )
 {
-    BOOL cond = FALSE;
+    BOOL bResult = FALSE;
     LPWSTR pszBuffer = NULL;
     SIZE_T ccb;
-    STARTUPINFO sti1;
-    PROCESS_INFORMATION pi1;
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
     DWORD dwFlags = CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS;
 
     if (PrimaryThread)
@@ -367,36 +367,34 @@ HANDLE NTAPI supRunProcessEx(
 
     _strcpy(pszBuffer, lpszParameters);
 
-    RtlSecureZeroMemory(&pi1, sizeof(pi1));
-    RtlSecureZeroMemory(&sti1, sizeof(sti1));
-    GetStartupInfo(&sti1);
+    RtlSecureZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+    RtlSecureZeroMemory(&si, sizeof(STARTUPINFO));
+    si.cb = sizeof(STARTUPINFO);
+    GetStartupInfo(&si);
 
-    do {
+    bResult = CreateProcessAsUser(
+        NULL,
+        lpApplicationName,
+        pszBuffer,
+        NULL,
+        NULL,
+        FALSE,
+        dwFlags | CREATE_SUSPENDED,
+        NULL,
+        lpCurrentDirectory,
+        &si,
+        &pi);
 
-        if (!CreateProcessAsUser(
-            NULL,
-            lpApplicationName,
-            pszBuffer,
-            NULL,
-            NULL,
-            FALSE,
-            dwFlags | CREATE_SUSPENDED,
-            NULL,
-            lpCurrentDirectory,
-            &sti1,
-            &pi1)) break;
-
+    if (bResult) {
         if (PrimaryThread) {
-            *PrimaryThread = pi1.hThread;
+            *PrimaryThread = pi.hThread;
         }
         else {
-            CloseHandle(pi1.hThread);
+            CloseHandle(pi.hThread);
         }
-    } while (cond);
-
+    }
     supHeapFree(pszBuffer);
-
-    return pi1.hProcess;
+    return pi.hProcess;
 }
 
 /*

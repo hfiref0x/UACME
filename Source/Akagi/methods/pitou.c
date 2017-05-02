@@ -361,7 +361,7 @@ BOOL ucmStandardAutoElevation(
     DWORD ProxyDllSize
 )
 {
-    BOOL	cond = FALSE, bResult = FALSE;
+    BOOL    cond = FALSE, bResult = FALSE;
     WCHAR   szSourceDll[MAX_PATH * 2];
     WCHAR   szTargetDir[MAX_PATH * 2];
     WCHAR   szTargetProcess[MAX_PATH * 2];

@@ -165,7 +165,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Component(s): MsCoree.dll
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS1 (14376)
-        * How: inetmgr.exe executable manifest hardening
+        * How: inetmgr.exe executable manifest hardening, MitigationPolicy->ProcessImageLoadPolicy->PreferSystem32Images
 20. Author: Leo Davidson derivative
      * Type: Dll Hijack
      * Method: IFileOperation

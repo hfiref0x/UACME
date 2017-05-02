@@ -10,7 +10,7 @@ unsigned long strtoul_a(char *s)
 
 	while (*s != 0) {
 		c = *s;
-		if (_isdigit_w(c))
+		if (_isdigit_a(c))
 			a = (a*10)+(c-'0');
 		else
 			break;

