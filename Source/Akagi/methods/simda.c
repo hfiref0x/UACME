@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.71
 *
-*  DATE:        08 Maí 2017
+*  DATE:        08 May 2017
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
