@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.71
 *
-*  DATE:        25 Mar 2017
+*  DATE:        07 May 2017
 *
 *  Leo Davidson based IFileOperation auto-elevation.
 *
@@ -24,11 +24,12 @@
 * Purpose:
 *
 * Rename file/directory autoelevated.
+* This function expects that supMasqueradeProcess was called on process initialization.
 *
 */
 BOOL ucmMasqueradedRenameElementCOM(
-    LPWSTR OldName,
-    LPWSTR NewName
+    _In_ LPWSTR OldName,
+    _In_ LPWSTR NewName
 )
 {
     BOOL                bCond = FALSE, bResult = FALSE;
@@ -107,11 +108,12 @@ BOOL ucmMasqueradedRenameElementCOM(
 * Purpose:
 *
 * Create directory autoelevated.
+* This function expects that supMasqueradeProcess was called on process initialization.
 *
 */
 BOOL ucmMasqueradedCreateSubDirectoryCOM(
-    LPWSTR ParentDirectory,
-    LPWSTR SubDirectory
+    _In_ LPWSTR ParentDirectory,
+    _In_ LPWSTR SubDirectory
 )
 {
     BOOL                bCond = FALSE, bResult = FALSE;
@@ -185,16 +187,18 @@ BOOL ucmMasqueradedCreateSubDirectoryCOM(
 }
 
 /*
-* ucmMasqueradedMoveFileCOM
+* ucmMasqueradedMoveCopyFileCOM
 *
 * Purpose:
 *
-* Move file autoelevated.
+* Move or Copy file autoelevated.
+* This function expects that supMasqueradeProcess was called on process initialization.
 *
 */
-BOOL ucmMasqueradedMoveFileCOM(
-    LPWSTR SourceFileName,
-    LPWSTR DestinationDir
+BOOL ucmMasqueradedMoveCopyFileCOM(
+    _In_ LPWSTR SourceFileName,
+    _In_ LPWSTR DestinationDir,
+    _In_ BOOL fMove
 )
 {
     BOOL                cond = FALSE;
@@ -213,13 +217,11 @@ BOOL ucmMasqueradedMoveFileCOM(
         r = CoCreateInstance(&CLSID_FileOperation, NULL,
             CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER, &IID_IFileOperation, &FileOperation1);
 
-        if (r != S_OK) {
+        if (r != S_OK)
             break;
-        }
 
-        if (FileOperation1 != NULL) {
+        if (FileOperation1 != NULL)
             FileOperation1->lpVtbl->Release(FileOperation1);
-        }
 
         r = ucmMasqueradedCoGetObjectElevate(
             T_CLSID_FileOperation,
@@ -227,9 +229,9 @@ BOOL ucmMasqueradedMoveFileCOM(
             &IID_IFileOperation,
             &FileOperation1);
 
-        if (r != S_OK) {
+        if (r != S_OK)
             break;
-        }
+
         if (FileOperation1 == NULL) {
             r = E_FAIL;
             break;
@@ -238,23 +240,24 @@ BOOL ucmMasqueradedMoveFileCOM(
         FileOperation1->lpVtbl->SetOperationFlags(FileOperation1, g_ctx.IFileOperationFlags);
 
         r = SHCreateItemFromParsingName(SourceFileName, NULL, &IID_IShellItem, &isrc);
-        if (r != S_OK) {
+        if (r != S_OK)
             break;
-        }
 
         r = SHCreateItemFromParsingName(DestinationDir, NULL, &IID_IShellItem, &idst);
-        if (r != S_OK) {
+        if (r != S_OK)
             break;
-        }
 
-        r = FileOperation1->lpVtbl->MoveItem(FileOperation1, isrc, idst, NULL, NULL);
-        if (r != S_OK) {
+        if (fMove)
+            r = FileOperation1->lpVtbl->MoveItem(FileOperation1, isrc, idst, NULL, NULL);
+        else
+            r = FileOperation1->lpVtbl->CopyItem(FileOperation1, isrc, idst, NULL, NULL);
+
+        if (r != S_OK)
             break;
-        }
+
         r = FileOperation1->lpVtbl->PerformOperations(FileOperation1);
-        if (r != S_OK) {
+        if (r != S_OK)
             break;
-        }
 
         idst->lpVtbl->Release(idst);
         idst = NULL;
@@ -263,17 +266,33 @@ BOOL ucmMasqueradedMoveFileCOM(
 
     } while (cond);
 
-    if (FileOperation1 != NULL) {
+    if (FileOperation1 != NULL)
         FileOperation1->lpVtbl->Release(FileOperation1);
-    }
-    if (isrc != NULL) {
+
+    if (isrc != NULL)
         isrc->lpVtbl->Release(isrc);
-    }
-    if (idst != NULL) {
+
+    if (idst != NULL)
         idst->lpVtbl->Release(idst);
-    }
 
     return (SUCCEEDED(r));
+}
+
+/*
+* ucmMasqueradedMoveFileCOM
+*
+* Purpose:
+*
+* Move file autoelevated.
+* This function expects that supMasqueradeProcess was called on process initialization.
+*
+*/
+BOOL ucmMasqueradedMoveFileCOM(
+    _In_ LPWSTR SourceFileName,
+    _In_ LPWSTR DestinationDir
+)
+{
+    return ucmMasqueradedMoveCopyFileCOM(SourceFileName, DestinationDir, TRUE);
 }
 
 /*

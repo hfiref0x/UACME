@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUSION.C
 *
-*  VERSION:     1.24
+*  VERSION:     1.25
 *
-*  DATE:        20 Mar 2017
+*  DATE:        10 May 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -357,7 +357,7 @@ VOID FusionCheckFile(
     OBJECT_ATTRIBUTES   attr;
     UNICODE_STRING      usFileName;
     IO_STATUS_BLOCK     iosb;
-    ULONG               ResourceSize = 0;
+    ULONG_PTR           ResourceSize = 0;
     ULONG_PTR           IdPath[3];
 
     ACTCTX      ctx;
@@ -431,7 +431,7 @@ VOID FusionCheckFile(
         IdPath[0] = (ULONG_PTR)RT_MANIFEST;
         IdPath[1] = (ULONG_PTR)CREATEPROCESS_MANIFEST_RESOURCE_ID;
         IdPath[2] = 0;
-        status = LdrResSearchResource(DllBase, (ULONG_PTR*)&IdPath, 3, 0, &pt, (ULONG*)&ResourceSize, NULL, NULL);
+        status = LdrResSearchResource(DllBase, (ULONG_PTR*)&IdPath, 3, 0, &pt, (ULONG_PTR*)&ResourceSize, NULL, NULL);
 
         FusionCommonData.IsFusion = NT_SUCCESS(status);
 
@@ -525,7 +525,7 @@ VOID FusionCheckFile(
         }
 
         //
-        // Query run level information.
+        // Query run level and uiAccess information.
         //
         RtlSecureZeroMemory(&ctxrl, sizeof(ctxrl));
         status = RtlQueryInformationActivationContext(
@@ -533,10 +533,7 @@ VOID FusionCheckFile(
             hActCtx, NULL, RunlevelInformationInActivationContext, 
             (PVOID)&ctxrl, sizeof(ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION), NULL);
         if (NT_SUCCESS(status)) {
-            FusionCommonData.RunLevel = ctxrl.RunLevel;
-        }
-        else {
-            FusionCommonData.RunLevel = ACTCTX_RUN_LEVEL_UNSPECIFIED;
+            RtlCopyMemory(&FusionCommonData.RunLevel, &ctxrl, sizeof(ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION));
         }
 
         //

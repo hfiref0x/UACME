@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     2.70
+*  VERSION:     2.71
 *
-*  DATE:        25 Mar 2017
+*  DATE:        06 May 2017
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -17,8 +17,6 @@
 *
 *******************************************************************************/
 #pragma once
-
-#define UCM_DISPATCH_ENTRY_MAX 32
 
 typedef enum _UCM_METHOD {
     UacMethodTest = 0,      //+
@@ -53,8 +51,11 @@ typedef enum _UCM_METHOD {
     UacMethodEnigma0x3_3,   //+
     UacMethodWow64Logger,   //+
     UacMethodEnigma0x3_4,   //+
+    UacMethodUiAccess,
     UacMethodMax
 } UCM_METHOD;
+
+#define UCM_DISPATCH_ENTRY_MAX UacMethodMax
 
 typedef struct _UCM_METHOD_AVAILABILITY {
     ULONG MinumumWindowsBuildRequired;             //if the current build less this value this method is not working here

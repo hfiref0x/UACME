@@ -27,6 +27,9 @@
     <ClInclude Include="unbcl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Shared\_filename.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="version.rc">
@@ -41,6 +44,15 @@
       <Filter>minirtl</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\_strcpy.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_filename.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strend.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strcmpi.c">
       <Filter>minirtl</Filter>
     </ClCompile>
   </ItemGroup>

@@ -262,6 +262,14 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 10 (10240)
      * Fixed in: unfixed :see_no_evil:
         * How: -
+32. Author: xi-tauw
+     * Type: Dll Hijack 
+     * Method: UIPI bypass with uiAccess application
+     * Target(s): \Program Files\Windows Media Player\osk.exe, \system32\EventVwr.exe, \system32\mmc.exe
+     * Component(s): duser.dll, osksupport.dll
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;
@@ -319,6 +327,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * Using IARPUninstallStringLauncher COM interface to bypass UAC, http://www.freebuf.com/articles/system/116611.html
 * Bypassing UAC using App Paths, https://enigma0x3.net/2017/03/14/bypassing-uac-using-app-paths/
 * "Fileless" UAC Bypass using sdclt.exe, https://enigma0x3.net/2017/03/17/fileless-uac-bypass-using-sdclt-exe/
+* UAC Bypass or story about three escalations, https://habrahabr.ru/company/pm/blog/328008/
  
 # Authors
 

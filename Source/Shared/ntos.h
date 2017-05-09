@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.65
+*  VERSION:     1.66
 *
-*  DATE:        05 Apr 2017
+*  DATE:        02 May 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -4405,7 +4405,7 @@ NTSTATUS NTAPI LdrResSearchResource(
     _In_        ULONG ResIdCount,
     _In_        ULONG Flags,
     _Out_       LPVOID *Resource,
-    _Out_       ULONG *Size,
+    _Out_       ULONG_PTR *Size,
     _In_opt_    USHORT *FoundLanguage,
     _In_opt_    ULONG *FoundLanguageLength
     );

@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.70
+*  VERSION:     2.71
 *
-*  DATE:        25 Mar 2017
+*  DATE:        07 May 2017
 *
 *  Common header file for the program support routines.
 *
@@ -43,6 +43,11 @@ PBYTE supReadFileToBuffer(
     _In_ LPWSTR lpFileName,
     _Inout_opt_ LPDWORD lpBufferSize);
 
+BOOL supRunProcess2(
+    _In_ LPWSTR lpszProcessName,
+    _In_opt_ LPWSTR lpszParameters,
+    _In_ BOOL fWait);
+
 BOOL supRunProcess(
     _In_ LPWSTR lpszProcessName,
     _In_opt_ LPWSTR lpszParameters);
@@ -62,13 +67,24 @@ void supCopyMemory(
 DWORD supQueryEntryPointRVA(
     _In_ LPWSTR lpImageFile);
 
+LPWSTR supQueryEnvironmentVariableOffset(
+    _In_ PUNICODE_STRING Value);
+
 BOOL supSetParameter(
     LPWSTR lpParameter,
     DWORD cbParameter);
 
+DWORD supCalculateCheckSumForMappedFile(
+    _In_ PVOID BaseAddress,
+    _In_ ULONG FileLength);
+
 BOOLEAN supVerifyMappedImageMatchesChecksum(
     _In_ PVOID BaseAddress,
     _In_ ULONG FileLength);
+
+BOOLEAN supSetCheckSumForMappedFile(
+    _In_ PVOID BaseAddress,
+    _In_ ULONG CheckSum);
 
 VOID ucmShowMessage(
     LPWSTR lpszMsg);

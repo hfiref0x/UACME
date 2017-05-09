@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.70
+*  VERSION:     2.71
 *
-*  DATE:        25 Mar 2017
+*  DATE:        06 May 2017
 *
 *  Global consts definition file.
 *
@@ -30,6 +30,7 @@
 #define T_CLSID_MYCOMPUTER_COMET    L"\\Comet.{20D04FE0-3AEA-1069-A2D8-08002B30309D}"
 #define T_SDDL_ALL_FOR_EVERYONE     L"D:(A;;GA;;;WD)"
 #define T_PROGRAMDATA               L"ProgramData"
+#define T_WINDOWSMEDIAPLAYER        L"Windows Media Player"
 
 #define T_ISOLATEDCOMMAND           L"IsolatedCommand"
 
@@ -49,6 +50,7 @@
 #define DBGCORE_DLL                 L"dbgcore.dll"
 #define DEVOBJ_DLL                  L"devobj.dll"
 #define DISMCORE_DLL                L"dismcore.dll"
+#define DUSER_DLL                   L"duser.dll"
 #define ELSEXT_DLL                  L"elsext.dll"
 #define HIBIKI_DLL                  L"Hibiki.dll"
 #define KERNEL32_DLL                L"kernel32.dll"
@@ -58,6 +60,7 @@
 #define NTDLL_DLL                   L"ntdll.dll"
 #define NTWDBLIB_DLL                L"ntwdblib.dll"
 #define OLE32_DLL                   L"ole32.dll"
+#define OSKSUPPORT_DLL              L"OskSupport.dll"
 #define POWRPROF_DLL                L"powrprof.dll"
 #define PROVPROVIDER_DLL            L"ProvProvider.dll"
 #define SHCORE_DLL                  L"shcore.dll"
@@ -81,7 +84,8 @@
 #define MIGWIZ_EXE                  L"migwiz.exe"
 #define MMC_EXE                     L"mmc.exe"
 #define OOBE_EXE                    L"oobe.exe"
-#define SETUPSQM_EXE                L"oobe\\setupsqm.exe"   
+#define SETUPSQM_EXE                L"oobe\\setupsqm.exe" 
+#define OSK_EXE                     L"osk.exe"
 #define PKGMGR_EXE                  L"pkgmgr.exe"
 #define SCHTASKS_EXE                L"schtasks.exe"
 #define SDBINST_EXE                 L"sdbinst.exe"

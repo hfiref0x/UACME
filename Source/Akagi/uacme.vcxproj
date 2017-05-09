@@ -237,6 +237,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Shared\cmdline.c" />
+    <ClCompile Include="..\Shared\ldr.c" />
     <ClCompile Include="..\Shared\strtoul.c" />
     <ClCompile Include="..\Shared\ultohex.c" />
     <ClCompile Include="..\Shared\ultostr.c" />
@@ -268,6 +269,7 @@
     <ClCompile Include="tests\test.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Shared\ldr.h" />
     <ClInclude Include="..\shared\minirtl.h" />
     <ClInclude Include="..\shared\rtltypes.h" />
     <ClInclude Include="..\Shared\_filename.h" />

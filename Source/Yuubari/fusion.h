@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUSION.H
 *
-*  VERSION:     1.20
+*  VERSION:     1.25
 *
-*  DATE:        01 Mar 2017
+*  DATE:        10 May 2017
 *
 *  Header file for the autoelevated applications scan.
 *
@@ -30,7 +30,7 @@ typedef enum {
 typedef struct _UAC_FUSION_DATA {
     DWORD DataType;
     LPWSTR Name;
-    ACTCTX_REQUESTED_RUN_LEVEL RunLevel;
+    ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION RunLevel;
     AUTOELEVATESTATE AutoElevateState;
     BOOL IsFusion;
     BOOL IsDotNet;

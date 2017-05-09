@@ -25,6 +25,9 @@
     <Filter Include="Source Files\methods">
       <UniqueIdentifier>{6a18d07e-0b0d-455a-b4c2-1379f5934479}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ldr">
+      <UniqueIdentifier>{751f7002-5a6c-4d2e-9296-3b8132e640f8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -117,6 +120,9 @@
     <ClCompile Include="methods\simda.c">
       <Filter>Source Files\methods</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\ldr.c">
+      <Filter>ldr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -187,6 +193,9 @@
     </ClInclude>
     <ClInclude Include="methods\apphelp.h">
       <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\ldr.h">
+      <Filter>ldr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

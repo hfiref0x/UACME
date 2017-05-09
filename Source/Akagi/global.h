@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.70
+*  VERSION:     2.71
 *
-*  DATE:        25 Mar 2017
+*  DATE:        07 May 2017
 *
 *  Common header file for the program support routines.
 *
@@ -63,6 +63,7 @@
 #include "shared\minirtl.h"
 #include "shared\cmdline.h"
 #include "shared\_filename.h"
+#include "Shared\ldr.h"
 #include "consts.h"
 #include "compress.h"
 #include "sup.h"

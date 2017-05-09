@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.71
 *
-*  DATE:        19 Apr 2017
+*  DATE:        07 May 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -298,6 +298,42 @@ PBYTE supReadFileToBuffer(
 }
 
 /*
+* supRunProcess2
+*
+* Purpose:
+*
+* Execute given process with given parameters and wait if specified.
+*
+*/
+BOOL supRunProcess2(
+    _In_ LPWSTR lpszProcessName,
+    _In_opt_ LPWSTR lpszParameters,
+    _In_ BOOL fWait
+)
+{
+    BOOL bResult;
+    SHELLEXECUTEINFOW shinfo;
+    RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
+
+    if (lpszProcessName == NULL)
+        return FALSE;
+
+    shinfo.cbSize = sizeof(shinfo);
+    shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+    shinfo.lpFile = lpszProcessName;
+    shinfo.lpParameters = lpszParameters;
+    shinfo.lpDirectory = NULL;
+    shinfo.nShow = SW_SHOW;
+    bResult = ShellExecuteExW(&shinfo);
+    if (bResult) {
+        if (fWait)
+            WaitForSingleObject(shinfo.hProcess, 0x8000);
+        CloseHandle(shinfo.hProcess);
+    }
+    return bResult;
+}
+
+/*
 * supRunProcess
 *
 * Purpose:
@@ -310,26 +346,7 @@ BOOL supRunProcess(
     _In_opt_ LPWSTR lpszParameters
 )
 {
-    BOOL bResult;
-    SHELLEXECUTEINFOW shinfo;
-    RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
-
-    if (lpszProcessName == NULL) {
-        return FALSE;
-    }
-
-    shinfo.cbSize = sizeof(shinfo);
-    shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-    shinfo.lpFile = lpszProcessName;
-    shinfo.lpParameters = lpszParameters;
-    shinfo.lpDirectory = NULL;
-    shinfo.nShow = SW_SHOW;
-    bResult = ShellExecuteExW(&shinfo);
-    if (bResult) {
-        WaitForSingleObject(shinfo.hProcess, 0x8000);
-        CloseHandle(shinfo.hProcess);
-    }
-    return bResult;
+    return supRunProcess2(lpszProcessName, lpszParameters, TRUE);
 }
 
 /*
@@ -469,6 +486,40 @@ DWORD supQueryEntryPointRVA(
 }
 
 /*
+* supQueryEnvironmentVariableOffset
+*
+* Purpose:
+*
+* Return offset to the given environment variable.
+*
+*/
+LPWSTR supQueryEnvironmentVariableOffset(
+    _In_ PUNICODE_STRING Value
+)
+{
+    UNICODE_STRING   str1;
+    PWCHAR           EnvironmentBlock, ptr;
+
+    EnvironmentBlock = RtlGetCurrentPeb()->ProcessParameters->Environment;
+    ptr = EnvironmentBlock;
+
+    do {
+        if (*ptr == 0)
+            return 0;
+
+        RtlSecureZeroMemory(&str1, sizeof(str1));
+        RtlInitUnicodeString(&str1, ptr);
+        if (RtlPrefixUnicodeString(Value, &str1, TRUE))
+            break;
+
+        ptr += _strlen(ptr) + 1;
+
+    } while (1);
+
+    return (ptr + Value->Length / sizeof(WCHAR));
+}
+
+/*
 * supSetParameter
 *
 * Purpose:
@@ -533,6 +584,42 @@ USHORT supChkSum(
 }
 
 /*
+* supCalculateCheckSumForMappedFile
+*
+* Purpose:
+*
+* Calculate PE file checksum.
+*
+*/
+DWORD supCalculateCheckSumForMappedFile(
+    _In_ PVOID BaseAddress,
+    _In_ ULONG FileLength
+)
+{
+    PUSHORT AdjustSum;
+    PIMAGE_NT_HEADERS NtHeaders;
+    USHORT PartialSum;
+    ULONG CheckSum;
+
+    PartialSum = supChkSum(0, (PUSHORT)BaseAddress, (FileLength + 1) >> 1);
+
+    NtHeaders = RtlImageNtHeader(BaseAddress);
+    if (NtHeaders != NULL) {
+        AdjustSum = (PUSHORT)(&NtHeaders->OptionalHeader.CheckSum);
+        PartialSum -= (PartialSum < AdjustSum[0]);
+        PartialSum -= AdjustSum[0];
+        PartialSum -= (PartialSum < AdjustSum[1]);
+        PartialSum -= AdjustSum[1];
+    }
+    else
+    {
+        PartialSum = 0;
+    }
+    CheckSum = (ULONG)PartialSum + FileLength;
+    return CheckSum;
+}
+
+/*
 * supVerifyMappedImageMatchesChecksum
 *
 * Purpose:
@@ -545,31 +632,43 @@ BOOLEAN supVerifyMappedImageMatchesChecksum(
     _In_ ULONG FileLength
 )
 {
-    PUSHORT AdjustSum;
     PIMAGE_NT_HEADERS NtHeaders;
-    USHORT PartialSum;
     ULONG HeaderSum;
     ULONG CheckSum;
 
-    HeaderSum = 0;
-    PartialSum = supChkSum(0, (PUSHORT)BaseAddress, (FileLength + 1) >> 1);
+    CheckSum = supCalculateCheckSumForMappedFile(BaseAddress, FileLength);
 
     NtHeaders = RtlImageNtHeader(BaseAddress);
-    if (NtHeaders != NULL) {
+    if (NtHeaders) {
         HeaderSum = NtHeaders->OptionalHeader.CheckSum;
-        AdjustSum = (PUSHORT)(&NtHeaders->OptionalHeader.CheckSum);
-        PartialSum -= (PartialSum < AdjustSum[0]);
-        PartialSum -= AdjustSum[0];
-        PartialSum -= (PartialSum < AdjustSum[1]);
-        PartialSum -= AdjustSum[1];
     }
-    else
-    {
-        PartialSum = 0;
+    else {
         HeaderSum = FileLength;
     }
-    CheckSum = (ULONG)PartialSum + FileLength;
     return (CheckSum == HeaderSum);
+}
+
+/*
+* supSetCheckSumForMappedFile
+*
+* Purpose:
+*
+* Set checksum value to PE header.
+*
+*/
+BOOLEAN supSetCheckSumForMappedFile(
+    _In_ PVOID BaseAddress,
+    _In_ ULONG CheckSum
+)
+{
+    PIMAGE_NT_HEADERS NtHeaders;
+
+    NtHeaders = RtlImageNtHeader(BaseAddress);
+    if (NtHeaders) {
+        NtHeaders->OptionalHeader.CheckSum = CheckSum;
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /*

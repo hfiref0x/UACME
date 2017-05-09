@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.71
 *
-*  DATE:        25 Mar 2017
+*  DATE:        08 Maí 2017
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -24,6 +24,7 @@
 * Purpose:
 *
 * Change object security through ISecurityEditor(SetNamedInfo).
+* This function expects that supMasqueradeProcess was called on process initialization.
 *
 */
 DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
