@@ -303,7 +303,7 @@ VOID UiAccessMethodPayload(
     _In_ HINSTANCE hinstDLL
 )
 {
-    LPWSTR lpFileName, lpTargetName;
+    LPWSTR lpFileName;
     HHOOK hHook;
     HOOKPROC HookProcedure;
     WCHAR szModuleName[MAX_PATH + 1];
