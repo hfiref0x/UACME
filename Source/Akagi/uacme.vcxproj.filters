@@ -123,6 +123,9 @@
     <ClCompile Include="..\Shared\ldr.c">
       <Filter>ldr</Filter>
     </ClCompile>
+    <ClCompile Include="windefend.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -196,6 +199,9 @@
     </ClInclude>
     <ClInclude Include="..\Shared\ldr.h">
       <Filter>ldr</Filter>
+    </ClInclude>
+    <ClInclude Include="windefend.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

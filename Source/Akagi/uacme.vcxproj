@@ -267,6 +267,7 @@
     <ClCompile Include="methods\simda.c" />
     <ClCompile Include="sup.c" />
     <ClCompile Include="tests\test.c" />
+    <ClCompile Include="windefend.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Shared\ldr.h" />
@@ -293,6 +294,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="sup.h" />
     <ClInclude Include="tests\test.h" />
+    <ClInclude Include="windefend.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="bin32res.rc">

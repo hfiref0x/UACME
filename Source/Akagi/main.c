@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.72
 *
-*  DATE:        25 Mar 2017
+*  DATE:        26 May 2017
 *
 *  Program entry point.
 *
@@ -26,29 +26,6 @@ UACMECONTEXT g_ctx;
 TEB_ACTIVE_FRAME_CONTEXT g_fctx = { 0, "(=^..^=)" };
 
 static pfnDecompressPayload pDecryptPayload = NULL;
-
-/*
-* DummyWindowProc
-*
-* Purpose:
-*
-* Part of antiemulation, does nothing, serves as a window for ogl operations.
-*
-*/
-LRESULT CALLBACK DummyWindowProc(
-    HWND hwnd,
-    UINT uMsg,
-    WPARAM wParam,
-    LPARAM lParam
-)
-{
-    switch (uMsg) {
-    case WM_CLOSE:
-        PostQuitMessage(0);
-        break;
-    }
-    return DefWindowProc(hwnd, uMsg, wParam, lParam);
-}
 
 /*
 * ucmInit
@@ -165,7 +142,7 @@ UINT ucmInit(
 
         wincls.cbSize = sizeof(WNDCLASSEX);
         wincls.style = CS_OWNDC;
-        wincls.lpfnWndProc = &DummyWindowProc;
+        wincls.lpfnWndProc = &wdDummyWindowProc;
         wincls.cbClsExtra = 0;
         wincls.cbWndExtra = 0;
         wincls.hInstance = inst;
@@ -289,7 +266,7 @@ UINT ucmMain()
     UINT        uResult;
     UCM_METHOD  Method = 0;
 
-    supCheckMSEngineVFS();
+    wdCheckEmulatedVFS();
 
     uResult = ucmInit(&Method);
     switch (uResult) {
@@ -363,6 +340,8 @@ VOID main()
     DWORD k;
     EXCEPTION_RECORD ex;
     UACME_THREAD_CONTEXT uctx;
+
+    wdCheckEmulatedAPI();
 
     RtlSecureZeroMemory(&uctx, sizeof(uctx));
 

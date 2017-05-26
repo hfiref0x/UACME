@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.71
+*  VERSION:     2.72
 *
-*  DATE:        07 May 2017
+*  DATE:        26 May 2017
 *
 *  Common header file for the program support routines.
 *
@@ -105,9 +105,6 @@ DWORD supExpandEnvironmentStrings(
     LPWSTR lpDst,
     DWORD nSize);
 
-VOID supCheckMSEngineVFS(
-    VOID);
-
 VOID NTAPI sxsFindDllCallback(
     _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
     _In_ PVOID Context,
@@ -126,5 +123,14 @@ PVOID FORCEINLINE supHeapAlloc(
 
 BOOL FORCEINLINE supHeapFree(
     _In_ PVOID Memory);
+
+BOOL supDeleteKeyRecursive(
+    _In_ HKEY hKeyRoot,
+    _In_ LPWSTR lpSubKey);
+
+BOOL supSetEnvVariable(
+    _In_ BOOL fRemove,
+    _In_ LPWSTR lpVariableName,
+    _In_opt_ LPWSTR lpVariableData);
 
 #define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)

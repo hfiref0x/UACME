@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.71
+*  VERSION:     2.72
 *
-*  DATE:        07 May 2017
+*  DATE:        24 May 2017
 *
 *  Common header file for the program support routines.
 *
@@ -68,6 +68,7 @@
 #include "compress.h"
 #include "sup.h"
 #include "methods\methods.h"
+#include "windefend.h"
 
 //default execution flow
 #define AKAGI_FLAG_KILO  0

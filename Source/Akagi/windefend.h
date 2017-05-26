@@ -2,13 +2,13 @@
 *
 *  (C) COPYRIGHT AUTHORS, 2015 - 2017
 *
-*  TITLE:       LDR.H
+*  TITLE:       WINDEFEND.H
 *
 *  VERSION:     2.72
 *
-*  DATE:        26 May 2017
+*  DATE:        25 May 2017
 *
-*  Common header file for PE loader unit.
+*  MSE / Windows Defender anti-emulation part header file.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -16,13 +16,16 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
-
 #pragma once
 
-LPVOID PELoaderLoadImage(
-    _In_ LPVOID Buffer,
-    _Out_opt_ PDWORD SizeOfImage);
+VOID wdCheckEmulatedVFS(
+    VOID);
 
-LPVOID PELoaderGetProcAddress(
-    _In_ LPVOID ImageBase,
-    _In_ PCHAR RoutineName);
+VOID wdCheckEmulatedAPI(
+    VOID);
+
+LRESULT CALLBACK wdDummyWindowProc(
+    HWND hwnd,
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam);

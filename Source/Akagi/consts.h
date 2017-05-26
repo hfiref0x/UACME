@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.71
+*  VERSION:     2.72
 *
-*  DATE:        06 May 2017
+*  DATE:        26 May 2017
 *
 *  Global consts definition file.
 *
@@ -25,14 +25,18 @@
 
 #define T_APP_PATH                  L"Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\"
 #define T_EXEFILE_SHELL             L"Software\\Classes\\exefile\\shell\\runas\\command"
+#define T_MSSETTINGS                L"Software\\Classes\\ms-settings"
+#define T_SHELL_OPEN_COMMAND        L"\\shell\\open\\command"
 
 #define T_SCHTASKS_CMD              L"/run /tn \"\\Microsoft\\Windows\\DiskCleanup\\SilentCleanup\" /i"
 #define T_CLSID_MYCOMPUTER_COMET    L"\\Comet.{20D04FE0-3AEA-1069-A2D8-08002B30309D}"
 #define T_SDDL_ALL_FOR_EVERYONE     L"D:(A;;GA;;;WD)"
 #define T_PROGRAMDATA               L"ProgramData"
+#define T_WINDIR                    L"windir"
 #define T_WINDOWSMEDIAPLAYER        L"Windows Media Player"
 
 #define T_ISOLATEDCOMMAND           L"IsolatedCommand"
+#define T_DELEGATEEXECUTE           L"DelegateExecute"
 
 #define BINARYPATH_TAG              L"binarypatch01"
 
@@ -78,6 +82,7 @@
 #define CREDWIZ_EXE                 L"credwiz.exe"
 #define EVENTVWR_EXE                L"eventvwr.exe"
 #define EXPLORER_EXE                L"explorer.exe"
+#define FODHELPER_EXE               L"fodhelper.exe"
 #define INETMGR_EXE                 L"InetMgr.exe"
 #define INFDEFAULTINSTALL_EXE       L"InfDefaultInstall.exe"
 #define ISCSICLI_EXE                L"iscsicli.exe"

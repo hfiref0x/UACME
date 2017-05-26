@@ -220,6 +220,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Target(s): %temp%\GUID\dismhost.exe
      * Component(s): LogProvider.dll
      * Works from: Windows 10 TH1 (10240)
+     * AlwaysNofity compatible
      * Fixed in: Windows 10 RS2 (15031)
         * How: File security permissions altered
 27. Author: ExpLife
@@ -228,8 +229,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Target(s): Attacker defined application
      * Component(s): Attacker defined components
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 RS3 (16199)
+        * How: UninstallStringLauncher interface removed from COMAutoApprovalList
 28. Author: Exploit/Sandworm
      * Type: Whitelisted component
      * Method: InfDefaultInstall
@@ -268,6 +269,23 @@ Keys (watch debug output with dbgview or similar for more info):
      * Target(s): \Program Files\Windows Media Player\osk.exe, \system32\EventVwr.exe, \system32\mmc.exe
      * Component(s): duser.dll, osksupport.dll
      * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+33. Author: winscripting.blog
+     * Type: Shell API 
+     * Method: Registry key manipulation
+     * Target(s): \system32\fodhelper.exe
+     * Component(s): Attacker defined application
+     * Works from: Windows 10 (10240)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+34. Author: James Forshaw
+     * Type: Shell API 
+     * Method: Environment variables expansion
+     * Target(s): \system32\svchost.exe via \system32\schtasks.exe
+     * Component(s): Attacker defined application
+     * Works from: Windows 10 (10240)
+     * AlwaysNofity compatible
      * Fixed in: unfixed :see_no_evil:
         * How: -
 
@@ -328,6 +346,8 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * Bypassing UAC using App Paths, https://enigma0x3.net/2017/03/14/bypassing-uac-using-app-paths/
 * "Fileless" UAC Bypass using sdclt.exe, https://enigma0x3.net/2017/03/17/fileless-uac-bypass-using-sdclt-exe/
 * UAC Bypass or story about three escalations, https://habrahabr.ru/company/pm/blog/328008/
+* Exploiting Environment Variables in Scheduled Tasks for UAC Bypass, https://tyranidslair.blogspot.ru/2017/05/exploiting-environment-variables-in.html
+* First entry: Welcome and fileless UAC bypass, https://winscripting.blog/2017/05/12/first-entry-welcome-and-uac-bypass/
  
 # Authors
 

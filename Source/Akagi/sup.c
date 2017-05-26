@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.71
+*  VERSION:     2.72
 *
-*  DATE:        07 May 2017
+*  DATE:        26 May 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -861,35 +861,6 @@ DWORD supExpandEnvironmentStrings(
 }
 
 /*
-* supCheckMSEngineVFS
-*
-* Purpose:
-*
-* Detect Microsoft Security Engine emulation by it own VFS artefact.
-*
-* Microsoft AV provides special emulated environment for scanned application where it
-* fakes general system information, process environment structures/data to make sure
-* API calls are transparent for scanned code. It also use simple Virtual File System
-* allowing this AV track file system changes and if needed continue emulation on new target.
-*
-* This method implemented in commercial malware presumable since 2013.
-*
-*/
-VOID supCheckMSEngineVFS(
-    VOID
-)
-{
-    WCHAR szBuffer[MAX_PATH];
-    WCHAR szMsEngVFS[12] = { L':', L'\\', L'm', L'y', L'a', L'p', L'p', L'.', L'e', L'x', L'e', 0 };
-
-    RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
-    GetModuleFileName(NULL, szBuffer, MAX_PATH);
-    if (_strstri(szBuffer, szMsEngVFS) != NULL) {
-        ExitProcess((UINT)0);
-    }
-}
-
-/*
 * sxsFilePathNoSlash
 *
 * Purpose:
@@ -993,4 +964,161 @@ PVOID supNativeGetProcAddress(
         return NULL;
 
     return ProcedureAddress;
+}
+
+/*
+* supxDeleteKeyRecursive
+*
+* Purpose:
+*
+* Delete key and all it subkeys/values.
+*
+*/
+BOOL supxDeleteKeyRecursive(
+    _In_ HKEY hKeyRoot,
+    _In_ LPWSTR lpSubKey)
+{
+    LPWSTR lpEnd;
+    LONG lResult;
+    DWORD dwSize;
+    WCHAR szName[MAX_PATH + 1];
+    HKEY hKey;
+    FILETIME ftWrite;
+
+    //
+    // Attempt to delete key as is.
+    //
+    lResult = RegDeleteKey(hKeyRoot, lpSubKey);
+    if (lResult == ERROR_SUCCESS)
+        return TRUE;
+
+    //
+    // Try to open key to check if it exist.
+    //
+    lResult = RegOpenKeyEx(hKeyRoot, lpSubKey, 0, KEY_READ, &hKey);
+    if (lResult != ERROR_SUCCESS) {
+        if (lResult == ERROR_FILE_NOT_FOUND)
+            return TRUE;
+        else
+            return FALSE;
+    }
+
+    //
+    // Add slash to the key path if not present.
+    //
+    lpEnd = _strend(lpSubKey);
+    if (*(lpEnd - 1) != TEXT('\\')) {
+        *lpEnd = TEXT('\\');
+        lpEnd++;
+        *lpEnd = TEXT('\0');
+    }
+
+    //
+    // Enumerate subkeys and call this func for each.
+    //
+    dwSize = MAX_PATH;
+    lResult = RegEnumKeyEx(hKey, 0, szName, &dwSize, NULL,
+        NULL, NULL, &ftWrite);
+
+    if (lResult == ERROR_SUCCESS) {
+
+        do {
+
+            _strncpy(lpEnd, MAX_PATH, szName, MAX_PATH);
+
+            if (!supxDeleteKeyRecursive(hKeyRoot, lpSubKey))
+                break;
+
+            dwSize = MAX_PATH;
+
+            lResult = RegEnumKeyEx(hKey, 0, szName, &dwSize, NULL,
+                NULL, NULL, &ftWrite);
+
+        } while (lResult == ERROR_SUCCESS);
+    }
+
+    lpEnd--;
+    *lpEnd = TEXT('\0');
+
+    RegCloseKey(hKey);
+
+    //
+    // Delete current key, all it subkeys should be already removed.
+    //
+    lResult = RegDeleteKey(hKeyRoot, lpSubKey);
+    if (lResult == ERROR_SUCCESS)
+        return TRUE;
+
+    return FALSE;
+}
+
+/*
+* supDeleteKeyRecursive
+*
+* Purpose:
+*
+* Delete key and all it subkeys/values.
+*
+* Remark:
+*
+* SubKey should not be longer than 260 chars.
+*
+*/
+BOOL supDeleteKeyRecursive(
+    _In_ HKEY hKeyRoot,
+    _In_ LPWSTR lpSubKey)
+{
+    WCHAR szKeyName[MAX_PATH * 2];
+    RtlSecureZeroMemory(szKeyName, sizeof(szKeyName));
+    _strncpy(szKeyName, MAX_PATH * 2, lpSubKey, MAX_PATH);
+    return supxDeleteKeyRecursive(hKeyRoot, szKeyName);
+}
+
+/*
+* supSetEnvVariable
+*
+* Purpose:
+*
+* Remove or set current user environment variable.
+*
+*/
+BOOL supSetEnvVariable(
+    _In_ BOOL fRemove,
+    _In_ LPWSTR lpVariableName,
+    _In_opt_ LPWSTR lpVariableData
+)
+{
+    BOOL	bResult = FALSE, bCond = FALSE;
+    HKEY    hKey = NULL;
+    DWORD   cbData;
+
+    do {
+        if (lpVariableName == NULL)
+            break;
+
+        if ((lpVariableData == NULL) && (fRemove == FALSE))
+            break;
+
+        if (RegOpenKey(HKEY_CURRENT_USER, L"Environment", &hKey) != ERROR_SUCCESS)
+            break;
+
+        if (fRemove) {
+            RegDeleteValue(hKey, lpVariableName);
+        }
+        else {
+            cbData = (DWORD)((1 + _strlen(lpVariableData)) * sizeof(WCHAR));
+            if (RegSetValueEx(hKey, lpVariableName, 0, REG_SZ,
+                (BYTE*)lpVariableData, cbData) != ERROR_SUCCESS)
+            {
+                break;
+            }
+        }
+        bResult = TRUE;
+
+    } while (bCond);
+
+    if (hKey != NULL)
+        RegCloseKey(hKey);
+
+    return bResult;
 }
