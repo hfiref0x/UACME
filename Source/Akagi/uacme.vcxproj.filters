@@ -126,6 +126,9 @@
     <ClCompile Include="windefend.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="methods\tyranid.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -202,6 +205,9 @@
     </ClInclude>
     <ClInclude Include="windefend.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\tyranid.h">
+      <Filter>Header Files\methods</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

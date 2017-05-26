@@ -44,6 +44,3 @@ BOOL ucmSdcltIsolatedCommandMethod(
 
 BOOL ucmMsSettingsDelegateExecuteMethod(
     _In_opt_ LPWSTR lpszPayload);
-
-BOOL ucmDiskCleanupEnvironmentVariable(
-    _In_opt_ LPWSTR lpszPayload);

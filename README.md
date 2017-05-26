@@ -220,7 +220,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Target(s): %temp%\GUID\dismhost.exe
      * Component(s): LogProvider.dll
      * Works from: Windows 10 TH1 (10240)
-     * AlwaysNofity compatible
+     * AlwaysNotify compatible
      * Fixed in: Windows 10 RS2 (15031)
         * How: File security permissions altered
 27. Author: ExpLife
@@ -284,8 +284,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: Environment variables expansion
      * Target(s): \system32\svchost.exe via \system32\schtasks.exe
      * Component(s): Attacker defined application
-     * Works from: Windows 10 (10240)
-     * AlwaysNofity compatible
+     * Works from: Windows 8.1 (9600)
+     * AlwaysNotify compatible
      * Fixed in: unfixed :see_no_evil:
         * How: -
 

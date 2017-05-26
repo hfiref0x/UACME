@@ -99,6 +99,7 @@ typedef struct _UCM_API_DISPATCH_ENTRY {
 #include "tests\test.h"
 #include "apphelp.h"
 #include "gootkit.h"
+#include "tyranid.h"
 
 BOOL MethodsManagerCall(
     _In_ UCM_METHOD Method);

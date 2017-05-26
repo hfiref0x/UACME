@@ -265,6 +265,7 @@
     <ClCompile Include="methods\pitou.c" />
     <ClCompile Include="methods\sandworm.c" />
     <ClCompile Include="methods\simda.c" />
+    <ClCompile Include="methods\tyranid.c" />
     <ClCompile Include="sup.c" />
     <ClCompile Include="tests\test.c" />
     <ClCompile Include="windefend.c" />
@@ -291,6 +292,7 @@
     <ClInclude Include="methods\sandworm.h" />
     <ClInclude Include="methods\simda.h" />
     <ClInclude Include="methods\sirefef.h" />
+    <ClInclude Include="methods\tyranid.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sup.h" />
     <ClInclude Include="tests\test.h" />
