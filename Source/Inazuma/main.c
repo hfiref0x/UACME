@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.73
 *
-*  DATE:        24 Mar 2017
+*  DATE:        27 May 2017
 *
 *  ShellCode.
 *
@@ -19,6 +19,10 @@
 
 //disable nonmeaningful warnings.
 #pragma warning(disable: 4005) // macro redefinition
+#pragma warning(disable: 4055) // %s : from data pointer %s to function pointer %s
+#pragma warning(disable: 4152) // nonstandard extension, function/data pointer conversion in expression
+#pragma warning(disable: 4201) // nonstandard extension used : nameless struct/union
+#pragma warning(disable: 6102) // Using %s from failed function call at line %u
 
 #include <Windows.h>
 #include "shared\ntos.h"

@@ -288,6 +288,15 @@ Keys (watch debug output with dbgview or similar for more info):
      * AlwaysNotify compatible
      * Fixed in: unfixed :see_no_evil:
         * How: -
+35. Author: CIA & James Forshaw
+     * Type: Impersonation
+     * Method: Token Manipulations
+     * Target(s): Autoelevated applications
+     * Component(s): Attacker defined applications
+     * Works from: Windows 7 (7600)
+     * AlwaysNotify compatible, see note
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;
@@ -295,7 +304,8 @@ Note:
 * Method (13) (19) and above implemented only in x64 version;
 * Method (14) require process injection, wow64 unsupported, use x64 version of this tool;
 * Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone;
-* Method (30) require x64 because it abuses WOW64 subsystem feature.
+* Method (30) require x64 because it abuses WOW64 subsystem feature;
+* Method (35) AlwaysNotify compatible as there always will be running autoelevated apps or user will have to launch them anyway.
 
 Run examples:
 * akagi32.exe 1
@@ -317,7 +327,6 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 
 # Protection
-* UAC turned on maximum level and full awareness about every window it will show;
 * Account without administrative privileges.
 
 # Malware usage
@@ -348,7 +357,11 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * UAC Bypass or story about three escalations, https://habrahabr.ru/company/pm/blog/328008/
 * Exploiting Environment Variables in Scheduled Tasks for UAC Bypass, https://tyranidslair.blogspot.ru/2017/05/exploiting-environment-variables-in.html
 * First entry: Welcome and fileless UAC bypass, https://winscripting.blog/2017/05/12/first-entry-welcome-and-uac-bypass/
- 
+* Reading Your Way Around UAC in 3 parts:
+   1. https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-1.html
+   2. https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-2.html
+   3. https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-3.html 
+
 # Authors
 
 (c) 2014 - 2017 UACMe Project

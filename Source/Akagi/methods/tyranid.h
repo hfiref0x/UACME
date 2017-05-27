@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2017
+*  (C) COPYRIGHT AUTHORS, 2017
 *
 *  TITLE:       TYRANID.H
 *
-*  VERSION:     2.72
+*  VERSION:     2.73
 *
-*  DATE:        26 May 2017
+*  DATE:        27 May 2017
 *
 *  Prototypes and definitions for James Forshaw method(s).
 *
@@ -19,4 +19,7 @@
 #pragma once
 
 BOOL ucmDiskCleanupEnvironmentVariable(
+    _In_opt_ LPWSTR lpszPayload);
+
+BOOL ucmTokenModification(
     _In_opt_ LPWSTR lpszPayload);
