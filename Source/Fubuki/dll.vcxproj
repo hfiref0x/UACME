@@ -336,11 +336,13 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Shared\ultostr.c" />
     <ClCompile Include="..\Shared\_filename.c" />
     <ClCompile Include="..\shared\_strcat.c" />
     <ClCompile Include="..\Shared\_strcmpi.c" />
     <ClCompile Include="..\shared\_strcpy.c" />
     <ClCompile Include="..\Shared\_strend.c" />
+    <ClCompile Include="..\Shared\_strlen.c" />
     <ClCompile Include="dllmain.c" />
   </ItemGroup>
   <ItemGroup>

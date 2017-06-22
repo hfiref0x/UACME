@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     2.71
+*  VERSION:     2.74
 *
-*  DATE:        06 May 2017
+*  DATE:        20 June 2017
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -94,5 +94,9 @@ BOOL ucmWow64LoggerMethod(
     DWORD ProxyDllSize);
 
 BOOL ucmUiAccessMethod(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize);
+
+BOOL ucmJunctionMethod(
     PVOID ProxyDll,
     DWORD ProxyDllSize);

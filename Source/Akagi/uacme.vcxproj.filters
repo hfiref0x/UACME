@@ -129,6 +129,12 @@
     <ClCompile Include="methods\tyranid.c">
       <Filter>Source Files\methods</Filter>
     </ClCompile>
+    <ClCompile Include="methods\comfileop.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\wusa.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -207,6 +213,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="methods\tyranid.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\comfileop.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\wusa.h">
       <Filter>Header Files\methods</Filter>
     </ClInclude>
   </ItemGroup>

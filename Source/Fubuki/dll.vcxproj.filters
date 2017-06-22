@@ -55,6 +55,12 @@
     <ClCompile Include="..\Shared\_strcmpi.c">
       <Filter>minirtl</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\_strlen.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\ultostr.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="export.def">

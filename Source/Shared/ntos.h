@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.70
+*  VERSION:     1.71
 *
-*  DATE:        27 May 2017
+*  DATE:        28 May 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -5605,6 +5605,11 @@ NTSTATUS NTAPI NtDuplicateToken(
     _Out_ PHANDLE NewTokenHandle
     );
 
+#define DISABLE_MAX_PRIVILEGE   0x1 // winnt
+#define SANDBOX_INERT           0x2 // winnt
+#define LUA_TOKEN               0x4
+#define WRITE_RESTRICT          0x8
+
 NTSTATUS NTAPI NtFilterToken(
     _In_ HANDLE ExistingTokenHandle,
     _In_ ULONG Flags,
@@ -5657,20 +5662,6 @@ NTSTATUS NTAPI NtQueryInformationToken(
 	_In_	ULONG TokenInformationLength,
 	_Out_	PULONG ReturnLength
 	);
-
-#define DISABLE_MAX_PRIVILEGE   0x1 // winnt
-#define SANDBOX_INERT           0x2 // winnt
-#define LUA_TOKEN               0x4
-#define WRITE_RESTRICT          0x8
-
-NTSTATUS NTAPI NtFilterToken(
-    _In_ HANDLE ExistingTokenHandle,
-    _In_ ULONG Flags,
-    _In_opt_ PTOKEN_GROUPS SidsToDisable,
-    _In_opt_ PTOKEN_PRIVILEGES PrivilegesToDelete,
-    _In_opt_ PTOKEN_GROUPS RestrictedSids,
-    _Out_ PHANDLE NewTokenHandle
-    );
 
 NTSTATUS NTAPI NtCreateKey(
     _Out_      PHANDLE KeyHandle,

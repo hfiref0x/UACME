@@ -390,11 +390,13 @@
     <ClCompile Include="methods\explife.c" />
     <ClCompile Include="methods\gootkit.c" />
     <ClCompile Include="methods\hybrids.c" />
+    <ClCompile Include="methods\comfileop.c" />
     <ClCompile Include="methods\methods.c" />
     <ClCompile Include="methods\pitou.c" />
     <ClCompile Include="methods\sandworm.c" />
     <ClCompile Include="methods\simda.c" />
     <ClCompile Include="methods\tyranid.c" />
+    <ClCompile Include="methods\wusa.c" />
     <ClCompile Include="sup.c" />
     <ClCompile Include="tests\test.c" />
     <ClCompile Include="windefend.c" />
@@ -412,6 +414,7 @@
     <ClInclude Include="methods\apphelp.h" />
     <ClInclude Include="methods\carberp.h" />
     <ClInclude Include="methods\comet.h" />
+    <ClInclude Include="methods\comfileop.h" />
     <ClInclude Include="methods\enigma0x3.h" />
     <ClInclude Include="methods\explife.h" />
     <ClInclude Include="methods\gootkit.h" />
@@ -422,6 +425,7 @@
     <ClInclude Include="methods\simda.h" />
     <ClInclude Include="methods\sirefef.h" />
     <ClInclude Include="methods\tyranid.h" />
+    <ClInclude Include="methods\wusa.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sup.h" />
     <ClInclude Include="tests\test.h" />

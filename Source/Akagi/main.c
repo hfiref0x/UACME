@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.72
+*  VERSION:     2.73
 *
-*  DATE:        26 May 2017
+*  DATE:        08 June 2017
 *
 *  Program entry point.
 *
@@ -136,8 +136,8 @@ UINT ucmInit(
         bytesIO = 0;
         GetCommandLineParam(GetCommandLine(), 2, szBuffer, MAX_PATH, &bytesIO);
         if (bytesIO > 0) {
-            g_ctx.OptionalParameterLength = bytesIO;
             _strcpy(g_ctx.szOptionalParameter, szBuffer);
+            g_ctx.OptionalParameterLength = 1 + bytesIO; //including 0
         }
 
         wincls.cbSize = sizeof(WNDCLASSEX);

@@ -244,9 +244,9 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: Registry key manipulation
      * Target(s): \system32\sdctl.exe
      * Component(s): Attacker defined application
-     * Works from: Windows 10 (10240)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Works from: Windows 10 TH1 (10240)
+     * Fixed in: Windows 10 RS3 (16215)
+        * How: Shell API update
 30. Author: Leo Davidson derivative, lhc645
      * Type: Dll Hijack
      * Method: WOW64 logger
@@ -260,7 +260,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: Registry key manipulation
      * Target(s): \system32\sdctl.exe
      * Component(s): Attacker defined application
-     * Works from: Windows 10 (10240)
+     * Works from: Windows 10 TH1 (10240)
      * Fixed in: unfixed :see_no_evil:
         * How: -
 32. Author: xi-tauw
@@ -276,7 +276,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: Registry key manipulation
      * Target(s): \system32\fodhelper.exe
      * Component(s): Attacker defined application
-     * Works from: Windows 10 (10240)
+     * Works from: Windows 10 TH1 (10240)
      * Fixed in: unfixed :see_no_evil:
         * How: -
 34. Author: James Forshaw
@@ -297,11 +297,19 @@ Keys (watch debug output with dbgview or similar for more info):
      * AlwaysNotify compatible, see note
      * Fixed in: unfixed :see_no_evil:
         * How: -
+36. Author: Thomas Vanhoutte
+     * Type: Race condition
+     * Method: NTFS reparse point & Dll Hijack
+     * Target(s): wusa.exe
+     * Component(s): dcomcnfg.exe, mmc.exe, ole32.dll, MsCoree.dll
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;
 * Method (11) implemented in x86-32 version;
-* Method (13) (19) and above implemented only in x64 version;
+* Method (13) (19) implemented only in x64 version;
 * Method (14) require process injection, wow64 unsupported, use x64 version of this tool;
 * Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone;
 * Method (30) require x64 because it abuses WOW64 subsystem feature;

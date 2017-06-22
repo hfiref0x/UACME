@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.74
 *
-*  DATE:        22 Mar 2017
+*  DATE:        20 June 2017
 *
 *  Proxy dll entry point, Akatsuki.
 *  Special dll for wow64 logger method.
@@ -147,9 +147,12 @@ BOOL ucmQueryCustomParameter(
             RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
             RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
             startupInfo.cb = sizeof(startupInfo);
-            GetStartupInfoW(&startupInfo);
+            GetStartupInfo(&startupInfo);
 
-            bResult = CreateProcessW(NULL, lpParameter, NULL, NULL, FALSE, 0, NULL,
+            startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+            startupInfo.wShowWindow = SW_SHOW;
+
+            bResult = CreateProcess(NULL, lpParameter, NULL, NULL, FALSE, 0, NULL,
                 NULL, &startupInfo, &processInfo);
 
             if (bResult) {
@@ -251,7 +254,7 @@ BOOL WINAPI DllMain(
             RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
             RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
             startupInfo.cb = sizeof(startupInfo);
-            GetStartupInfoW(&startupInfo);
+            GetStartupInfo(&startupInfo);
 
             RtlSecureZeroMemory(sysdir, sizeof(sysdir));
             cch = ucmExpandEnvironmentStrings(TEXT("%systemroot%\\system32\\"), sysdir, MAX_PATH);
@@ -260,7 +263,10 @@ BOOL WINAPI DllMain(
                 _strcpy(cmdbuf, sysdir);
                 _strcat(cmdbuf, TEXT("cmd.exe"));
 
-                if (CreateProcessW(cmdbuf, NULL, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL,
+                startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+                startupInfo.wShowWindow = SW_SHOW;
+
+                if (CreateProcess(cmdbuf, NULL, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL,
                     sysdir, &startupInfo, &processInfo))
                 {
                     CloseHandle(processInfo.hProcess);

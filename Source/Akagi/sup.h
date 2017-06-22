@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.72
+*  VERSION:     2.74
 *
-*  DATE:        26 May 2017
+*  DATE:        11 June 2017
 *
 *  Common header file for the program support routines.
 *
@@ -28,11 +28,43 @@ typedef struct _SXS_SEARCH_CONTEXT {
     LPWSTR FullDllPath;
 } SXS_SEARCH_CONTEXT, *PSXS_SEARCH_CONTEXT;
 
+//ntifs.h
+typedef struct _REPARSE_DATA_BUFFER {
+    ULONG  ReparseTag;
+    USHORT ReparseDataLength;
+    USHORT Reserved;
+    union {
+        struct {
+            USHORT SubstituteNameOffset;
+            USHORT SubstituteNameLength;
+            USHORT PrintNameOffset;
+            USHORT PrintNameLength;
+            ULONG Flags;
+            WCHAR PathBuffer[1];
+        } SymbolicLinkReparseBuffer;
+        struct {
+            USHORT SubstituteNameOffset;
+            USHORT SubstituteNameLength;
+            USHORT PrintNameOffset;
+            USHORT PrintNameLength;
+            WCHAR PathBuffer[1];
+        } MountPointReparseBuffer;
+        struct {
+            UCHAR  DataBuffer[1];
+        } GenericReparseBuffer;
+    } DUMMYUNIONNAME;
+} REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
+
+#define REPARSE_DATA_BUFFER_HEADER_LENGTH FIELD_OFFSET(REPARSE_DATA_BUFFER, GenericReparseBuffer.DataBuffer)
+
 BOOLEAN supIsProcess32bit(
     _In_ HANDLE hProcess);
 
 BOOL supGetElevationType(
     TOKEN_ELEVATION_TYPE *lpType);
+
+HANDLE supGetExplorerHandle(
+    VOID);
 
 BOOL supWriteBufferToFile(
     _In_ LPWSTR lpFileName,
@@ -132,5 +164,13 @@ BOOL supSetEnvVariable(
     _In_ BOOL fRemove,
     _In_ LPWSTR lpVariableName,
     _In_opt_ LPWSTR lpVariableData);
+
+BOOL supSetMountPoint(
+    _In_ HANDLE hDirectory,
+    _In_ LPWSTR lpTarget,
+    _In_ LPWSTR lpPrintName);
+
+BOOL supDeleteMountPoint(
+    _In_ HANDLE hDirectory);
 
 #define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)

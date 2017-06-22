@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.74
 *
-*  DATE:        21 Mar 2017
+*  DATE:        20 June 2017
 *
 *  AVrf entry point, Hibiki Kai Ni.
 *
@@ -346,6 +346,9 @@ BOOL ucmQueryCustomParameter(
             startupInfo.cb = sizeof(startupInfo);
             ucmGetStartupInfo(&startupInfo);
 
+            startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+            startupInfo.wShowWindow = SW_SHOW;
+
             bResult = pCreateProcessW(NULL, lpParameter, NULL, NULL, FALSE, 0, NULL,
                 NULL, &startupInfo, &processInfo);
 
@@ -403,6 +406,9 @@ VOID ucmbRunTarget(
             RtlSecureZeroMemory(cmdbuf, sizeof(cmdbuf));
             _strcpy_w(cmdbuf, sysdir);
             _strcat_w(cmdbuf, L"cmd.exe");
+
+            startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+            startupInfo.wShowWindow = SW_SHOW;
 
             if (pCreateProcessW(cmdbuf, NULL, NULL, NULL, FALSE, 0, NULL,
                 sysdir, &startupInfo, &processInfo))

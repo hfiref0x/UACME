@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.72
+*  VERSION:     2.74
 *
-*  DATE:        26 May 2017
+*  DATE:        20 June 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -107,6 +107,32 @@ BOOL supGetElevationType(
     NtClose(hToken);
 
     return (NT_SUCCESS(status));
+}
+
+/*
+* supGetExplorerHandle
+*
+* Purpose:
+*
+* Returns Explorer process handle opened with maximum allowed rights or NULL on error.
+*
+*/
+HANDLE supGetExplorerHandle(
+    VOID
+)
+{
+    HWND	hTrayWnd = NULL;
+    DWORD	dwProcessId = 0;
+
+    hTrayWnd = FindWindow(TEXT("Shell_TrayWnd"), NULL);
+    if (hTrayWnd == NULL)
+        return NULL;
+
+    GetWindowThreadProcessId(hTrayWnd, &dwProcessId);
+    if (dwProcessId == 0)
+        return NULL;
+
+    return OpenProcess(MAXIMUM_ALLOWED, FALSE, dwProcessId);
 }
 
 /*
@@ -312,7 +338,7 @@ BOOL supRunProcess2(
 )
 {
     BOOL bResult;
-    SHELLEXECUTEINFOW shinfo;
+    SHELLEXECUTEINFO shinfo;
     RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
 
     if (lpszProcessName == NULL)
@@ -324,7 +350,7 @@ BOOL supRunProcess2(
     shinfo.lpParameters = lpszParameters;
     shinfo.lpDirectory = NULL;
     shinfo.nShow = SW_SHOW;
-    bResult = ShellExecuteExW(&shinfo);
+    bResult = ShellExecuteEx(&shinfo);
     if (bResult) {
         if (fWait)
             WaitForSingleObject(shinfo.hProcess, 0x8000);
@@ -852,7 +878,7 @@ DWORD supExpandEnvironmentStrings(
         &Length
     );
     if (NT_SUCCESS(Status) || Status == STATUS_BUFFER_TOO_SMALL) {
-        return(Length / sizeof(WCHAR));
+        return (DWORD)(Length / sizeof(WCHAR));
     }
     else {
         RtlSetLastWin32Error(RtlNtStatusToDosError(Status));
@@ -1121,4 +1147,131 @@ BOOL supSetEnvVariable(
         RegCloseKey(hKey);
 
     return bResult;
+}
+
+/*
+* supDeleteMountPoint
+*
+* Purpose:
+*
+* Removes reparse point of type mount_point from directory.
+*
+*/
+BOOL supDeleteMountPoint(
+    _In_ HANDLE hDirectory
+)
+{
+    NTSTATUS        status;
+    IO_STATUS_BLOCK IoStatusBlock;
+
+    REPARSE_GUID_DATA_BUFFER Buffer;
+
+    RtlSecureZeroMemory(&Buffer, sizeof(REPARSE_GUID_DATA_BUFFER));
+    Buffer.ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+
+    status = NtFsControlFile(hDirectory,
+        NULL,
+        NULL,
+        NULL,
+        &IoStatusBlock,
+        FSCTL_DELETE_REPARSE_POINT,
+        &Buffer,
+        REPARSE_GUID_DATA_BUFFER_HEADER_SIZE,
+        NULL,
+        0);
+
+    if (status == STATUS_NOT_A_REPARSE_POINT) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+    }
+    else {
+        SetLastError(RtlNtStatusToDosError(status));
+    }
+
+    return NT_SUCCESS(status);
+}
+
+/*
+* supSetMountPoint
+*
+* Purpose:
+*
+* Install reparse point of type mount_point to directory.
+*
+*/
+BOOL supSetMountPoint(
+    _In_ HANDLE hDirectory,
+    _In_ LPWSTR lpTarget,
+    _In_ LPWSTR lpPrintName
+)
+{
+    ULONG           memIO;
+    USHORT          cbTarget, cbPrintName, reparseDataLength;
+    NTSTATUS        status;
+    IO_STATUS_BLOCK IoStatusBlock;
+
+    REPARSE_DATA_BUFFER *Buffer;
+
+    if ((lpTarget == NULL) || (lpPrintName == NULL)) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    //
+    // Calculate required buffer size.
+    // Header + length of input strings + safe space.
+    //
+    cbTarget = (USHORT)(_strlen(lpTarget) * sizeof(WCHAR));
+    cbPrintName = (USHORT)(_strlen(lpPrintName) * sizeof(WCHAR));
+
+    reparseDataLength = cbTarget + cbPrintName + 12;
+    memIO = (ULONG)(reparseDataLength + REPARSE_DATA_BUFFER_HEADER_LENGTH);
+
+    Buffer = supHeapAlloc((SIZE_T)memIO);
+    if (Buffer == NULL)
+        return FALSE;
+
+    //
+    // Setup reparse point structure.
+    //
+    Buffer->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+    Buffer->ReparseDataLength = reparseDataLength;
+
+    //
+    // Add Target to PathBuffer.
+    //
+    Buffer->MountPointReparseBuffer.SubstituteNameOffset = 0;
+    Buffer->MountPointReparseBuffer.SubstituteNameLength = cbTarget;
+
+    RtlCopyMemory(Buffer->MountPointReparseBuffer.PathBuffer,
+        lpTarget,
+        cbTarget);
+
+    //
+    // Add PrintName to PathBuffer.
+    //
+    Buffer->MountPointReparseBuffer.PrintNameOffset = cbTarget + sizeof(UNICODE_NULL);
+    Buffer->MountPointReparseBuffer.PrintNameLength = cbPrintName;
+
+    RtlCopyMemory(&Buffer->MountPointReparseBuffer.PathBuffer[(cbTarget / sizeof(WCHAR)) + 1],
+        lpPrintName,
+        cbPrintName);
+
+    //
+    // Set reparse point.
+    //
+    status = NtFsControlFile(hDirectory,
+        NULL,
+        NULL,
+        NULL,
+        &IoStatusBlock,
+        FSCTL_SET_REPARSE_POINT,
+        Buffer,
+        memIO,
+        NULL,
+        0);
+
+    supHeapFree(Buffer);
+
+    SetLastError(RtlNtStatusToDosError(status));
+    return NT_SUCCESS(status);
 }

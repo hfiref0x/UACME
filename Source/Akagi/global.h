@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.72
+*  VERSION:     2.74
 *
-*  DATE:        24 May 2017
+*  DATE:        10 June 2017
 *
 *  Common header file for the program support routines.
 *
@@ -37,6 +37,7 @@
 #pragma warning(disable: 4152) // nonstandard extension, function/data pointer conversion in expression
 #pragma warning(disable: 4201) // nonstandard extension used : nameless struct/union
 #pragma warning(disable: 6102) // Using %s from failed function call at line %u
+#pragma warning(disable: 6258) // Using TerminateThread does not allow proper thread clean up
 #pragma warning(disable: 6320) // exception-filter expression is the constant EXCEPTION_EXECUTE_HANDLER
 
 #define PAYLOAD_ID_NONE MAXDWORD
@@ -63,7 +64,7 @@
 #include "shared\minirtl.h"
 #include "shared\cmdline.h"
 #include "shared\_filename.h"
-#include "Shared\ldr.h"
+#include "shared\ldr.h"
 #include "consts.h"
 #include "compress.h"
 #include "sup.h"
@@ -86,7 +87,7 @@ typedef struct _UACME_CONTEXT {
     ULONG                   dwBuildNumber;
     ULONG                   AkagiFlag;
     ULONG                   IFileOperationFlags;
-    ULONG                   OptionalParameterLength;
+    ULONG                   OptionalParameterLength; //count of characters
     WCHAR                   szSystemDirectory[MAX_PATH + 1];//with end slash
     WCHAR                   szTempDirectory[MAX_PATH + 1]; //with end slash
     WCHAR                   szOptionalParameter[MAX_PATH + 1]; //limited to MAX_PATH

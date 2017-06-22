@@ -4,15 +4,18 @@
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     2.73
+*  VERSION:     2.74
 *
-*  DATE:        27 May 2017
+*  DATE:        11 June 2017
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
 *
 *  For description please visit original URL
 *  https://tyranidslair.blogspot.ru/2017/05/exploiting-environment-variables-in.html
+*  https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-1.html
+*  https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-2.html
+*  https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-3.html
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -192,7 +195,7 @@ BOOL ucmTokenModification(
         tml.Label.Sid = pIntegritySid;
 
         Status = NtSetInformationToken(hDupToken, TokenIntegrityLevel, &tml,
-            sizeof(TOKEN_MANDATORY_LABEL) + RtlLengthSid(pIntegritySid));
+            (ULONG)(sizeof(TOKEN_MANDATORY_LABEL) + RtlLengthSid(pIntegritySid)));
         if (!NT_SUCCESS(Status)) {
 #ifdef _INT_DEBUG
             supDebugPrint(

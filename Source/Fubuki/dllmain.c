@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.71
+*  VERSION:     2.74
 *
-*  DATE:        07 May 2017
+*  DATE:        20 June 2017
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -84,13 +84,13 @@ void ucmShowProcessIntegrityLevel(
 )
 {
     NTSTATUS status;
-    HANDLE hToken;
+    HANDLE hToken = NULL;
 
-    ULONG LengthNeeded;
+    ULONG LengthNeeded = 0;
 
     PTOKEN_MANDATORY_LABEL pTIL = NULL;
     DWORD dwIntegrityLevel;
-    WCHAR *t = NULL;
+    LPWSTR lpText = NULL;
     WCHAR szBuffer[MAX_PATH + 1];
 
     status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_QUERY, &hToken);
@@ -109,25 +109,25 @@ void ucmShowProcessIntegrityLevel(
 
                     if (dwIntegrityLevel == SECURITY_MANDATORY_LOW_RID)
                     {
-                        t = L"Low Process";
+                        lpText = L"Low Process";
                     }
                     else if (dwIntegrityLevel >= SECURITY_MANDATORY_MEDIUM_RID &&
                         dwIntegrityLevel < SECURITY_MANDATORY_HIGH_RID)
                     {
-                        t = L"Medium Process";
+                        lpText = L"Medium Process";
                     }
                     else if (dwIntegrityLevel == SECURITY_MANDATORY_HIGH_RID)
                     {
-                        t = L"High Integrity Process";
+                        lpText = L"High Integrity Process";
                     }
                     else if (dwIntegrityLevel == SECURITY_MANDATORY_SYSTEM_RID)
                     {
-                        t = L"System Integrity Process";
+                        lpText = L"System Integrity Process";
                     }
 
                     RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
                     wsprintf(szBuffer, L"PID=%lu, IntegrityLevel=%ws",
-                        GetCurrentProcessId(), t);
+                        GetCurrentProcessId(), lpText);
 
                 }
                 LocalFree(pTIL);
@@ -135,7 +135,12 @@ void ucmShowProcessIntegrityLevel(
         }
         NtClose(hToken);
     }
-    if (t) MessageBox(GetDesktopWindow(), szBuffer, GetCommandLineW(), MB_ICONINFORMATION);
+    if (lpText) {
+        MessageBox(GetDesktopWindow(),
+            szBuffer,
+            GetCommandLine(),
+            MB_ICONINFORMATION);
+    }
 }
 
 /*
@@ -245,6 +250,7 @@ VOID DefaultPayload(
         RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
         RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
         startupInfo.cb = sizeof(startupInfo);
+        //GetStartupInfo(&startupInfo);
 
         RtlSecureZeroMemory(sysdir, sizeof(sysdir));
         cch = ExpandEnvironmentStrings(TEXT("%systemroot%\\system32\\"), sysdir, MAX_PATH);

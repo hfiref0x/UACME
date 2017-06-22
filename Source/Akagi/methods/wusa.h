@@ -1,14 +1,14 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2017
 *
-*  TITLE:       PITOU.H
+*  TITLE:       WUSA.H
 *
 *  VERSION:     2.74
 *
-*  DATE:        10 June 2017
+*  DATE:        20 June 2017
 *
-*  Prototypes and definitions for Leo Davidson method.
+*  Prototypes and definitions for Windows Update Standalone Installer (WUSA) based methods.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -18,11 +18,13 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmStandardAutoElevation(
-    UCM_METHOD Method,
-    CONST PVOID ProxyDll,
-    DWORD ProxyDllSize);
+BOOL ucmWusaExtractPackage(
+    _In_ LPWSTR lpTargetDirectory);
 
-BOOL ucmStandardAutoElevation2(
-    CONST PVOID ProxyDll,
-    DWORD ProxyDllSize);
+BOOL ucmCreateCabinetForSingleFile(
+    _In_ LPWSTR lpSourceDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
+
+BOOL ucmWusaExtractViaJunction(
+    _In_ LPWSTR lpTargetDirectory);

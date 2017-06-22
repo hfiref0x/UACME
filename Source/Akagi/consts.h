@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.72
+*  VERSION:     2.74
 *
-*  DATE:        26 May 2017
+*  DATE:        20 June 2017
 *
 *  Global consts definition file.
 *
@@ -24,6 +24,7 @@
 #define T_UACKEY                    L"MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system"
 
 #define T_APP_PATH                  L"Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\"
+#define T_DOTNET_CLIENT             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\KnownFunctionTableDlls"
 #define T_EXEFILE_SHELL             L"Software\\Classes\\exefile\\shell\\runas\\command"
 #define T_MSSETTINGS                L"Software\\Classes\\ms-settings"
 #define T_SHELL_OPEN_COMMAND        L"\\shell\\open\\command"
@@ -56,6 +57,7 @@
 #define DISMCORE_DLL                L"dismcore.dll"
 #define DUSER_DLL                   L"duser.dll"
 #define ELSEXT_DLL                  L"elsext.dll"
+#define GDIPLUS_DLL                 L"GdiPlus.dll"
 #define HIBIKI_DLL                  L"Hibiki.dll"
 #define KERNEL32_DLL                L"kernel32.dll"
 #define LOGPROVIDER_DLL             L"LogProvider.dll"
@@ -80,6 +82,7 @@
 #define CONSENT_EXE                 L"consent.exe"
 #define CONTROL_EXE                 L"control.exe"
 #define CREDWIZ_EXE                 L"credwiz.exe"
+#define DCOMCNFG_EXE                L"dcomcnfg.exe"
 #define EVENTVWR_EXE                L"eventvwr.exe"
 #define EXPLORER_EXE                L"explorer.exe"
 #define FODHELPER_EXE               L"fodhelper.exe"

