@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.74
+*  VERSION:     2.75
 *
-*  DATE:        20 June 2017
+*  DATE:        30 June 2017
 *
 *  Global consts definition file.
 *
@@ -83,6 +83,7 @@
 #define CONTROL_EXE                 L"control.exe"
 #define CREDWIZ_EXE                 L"credwiz.exe"
 #define DCOMCNFG_EXE                L"dcomcnfg.exe"
+#define DCCW_EXE                    L"dccw.exe"
 #define EVENTVWR_EXE                L"eventvwr.exe"
 #define EXPLORER_EXE                L"explorer.exe"
 #define FODHELPER_EXE               L"fodhelper.exe"
@@ -129,6 +130,7 @@
 #define FAKE_LOCAL_SXS              L".hawawa"
 #define INETMGR_SXS                 L"microsoft-windows-iis-managementconsole"
 #define COMCTL32_SXS                L"microsoft.windows.common-controls"
+#define GDIPLUS_SXS                 L"microsoft.windows.gdiplus"
 
 #define APPCMDLINE                  L"Not a security boundary! Just hack-o-rama. Keep it as is!"
 #define PROGRAMTITLE                L"UACMe"

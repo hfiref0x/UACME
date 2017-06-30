@@ -4,9 +4,9 @@
 *
 *  TITLE:       WUSA.C
 *
-*  VERSION:     2.74
+*  VERSION:     2.75
 *
-*  DATE:        20 June 2017
+*  DATE:        30 June 2017
 *
 *  Windows Update Standalone Installer (WUSA) based routines.
 *
@@ -75,7 +75,8 @@ BOOL ucmWusaExtractPackage(
 BOOL ucmCreateCabinetForSingleFile(
     _In_ LPWSTR lpSourceDll,
     _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize
+    _In_ DWORD ProxyDllSize,
+    _In_opt_ LPWSTR lpInternalName
 )
 {
     BOOL     cond = FALSE, bResult = FALSE;
@@ -103,14 +104,41 @@ BOOL ucmCreateCabinetForSingleFile(
         if (Cabinet == NULL)
             break;
 
-        lpFileName = _filename(lpSourceDll);
+        if (lpInternalName == NULL) {
+            lpFileName = _filename(lpSourceDll);
+        }
+        else {
+            lpFileName = lpInternalName;
+        }
+
         //put file without compression
         bResult = cabAddFile(Cabinet, lpSourceDll, lpFileName);
-        cabClose(Cabinet);
+        cabClose(Cabinet);       
 
     } while (cond);
 
+    DeleteFile(lpSourceDll);
+
     return bResult;
+}
+
+/*
+* ucmWusaCabinetCleanup
+*
+* Purpose:
+*
+* Remove fake msu file.
+*
+*/
+VOID ucmWusaCabinetCleanup(
+    VOID)
+{
+    WCHAR    szMsuFileName[MAX_PATH * 2];
+
+    RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
+    _strcpy(szMsuFileName, g_ctx.szTempDirectory);
+    _strcat(szMsuFileName, ELLOCNAK_MSU);
+    DeleteFile(szMsuFileName);
 }
 
 volatile ULONG g_ThreadFinished = 0;
@@ -156,8 +184,9 @@ DWORD ucmxInvokeWusaThread(
             TerminateProcess(shinfo.hProcess, 0);
 
         CloseHandle(shinfo.hProcess);
-        InterlockedExchange((LONG*)&g_ThreadFinished, 1);
     }
+    Sleep(1000);
+    InterlockedExchange((LONG*)&g_ThreadFinished, 1);
     return 0;
 }
 
@@ -402,7 +431,7 @@ BOOL ucmWusaExtractViaJunction(
         //
         hWusaThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ucmxInvokeWusaThread, NULL, 0, &ti);
         if (hWusaThread) {
-            if (WaitForSingleObject(hWusaThread, 5000) == WAIT_TIMEOUT)
+            if (WaitForSingleObject(hWusaThread, 15000) == WAIT_TIMEOUT)
                 TerminateThread(hWusaThread, 0);
 
             CloseHandle(hWusaThread);

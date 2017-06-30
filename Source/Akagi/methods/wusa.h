@@ -4,9 +4,9 @@
 *
 *  TITLE:       WUSA.H
 *
-*  VERSION:     2.74
+*  VERSION:     2.75
 *
-*  DATE:        20 June 2017
+*  DATE:        30 June 2017
 *
 *  Prototypes and definitions for Windows Update Standalone Installer (WUSA) based methods.
 *
@@ -24,7 +24,11 @@ BOOL ucmWusaExtractPackage(
 BOOL ucmCreateCabinetForSingleFile(
     _In_ LPWSTR lpSourceDll,
     _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize);
+    _In_ DWORD ProxyDllSize,
+    _In_opt_ LPWSTR lpInternalName);
+
+VOID ucmWusaCabinetCleanup(
+    VOID);
 
 BOOL ucmWusaExtractViaJunction(
     _In_ LPWSTR lpTargetDirectory);

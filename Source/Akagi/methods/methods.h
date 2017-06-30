@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     2.74
+*  VERSION:     2.75
 *
-*  DATE:        20 June 2017
+*  DATE:        30 June 2017
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -56,6 +56,7 @@ typedef enum _UCM_METHOD {
     UacMethodTyranid,       //+
     UacMethodTokenMod,      //+
     UacMethodJunction,      //+
+    UacMethodSXSDccw,       //+
     UacMethodMax
 } UCM_METHOD;
 

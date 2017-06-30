@@ -172,16 +172,16 @@ Keys (watch debug output with dbgview or similar for more info):
      * Target(s): \system32\mmc.exe, Rsop.msc
      * Component(s): WbemComn.dll
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 RS3 (16232)
+        * How: Target requires wbemcomn.dll to be signed by MS
 21. Author: Leo Davidson derivative
      * Type: Dll Hijack
      * Method: IFileOperation, SxS DotLocal
      * Target(s): \system32\sysprep\sysprep.exe
      * Component(s): comctl32.dll
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 RS3 (16232)
+        * How: sysprep.exe requires MS signed modules to load
 22. Author: Leo Davidson derivative
      * Type: Dll Hijack
      * Method: IFileOperation, SxS DotLocal
@@ -302,6 +302,14 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: NTFS reparse point & Dll Hijack
      * Target(s): wusa.exe
      * Component(s): dcomcnfg.exe, mmc.exe, ole32.dll, MsCoree.dll
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+37. Author: Ernesto Fernandez, Thomas Vanhoutte
+     * Type: Dll Hijack
+     * Method: SxS DotLocal, NTFS reparse point, Dll Hijack
+     * Target(s): \system32\dccw.exe
+     * Component(s): GdiPlus.dll
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -

