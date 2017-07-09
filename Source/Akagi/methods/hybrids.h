@@ -104,3 +104,7 @@ BOOL ucmJunctionMethod(
 BOOL ucmSXSMethodDccw(
     PVOID ProxyDll,
     DWORD ProxyDllSize);
+
+BOOL Test2(
+    _In_opt_ PVOID PayloadCode,
+    _In_opt_ ULONG PayloadSize);

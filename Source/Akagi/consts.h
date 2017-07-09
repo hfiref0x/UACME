@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.75
 *
-*  DATE:        30 June 2017
+*  DATE:        09 July 2017
 *
 *  Global consts definition file.
 *

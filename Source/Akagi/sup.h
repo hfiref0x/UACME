@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.74
+*  VERSION:     2.76
 *
-*  DATE:        11 June 2017
+*  DATE:        01 July 2017
 *
 *  Common header file for the program support routines.
 *
@@ -172,5 +172,16 @@ BOOL supSetMountPoint(
 
 BOOL supDeleteMountPoint(
     _In_ HANDLE hDirectory);
+
+BOOL supDeleteSymlink(
+    _In_ HANDLE hDirectory);
+
+BOOL supSetSymlink(
+    _In_ HANDLE hDirectory,
+    _In_ LPWSTR lpTarget,
+    _In_ LPWSTR lpPrintName);
+
+HANDLE supOpenDirectoryForReparse(
+    _In_ LPWSTR lpDirectory);
 
 #define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)

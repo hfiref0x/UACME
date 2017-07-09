@@ -162,7 +162,7 @@ DWORD ucmDiskCleanupWorkerThread(
 
         InitializeObjectAttributes(&ObjectAttributes, &usName, OBJ_CASE_INSENSITIVE, 0, NULL);
 
-        status = NtCreateFile(&hDirectory, 
+        status = NtCreateFile(&hDirectory,
             FILE_LIST_DIRECTORY | SYNCHRONIZE,
             &ObjectAttributes,
             &IoStatusBlock,
@@ -461,6 +461,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
     PVOID   OldValue;
 #endif
     LPWSTR  lpBuffer = NULL;
+    LPWSTR  lpTargetValue = NULL;
     HKEY    hKey = NULL;
 
     WCHAR szBuffer[MAX_PATH + 1];
@@ -494,19 +495,29 @@ BOOL ucmSdcltIsolatedCommandMethod(
             break;
 
         //
-        // Save old value if exist.
+        // There is a fix of original concept in 16237 RS3.
+        // Bypass it.
         //
-        cbOldData = MAX_PATH * 2;
-        lResult = RegQueryValueEx(hKey, T_ISOLATEDCOMMAND, 0, NULL,
-            (BYTE*)szOldValue, &cbOldData);
-        if (lResult == ERROR_SUCCESS)
-            bExist = TRUE;
+        if (g_ctx.dwBuildNumber >= 16237)
+            lpTargetValue = TEXT("");
+        else {
+            lpTargetValue = T_ISOLATEDCOMMAND;
+
+            //
+            // Save old value if exist.
+            //
+            cbOldData = MAX_PATH * 2;
+            lResult = RegQueryValueEx(hKey, lpTargetValue, 0, NULL,
+                (BYTE*)szOldValue, &cbOldData);
+            if (lResult == ERROR_SUCCESS)
+                bExist = TRUE;
+        }
 
         cbData = (DWORD)((1 + sz) * sizeof(WCHAR));
 
         lResult = RegSetValueEx(
             hKey,
-            T_ISOLATEDCOMMAND,
+            lpTargetValue,
             0, REG_SZ,
             (BYTE*)lpBuffer,
             cbData);
@@ -519,13 +530,13 @@ BOOL ucmSdcltIsolatedCommandMethod(
                 //
                 // We created this value, remove it.
                 //
-                RegDeleteValue(hKey, T_ISOLATEDCOMMAND);
+                RegDeleteValue(hKey, lpTargetValue);
             }
             else {
                 //
                 // Value was before us, restore original.
                 //
-                RegSetValueEx(hKey, T_ISOLATEDCOMMAND, 0, REG_SZ,
+                RegSetValueEx(hKey, lpTargetValue, 0, REG_SZ,
                     (BYTE*)szOldValue, cbOldData);
             }
         }
