@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.74
+*  VERSION:     2.76
 *
-*  DATE:        10 June 2017
+*  DATE:        12 July 2017
 *
 *  Common header file for the program support routines.
 *
@@ -48,12 +48,14 @@
 #define HIBIKI_ID IDR_HIBIKI64
 #define IKAZUCHI_ID IDR_IKAZUCHI64
 #define AKATSUKI_ID IDR_AKATSUKI64
+#define KAMIKAZE_ID IDR_KAMIKAZE
 #else
 #include "bin32res.h"
 #define FUBUKI_ID IDR_FUBUKI32
 #define HIBIKI_ID IDR_HIBIKI32
 #define IKAZUCHI_ID IDR_IKAZUCHI32
 #define AKATSUKI_ID PAYLOAD_ID_NONE //this module unavailable for 32 bit
+#define KAMIKAZE_ID IDR_KAMIKAZE
 #endif
 
 #include <Windows.h>
@@ -68,6 +70,8 @@
 #include "consts.h"
 #include "compress.h"
 #include "sup.h"
+#include "aic.h"
+#include "minhook\MinHook.h"
 #include "methods\methods.h"
 #include "windefend.h"
 

@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.75
+*  VERSION:     2.76
 *
-*  DATE:        09 July 2017
+*  DATE:        12 July 2017
 *
 *  Global consts definition file.
 *
@@ -75,6 +75,7 @@
 #define UNBCL_DLL                   L"unbcl.dll"
 #define WBEMCOMN_DLL                L"wbemcomn.dll"
 #define WDSCORE_DLL                 L"wdscore.dll"
+#define WINDOWS_STORAGE_DLL         L"windows.storage.dll"
 #define WOW64LOG_DLL                L"wow64log.dll"
 #define CMD_EXE                     L"cmd.exe"
 #define CLICONFG_EXE                L"cliconfg.exe"
@@ -87,6 +88,7 @@
 #define EVENTVWR_EXE                L"eventvwr.exe"
 #define EXPLORER_EXE                L"explorer.exe"
 #define FODHELPER_EXE               L"fodhelper.exe"
+#define FUBUKI_EXE                  L"Fubuki.exe"
 #define INETMGR_EXE                 L"InetMgr.exe"
 #define INFDEFAULTINSTALL_EXE       L"InfDefaultInstall.exe"
 #define ISCSICLI_EXE                L"iscsicli.exe"
@@ -112,6 +114,7 @@
 #define MANAGE_VERB                 L"Manage"
 #define RUNAS_VERB                  L"runas"
 #define EVENTVWR_MSC                L"eventvwr.msc"
+#define KAMIKAZE_MSC                L"kmkze.msc"
 #define RSOP_MSC                    L"rsop.msc"
 #define PACKAGE_XML                 L"ellocnak.xml"
 #define PACKAGE_INF                 L"ellocnak.inf"

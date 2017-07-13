@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.74
+*  VERSION:     2.76
 *
-*  DATE:        20 June 2017
+*  DATE:        12 July 2017
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -454,7 +454,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
 )
 {
     BOOL    bResult = FALSE, bCond = FALSE, bExist = FALSE;
-    DWORD   cbData, cbOldData;
+    DWORD   cbData, cbOldData = 0;
     SIZE_T  sz = 0;
     LRESULT lResult;
 #ifndef _WIN64

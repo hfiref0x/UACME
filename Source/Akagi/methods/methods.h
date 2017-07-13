@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     2.75
+*  VERSION:     2.76
 *
-*  DATE:        30 June 2017
+*  DATE:        12 July 2017
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -57,6 +57,7 @@ typedef enum _UCM_METHOD {
     UacMethodTokenMod,      //+
     UacMethodJunction,      //+
     UacMethodSXSDccw,       //+
+    UacMethodHakril,        //+
     UacMethodMax
 } UCM_METHOD;
 
@@ -83,27 +84,28 @@ typedef BOOL(CALLBACK *PUCM_API_ROUTINE)(
 typedef struct _UCM_API_DISPATCH_ENTRY {
     PUCM_API_ROUTINE Routine;
     PVOID ExtraContext;
-    UCM_METHOD_AVAILABILITY Availablity;
+    UCM_METHOD_AVAILABILITY Availability;
     ULONG PayloadResourceId;
     BOOL Win32OrWow64Required;
     BOOL DisallowWow64;
     BOOL SetParameterInRegistry;
 } UCM_API_DISPATCH_ENTRY, *PUCM_API_DISPATCH_ENTRY;
 
-#include "comfileop.h"
-#include "wusa.h"
-#include "pitou.h"
-#include "simda.h"
-#include "explife.h"
-#include "carberp.h"
-#include "hybrids.h"
-#include "comet.h"
-#include "enigma0x3.h"
-#include "sandworm.h"
-#include "sirefef.h"
-#include "tests\test.h"
 #include "apphelp.h"
+#include "carberp.h"
+#include "comet.h"
+#include "comfileop.h"
+#include "enigma0x3.h"
+#include "explife.h"
 #include "gootkit.h"
+#include "hakril.h"
+#include "hybrids.h"
+#include "pitou.h"
+#include "sandworm.h"
+#include "simda.h"
+#include "sirefef.h"
+#include "wusa.h"
+#include "tests\test.h"
 #include "tyranid.h"
 
 BOOL MethodsManagerCall(

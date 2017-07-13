@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.74
+*  VERSION:     2.76
 *
-*  DATE:        20 June 2017
+*  DATE:        12 July 2017
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -394,3 +394,18 @@ BOOL WINAPI DllMain(
 
     return TRUE;
 }
+
+/*
+* EntryPoint
+*
+* Purpose:
+*
+* Entry point to be used in exe mode.
+*
+*/
+VOID WINAPI EntryPoint(
+    VOID)
+{
+    DefaultPayload();
+}
+

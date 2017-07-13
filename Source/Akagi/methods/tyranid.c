@@ -4,9 +4,9 @@
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     2.74
+*  VERSION:     2.76
 *
-*  DATE:        11 June 2017
+*  DATE:        12 July 2017
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -300,7 +300,10 @@ BOOL ucmTokenModification(
     if (hProcessToken) NtClose(hProcessToken);
     if (hDupToken) NtClose(hDupToken);
     if (hLuaToken) NtClose(hLuaToken);
-    if (shinfo.hProcess) NtClose(shinfo.hProcess);
+    if (shinfo.hProcess) {
+        NtTerminateProcess(shinfo.hProcess, STATUS_SUCCESS);
+        NtClose(shinfo.hProcess);
+    }
     if (pIntegritySid) RtlFreeSid(pIntegritySid);
 
     RtlSetLastWin32Error(RtlNtStatusToDosError(Status));

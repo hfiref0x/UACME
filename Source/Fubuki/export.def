@@ -2,6 +2,7 @@ EXPORTS
 DllRegisterServer           = DummyFunc PRIVATE
 _FubukiProc1                = UiAccessMethodDllMain
 _FubukiProc2                = UiAccessMethodHookProc
+_FubukiProc3                = EntryPoint
 ConstructPartialMsgVW       = DummyFunc
 CurrentIP                   = DummyFunc
 WdsAbortBlackboard          = DummyFunc
@@ -59,7 +60,6 @@ InitCommonControlsEx        = DummyFunc
 InitializeOSKSupport        = DummyFunc
 UninitializeOSKSupport      = DummyFunc
 InvalidateGadget            = DummyFunc
-
 GdipAlloc                   = DummyFunc
 GdipCloneImage              = DummyFunc
 GdipCreateBitmapFromStream  = DummyFunc

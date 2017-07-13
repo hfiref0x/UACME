@@ -45,7 +45,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Component(s): -
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TP (> 9600)
-      * How: Sbdinst.exe autoelevation removed, KB3045645/KB3048097 for rest Windows versions
+      * How: Sdbinst.exe autoelevation removed, KB3045645/KB3048097 for rest Windows versions
 5. Author: WinNT/Simda
    * Type: Elevated COM interface
    * Method: ISecurityEditor
@@ -101,7 +101,7 @@ Keys (watch debug output with dbgview or similar for more info):
       * Component(s): Attacker prepared shellcode
       * Works from: Windows 7 (7600)
       * Fixed in: Windows 8.1 (9600)
-         * How: Sbdinst.exe autoelevation removed, KB3045645/KB3048097 for rest Windows versions
+         * How: Sdbinst.exe autoelevation removed, KB3045645/KB3048097 for rest Windows versions
 12. Author: Leo Davidson derivative
       * Type: Dll Hijack
       * Method: IFileOperation
@@ -307,9 +307,17 @@ Keys (watch debug output with dbgview or similar for more info):
         * How: -
 37. Author: Ernesto Fernandez, Thomas Vanhoutte
      * Type: Dll Hijack
-     * Method: SxS DotLocal, NTFS reparse point, Dll Hijack
+     * Method: SxS DotLocal, NTFS reparse point
      * Target(s): \system32\dccw.exe
      * Component(s): GdiPlus.dll
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+38. Author: Clement Rouault
+     * Type: Whitelisted component
+     * Method: APPINFO command line spoofing
+     * Target(s): \system32\mmc.exe
+     * Component(s): Attacker defined components
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -317,7 +325,7 @@ Keys (watch debug output with dbgview or similar for more info):
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;
 * Method (11) implemented in x86-32 version;
-* Method (13) (19) implemented only in x64 version;
+* Method (13) (19) (35) implemented only in x64 version;
 * Method (14) require process injection, wow64 unsupported, use x64 version of this tool;
 * Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone;
 * Method (30) require x64 because it abuses WOW64 subsystem feature;
@@ -381,3 +389,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 # Authors
 
 (c) 2014 - 2017 UACMe Project
+
+# 3rd party components usage
+
+MinHook - The Minimalistic x86/x64 API Hooking Library for Windows, https://github.com/TsudaKageyu/minhook

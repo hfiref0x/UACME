@@ -2,11 +2,13 @@
 *
 *  (C) COPYRIGHT AUTHORS, 2017
 *
-*  TITLE:       TEST.C
+*  TITLE:       HAKRIL.H
 *
 *  VERSION:     2.76
 *
 *  DATE:        12 July 2017
+*
+*  Prototypes and definitions for hakril method.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -14,14 +16,20 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
-#include "global.h"
+#pragma once
 
-BOOL ucmTestRoutine(
-    _In_opt_ PVOID PayloadCode,
-    _In_opt_ ULONG PayloadSize)
-{
-    UNREFERENCED_PARAMETER(PayloadCode);
-    UNREFERENCED_PARAMETER(PayloadSize);
+typedef ULONG_PTR (WINAPI *pfnAipFindLaunchAdminProcess)(
+    LPWSTR lpApplicationName,
+    LPWSTR lpParameters,
+    DWORD UacRequestFlag,
+    DWORD dwCreationFlags,
+    LPWSTR lpCurrentDirectory,
+    HWND hWnd,
+    PVOID StartupInfo,
+    PVOID ProcessInfo,
+    ELEVATION_REASON *ElevationReason
+    );
 
-    return TRUE;
-}
+BOOL ucmMethodHakril(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize);

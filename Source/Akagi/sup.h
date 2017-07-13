@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.76
 *
-*  DATE:        01 July 2017
+*  DATE:        12 July 2017
 *
 *  Common header file for the program support routines.
 *
@@ -141,6 +141,12 @@ VOID NTAPI sxsFindDllCallback(
     _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
     _In_ PVOID Context,
     _In_ OUT BOOLEAN *StopEnumeration);
+
+PVOID supFindPattern(
+    CONST PBYTE Buffer,
+    SIZE_T BufferSize,
+    CONST PBYTE Pattern,
+    SIZE_T PatternSize);
 
 PVOID supNativeGetProcAddress(
     WCHAR *Module,

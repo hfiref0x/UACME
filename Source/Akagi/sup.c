@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.76
 *
-*  DATE:        01 July 2017
+*  DATE:        12 July 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -961,6 +961,43 @@ VOID NTAPI sxsFindDllCallback(
     } while (bCond);
 
     *StopEnumeration = bFound;
+}
+
+/*
+* supFindPattern
+*
+* Purpose:
+*
+* Lookup pattern in buffer.
+*
+*/
+PVOID supFindPattern(
+    CONST PBYTE Buffer,
+    SIZE_T BufferSize,
+    CONST PBYTE Pattern,
+    SIZE_T PatternSize
+)
+{
+    PBYTE	p = Buffer;
+
+    if (PatternSize == 0)
+        return NULL;
+    if (BufferSize < PatternSize)
+        return NULL;
+    BufferSize -= PatternSize;
+
+    do {
+        p = memchr(p, Pattern[0], BufferSize - (p - Buffer));
+        if (p == NULL)
+            break;
+
+        if (memcmp(p, Pattern, PatternSize) == 0)
+            return p;
+
+        p++;
+    } while (BufferSize - (p - Buffer) > 0); //-V555
+
+    return NULL;
 }
 
 /*

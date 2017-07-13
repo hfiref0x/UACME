@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.73
+*  VERSION:     2.76
 *
-*  DATE:        08 June 2017
+*  DATE:        13 June 2017
 *
 *  Program entry point.
 *
@@ -182,7 +182,8 @@ UINT ucmInit(
         }
 
         //query basic directories
-        supExpandEnvironmentStrings(L"%systemroot%\\system32\\", g_ctx.szSystemDirectory, MAX_PATH);
+        _strcpy(g_ctx.szSystemDirectory, USER_SHARED_DATA->NtSystemRoot);
+        _strcat(g_ctx.szSystemDirectory, TEXT("\\system32\\"));
         supExpandEnvironmentStrings(L"%temp%\\", g_ctx.szTempDirectory, MAX_PATH);
 
         //query build number
