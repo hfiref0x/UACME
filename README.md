@@ -329,7 +329,8 @@ Note:
 * Method (14) require process injection, wow64 unsupported, use x64 version of this tool;
 * Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone;
 * Method (30) require x64 because it abuses WOW64 subsystem feature;
-* Method (35) AlwaysNotify compatible as there always will be running autoelevated apps or user will have to launch them anyway.
+* Method (35) AlwaysNotify compatible as there always will be running autoelevated apps or user will have to launch them anyway;
+* Method (38) require internet connection as it executes remote script located at github.com/hfiref0x/Beacon/blob/master/uac/exec.html.
 
 Run examples:
 * akagi32.exe 1
