@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     2.75
+*  VERSION:     2.77
 *
-*  DATE:        30 June 2017
+*  DATE:        21 July 2017
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -105,6 +105,6 @@ BOOL ucmSXSMethodDccw(
     PVOID ProxyDll,
     DWORD ProxyDllSize);
 
-BOOL Test2(
-    _In_opt_ PVOID PayloadCode,
-    _In_opt_ ULONG PayloadSize);
+BOOL ucmMethodCorProfiler(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize);

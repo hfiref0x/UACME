@@ -33,3 +33,4 @@ typedef ULONG_PTR (WINAPI *pfnAipFindLaunchAdminProcess)(
 BOOL ucmMethodHakril(
     PVOID ProxyDll,
     DWORD ProxyDllSize);
+

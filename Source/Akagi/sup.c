@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.76
+*  VERSION:     2.77
 *
-*  DATE:        12 July 2017
+*  DATE:        21 July 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -1166,17 +1166,13 @@ BOOL supSetEnvVariable(
             break;
 
         if (fRemove) {
-            RegDeleteValue(hKey, lpVariableName);
+            bResult = (RegDeleteValue(hKey, lpVariableName) == ERROR_SUCCESS);
         }
         else {
             cbData = (DWORD)((1 + _strlen(lpVariableData)) * sizeof(WCHAR));
-            if (RegSetValueEx(hKey, lpVariableName, 0, REG_SZ,
-                (BYTE*)lpVariableData, cbData) != ERROR_SUCCESS)
-            {
-                break;
-            }
+            bResult = (RegSetValueEx(hKey, lpVariableName, 0, REG_SZ,
+                (BYTE*)lpVariableData, cbData) == ERROR_SUCCESS);
         }
-        bResult = TRUE;
 
     } while (bCond);
 

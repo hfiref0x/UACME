@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.76
+*  VERSION:     2.77
 *
-*  DATE:        12 July 2017
+*  DATE:        21 July 2017
 *
 *  Global consts definition file.
 *
@@ -143,6 +143,10 @@
 #define T_AKAGI_KEY                 L"Software\\Akagi"
 #define T_AKAGI_PARAM               L"LoveLetter"
 #define T_AKAGI_FLAG                L"Flag"
+
+#define COR_PROFILER                L"COR_PROFILER"
+#define COR_PROFILER_PATH           L"COR_PROFILER_PATH"
+#define COR_ENABLE_PROFILING        L"COR_ENABLE_PROFILING"
 
 //
 //COM objects elevation.

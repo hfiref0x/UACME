@@ -321,6 +321,14 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
+39. Author: Stefan Kanthak
+     * Type: Dll Hijack
+     * Method: .NET Code Profiler
+     * Target(s): \system32\mmc.exe
+     * Component(s): Attacker defined components
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;
