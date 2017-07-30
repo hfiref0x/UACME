@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.77
+*  VERSION:     2.78
 *
-*  DATE:        21 July 2017
+*  DATE:        30 July 2017
 *
 *  Global consts definition file.
 *
@@ -125,7 +125,7 @@
 #define KONGOU_CD                   L"Kongou32.cd"
 #endif
 
-#define MYSTERIOSCUTETHING          L"pe386"
+#define MYSTERIOUSCUTETHING         L"pe386"
 
 #define T_DEFAULT_CMD               L"%systemroot%\\system32\\cmd.exe"
 
@@ -157,3 +157,19 @@
 
 #define T_IID_ISecurityEditor                L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}"
 #define T_IID_IARPUninstallStringLauncher    L"{F885120E-3789-4FD9-865E-DC9B4A6412D2}"
+
+//
+//COM Handlers hijack
+//
+#define T_CLSID_EVENTVWR_BYPASSS             L"{0A29FF9E-7F9C-4437-8B11-F424491E3931}"
+
+
+#define T_REG_SOFTWARECLASSESCLSID      L"Software\\Classes\\CLSID\\"
+#define T_REG_INPROCSERVER32            L"\\InProcServer32"
+#define T_REG_SHELLFOLDER               L"\\ShellFolder"
+
+#define T_THREADINGMODEL            L"ThreadingModel"
+#define T_APARTMENT                 L"Apartment"
+#define T_LOADWITHOUTCOM            L"LoadWithoutCOM"
+#define T_HIDEONDESKTOPPERUSER      L"HideOnDesktopPerUser"
+#define T_ATTRIBUTES                L"Attributes"

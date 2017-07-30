@@ -3,7 +3,7 @@
 
 # System Requirements
 
-* x86-32/x64 Windows 7/8/8.1/10TH1/10TH2/10RS1/10RS2 (client, some methods however works on server version too).
+* x86-32/x64 Windows 7/8/8.1/10(TH1/TH2/RS1/RS2/RS3/RS4) (client, some methods however works on server version too).
 * Admin account with UAC set on default settings required.
 
 # Usage
@@ -325,6 +325,14 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: Dll Hijack
      * Method: .NET Code Profiler
      * Target(s): \system32\mmc.exe
+     * Component(s): Attacker defined components
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+40. Author: Ruben Boonen
+     * Type: COM Handler hijack
+     * Method: Registry key manipulation
+     * Target(s): \system32\mmc.exe, \System32\recdisc.exe
      * Component(s): Attacker defined components
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:

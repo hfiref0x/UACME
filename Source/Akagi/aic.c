@@ -96,6 +96,7 @@ ULONG_PTR AipFindLaunchAdminProcess(
     case 16199:
     case 16237:
     case 16241:
+    case 16251:
         Pattern = LaunchAdminProcessSignature_15063_16237;
         PatternSize = sizeof(LaunchAdminProcessSignature_15063_16237);
         ScanModule = WINDOWS_STORAGE_DLL;
