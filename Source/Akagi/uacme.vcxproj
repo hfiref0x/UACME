@@ -386,6 +386,7 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="makecab.c" />
     <ClCompile Include="compress.c" />
+    <ClCompile Include="methods\api0cradle.c" />
     <ClCompile Include="methods\b33f.c" />
     <ClCompile Include="methods\carberp.c" />
     <ClCompile Include="methods\comet.c" />
@@ -421,6 +422,7 @@
     <ClInclude Include="global.h" />
     <ClInclude Include="makecab.h" />
     <ClInclude Include="manifest.h" />
+    <ClInclude Include="methods\api0cradle.h" />
     <ClInclude Include="methods\apphelp.h" />
     <ClInclude Include="methods\b33f.h" />
     <ClInclude Include="methods\carberp.h" />

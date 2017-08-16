@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.78
+*  VERSION:     2.79
 *
-*  DATE:        30 July 2017
+*  DATE:        16 Aug 2017
 *
 *  Global consts definition file.
 *
@@ -151,10 +151,12 @@
 //
 //COM objects elevation.
 //
+#define T_CLSID_CMSTPLUA                     L"{3E5FC7F9-9A51-4367-9063-A120244FBEC7}"
 #define T_CLSID_FileOperation                L"{3AD05575-8857-4850-9277-11B85BDB8E09}"
 #define T_CLSID_ShellSecurityEditor          L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}"
 #define T_CLSID_UninstallStringLauncher      L"{FCC74B77-EC3E-4DD8-A80B-008A702075A9}"
 
+#define T_IID_ICMLuaUtil                     L"{6EDD6D74-C007-4E75-B76A-E5740995E24C}"
 #define T_IID_ISecurityEditor                L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}"
 #define T_IID_IARPUninstallStringLauncher    L"{F885120E-3789-4FD9-865E-DC9B4A6412D2}"
 
@@ -162,7 +164,6 @@
 //COM Handlers hijack
 //
 #define T_CLSID_EVENTVWR_BYPASSS             L"{0A29FF9E-7F9C-4437-8B11-F424491E3931}"
-
 
 #define T_REG_SOFTWARECLASSESCLSID      L"Software\\Classes\\CLSID\\"
 #define T_REG_INPROCSERVER32            L"\\InProcServer32"

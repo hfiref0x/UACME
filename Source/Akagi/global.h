@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.76
+*  VERSION:     2.79
 *
-*  DATE:        12 July 2017
+*  DATE:        16 Aug 2017
 *
 *  Common header file for the program support routines.
 *

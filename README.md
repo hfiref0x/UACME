@@ -337,6 +337,14 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
+41. Author: Oddvar Moe
+     * Type: Elevated COM interface
+     * Method: ICMLuaUtil
+     * Target(s): Attacker defined
+     * Component(s): Attacker defined
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;
@@ -402,6 +410,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
    1. https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-1.html
    2. https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-2.html
    3. https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-3.html 
+* Research on CMSTP.exe, https://msitpros.com/?p=3960
 
 # Authors
 

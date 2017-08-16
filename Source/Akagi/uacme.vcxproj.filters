@@ -168,6 +168,9 @@
     <ClCompile Include="methods\b33f.c">
       <Filter>Source Files\methods</Filter>
     </ClCompile>
+    <ClCompile Include="methods\api0cradle.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -285,6 +288,9 @@
       <Filter>Header Files\methods</Filter>
     </ClInclude>
     <ClInclude Include="methods\b33f.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\api0cradle.h">
       <Filter>Header Files\methods</Filter>
     </ClInclude>
   </ItemGroup>
