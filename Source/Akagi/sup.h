@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.76
+*  VERSION:     2.80
 *
-*  DATE:        12 July 2017
+*  DATE:        08 Sept 2017
 *
 *  Common header file for the program support routines.
 *
@@ -106,6 +106,9 @@ BOOL supSetParameter(
     LPWSTR lpParameter,
     DWORD cbParameter);
 
+BOOL supSaveAkagiParameters(
+    VOID);
+
 DWORD supCalculateCheckSumForMappedFile(
     _In_ PVOID BaseAddress,
     _In_ ULONG FileLength);
@@ -189,5 +192,20 @@ BOOL supSetSymlink(
 
 HANDLE supOpenDirectoryForReparse(
     _In_ LPWSTR lpDirectory);
+
+BOOL supSetupIPCLinkData(
+    VOID);
+
+BOOL supWinstationToName(
+    _In_opt_ HWINSTA hWinsta,
+    _In_ LPWSTR lpBuffer,
+    _In_ DWORD cbBuffer,
+    _Out_ PDWORD BytesNeeded);
+
+BOOL supDesktopToName(
+    _In_opt_ HDESK hDesktop,
+    _In_ LPWSTR lpBuffer,
+    _In_ DWORD cbBuffer,
+    _Out_ PDWORD BytesNeeded);
 
 #define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)

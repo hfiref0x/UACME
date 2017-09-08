@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.80
 *
-*  DATE:        25 Mar 2017
+*  DATE:        11 Aug 2017
 *
 *  Compression support.
 *
@@ -105,7 +105,7 @@ PUCHAR DecompressBufferLZNT1(
 
     if (status != STATUS_SUCCESS) { //accept only success value
         Size = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &UncompBuffer, &Size, MEM_RELEASE);       
+        NtFreeVirtualMemory(NtCurrentProcess(), &UncompBuffer, &Size, MEM_RELEASE);
         UncompBuffer = NULL;
     }
 
@@ -147,7 +147,7 @@ PVOID DecompressPayload(
                 MEM_COMMIT | MEM_RESERVE,
                 PAGE_READWRITE);
 
-            if ( (!NT_SUCCESS(status)) || (Data == NULL) ) 
+            if ((!NT_SUCCESS(status)) || (Data == NULL))
                 break;
 
             supCopyMemory(Data, (SIZE_T)CompressedBufferSize, CompressedBuffer, (SIZE_T)CompressedBufferSize);
@@ -387,7 +387,7 @@ BOOL ProcessFileDCS(
     PDCS_BLOCK Block;
 
     DWORD NumberOfBlocks = 0;
-    DWORD BytesRead = 0, BytesWritten = 0, NextOffset;
+    DWORD BytesRead, BytesDecompressed, NextOffset;
 
     if ((SourceFile == NULL) ||
         (OutputFileBuffer == NULL) ||
@@ -417,15 +417,21 @@ BOOL ProcessFileDCS(
 
         DataBufferPtr = DataBuffer;
         NumberOfBlocks = FileHeader->NumberOfBlocks;
+
+        BytesDecompressed = 0;
+        BytesRead = 0;
+
         Block = (PDCS_BLOCK)FileHeader->FirstBlock;
 
-        do {
-
+        while (NumberOfBlocks > 0) {
+            
             if (BytesRead + Block->CompressedBlockSize > SourceFileSize)
                 break;
 
-            if (BytesWritten + Block->DecompressedBlockSize > FileHeader->UncompressedFileSize)
+            if (BytesDecompressed + Block->DecompressedBlockSize > FileHeader->UncompressedFileSize)
                 break;
+
+            BytesDecompressed += Block->DecompressedBlockSize;
 
             bResult = pDecompress(hDecompressor,
                 Block->CompressedData, Block->CompressedBlockSize - 4,
@@ -443,12 +449,7 @@ BOOL ProcessFileDCS(
             NextOffset = Block->CompressedBlockSize + 4;
             Block = (DCS_BLOCK*)((BYTE *)Block + NextOffset);
             BytesRead += NextOffset;
-            BytesWritten += Block->DecompressedBlockSize;
-
-            if (BytesWritten > FileHeader->UncompressedFileSize)
-                break;
-
-        } while (NumberOfBlocks > 0);
+        }
 
         *OutputFileBuffer = DataBuffer;
         *OutputFileBufferSize = FileHeader->UncompressedFileSize;

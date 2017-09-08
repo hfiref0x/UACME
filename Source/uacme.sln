@@ -20,12 +20,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{49552A
 		shared\_strncmpi.c = shared\_strncmpi.c
 		shared\_strncpy.c = shared\_strncpy.c
 		Shared\cmdline.c = Shared\cmdline.c
+		Shared\lsa.h = Shared\lsa.h
 		shared\minirtl.h = shared\minirtl.h
 		shared\ntos.h = shared\ntos.h
 		Shared\ntsxs.h = Shared\ntsxs.h
 		shared\rtltypes.h = shared\rtltypes.h
 		Shared\strtoul.c = Shared\strtoul.c
 		Shared\u64tohex.c = Shared\u64tohex.c
+		Shared\util.c = Shared\util.c
+		Shared\util.h = Shared\util.h
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hibiki", "Hibiki\Hibiki.vcxproj", "{31CD69DD-2040-4E43-86F5-921E182F3F43}"

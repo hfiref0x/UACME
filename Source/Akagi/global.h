@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.79
+*  VERSION:     2.80
 *
-*  DATE:        16 Aug 2017
+*  DATE:        28 Aug 2017
 *
 *  Common header file for the program support routines.
 *
@@ -67,6 +67,7 @@
 #include "shared\cmdline.h"
 #include "shared\_filename.h"
 #include "shared\ldr.h"
+#include "shared\lsa.h"
 #include "consts.h"
 #include "compress.h"
 #include "sup.h"
@@ -76,10 +77,10 @@
 #include "windefend.h"
 
 //default execution flow
-#define AKAGI_FLAG_KILO  0
+#define AKAGI_FLAG_KILO  1
 
 //suppress all additional output
-#define AKAGI_FLAG_TANGO 1
+#define AKAGI_FLAG_TANGO 2
 
 typedef struct _UACME_CONTEXT {
     BOOL                    IsWow64;

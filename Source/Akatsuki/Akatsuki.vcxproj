@@ -154,6 +154,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Shared\ultostr.c" />
+    <ClCompile Include="..\Shared\util.c" />
     <ClCompile Include="..\Shared\_strcat.c" />
     <ClCompile Include="..\Shared\_strcmpi.c" />
     <ClCompile Include="..\Shared\_strcpy.c" />
@@ -166,8 +168,10 @@
     <ClCompile Include="dllmain.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Shared\lsa.h" />
     <ClInclude Include="..\Shared\ntos.h" />
     <ClInclude Include="..\Shared\rtltypes.h" />
+    <ClInclude Include="..\Shared\util.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

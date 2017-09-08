@@ -16,6 +16,9 @@
     <Filter Include="minirtl">
       <UniqueIdentifier>{cf1e8bef-2207-422c-a3ae-8e2856b92c8c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils">
+      <UniqueIdentifier>{86eaface-dcab-4d25-be3c-e7bdce47af51}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.c">
@@ -51,9 +54,21 @@
     <ClCompile Include="..\Shared\ultostr.c">
       <Filter>minirtl</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\util.c">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strstri.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\util.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\lsa.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -16,6 +16,9 @@
     <Filter Include="minirtl">
       <UniqueIdentifier>{2c7d3d0a-54ea-44ba-8570-6f9005a7d257}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils">
+      <UniqueIdentifier>{b9d28ade-4cf5-427b-9c4d-03dcf4534593}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.c">
@@ -45,6 +48,12 @@
     <ClCompile Include="..\Shared\_strncpy.c">
       <Filter>minirtl</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\util.c">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\ultostr.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="version.rc">
@@ -58,10 +67,13 @@
     <ClInclude Include="..\Shared\minirtl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="wbemcomn.h">
+    <ClInclude Include="..\Shared\_filename.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shared\_filename.h">
+    <ClInclude Include="..\Shared\util.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\lsa.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

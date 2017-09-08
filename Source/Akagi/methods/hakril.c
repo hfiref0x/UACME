@@ -4,9 +4,9 @@
 *
 *  TITLE:       HAKRIL.C
 *
-*  VERSION:     2.76
+*  VERSION:     2.80
 *
-*  DATE:        13 July 2017
+*  DATE:        30 July 2017
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -97,9 +97,6 @@ BOOL ucmMethodHakril(
         if (LaunchAdminProcessPtr == NULL) {
 
             switch (ErrorCode) {
-            case ERROR_UNKNOWN_REVISION:
-                lpText = TEXT("This Windows build has no pattern for AicLaunchAdminProcess binary search.");
-                break;
 
             case ERROR_PROC_NOT_FOUND:
                 lpText = TEXT("The required procedure address not found.");

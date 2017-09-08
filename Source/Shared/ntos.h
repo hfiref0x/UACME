@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.71
+*  VERSION:     1.73
 *
-*  DATE:        28 May 2017
+*  DATE:        07 Sept 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -572,6 +572,11 @@ typedef struct _PROCESS_EXTENDED_BASIC_INFORMATION {
 		} DUMMYSTRUCTNAME;
 	} DUMMYUNIONNAME;
 } PROCESS_EXTENDED_BASIC_INFORMATION, *PPROCESS_EXTENDED_BASIC_INFORMATION;
+
+typedef struct _PROCESS_ACCESS_TOKEN {
+    HANDLE Token;
+    HANDLE Thread;
+} PROCESS_ACCESS_TOKEN, *PPROCESS_ACCESS_TOKEN;
 
 //thanks to wj32 headers
 
@@ -4696,6 +4701,15 @@ VOID NTAPI RtlInitString(
 	PCSZ SourceString
 	);
 
+NTSTATUS NTAPI RtlExpandEnvironmentStrings(
+    _In_opt_ PVOID Environment,
+    _In_reads_(SrcLength) PWSTR Src,
+    _In_ SIZE_T SrcLength,
+    _Out_writes_opt_(DstLength) PWSTR Dst,
+    _In_ SIZE_T DstLength,
+    _Out_opt_ PSIZE_T ReturnLength
+    );
+
 NTSTATUS NTAPI RtlExpandEnvironmentStrings_U(
 	_In_opt_	PVOID Environment,
 	_In_		PCUNICODE_STRING Source,
@@ -6068,6 +6082,13 @@ NTSTATUS NTAPI NtQueryInformationProcess(
 	_Out_opt_	PULONG ReturnLength
 	);
 
+NTSTATUS NTAPI NtSetInformationProcess(
+    _In_        HANDLE ProcessHandle,
+    _In_        PROCESSINFOCLASS ProcessInformationClass,
+    _In_count_(ProcessInformationLength) PVOID ProcessInformation,
+    _In_        ULONG ProcessInformationLength
+    );
+
 NTSTATUS NTAPI NtDuplicateObject(
 	_In_		HANDLE SourceProcessHandle,
 	_In_		HANDLE SourceHandle,
@@ -6311,3 +6332,8 @@ NTSTATUS NTAPI NtEnumerateBootEntries(
     _Out_ PVOID Buffer,
     _Inout_ PULONG BufferLength);
 
+NTSTATUS NTAPI NtPrivilegeCheck(
+    _In_ HANDLE ClientToken,
+    _Inout_ PPRIVILEGE_SET RequiredPrivileges,
+    _Out_ PBOOLEAN Result
+    );

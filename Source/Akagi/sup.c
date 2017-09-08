@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.77
+*  VERSION:     2.80
 *
-*  DATE:        21 July 2017
+*  DATE:        08 Sept 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -546,6 +546,95 @@ LPWSTR supQueryEnvironmentVariableOffset(
 }
 
 /*
+* supSaveAkagiParameters
+*
+* Purpose:
+*
+* Store Akagi parameters.
+*
+*/
+BOOL supSaveAkagiParameters(
+    VOID
+)
+{
+    BOOL bResult = FALSE;
+    HKEY hKey = NULL;
+    LRESULT lRet;
+
+    DWORD bytesIO = 0;
+    WCHAR szQuery[100];
+    WCHAR szParameter[MAX_PATH];
+
+    ULONG SessionId = NtCurrentPeb()->SessionId;
+
+    szQuery[0] = 0;
+    szParameter[0] = 0;
+
+    lRet = RegCreateKeyEx(HKEY_CURRENT_USER, T_AKAGI_KEY, 0, NULL,
+        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL);
+
+    if ((lRet == ERROR_SUCCESS) && (hKey != NULL)) {
+
+        //
+        // Save current session id.
+        //
+        lRet = RegSetValueEx(
+            hKey,
+            T_AKAGI_SESSION,
+            0,
+            REG_DWORD,
+            (BYTE *)&SessionId,
+            sizeof(DWORD));
+
+        //
+        // Save flag.
+        //
+        if (lRet == ERROR_SUCCESS) {
+
+            lRet = RegSetValueEx(
+                hKey,
+                T_AKAGI_FLAG,
+                0,
+                REG_DWORD,
+                (BYTE *)&g_ctx.AkagiFlag,
+                sizeof(DWORD));
+
+        }
+
+        //
+        // Save WinStation + Desktop.
+        //
+        RtlSecureZeroMemory(&szQuery, sizeof(szQuery));
+        RtlSecureZeroMemory(&szParameter, sizeof(szParameter));
+        if (supWinstationToName(NULL, szQuery, sizeof(szQuery), &bytesIO)) {
+            _strcpy(szParameter, szQuery);
+            _strcat(szParameter, TEXT("\\"));
+
+            RtlSecureZeroMemory(&szQuery, sizeof(szQuery));
+            if (supDesktopToName(NULL, szQuery, sizeof(szQuery), &bytesIO)) {
+                _strcat(szParameter, szQuery);
+
+                bytesIO = (DWORD)((1 + _strlen(szParameter)) * sizeof(WCHAR));
+
+                lRet = RegSetValueEx(
+                    hKey,
+                    T_AKAGI_DESKTOP,
+                    0,
+                    REG_SZ,
+                    (LPBYTE)&szParameter,
+                    bytesIO);
+            }
+        }
+
+        bResult = (lRet == ERROR_SUCCESS);
+
+        RegCloseKey(hKey);
+    }
+
+    return bResult;
+}
+
+/*
 * supSetParameter
 *
 * Purpose:
@@ -558,30 +647,23 @@ BOOL supSetParameter(
     DWORD cbParameter
 )
 {
-    BOOL cond = FALSE, bResult = FALSE;
-    HKEY hKey;
+    BOOL bResult = FALSE;
+    HKEY hKey = NULL;
     LRESULT lRet;
 
-    hKey = NULL;
+    lRet = RegCreateKeyEx(HKEY_CURRENT_USER, T_AKAGI_KEY, 0, NULL,
+        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL);
 
-    do {
-        lRet = RegCreateKeyExW(HKEY_CURRENT_USER, T_AKAGI_KEY, 0, NULL,
-            REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL);
-
-        if ((lRet != ERROR_SUCCESS) || (hKey == NULL)) {
-            break;
-        }
-
-        RegSetValueExW(hKey, T_AKAGI_FLAG, 0, REG_DWORD, (BYTE *)&g_ctx.AkagiFlag, sizeof(DWORD));
-
-        lRet = RegSetValueExW(hKey, T_AKAGI_PARAM, 0, REG_SZ,
+    if ((lRet == ERROR_SUCCESS) && (hKey != NULL)) {
+        
+        //
+        // Write optional parameter.
+        //
+        lRet = RegSetValueEx(hKey, T_AKAGI_PARAM, 0, REG_SZ,
             (LPBYTE)lpParameter, cbParameter);
 
         bResult = (lRet == ERROR_SUCCESS);
 
-    } while (cond);
-
-    if (hKey) {
         RegCloseKey(hKey);
     }
 
@@ -1484,4 +1566,134 @@ HANDLE supOpenDirectoryForReparse(
     SetLastError(RtlNtStatusToDosError(status));
 
     return hReparseDirectory;
+}
+
+/*
+* supSetupIPCLinkData
+*
+* Purpose:
+*
+* Setup shared variable.
+*
+*/
+BOOL supSetupIPCLinkData(
+    VOID
+)
+{
+    BOOL bCond = FALSE, bResult = FALSE;
+    HANDLE hRoot = NULL, hChild = NULL;
+    LPWSTR lpUser;
+    NTSTATUS status;
+    UNICODE_STRING ChildName, ParentRoot, usKey;
+    OBJECT_ATTRIBUTES attr;
+
+    RtlSecureZeroMemory(&usKey, sizeof(usKey));
+
+    do {
+        status = RtlFormatCurrentUserKeyPath(&usKey);
+        if (!NT_SUCCESS(status))
+            break;
+
+        lpUser = _filename(usKey.Buffer);
+
+        ParentRoot.Buffer = NULL;
+        ParentRoot.Length = 0;
+        ParentRoot.MaximumLength = 0;
+        RtlInitUnicodeString(&ParentRoot, T_AKAGI_LINK);
+        InitializeObjectAttributes(&attr, &ParentRoot, OBJ_CASE_INSENSITIVE, 0, NULL);
+        status = NtCreateDirectoryObject(&hRoot, DIRECTORY_CREATE_SUBDIRECTORY, &attr);
+        if (!NT_SUCCESS(status))
+            break;
+
+        ChildName.Buffer = NULL;
+        ChildName.Length = 0;
+        ChildName.MaximumLength = 0;
+        RtlInitUnicodeString(&ChildName, lpUser);
+        attr.RootDirectory = hRoot;
+        attr.ObjectName = &ChildName;
+        status = NtCreateDirectoryObject(&hChild, DIRECTORY_ALL_ACCESS, &attr);
+        if (!NT_SUCCESS(status))
+            break;
+
+        bResult = TRUE;
+
+    } while (bCond);
+
+    //
+    // Cleanup created objects if something went wrong.
+    // Otherwise objects will die together with process at exit.
+    //
+    if (bResult == FALSE) {
+        if (hRoot) {
+            NtClose(hRoot);
+        }
+        if (hChild) {
+            NtClose(hChild);
+        }
+    }
+
+    if (usKey.Buffer) {
+        RtlFreeUnicodeString(&usKey);
+    }
+    return bResult;
+}
+
+/*
+* supWinstationToName
+*
+* Purpose:
+*
+* Retrieves winstation string name.
+*
+*/
+BOOL supWinstationToName(
+    _In_opt_ HWINSTA hWinsta,
+    _In_ LPWSTR lpBuffer,
+    _In_ DWORD cbBuffer,
+    _Out_ PDWORD BytesNeeded
+)
+{
+    HWINSTA hObject;
+
+    if (hWinsta == NULL)
+        hObject = GetProcessWindowStation();
+    else
+        hObject = hWinsta;
+
+    return GetUserObjectInformation(
+        hObject,
+        UOI_NAME,
+        lpBuffer,
+        cbBuffer,
+        BytesNeeded);
+}
+
+/*
+* supDesktopToName
+*
+* Purpose:
+*
+* Retrieves desktop string name.
+*
+*/
+BOOL supDesktopToName(
+    _In_opt_ HDESK hDesktop,
+    _In_ LPWSTR lpBuffer,
+    _In_ DWORD cbBuffer,
+    _Out_ PDWORD BytesNeeded
+)
+{
+    HDESK hObject;
+
+    if (hDesktop == NULL)
+        hObject = GetThreadDesktop(GetCurrentThreadId());
+    else
+        hObject = hDesktop;
+
+    return GetUserObjectInformation(
+        hObject,
+        UOI_NAME,
+        lpBuffer,
+        cbBuffer,
+        BytesNeeded);
 }

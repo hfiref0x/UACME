@@ -316,6 +316,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Shared\ultostr.c" />
+    <ClCompile Include="..\Shared\util.c" />
     <ClCompile Include="..\Shared\_filename.c" />
     <ClCompile Include="..\Shared\_strcat.c" />
     <ClCompile Include="..\Shared\_strcmpi.c" />
@@ -330,10 +332,11 @@
     <ResourceCompile Include="version.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Shared\lsa.h" />
     <ClInclude Include="..\Shared\minirtl.h" />
+    <ClInclude Include="..\Shared\util.h" />
     <ClInclude Include="..\Shared\_filename.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="wbemcomn.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="export.def" />

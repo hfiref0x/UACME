@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     2.79
+*  VERSION:     2.80
 *
-*  DATE:        16 Aug 2017
+*  DATE:        31 Aug 2017
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -85,13 +85,13 @@ typedef BOOL(CALLBACK *PUCM_API_ROUTINE)(
     _In_opt_ ULONG PayloadSize)
 
 typedef struct _UCM_API_DISPATCH_ENTRY {
-    PUCM_API_ROUTINE Routine;
-    PVOID ExtraContext;
-    UCM_METHOD_AVAILABILITY Availability;
-    ULONG PayloadResourceId;
-    BOOL Win32OrWow64Required;
-    BOOL DisallowWow64;
-    BOOL SetParameterInRegistry;
+    PUCM_API_ROUTINE Routine;               //method to execute
+    PVOID ExtraContext;                     //unused, future use
+    UCM_METHOD_AVAILABILITY Availability;   //min and max supported Windows builds
+    ULONG PayloadResourceId;                //which payload dll must be used
+    BOOL Win32OrWow64Required;              
+    BOOL DisallowWow64;                     
+    BOOL SetParametersInRegistry;           //need shared parameters to be set in the registry
 } UCM_API_DISPATCH_ENTRY, *PUCM_API_DISPATCH_ENTRY;
 
 #include "api0cradle.h"
