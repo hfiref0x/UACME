@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.80
 *
-*  DATE:        07 Sept 2017
+*  DATE:        08 Sept 2017
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -868,7 +868,7 @@ BOOL ucmLaunchPayload2(
         RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
 
         //
-        // In case of start from service, force winstasion.
+        // In case of start from service, force default WinStation and Desktop.
         //
         // Future note: maybe moved to registry settings as custom winsta param.
         //
@@ -1542,8 +1542,11 @@ BOOL ucmReadParameters(
 
     do {
 
+        //
+        // This is default flag value. At the moment flags are used only by Fubuki.
+        //
         if (pdwGlobalFlag)
-            *pdwGlobalFlag = 0;
+            *pdwGlobalFlag = 1; //AKAGI_FLAG_KILO
 
         Param.Buffer = NULL;
         Param.BufferSize = 0;
@@ -1556,7 +1559,7 @@ BOOL ucmReadParameters(
         //
 
         //
-        // Determine what kind of user we are now, then select proper registry key for data read.
+        // Determine what kind of user we are now, then select proper registry key to read data.
         //
         bSystem = IsSystem;
 
