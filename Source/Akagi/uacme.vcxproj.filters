@@ -16,24 +16,30 @@
     <Filter Include="minirtl">
       <UniqueIdentifier>{1caf2f34-af91-46be-aa2e-1893b0be628c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="testunits">
+      <UniqueIdentifier>{c4fc1dcf-e216-4458-a377-e7203d627128}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\methods">
+      <UniqueIdentifier>{8adb74b4-1781-4684-84d2-61c8379b56f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\methods">
+      <UniqueIdentifier>{6a18d07e-0b0d-455a-b4c2-1379f5934479}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ldr">
+      <UniqueIdentifier>{751f7002-5a6c-4d2e-9296-3b8132e640f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="minhook">
+      <UniqueIdentifier>{05bd96ff-ca68-4044-b837-5c65515fa832}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="minhook\hde">
+      <UniqueIdentifier>{d27ee8cb-a037-41c6-b75f-56bc1b0f46a5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sup.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pitou.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gootkit.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="simda.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="carberp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\_strcat.c">
@@ -66,9 +72,6 @@
     <ClCompile Include="..\Shared\strtoul.c">
       <Filter>minirtl</Filter>
     </ClCompile>
-    <ClCompile Include="hybrids.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="makecab.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -87,6 +90,87 @@
     <ClCompile Include="..\Shared\_strstri.c">
       <Filter>minirtl</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\ultohex.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\test.c">
+      <Filter>testunits</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\methods.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\carberp.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\comet.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\enigma0x3.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\explife.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\gootkit.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\hybrids.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\pitou.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\sandworm.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\simda.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\ldr.c">
+      <Filter>ldr</Filter>
+    </ClCompile>
+    <ClCompile Include="windefend.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\tyranid.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\comfileop.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\wusa.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="aic.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="minhook\buffer.c">
+      <Filter>minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="minhook\hook.c">
+      <Filter>minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="minhook\trampoline.c">
+      <Filter>minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="minhook\hde\hde32.c">
+      <Filter>minhook\hde</Filter>
+    </ClCompile>
+    <ClCompile Include="minhook\hde\hde64.c">
+      <Filter>minhook\hde</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\hakril.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\u64tohex.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\b33f.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\api0cradle.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -98,28 +182,10 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pitou.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gootkit.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="simda.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="apphelp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="carberp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\shared\minirtl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\rtltypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="hybrids.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="makecab.h">
@@ -131,11 +197,101 @@
     <ClInclude Include="consts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shared\_filename.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="manifest.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\_filename.h">
+      <Filter>minirtl</Filter>
+    </ClInclude>
+    <ClInclude Include="tests\test.h">
+      <Filter>testunits</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\methods.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\carberp.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\comet.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\enigma0x3.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\explife.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\gootkit.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\hybrids.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\pitou.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\sandworm.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\simda.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\sirefef.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\apphelp.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\ldr.h">
+      <Filter>ldr</Filter>
+    </ClInclude>
+    <ClInclude Include="windefend.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\tyranid.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\comfileop.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\wusa.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="aic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\MinHook.h">
+      <Filter>minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\trampoline.h">
+      <Filter>minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\buffer.h">
+      <Filter>minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\hde\hde32.h">
+      <Filter>minhook\hde</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\hde\hde64.h">
+      <Filter>minhook\hde</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\hde\pstdint.h">
+      <Filter>minhook\hde</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\hde\table32.h">
+      <Filter>minhook\hde</Filter>
+    </ClInclude>
+    <ClInclude Include="minhook\hde\table64.h">
+      <Filter>minhook\hde</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\hakril.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\b33f.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\api0cradle.h">
+      <Filter>Header Files\methods</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

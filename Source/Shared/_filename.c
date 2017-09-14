@@ -58,7 +58,7 @@ wchar_t *_fileext_w(const wchar_t *f)
 		return 0;
 
 	while (*f != (wchar_t)0) {
-		if (*f == '.')
+		if (*f == (wchar_t)'.')
 			p = (wchar_t *)f;
 		f++;
 	}

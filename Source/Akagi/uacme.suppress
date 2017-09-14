@@ -1,0 +1,66 @@
+<?xml version="1.0" standalone="yes"?>
+<NewDataSet>
+  <xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:UseCurrentLocale="true">
+      <xs:complexType>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element name="SuppressVersion">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="CurrentVersion" type="xs:int" minOccurs="0" />
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="Akagi">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="FileName" type="xs:string" default="" />
+                <xs:element name="ErrorCode" type="xs:string" default="" />
+                <xs:element name="Message" type="xs:string" default="" />
+                <xs:element name="CodePrev" type="xs:unsignedInt" default="0" />
+                <xs:element name="CodeCurrent" type="xs:unsignedInt" default="0" />
+                <xs:element name="CodeNext" type="xs:unsignedInt" default="0" />
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+      <xs:unique name="Constraint1" msdata:PrimaryKey="true">
+        <xs:selector xpath=".//Akagi" />
+        <xs:field xpath="FileName" />
+        <xs:field xpath="ErrorCode" />
+        <xs:field xpath="Message" />
+        <xs:field xpath="CodePrev" />
+        <xs:field xpath="CodeCurrent" />
+        <xs:field xpath="CodeNext" />
+      </xs:unique>
+    </xs:element>
+  </xs:schema>
+  <SuppressVersion>
+    <CurrentVersion>2</CurrentVersion>
+  </SuppressVersion>
+  <Akagi>
+    <FileName>makecab.c</FileName>
+    <ErrorCode>V303</ErrorCode>
+    <Message>The function 'SetFilePointer' is deprecated in the Win_ system. It is safer to use the 'SetFilePointerEx' function.</Message>
+    <CodePrev>0</CodePrev>
+    <CodeCurrent>2781268437</CodeCurrent>
+    <CodeNext>0</CodeNext>
+  </Akagi>
+  <Akagi>
+    <FileName>compress.c</FileName>
+    <ErrorCode>V104</ErrorCode>
+    <Message>Implicit conversion of 'CompressedBufferSize' to memsize type in an arithmetic expression: CompressedBufferSize - sizeof (ULONG)</Message>
+    <CodePrev>2888972524</CodePrev>
+    <CodeCurrent>3344112666</CodeCurrent>
+    <CodeNext>0</CodeNext>
+  </Akagi>
+  <Akagi>
+    <FileName>rtltypes.h</FileName>
+    <ErrorCode>V112</ErrorCode>
+    <Message>Dangerous magic number _x_ used: return c + _x_;.</Message>
+    <CodePrev>172268903</CodePrev>
+    <CodeCurrent>355059</CodeCurrent>
+    <CodeNext>539</CodeNext>
+  </Akagi>
+</NewDataSet>

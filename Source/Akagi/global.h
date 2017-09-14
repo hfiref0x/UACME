@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.51
+*  VERSION:     2.80
 *
-*  DATE:        10 July 2016
+*  DATE:        28 Aug 2017
 *
 *  Common header file for the program support routines.
 *
@@ -37,91 +37,73 @@
 #pragma warning(disable: 4152) // nonstandard extension, function/data pointer conversion in expression
 #pragma warning(disable: 4201) // nonstandard extension used : nameless struct/union
 #pragma warning(disable: 6102) // Using %s from failed function call at line %u
+#pragma warning(disable: 6258) // Using TerminateThread does not allow proper thread clean up
 #pragma warning(disable: 6320) // exception-filter expression is the constant EXCEPTION_EXECUTE_HANDLER
 
-#define GENERATE_COMPRESSED_PAYLOAD
-#ifndef _DEBUG
-#undef GENERATE_COMPRESSED_PAYLOAD
-#endif
+#define PAYLOAD_ID_NONE MAXDWORD
 
 #ifdef _WIN64
 #include "bin64res.h"
 #define FUBUKI_ID IDR_FUBUKI64
 #define HIBIKI_ID IDR_HIBIKI64
-#define KONGOU_ID IDR_KONGOU64
 #define IKAZUCHI_ID IDR_IKAZUCHI64
+#define AKATSUKI_ID IDR_AKATSUKI64
+#define KAMIKAZE_ID IDR_KAMIKAZE
 #else
 #include "bin32res.h"
 #define FUBUKI_ID IDR_FUBUKI32
 #define HIBIKI_ID IDR_HIBIKI32
-#define KONGOU_ID IDR_KONGOU32
 #define IKAZUCHI_ID IDR_IKAZUCHI32
+#define AKATSUKI_ID PAYLOAD_ID_NONE //this module unavailable for 32 bit
+#define KAMIKAZE_ID IDR_KAMIKAZE
 #endif
-
-typedef enum _UACBYPASSMETHOD {
-    UacMethodSysprep1 = 1,
-    UacMethodSysprep2,
-    UacMethodOobe,
-    UacMethodRedirectExe,
-    UacMethodSimda,
-    UacMethodCarberp1,
-    UacMethodCarberp2,
-    UacMethodTilon,
-    UacMethodAVrf,
-    UacMethodWinsat,
-    UacMethodShimPatch,
-    UacMethodSysprep3,
-    UacMethodMMC1,
-    UacMethodSirefef,
-    UacMethodGeneric,
-    UacMethodGWX,
-    UacMethodSysprep4,
-    UacMethodManifest,
-    UacMethodInetMgr,
-    UacMethodMMC2,
-    UacMethodSXS,
-    UacMethodSXSConsent,
-    UacMethodDISM,
-    //UacMethod24,
-    UacMethodMax
-} UACBYPASSMETHOD;
 
 #include <Windows.h>
 #include <ntstatus.h>
 #include <CommCtrl.h>
 #include <shlobj.h>
-#include "..\shared\ntos.h"
-#include "..\shared\minirtl.h"
-#include "..\Shared\cmdline.h"
-#include "..\Shared\_filename.h"
+#include "shared\ntos.h"
+#include "shared\minirtl.h"
+#include "shared\cmdline.h"
+#include "shared\_filename.h"
+#include "shared\ldr.h"
+#include "shared\lsa.h"
 #include "consts.h"
 #include "compress.h"
 #include "sup.h"
-#include "pitou.h"
-#include "gootkit.h"
-#include "simda.h"
-#include "carberp.h"
-#include "hybrids.h"
+#include "aic.h"
+#include "minhook\MinHook.h"
+#include "methods\methods.h"
+#include "windefend.h"
 
 //default execution flow
-#define AKAGI_FLAG_KILO  0
+#define AKAGI_FLAG_KILO  1
 
 //suppress all additional output
-#define AKAGI_FLAG_TANGO 1
+#define AKAGI_FLAG_TANGO 2
 
 typedef struct _UACME_CONTEXT {
-    BOOL                IsWow64;
-    UACBYPASSMETHOD     Method;
-    PPEB                Peb;
-    HINSTANCE           hKernel32;
-    HINSTANCE           hOle32;
-    HINSTANCE           hShell32;
-    PVOID               PayloadDll;
-    ULONG               PayloadDllSize;
-    ULONG               dwBuildNumber;
-    ULONG               Flag;
-    WCHAR               szSystemDirectory[MAX_PATH + 1];//with end slash
-    WCHAR               szTempDirectory[MAX_PATH + 1]; //with end slash
+    BOOL                    IsWow64;
+    PVOID                   ucmHeap;
+    pfnDecompressPayload    DecryptRoutine;
+    HINSTANCE               hKernel32;
+    HINSTANCE               hOle32;
+    HINSTANCE               hShell32;
+    ULONG                   dwBuildNumber;
+    ULONG                   AkagiFlag;
+    ULONG                   IFileOperationFlags;
+    ULONG                   OptionalParameterLength; //count of characters
+    WCHAR                   szSystemDirectory[MAX_PATH + 1];//with end slash
+    WCHAR                   szTempDirectory[MAX_PATH + 1]; //with end slash
+    WCHAR                   szOptionalParameter[MAX_PATH + 1]; //limited to MAX_PATH
 } UACMECONTEXT, *PUACMECONTEXT;
+
+typedef UINT(WINAPI *pfnEntryPoint)();
+
+typedef struct _UACME_THREAD_CONTEXT {
+    TEB_ACTIVE_FRAME Frame;
+    pfnEntryPoint ucmMain;
+    DWORD ReturnedResult;
+} UACME_THREAD_CONTEXT, *PUACME_THREAD_CONTEXT;
 
 extern UACMECONTEXT g_ctx;

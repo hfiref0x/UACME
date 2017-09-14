@@ -16,6 +16,9 @@
     <Filter Include="minirtl">
       <UniqueIdentifier>{04ee0fac-8cb1-42ba-8211-a3b0023677db}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils">
+      <UniqueIdentifier>{b6d45a93-6c7a-43d2-bd7b-b1dad4bc1720}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -25,6 +28,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="unbcl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\_filename.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\util.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\lsa.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -41,6 +53,30 @@
       <Filter>minirtl</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\_strcpy.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_filename.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strend.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strcmpi.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strlen.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\ultostr.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\util.c">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strncpy.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strstri.c">
       <Filter>minirtl</Filter>
     </ClCompile>
   </ItemGroup>

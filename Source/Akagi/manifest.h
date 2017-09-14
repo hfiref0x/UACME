@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016
+*  (C) COPYRIGHT AUTHORS, 2016 - 2017
 *
 *  TITLE:       MANIFEST.H
 *
-*  VERSION:     2.51
+*  VERSION:     2.70
 *
-*  DATE:        10 July 2016
+*  DATE:        25 Mar 2017
 *
 *  1) Manifest for dll redirection, originally called "defence-in-depth approach".
 *  2) Simple update package.
