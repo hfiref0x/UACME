@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     1.24
+*  VERSION:     1.25
 *
-*  DATE:        21 Mar 2017
+*  DATE:        04 Oct 2017
 *
 *  Global consts definition file.
 *
@@ -19,7 +19,7 @@
 #pragma once
 
 #define YUUBARI_MIN_SUPPORTED_NT_BUILD 7600
-#define YUUBARI_MAX_SUPPORTED_NT_BUILD 15063
+#define YUUBARI_MAX_SUPPORTED_NT_BUILD 16299
 
 #define T_UAC_COM_AUTOAPPROVAL_LIST    TEXT("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\UAC\\COMAutoApprovalList") //RS1+
 #define T_UAC_SETTINGS_KEY             TEXT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System")
@@ -33,7 +33,7 @@
 #define T_FLAG_INSTALLERDETECT_ENABLED TEXT("InstallerDetectEnabled")
 
 #define T_PROGRAM_NAME                 TEXT("Yuubari")
-#define T_PROGRAM_TITLE                TEXT("[UacView] UAC information gathering tool, v1.2.4 (21/03/2017)\n")
+#define T_PROGRAM_TITLE                TEXT("[UacView] UAC information gathering tool, v1.2.6 (04/10/2017)\n")
 
 #define T_HELP	TEXT("Optional parameters to execute: \n\n\r\
 YUUBARI [/v] \n\n\r\

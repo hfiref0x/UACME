@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.24
+*  VERSION:     1.26
 *
-*  DATE:        21 Mar 2017
+*  DATE:        04 Oct 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -37,7 +37,7 @@ UAC_PATTERN g_MmcPatterns[SUPPORTED_PATTERNS_COUNT] = {
     { ptMmcBlock_9200, sizeof(ptMmcBlock_9200), 9200, 9200 },
     { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 9600, 9600 },
     { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 10240, 10240 },
-    { ptMmcBlock_10586_15063, sizeof(ptMmcBlock_10586_15063), 10586, 15063 }
+    { ptMmcBlock_10586_16299, sizeof(ptMmcBlock_10586_16299), 10586, 16299 }
 };
 
 #define TestChar(x)  ((x >= L'A') && (x <= L'z')) 
@@ -178,20 +178,20 @@ VOID SymbolAddToList(
     sz += sizeof(WCHAR);
 
     Entry->Next = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SYMBOL_ENTRY));
-    if (Entry->Next == NULL)
-        return;
+    if (Entry->Next) {
 
-    Entry = Entry->Next;
-    Entry->Next = NULL;
+        Entry = Entry->Next;
+        Entry->Next = NULL;
 
-    Entry->Name = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
-    if (Entry->Name == NULL) {
-        HeapFree(GetProcessHeap(), 0, Entry->Next);
-        return;
+        Entry->Name = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
+        if (Entry->Name) {
+
+            _strncpy(Entry->Name, sz / sizeof(WCHAR),
+                SymbolName, sz / sizeof(WCHAR));
+
+            Entry->Address = lpAddress;
+        }
     }
-
-    _strncpy(Entry->Name, sz / sizeof(WCHAR), SymbolName, sz / sizeof(WCHAR));
-    Entry->Address = lpAddress;
 }
 
 /*

@@ -77,7 +77,13 @@ char *_filename_noext_a(char *dest, const char *f)
         return 0;
 
     p = _filename_a(f);
+    if (p == 0)
+        return 0;
+
     dot = _strend_a(p);
+    if (dot == 0)
+        return 0;
+
     l = p;
 
     while (*l != (char)0)
@@ -106,7 +112,13 @@ wchar_t *_filename_noext_w(wchar_t *dest, const wchar_t *f)
         return 0;
 
     p = _filename_w(f);
+    if (p == 0)
+        return 0;
+
     dot = _strend_w(p);
+    if (dot == 0)
+        return 0;
+
     l = p;
 
     while (*l != (wchar_t)0)

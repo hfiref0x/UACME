@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.80
 *
-*  DATE:        30 Aug 2017
+*  DATE:        04 Oct 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -41,7 +41,7 @@ unsigned char LaunchAdminProcessSignature14393[] = {
     0xEC, 0x20, 0x04, 0x00, 0x00
 };
 
-unsigned char LaunchAdminProcessSignature_15063_16278[] = {
+unsigned char LaunchAdminProcessSignature_15063_16299[] = {
     0x40, 0x53, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x81,
     0xEC, 0x20, 0x04, 0x00, 0x00
 };
@@ -93,9 +93,10 @@ ULONG_PTR AipFindLaunchAdminProcess(
         ScanModule = WINDOWS_STORAGE_DLL;
         break;
     case 15063:
+    case 16299:
     default:
-        Pattern = LaunchAdminProcessSignature_15063_16278;
-        PatternSize = sizeof(LaunchAdminProcessSignature_15063_16278);
+        Pattern = LaunchAdminProcessSignature_15063_16299;
+        PatternSize = sizeof(LaunchAdminProcessSignature_15063_16299);
         ScanModule = WINDOWS_STORAGE_DLL;
         break;
     }
