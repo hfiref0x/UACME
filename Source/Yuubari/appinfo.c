@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.26
+*  VERSION:     1.27
 *
-*  DATE:        04 Oct 2017
+*  DATE:        24 Oct 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -174,8 +174,7 @@ VOID SymbolAddToList(
     while (Entry->Next != NULL)
         Entry = Entry->Next;
 
-    sz = _strlen(SymbolName) * sizeof(WCHAR);
-    sz += sizeof(WCHAR);
+    sz = (1 + _strlen(SymbolName)) * sizeof(WCHAR);
 
     Entry->Next = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SYMBOL_ENTRY));
     if (Entry->Next) {
@@ -190,6 +189,9 @@ VOID SymbolAddToList(
                 SymbolName, sz / sizeof(WCHAR));
 
             Entry->Address = lpAddress;
+        }
+        else {
+            HeapFree(GetProcessHeap(), 0, Entry);
         }
     }
 }

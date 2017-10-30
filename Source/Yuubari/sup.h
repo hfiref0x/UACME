@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     1.0F
+*  VERSION:     1.27
 *
-*  DATE:        13 Feb 2017
+*  DATE:        28 Oct 2017
 *
 *  Common header file for the program support routines.
 *
@@ -48,4 +48,8 @@ LRESULT supRegReadDword(
     _In_ HKEY hKey,
     _In_ LPWSTR lpValueName,
     _In_ LPDWORD Value
+    );
+
+BOOL supQueryNtBuildNumber(
+    _Inout_ PULONG BuildNumber
     );

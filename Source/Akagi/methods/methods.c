@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.80
+*  VERSION:     2.81
 *
-*  DATE:        31 Aug 2017
+*  DATE:        28 Oct 2017
 *
 *  UAC bypass dispatch.
 *
@@ -86,7 +86,7 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodSandworm, NULL, { 7600, 9600 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodEnigma0x3_3, NULL, { 10240, 16215 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodWow64Logger, NULL, { 7600, MAXDWORD }, AKATSUKI_ID, FALSE, TRUE, TRUE },
-    { MethodEnigma0x3_4, NULL, {10240, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodEnigma0x3_4, NULL, {10240, 17000 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodUiAccess, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodMsSettings, NULL, { 10240, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodTyranid, NULL, { 9600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },

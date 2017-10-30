@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.25
+*  VERSION:     1.27
 *
-*  DATE:        07 May 2017
+*  DATE:        28 Oct 2017
 *
 *  Program entry point.
 *
@@ -415,8 +415,9 @@ VOID main()
 
         cuiPrintText(g_ConOut, T_PROGRAM_TITLE, TRUE, TRUE);
 
-        RtlGetNtVersionNumbers(NULL, NULL, (ULONG*)&g_NtBuildNumber);
-        g_NtBuildNumber &= 0x00003fff;
+        g_NtBuildNumber = 0;
+        supQueryNtBuildNumber(&g_NtBuildNumber);
+
         if (g_NtBuildNumber < YUUBARI_MIN_SUPPORTED_NT_BUILD) {
             cuiPrintText(g_ConOut, TEXT("[UacView] Unsupported Windows version."), TRUE, TRUE);
             ExitProcess(0);

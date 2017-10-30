@@ -74,6 +74,7 @@ UINT ucmInit(
     *Out = 0;
 
     do {
+
         //we could read this from usershareddata but why not use it
         bytesIO = 0;
         RtlQueryElevationFlags(&bytesIO);
@@ -91,6 +92,17 @@ UINT ucmInit(
 
         //fill common data block
         RtlSecureZeroMemory(&g_ctx, sizeof(g_ctx));
+
+        //query build number
+        if (!supQueryNtBuildNumber(&g_ctx.dwBuildNumber)) {
+            Result = ERROR_INTERNAL_ERROR;
+            break;
+        }
+
+        if (g_ctx.dwBuildNumber < 7000) {
+            Result = ERROR_INSTALL_PLATFORM_UNSUPPORTED;
+            break;
+        }
 
         g_ctx.ucmHeap = RtlCreateHeap(HEAP_GROWABLE, NULL, 0, 0, NULL, NULL);
         if (g_ctx.ucmHeap == NULL) {
@@ -185,15 +197,6 @@ UINT ucmInit(
         _strcpy(g_ctx.szSystemDirectory, USER_SHARED_DATA->NtSystemRoot);
         _strcat(g_ctx.szSystemDirectory, TEXT("\\system32\\"));
         supExpandEnvironmentStrings(L"%temp%\\", g_ctx.szTempDirectory, MAX_PATH);
-
-        //query build number
-        RtlGetNtVersionNumbers(NULL, NULL, &g_ctx.dwBuildNumber);
-        g_ctx.dwBuildNumber &= 0x00003fff;
-
-        if (g_ctx.dwBuildNumber < 7000) {
-            Result = ERROR_INSTALL_PLATFORM_UNSUPPORTED;
-            break;
-        }
 
         g_ctx.IsWow64 = supIsProcess32bit(GetCurrentProcess());
 

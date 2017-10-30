@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.80
+*  VERSION:     2.81
 *
-*  DATE:        08 Sept 2017
+*  DATE:        28 Oct 2017
 *
 *  Common header file for the program support routines.
 *
@@ -207,5 +207,8 @@ BOOL supDesktopToName(
     _In_ LPWSTR lpBuffer,
     _In_ DWORD cbBuffer,
     _Out_ PDWORD BytesNeeded);
+
+BOOL supQueryNtBuildNumber(
+    _Inout_ PULONG BuildNumber);
 
 #define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)

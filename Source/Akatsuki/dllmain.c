@@ -35,7 +35,6 @@
 #include <ntstatus.h>
 #include "shared\minirtl.h"
 #include "shared\util.h"
-#include <WtsApi32.h>
 
 #if (_MSC_VER >= 1900) 
 #ifdef _DEBUG

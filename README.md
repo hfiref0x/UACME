@@ -261,8 +261,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Target(s): \system32\sdctl.exe
      * Component(s): Attacker defined application
      * Works from: Windows 10 TH1 (10240)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 RS4 (17025)
+        * How: Shell API / Windows components update
 32. Author: xi-tauw
      * Type: Dll Hijack 
      * Method: UIPI bypass with uiAccess application
