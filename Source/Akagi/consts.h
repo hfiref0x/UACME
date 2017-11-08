@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.80
+*  VERSION:     2.82
 *
-*  DATE:        06 Sept 2017
+*  DATE:        02 Nov 2017
 *
 *  Global consts definition file.
 *
@@ -26,6 +26,7 @@
 #define T_APP_PATH                  L"Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\"
 #define T_DOTNET_CLIENT             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\KnownFunctionTableDlls"
 #define T_EXEFILE_SHELL             L"Software\\Classes\\exefile\\shell\\runas\\command"
+#define T_MSC_SHELL                 L"Software\\Classes\\mscfile\\shell\\open\\command"
 #define T_MSSETTINGS                L"Software\\Classes\\ms-settings"
 #define T_SHELL_OPEN_COMMAND        L"\\shell\\open\\command"
 
@@ -157,10 +158,12 @@
 //
 #define T_CLSID_CMSTPLUA                     L"{3E5FC7F9-9A51-4367-9063-A120244FBEC7}"
 #define T_CLSID_FileOperation                L"{3AD05575-8857-4850-9277-11B85BDB8E09}"
+#define T_CLSID_FwCplLua                     L"{752438CB-E941-433F-BCB4-8B7D2329F0C8}"
 #define T_CLSID_ShellSecurityEditor          L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}"
 #define T_CLSID_UninstallStringLauncher      L"{FCC74B77-EC3E-4DD8-A80B-008A702075A9}"
 
 #define T_IID_ICMLuaUtil                     L"{6EDD6D74-C007-4E75-B76A-E5740995E24C}"
+#define T_IID_IFwCplLua                      L"{56DA8B35-7FC3-45DF-8768-664147864573}"
 #define T_IID_ISecurityEditor                L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}"
 #define T_IID_IARPUninstallStringLauncher    L"{F885120E-3789-4FD9-865E-DC9B4A6412D2}"
 

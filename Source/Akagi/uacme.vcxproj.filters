@@ -293,6 +293,9 @@
     <ClInclude Include="methods\api0cradle.h">
       <Filter>Header Files\methods</Filter>
     </ClInclude>
+    <ClInclude Include="methods\fwcpllua.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">

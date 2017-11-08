@@ -53,6 +53,7 @@ UCM_API(MethodHakril);
 UCM_API(MethodCorProfiler);
 UCM_API(MethodCOMHandlers);
 UCM_API(MethodCMLuaUtil);
+UCM_API(MethodFwCpl);
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTest, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -96,7 +97,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodHakril, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCorProfiler, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCOMHandlers, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodCMLuaUtil, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE }
+    { MethodCMLuaUtil, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
+    { MethodFwCpl, NULL, { 7600, 16300 }, PAYLOAD_ID_NONE, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -772,4 +774,24 @@ UCM_API(MethodCMLuaUtil)
         _strcpy(szBuffer, g_ctx.szOptionalParameter);
 
     return ucmCMLuaUtilShellExecMethod(szBuffer);
+}
+
+UCM_API(MethodFwCpl)
+{
+    LPWSTR lpszPayload = NULL;
+
+    UNREFERENCED_PARAMETER(Method);
+    UNREFERENCED_PARAMETER(ExtraContext);
+    UNREFERENCED_PARAMETER(PayloadCode);
+    UNREFERENCED_PARAMETER(PayloadSize);
+
+    //
+    // Select target application or use given by optional parameter.
+    //
+    if (g_ctx.OptionalParameterLength == 0)
+        lpszPayload = NULL;
+    else
+        lpszPayload = g_ctx.szOptionalParameter;
+
+    return ucmFwCplLuaMethod(lpszPayload);
 }

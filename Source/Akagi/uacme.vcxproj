@@ -430,6 +430,7 @@
     <ClInclude Include="methods\comfileop.h" />
     <ClInclude Include="methods\enigma0x3.h" />
     <ClInclude Include="methods\explife.h" />
+    <ClInclude Include="methods\fwcpllua.h" />
     <ClInclude Include="methods\gootkit.h" />
     <ClInclude Include="methods\hakril.h" />
     <ClInclude Include="methods\hybrids.h" />

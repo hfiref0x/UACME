@@ -4,9 +4,9 @@
 *
 *  TITLE:       API0CRADLE.C
 *
-*  VERSION:     2.79
+*  VERSION:     2.82
 *
-*  DATE:        16 Aug 2017
+*  DATE:        02 Nov 2017
 *
 *  UAC bypass method from Oddvar Moe aka api0cradle.
 *
@@ -24,6 +24,7 @@
 * Purpose:
 *
 * Bypass UAC using AutoElevated undocumented CMLuaUtil interface.
+* This function expects that supMasqueradeProcess was called on process initialization.
 *
 */
 BOOL ucmCMLuaUtilShellExecMethod(

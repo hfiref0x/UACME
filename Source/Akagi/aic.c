@@ -4,9 +4,9 @@
 *
 *  TITLE:       AIC.C
 *
-*  VERSION:     2.80
+*  VERSION:     2.82
 *
-*  DATE:        04 Oct 2017
+*  DATE:        02 Nov 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -106,7 +106,7 @@ ULONG_PTR AipFindLaunchAdminProcess(
         ScanBase = (PBYTE)LoadLibraryEx(ScanModule, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
     }
 
-    if ((ScanBase == NULL) || (Pattern == NULL)) {
+    if (ScanBase == NULL) {
         *ErrorCode = ERROR_INTERNAL_ERROR;
         return 0;
     }

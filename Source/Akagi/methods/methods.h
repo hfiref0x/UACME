@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     2.80
+*  VERSION:     2.82
 *
-*  DATE:        31 Aug 2017
+*  DATE:        02 Nov 2017
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -61,6 +61,7 @@ typedef enum _UCM_METHOD {
     UacMethodCorProfiler,   //+
     UacMethodCOMHandlers,   //+
     UacMethodCMLuaUtil,     //+
+    UacMethodFwCpl,         //+
     UacMethodMax
 } UCM_METHOD;
 
@@ -102,6 +103,7 @@ typedef struct _UCM_API_DISPATCH_ENTRY {
 #include "comfileop.h"
 #include "enigma0x3.h"
 #include "explife.h"
+#include "fwcpllua.h"
 #include "gootkit.h"
 #include "hakril.h"
 #include "hybrids.h"
