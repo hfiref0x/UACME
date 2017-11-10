@@ -296,6 +296,9 @@
     <ClInclude Include="methods\fwcpllua.h">
       <Filter>Header Files\methods</Filter>
     </ClInclude>
+    <ClInclude Include="methods\cdproxy.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">

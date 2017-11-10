@@ -4,9 +4,9 @@
 *
 *  TITLE:       API0CRADLE.H
 *
-*  VERSION:     2.79
+*  VERSION:     2.83
 *
-*  DATE:        16 Aug 2017
+*  DATE:        04 Nov 2017
 *
 *  Prototypes and definitions for api0cradle method.
 *
@@ -56,14 +56,19 @@ typedef struct ICMLuaUtilVtbl {
         HRESULT(STDMETHODCALLTYPE *ShellExec)(
             __RPC__in ICMLuaUtil * This,
              _In_     LPCTSTR lpFile,
-            _In_opt_ LPCTSTR lpParameters,
-            _In_opt_ LPCTSTR lpDirectory,
-            _In_     ULONG fMask,
-            _In_     ULONG nShow
+            _In_opt_  LPCTSTR lpParameters,
+            _In_opt_  LPCTSTR lpDirectory,
+            _In_      ULONG fMask,
+            _In_      ULONG nShow
             );
 
-        HRESULT(STDMETHODCALLTYPE *Method8)(
-            __RPC__in ICMLuaUtil * This);
+        HRESULT(STDMETHODCALLTYPE *SetRegistryStringValue)(
+            __RPC__in ICMLuaUtil * This,
+            _In_      HKEY hKey,
+            _In_opt_  LPCTSTR lpSubKey,
+            _In_opt_  LPCTSTR lpValueName,
+            _In_      LPCTSTR lpValueString
+            );
 
         HRESULT(STDMETHODCALLTYPE *Method9)(
             __RPC__in ICMLuaUtil * This);

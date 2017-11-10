@@ -20,6 +20,9 @@
 
 typedef interface ITestInterface ITestInterface;
 
+typedef HRESULT (STDMETHODCALLTYPE *MethodPfn)(
+    __RPC__in ITestInterface * This);
+
 typedef struct ITestInterfaceVtbl {
 
     BEGIN_INTERFACE
@@ -29,13 +32,17 @@ typedef struct ITestInterfaceVtbl {
             __RPC__in REFIID riid,
             _COM_Outptr_  void **ppvObject);
 
+
     ULONG(STDMETHODCALLTYPE *AddRef)(
         __RPC__in ITestInterface * This);
 
     ULONG(STDMETHODCALLTYPE *Release)(
         __RPC__in ITestInterface * This);
 
-    HRESULT(STDMETHODCALLTYPE *Method1)(
+    MethodPfn a[200];
+
+
+/*    HRESULT(STDMETHODCALLTYPE *Method1)(
         __RPC__in ITestInterface * This);
 
     HRESULT(STDMETHODCALLTYPE *Method2)(
@@ -81,7 +88,8 @@ typedef struct ITestInterfaceVtbl {
         __RPC__in ITestInterface * This);
 
     HRESULT(STDMETHODCALLTYPE *Method16)(
-        __RPC__in ITestInterface * This);
+        __RPC__in ITestInterface * This);*/
+
     END_INTERFACE
 
 } *PITestInterfaceVtbl;

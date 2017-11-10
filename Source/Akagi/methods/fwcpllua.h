@@ -18,7 +18,6 @@
 *******************************************************************************/
 #pragma once
 
-
 typedef interface IFwCplLua IFwCplLua;
 
 typedef struct IFwCplLuaInterfaceVtbl {

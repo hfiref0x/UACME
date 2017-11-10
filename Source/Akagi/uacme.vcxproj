@@ -426,6 +426,7 @@
     <ClInclude Include="methods\apphelp.h" />
     <ClInclude Include="methods\b33f.h" />
     <ClInclude Include="methods\carberp.h" />
+    <ClInclude Include="methods\cdproxy.h" />
     <ClInclude Include="methods\comet.h" />
     <ClInclude Include="methods\comfileop.h" />
     <ClInclude Include="methods\enigma0x3.h" />

