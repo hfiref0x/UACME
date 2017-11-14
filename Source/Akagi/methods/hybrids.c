@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.83
 *
-*  DATE:        04 Nov 2017
+*  DATE:        13 Nov 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -2285,7 +2285,7 @@ BOOL ucmDccwCOMMethod(
         //
         // Run our "custom calibrator".
         //
-        ColorDataProxy->lpVtbl->LaunchDccw(ColorDataProxy, 0);
+        r = ColorDataProxy->lpVtbl->LaunchDccw(ColorDataProxy, 0);
 
     } while (bCond);
 

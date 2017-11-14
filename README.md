@@ -351,8 +351,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Target(s): Attacker defined
      * Component(s): Attacker defined
      * Works from: Windows 7 (7600)
-     * Fixed in: currently unavailable in preview builds of Windows 10 RS4
-        * How: Shell redesign
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
 43. Author: Oddvar Moe derivative
      * Type: Elevated COM interface
      * Method: IColorDataProxy, ICMLuaUtil
