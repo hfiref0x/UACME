@@ -336,6 +336,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Shared\u64tostr.c" />
     <ClCompile Include="..\Shared\ultostr.c" />
     <ClCompile Include="..\Shared\util.c" />
     <ClCompile Include="..\Shared\_filename.c" />

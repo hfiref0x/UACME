@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.81
+*  VERSION:     2.84
 *
-*  DATE:        28 Oct 2017
+*  DATE:        22 Nov 2017
 *
 *  Common header file for the program support routines.
 *
@@ -171,6 +171,7 @@ BOOL supDeleteKeyRecursive(
 
 BOOL supSetEnvVariable(
     _In_ BOOL fRemove,
+    _In_opt_ LPWSTR lpKeyName,
     _In_ LPWSTR lpVariableName,
     _In_opt_ LPWSTR lpVariableData);
 

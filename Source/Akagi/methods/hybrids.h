@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     2.83
+*  VERSION:     2.84
 *
-*  DATE:        04 Nov 2017
+*  DATE:        22 Nov 2017
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -114,3 +114,7 @@ BOOL ucmFwCplLuaMethod(
 
 BOOL ucmDccwCOMMethod(
     _In_opt_ LPWSTR lpszPayload);
+
+BOOL ucmMethodVolatileEnv(
+    PVOID ProxyDll,
+    DWORD ProxyDllSize);

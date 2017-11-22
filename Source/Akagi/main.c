@@ -52,6 +52,8 @@ UINT ucmInit(
     HDC         dc1;
     int         index;
 
+    RTL_OSVERSIONINFOW osv;
+
 #ifndef _DEBUG
     TOKEN_ELEVATION_TYPE    ElevType;
 #endif	
@@ -93,10 +95,20 @@ UINT ucmInit(
         //fill common data block
         RtlSecureZeroMemory(&g_ctx, sizeof(g_ctx));
 
-        //query build number
-        if (!supQueryNtBuildNumber(&g_ctx.dwBuildNumber)) {
-            Result = ERROR_INTERNAL_ERROR;
-            break;
+        g_ctx.IsWow64 = supIsProcess32bit(GetCurrentProcess());
+
+        if (g_ctx.IsWow64) {
+            RtlSecureZeroMemory(&osv, sizeof(osv));
+            osv.dwOSVersionInfoSize = sizeof(osv);
+            RtlGetVersion((PRTL_OSVERSIONINFOW)&osv);
+            g_ctx.dwBuildNumber = osv.dwBuildNumber;
+        }
+        else {
+            //query build number
+            if (!supQueryNtBuildNumber(&g_ctx.dwBuildNumber)) {
+                Result = ERROR_INTERNAL_ERROR;
+                break;
+            }
         }
 
         if (g_ctx.dwBuildNumber < 7000) {
@@ -197,8 +209,6 @@ UINT ucmInit(
         _strcpy(g_ctx.szSystemDirectory, USER_SHARED_DATA->NtSystemRoot);
         _strcat(g_ctx.szSystemDirectory, TEXT("\\system32\\"));
         supExpandEnvironmentStrings(L"%temp%\\", g_ctx.szTempDirectory, MAX_PATH);
-
-        g_ctx.IsWow64 = supIsProcess32bit(GetCurrentProcess());
 
         if (g_ctx.dwBuildNumber > 14997) {
             g_ctx.IFileOperationFlags = FOF_NOCONFIRMATION | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION;

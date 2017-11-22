@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     2.83
+*  VERSION:     2.84
 *
-*  DATE:        04 Nov 2017
+*  DATE:        22 Nov 2017
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -63,6 +63,7 @@ typedef enum _UCM_METHOD {
     UacMethodCMLuaUtil,     //+
     UacMethodFwCplLua,      //+
     UacMethodDccwCOM,       //+
+    UacMethodVolatileEnv,   //+
     UacMethodMax
 } UCM_METHOD;
 

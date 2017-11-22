@@ -103,8 +103,9 @@ VOID DefaultPayload(
         cbParameter);
 
     if ((lpParameter == NULL) && (cbParameter == 0)) {
-        if (g_AkagiFlag == AKAGI_FLAG_KILO)
+        if (g_AkagiFlag == AKAGI_FLAG_KILO) {
             ucmQueryRuntimeInfo(FALSE);
+        }
     }
     else {
         if (bReadSuccess) {
@@ -114,6 +115,7 @@ VOID DefaultPayload(
                 lpParameter);
         }
     }
+
     ExitProcess(0);
 }
 

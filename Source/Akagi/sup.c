@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.81
+*  VERSION:     2.84
 *
-*  DATE:        28 Oct 2017
+*  DATE:        22 Nov 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -1229,6 +1229,7 @@ BOOL supDeleteKeyRecursive(
 */
 BOOL supSetEnvVariable(
     _In_ BOOL fRemove,
+    _In_opt_ LPWSTR lpKeyName,
     _In_ LPWSTR lpVariableName,
     _In_opt_ LPWSTR lpVariableData
 )
@@ -1237,14 +1238,21 @@ BOOL supSetEnvVariable(
     HKEY    hKey = NULL;
     DWORD   cbData;
 
+    LPWSTR lpSubKey;
+
     do {
         if (lpVariableName == NULL)
             break;
 
+        if (lpKeyName == NULL)
+            lpSubKey = L"Environment";
+        else
+            lpSubKey = lpKeyName;
+
         if ((lpVariableData == NULL) && (fRemove == FALSE))
             break;
 
-        if (RegOpenKey(HKEY_CURRENT_USER, L"Environment", &hKey) != ERROR_SUCCESS)
+        if (RegOpenKey(HKEY_CURRENT_USER, lpSubKey, &hKey) != ERROR_SUCCESS)
             break;
 
         if (fRemove) {

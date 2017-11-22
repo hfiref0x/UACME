@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.84
 *
-*  DATE:        04 Nov 2017
+*  DATE:        22 Nov 2017
 *
 *  Global consts definition file.
 *
@@ -99,6 +99,7 @@
 #define OOBE_EXE                    L"oobe.exe"
 #define SETUPSQM_EXE                L"oobe\\setupsqm.exe" 
 #define OSK_EXE                     L"osk.exe"
+#define PERFMON_EXE                 L"perfmon.exe"
 #define PKGMGR_EXE                  L"pkgmgr.exe"
 #define SCHTASKS_EXE                L"schtasks.exe"
 #define SDBINST_EXE                 L"sdbinst.exe"
@@ -111,6 +112,7 @@
 #define INETSRV_DIR                 L"inetsrv\\"
 #define MIGWIZ_DIR                  L"migwiz\\"
 #define SYSPREP_DIR                 L"sysprep\\"
+#define SYSTEM32_DIR                L"\\system32\\"
 #define WBEM_DIR                    L"wbem\\"
 #define SYSWOW64_DIR                L"\\syswow64\\"
 #define MANAGE_VERB                 L"Manage"
@@ -128,6 +130,9 @@
 #endif
 
 #define MYSTERIOUSCUTETHING         L"pe386"
+#define SOMEOTHERNAME               L"huy32"
+
+#define T_KUREND                    L"KureND"
 
 #define T_DEFAULT_CMD               L"%systemroot%\\system32\\cmd.exe"
 
@@ -149,6 +154,8 @@
 #define T_AKAGI_FLAG                L"Flag"
 #define T_AKAGI_SESSION             L"SessionId"
 #define T_AKAGI_DESKTOP             L"Desktop"
+#define T_VOLATILE_ENV              L"Volatile Environment"
+#define T_SYSTEMROOT_VAR            L"SYSTEMROOT"
 
 #define COR_PROFILER                L"COR_PROFILER"
 #define COR_PROFILER_PATH           L"COR_PROFILER_PATH"

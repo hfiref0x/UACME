@@ -57,6 +57,9 @@
     <ClCompile Include="..\Shared\util.c">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\u64tostr.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Shared\rtltypes.h">
