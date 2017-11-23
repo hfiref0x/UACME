@@ -364,10 +364,10 @@ Keys (watch debug output with dbgview or similar for more info):
 44. Author: bytecode77
      * Type: Shell API
      * Method: Environment variables expansion
-     * Target(s): Multiple autoelevated processes
+     * Target(s): Multiple auto-elevated processes
      * Component(s): Various per target
      * Works from: Windows 7 (7600)
-     * Fixed in: Windows RS3 (16299)
+     * Fixed in: Windows 10 RS3 (16299)
         * How: Current user system directory variables ignored during process creation
 
 Note:
