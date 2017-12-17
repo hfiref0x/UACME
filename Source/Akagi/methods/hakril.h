@@ -4,9 +4,9 @@
 *
 *  TITLE:       HAKRIL.H
 *
-*  VERSION:     2.76
+*  VERSION:     2.85
 *
-*  DATE:        12 July 2017
+*  DATE:        01 Dec 2017
 *
 *  Prototypes and definitions for hakril method.
 *
@@ -31,6 +31,5 @@ typedef ULONG_PTR (WINAPI *pfnAipFindLaunchAdminProcess)(
     );
 
 BOOL ucmMethodHakril(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
-
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);

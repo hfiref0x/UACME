@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     2.74
+*  VERSION:     2.85
 *
-*  DATE:        10 June 2017
+*  DATE:        01 Dec 2017
 *
 *  Leo Davidson based IFileOperation auto-elevation.
 *
@@ -30,8 +30,8 @@
 *
 */
 BOOL ucmStandardAutoElevation2(
-    CONST PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL  cond = FALSE, bResult = FALSE;
@@ -98,9 +98,9 @@ BOOL ucmStandardAutoElevation2(
 *
 */
 BOOL ucmStandardAutoElevation(
-    UCM_METHOD Method,
-    CONST PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ UCM_METHOD Method,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL    cond = FALSE, bResult = FALSE;

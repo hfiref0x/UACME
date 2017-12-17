@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.84
+*  VERSION:     2.85
 *
-*  DATE:        22 Nov 2017
+*  DATE:        01 Dec 2017
 *
 *  Common header file for the program support routines.
 *
@@ -61,7 +61,7 @@ BOOLEAN supIsProcess32bit(
     _In_ HANDLE hProcess);
 
 BOOL supGetElevationType(
-    TOKEN_ELEVATION_TYPE *lpType);
+    _Out_ TOKEN_ELEVATION_TYPE *lpType);
 
 HANDLE supGetExplorerHandle(
     VOID);
@@ -103,8 +103,8 @@ LPWSTR supQueryEnvironmentVariableOffset(
     _In_ PUNICODE_STRING Value);
 
 BOOL supSetParameter(
-    LPWSTR lpParameter,
-    DWORD cbParameter);
+    _In_ LPWSTR lpParameter,
+    _In_ DWORD cbParameter);
 
 BOOL supSaveAkagiParameters(
     VOID);
@@ -122,10 +122,10 @@ BOOLEAN supSetCheckSumForMappedFile(
     _In_ ULONG CheckSum);
 
 VOID ucmShowMessage(
-    LPWSTR lpszMsg);
+    _In_ LPWSTR lpszMsg);
 
 INT ucmShowQuestion(
-    LPWSTR lpszMsg);
+    _In_ LPWSTR lpszMsg);
 
 PBYTE supLdrQueryResourceData(
     _In_ ULONG_PTR ResourceId,
@@ -136,28 +136,28 @@ VOID supMasqueradeProcess(
     VOID);
 
 DWORD supExpandEnvironmentStrings(
-    LPCWSTR lpSrc,
-    LPWSTR lpDst,
-    DWORD nSize);
+    _In_ LPCWSTR lpSrc,
+    _In_ LPWSTR lpDst,
+    _In_ DWORD nSize);
 
 VOID NTAPI sxsFindDllCallback(
     _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
     _In_ PVOID Context,
-    _In_ OUT BOOLEAN *StopEnumeration);
+    _Inout_ BOOLEAN *StopEnumeration);
 
 PVOID supFindPattern(
-    CONST PBYTE Buffer,
-    SIZE_T BufferSize,
-    CONST PBYTE Pattern,
-    SIZE_T PatternSize);
+    _In_ CONST PBYTE Buffer,
+    _In_ SIZE_T BufferSize,
+    _In_ CONST PBYTE Pattern,
+    _In_ SIZE_T PatternSize);
 
 PVOID supNativeGetProcAddress(
-    WCHAR *Module,
-    CHAR *Routine);
+    _In_ WCHAR *Module,
+    _In_ CHAR *Routine);
 
 VOID supDebugPrint(
-    LPWSTR ApiName,
-    DWORD status);
+    _In_ LPWSTR ApiName,
+    _In_ DWORD status);
 
 PVOID FORCEINLINE supHeapAlloc(
     _In_ SIZE_T Size);
@@ -211,5 +211,21 @@ BOOL supDesktopToName(
 
 BOOL supQueryNtBuildNumber(
     _Inout_ PULONG BuildNumber);
+
+BOOL supConvertDllToExeSetNewEP(
+    _In_ PVOID pvImage,
+    _In_ ULONG dwImageSize,
+    _In_ LPSTR lpszEntryPoint);
+
+NTSTATUS supRegReadValue(
+    _In_ HANDLE hKey,
+    _In_ LPWSTR ValueName,
+    _In_ DWORD ValueType,
+    _Out_ PVOID *Buffer,
+    _Out_ ULONG *BufferSize,
+    _In_opt_ HANDLE hHeap);
+
+BOOL supQuerySystemRoot(
+    VOID);
 
 #define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)

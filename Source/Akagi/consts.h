@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.84
+*  VERSION:     2.85
 *
-*  DATE:        22 Nov 2017
+*  DATE:        01 Dec 2017
 *
 *  Global consts definition file.
 *
@@ -19,7 +19,10 @@
 #pragma once
 
 #define AKAGI_XOR_KEY               'naka'
+#define FUBUKI_EXT_ENTRYPOINT       "_FubukiProc1"
+#define FUBUKI_DEFAULT_ENTRYPOINT   "_FubukiProc3"
 
+#define T_WINDOWS_CURRENT_VERSION   L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion"
 #define T_IFEO                      L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"
 #define T_UACKEY                    L"MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\policies\\system"
 
@@ -134,8 +137,6 @@
 
 #define T_KUREND                    L"KureND"
 
-#define T_DEFAULT_CMD               L"%systemroot%\\system32\\cmd.exe"
-
 #define T_AKAGI_LINK                L"\\Rpc Control\\Akagi"
 
 #define LOCAL_SXS                   L".local"
@@ -156,6 +157,7 @@
 #define T_AKAGI_DESKTOP             L"Desktop"
 #define T_VOLATILE_ENV              L"Volatile Environment"
 #define T_SYSTEMROOT_VAR            L"SYSTEMROOT"
+#define T_REGISTRY_PREP             L"\\REGISTRY\\" //end slash included
 
 #define COR_PROFILER                L"COR_PROFILER"
 #define COR_PROFILER_PATH           L"COR_PROFILER_PATH"

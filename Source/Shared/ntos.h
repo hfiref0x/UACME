@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.73
+*  VERSION:     1.74
 *
-*  DATE:        07 Sept 2017
+*  DATE:        01 Dec 2017
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -123,6 +123,19 @@
                                      SYNCHRONIZE |                      \
                                      MEMORY_PARTITION_QUERY_ACCESS |    \
                                      MEMORY_PARTITION_MODIFY_ACCESS)
+
+
+//
+// NtCreateProcessEx specific flags.
+//
+#define PS_REQUEST_BREAKAWAY        1
+#define PS_NO_DEBUG_INHERIT         2
+#define PS_INHERIT_HANDLES          4
+#define PS_LARGE_PAGES              8
+#define PS_ALL_FLAGS                (PS_REQUEST_BREAKAWAY | \
+                                     PS_NO_DEBUG_INHERIT  | \
+                                     PS_INHERIT_HANDLES   | \
+                                     PS_LARGE_PAGES)
 
 #define NtCurrentThread() ( (HANDLE)(LONG_PTR) -2 )
 #define NtCurrentProcess() ( (HANDLE)(LONG_PTR) -1 )
@@ -4567,6 +4580,19 @@ NTSTATUS NTAPI RtlDestroyProcessParameters(
     _In_ PRTL_USER_PROCESS_PARAMETERS ProcessParameters
     );
 
+NTSTATUS NTAPI RtlCreateProcessParametersEx(
+    _Out_ PRTL_USER_PROCESS_PARAMETERS *pProcessParameters,
+    _In_ PUNICODE_STRING ImagePathName,
+    _In_opt_ PUNICODE_STRING DllPath,
+    _In_opt_ PUNICODE_STRING CurrentDirectory,
+    _In_opt_ PUNICODE_STRING CommandLine,
+    _In_opt_ PVOID Environment,
+    _In_opt_ PUNICODE_STRING WindowTitle,
+    _In_opt_ PUNICODE_STRING DesktopInfo,
+    _In_opt_ PUNICODE_STRING ShellInfo,
+    _In_opt_ PUNICODE_STRING RuntimeData,
+    _In_ ULONG Flags);
+
 NTSTATUS NTAPI RtlCreateUserProcess(
 	PUNICODE_STRING NtImagePathName,
 	ULONG Attributes,
@@ -5914,8 +5940,12 @@ NTSTATUS NTAPI NtCreateTransaction(
 	_In_opt_  PUNICODE_STRING Description
 	);
 
+NTSTATUS NTAPI NtRollbackTransaction(
+    _In_ HANDLE  TransactionHandle,
+    _In_ BOOLEAN Wait);
+
 //TmRm
-NTSTATUS NTAPINtCreateResourceManager(
+NTSTATUS NTAPI NtCreateResourceManager(
 	_Out_     PHANDLE ResourceManagerHandle,
 	_In_      ACCESS_MASK DesiredAccess,
 	_In_      HANDLE TmHandle,
@@ -6337,3 +6367,28 @@ NTSTATUS NTAPI NtPrivilegeCheck(
     _Inout_ PPRIVILEGE_SET RequiredPrivileges,
     _Out_ PBOOLEAN Result
     );
+
+NTSTATUS NTAPI NtCreateProcessEx(
+    _Out_    PHANDLE ProcessHandle,
+    _In_     ACCESS_MASK DesiredAccess,
+    _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
+    _In_     HANDLE ParentProcess,
+    _In_     ULONG Flags,
+    _In_opt_ HANDLE SectionHandle,
+    _In_opt_ HANDLE DebugPort,
+    _In_opt_ HANDLE ExceptionPort,
+    _In_     BOOLEAN InJob);
+
+NTSTATUS NTAPI NtCreateThreadEx(
+    _Out_ PHANDLE hThread,
+    _In_  ACCESS_MASK DesiredAccess,
+    _In_  LPVOID ObjectAttributes,
+    _In_  HANDLE ProcessHandle,
+    _In_  LPTHREAD_START_ROUTINE lpStartAddress,
+    _In_  LPVOID lpParameter,
+    _In_  BOOL CreateSuspended,
+    _In_  DWORD StackZeroBits,
+    _In_  DWORD SizeOfStackCommit,
+    _In_  DWORD SizeOfStackReserve,
+    _Out_ LPVOID lpBytesBuffer);
+

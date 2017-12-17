@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.80
+*  VERSION:     2.85
 *
-*  DATE:        28 Aug 2017
+*  DATE:        01 Dec 2017
 *
 *  Common header file for the program support routines.
 *
@@ -93,9 +93,11 @@ typedef struct _UACME_CONTEXT {
     ULONG                   AkagiFlag;
     ULONG                   IFileOperationFlags;
     ULONG                   OptionalParameterLength; //count of characters
+    WCHAR                   szSystemRoot[MAX_PATH + 1]; //with end slash
     WCHAR                   szSystemDirectory[MAX_PATH + 1];//with end slash
     WCHAR                   szTempDirectory[MAX_PATH + 1]; //with end slash
     WCHAR                   szOptionalParameter[MAX_PATH + 1]; //limited to MAX_PATH
+    WCHAR                   szDefaultPayload[MAX_PATH + 1]; //limited to MAX_PATH
 } UACMECONTEXT, *PUACMECONTEXT;
 
 typedef UINT(WINAPI *pfnEntryPoint)();

