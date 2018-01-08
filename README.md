@@ -407,7 +407,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # Other usage
 * Currently used as "signature" by "THOR APT" scanner (handmade pattern matching fraudware from Germany). We do  not take any responsibility for this tool usage in the fraudware;
-* The scamware project called "uacguard" has references to UACMe from their platform. We do  not take any responsibility for this tool usage in the scamware. This repository and it contents are the only genuine source for UACMe code. We have nothing to do with external links to this project, mentions anywhere as well as modifications (forks);
+* The scamware project called "uacguard" has references to UACMe from their platform. We do not take any responsibility for this tool usage in the scamware. This repository and it contents are the only genuine source for UACMe code. We have nothing to do with external links to this project, mentions anywhere as well as modifications (forks);
 * In July 2016 so-called "security company" Cymmetria released report about script-kiddie malware bundle called "Patchwork" and false flagged it as APT. They stated it was using "UACME method", which in fact is just slightly and unprofessionally modified injector dll from UACMe v1.9 and was using Carberp/Pitou hybrid method in malware self-implemented way. We do not take any responsibility for UACMe usage in the dubious advertising campaigns from third party "security companies".
 
 # Build 
@@ -439,7 +439,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # Authors
 
-(c) 2014 - 2017 UACMe Project
+(c) 2014 - 2018 UACMe Project
 
 # 3rd party components usage
 
