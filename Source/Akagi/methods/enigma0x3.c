@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2017
+*  (C) COPYRIGHT AUTHORS, 2016 - 2018
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.85
+*  VERSION:     2.86
 *
-*  DATE:        01 Dec 2017
+*  DATE:        15 Jan 2018
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -277,7 +277,7 @@ BOOL ucmDiskCleanupRaceCondition(
     BOOL                bResult = FALSE;
     DWORD               ti;
     HANDLE              hThread = NULL;
-    SHELLEXECUTEINFOW   shinfo;
+    SHELLEXECUTEINFO    shinfo;
 
     RtlSecureZeroMemory(&g_EnigmaThreadCtx, sizeof(g_EnigmaThreadCtx));
 
@@ -293,7 +293,7 @@ BOOL ucmDiskCleanupRaceCondition(
         shinfo.lpFile = SCHTASKS_EXE;
         shinfo.lpParameters = T_SCHTASKS_CMD;
         shinfo.nShow = SW_SHOW;
-        if (ShellExecuteExW(&shinfo)) {
+        if (ShellExecuteEx(&shinfo)) {
             if (shinfo.hProcess != NULL) {
                 WaitForSingleObject(shinfo.hProcess, INFINITE);
                 CloseHandle(shinfo.hProcess);

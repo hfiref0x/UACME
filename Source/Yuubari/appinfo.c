@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       APPINFO.C
 *
 *  VERSION:     1.27
 *
-*  DATE:        24 Oct 2017
+*  DATE:        08 Jan 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -40,7 +40,7 @@ UAC_PATTERN g_MmcPatterns[SUPPORTED_PATTERNS_COUNT] = {
     { ptMmcBlock_10586_16299, sizeof(ptMmcBlock_10586_16299), 10586, 16299 }
 };
 
-#define TestChar(x)  ((x >= L'A') && (x <= L'z')) 
+#define TestChar(x)  (((WCHAR)x >= L'A') && ((WCHAR)x <= L'z')) 
 
 /*
 * GetAppInfoBuildVersion

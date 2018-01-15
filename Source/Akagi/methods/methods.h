@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     2.85
+*  VERSION:     2.86
 *
-*  DATE:        01 Dec 2017
+*  DATE:        15 Jan 2018
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -64,6 +64,7 @@ typedef enum _UCM_METHOD {
     UacMethodFwCplLua,      //+
     UacMethodDccwCOM,       //+
     UacMethodVolatileEnv,   //+
+    UacMethodSluiHijack,    //+
     UacMethodMax
 } UCM_METHOD;
 
@@ -100,6 +101,7 @@ typedef struct _UCM_API_DISPATCH_ENTRY {
 #include "api0cradle.h"
 #include "apphelp.h"
 #include "b33f.h"
+#include "bytecode77.h"
 #include "carberp.h"
 #include "cdproxy.h"
 #include "comet.h"

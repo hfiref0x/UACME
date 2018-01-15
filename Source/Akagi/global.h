@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.85
+*  VERSION:     2.86
 *
-*  DATE:        01 Dec 2017
+*  DATE:        15 Jan 2018
 *
 *  Common header file for the program support routines.
 *
@@ -75,6 +75,12 @@
 #include "minhook\MinHook.h"
 #include "methods\methods.h"
 #include "windefend.h"
+
+//
+// enable for test
+//#pragma comment(lib, "libucrt.lib")
+//#include <strsafe.h>
+//
 
 //default execution flow
 #define AKAGI_FLAG_KILO  1

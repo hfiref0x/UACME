@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.85
+*  VERSION:     2.86
 *
-*  DATE:        01 Dec 2017
+*  DATE:        15 Jan 2018
 *
 *  Common header file for the program support routines.
 *
@@ -78,6 +78,7 @@ PBYTE supReadFileToBuffer(
 BOOL supRunProcess2(
     _In_ LPWSTR lpszProcessName,
     _In_opt_ LPWSTR lpszParameters,
+    _In_opt_ LPWSTR lpVerb,
     _In_ BOOL fWait);
 
 BOOL supRunProcess(

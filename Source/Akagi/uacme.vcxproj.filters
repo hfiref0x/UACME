@@ -171,6 +171,9 @@
     <ClCompile Include="methods\api0cradle.c">
       <Filter>Source Files\methods</Filter>
     </ClCompile>
+    <ClCompile Include="methods\bytecode77.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -297,6 +300,9 @@
       <Filter>Header Files\methods</Filter>
     </ClInclude>
     <ClInclude Include="methods\cdproxy.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\bytecode77.h">
       <Filter>Header Files\methods</Filter>
     </ClInclude>
   </ItemGroup>

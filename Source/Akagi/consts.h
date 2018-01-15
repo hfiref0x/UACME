@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2017
+*  (C) COPYRIGHT AUTHORS, 2015 - 2018
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.85
+*  VERSION:     2.86
 *
-*  DATE:        01 Dec 2017
+*  DATE:        15 Jan 2018
 *
 *  Global consts definition file.
 *
@@ -30,6 +30,7 @@
 #define T_DISPLAY_CALIBRATION       L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ICM\\Calibration"
 #define T_DOTNET_CLIENT             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\KnownFunctionTableDlls"
 #define T_EXEFILE_SHELL             L"Software\\Classes\\exefile\\shell\\runas\\command"
+#define T_EXEFILE_SHELL_OPEN        L"Software\\Classes\\exefile\\shell\\open\\command"
 #define T_MSC_SHELL                 L"Software\\Classes\\mscfile\\shell\\open\\command"
 #define T_MSSETTINGS                L"Software\\Classes\\ms-settings"
 #define T_SHELL_OPEN_COMMAND        L"\\shell\\open\\command"
@@ -107,6 +108,7 @@
 #define SCHTASKS_EXE                L"schtasks.exe"
 #define SDBINST_EXE                 L"sdbinst.exe"
 #define SDCLT_EXE                   L"sdclt.exe"
+#define SLUI_EXE                    L"slui.exe"
 #define SYSPREP_EXE                 L"sysprep.exe" 
 #define TASKHOST_EXE                L"taskhost.exe"
 #define TZSYNC_EXE                  L"tzsync.exe"

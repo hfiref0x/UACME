@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.80
+*  VERSION:     2.86
 *
-*  DATE:        06 Sept 2017
+*  DATE:        10 Jan 2018
 *
 *  AVrf entry point, Hibiki Kai Ni.
 *
@@ -44,37 +44,6 @@
 #endif
 
 #define LoadedMsg      "Hibiki lock and loaded"
-
-#define DLL_PROCESS_VERIFIER 4
-
-typedef VOID(NTAPI * RTL_VERIFIER_DLL_LOAD_CALLBACK) (PWSTR DllName, PVOID DllBase, SIZE_T DllSize, PVOID Reserved);
-
-typedef struct _RTL_VERIFIER_THUNK_DESCRIPTOR {
-    PCHAR ThunkName;
-    PVOID ThunkOldAddress;
-    PVOID ThunkNewAddress;
-} RTL_VERIFIER_THUNK_DESCRIPTOR, *PRTL_VERIFIER_THUNK_DESCRIPTOR;
-
-typedef struct _RTL_VERIFIER_DLL_DESCRIPTOR {
-    PWCHAR DllName;
-    DWORD DllFlags;
-    PVOID DllAddress;
-    PRTL_VERIFIER_THUNK_DESCRIPTOR DllThunks;
-} RTL_VERIFIER_DLL_DESCRIPTOR, *PRTL_VERIFIER_DLL_DESCRIPTOR;
-
-typedef struct _RTL_VERIFIER_PROVIDER_DESCRIPTOR {
-    DWORD Length;
-    PRTL_VERIFIER_DLL_DESCRIPTOR ProviderDlls;
-    RTL_VERIFIER_DLL_LOAD_CALLBACK ProviderDllLoadCallback;
-    PVOID ProviderDllUnloadCallback;
-    PWSTR VerifierImage;
-    DWORD VerifierFlags;
-    DWORD VerifierDebug;
-    PVOID RtlpGetStackTraceAddress;
-    PVOID RtlpDebugPageHeapCreate;
-    PVOID RtlpDebugPageHeapDestroy;
-    PVOID ProviderNtdllHeapFreeCallback;
-} RTL_VERIFIER_PROVIDER_DESCRIPTOR, *PRTL_VERIFIER_PROVIDER_DESCRIPTOR;
 
 static RTL_VERIFIER_PROVIDER_DESCRIPTOR g_avrfProvider;
 static RTL_VERIFIER_THUNK_DESCRIPTOR avrfThunks[2];

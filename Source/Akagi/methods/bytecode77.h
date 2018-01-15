@@ -2,11 +2,13 @@
 *
 *  (C) COPYRIGHT AUTHORS, 2017 - 2018
 *
-*  TITLE:       TEST.C
+*  TITLE:       BYTECODE77.H
 *
 *  VERSION:     2.86
 *
 *  DATE:        15 Jan 2018
+*
+*  Prototypes and definitions for bytecode77 methods.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -14,22 +16,11 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
-#include "global.h"
+#pragma once
 
-/*
-* ucmTestRoutine
-*
-* Purpose:
-*
-* Test routine, can serve multiple purposes.
-*
-*/
-BOOL ucmTestRoutine(
-    _In_opt_ PVOID PayloadCode,
-    _In_opt_ ULONG PayloadSize)
-{
-    UNREFERENCED_PARAMETER(PayloadCode);
-    UNREFERENCED_PARAMETER(PayloadSize);
+BOOL ucmMethodVolatileEnv(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
-    return TRUE;
-}
+BOOL ucmMethodSluiHijack(
+    _In_ LPWSTR lpszPayload);

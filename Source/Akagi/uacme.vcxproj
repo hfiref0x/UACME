@@ -388,6 +388,7 @@
     <ClCompile Include="compress.c" />
     <ClCompile Include="methods\api0cradle.c" />
     <ClCompile Include="methods\b33f.c" />
+    <ClCompile Include="methods\bytecode77.c" />
     <ClCompile Include="methods\carberp.c" />
     <ClCompile Include="methods\comet.c" />
     <ClCompile Include="methods\enigma0x3.c" />
@@ -425,6 +426,7 @@
     <ClInclude Include="methods\api0cradle.h" />
     <ClInclude Include="methods\apphelp.h" />
     <ClInclude Include="methods\b33f.h" />
+    <ClInclude Include="methods\bytecode77.h" />
     <ClInclude Include="methods\carberp.h" />
     <ClInclude Include="methods\cdproxy.h" />
     <ClInclude Include="methods\comet.h" />

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2017
+*  (C) COPYRIGHT AUTHORS, 2015 - 2018
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.85
+*  VERSION:     2.86
 *
-*  DATE:        01 Dec 2017
+*  DATE:        15 Jan 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -400,22 +400,24 @@ PBYTE supReadFileToBuffer(
 BOOL supRunProcess2(
     _In_ LPWSTR lpszProcessName,
     _In_opt_ LPWSTR lpszParameters,
+    _In_opt_ LPWSTR lpVerb,
     _In_ BOOL fWait
 )
 {
     BOOL bResult;
     SHELLEXECUTEINFO shinfo;
-    RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
 
     if (lpszProcessName == NULL)
         return FALSE;
 
+    RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
     shinfo.cbSize = sizeof(shinfo);
     shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
     shinfo.lpFile = lpszProcessName;
     shinfo.lpParameters = lpszParameters;
     shinfo.lpDirectory = NULL;
     shinfo.nShow = SW_SHOW;
+    shinfo.lpVerb = lpVerb;
     bResult = ShellExecuteEx(&shinfo);
     if (bResult) {
         if (fWait)
@@ -438,7 +440,7 @@ BOOL supRunProcess(
     _In_opt_ LPWSTR lpszParameters
 )
 {
-    return supRunProcess2(lpszProcessName, lpszParameters, TRUE);
+    return supRunProcess2(lpszProcessName, lpszParameters, NULL, TRUE);
 }
 
 /*
@@ -1169,6 +1171,7 @@ PVOID supNativeGetProcAddress(
     if (!NT_SUCCESS(LdrGetDllHandle(NULL, NULL, &DllName, &DllImageBase)))
         return NULL;
 
+    RtlSecureZeroMemory(&str, sizeof(str));
     RtlInitString(&str, Routine);
     if (!NT_SUCCESS(LdrGetProcedureAddress(DllImageBase, &str, 0, &ProcedureAddress)))
         return NULL;
