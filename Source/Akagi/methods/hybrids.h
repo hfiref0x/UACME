@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     2.86
+*  VERSION:     2.87
 *
-*  DATE:        15 Jan 2018
+*  DATE:        19 Jan 2018
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -113,4 +113,7 @@ BOOL ucmFwCplLuaMethod(
     _In_ LPWSTR lpszPayload);
 
 BOOL ucmDccwCOMMethod(
+    _In_ LPWSTR lpszPayload);
+
+BOOL ucmBitlockerRCMethod(
     _In_ LPWSTR lpszPayload);

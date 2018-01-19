@@ -377,6 +377,14 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 8.1 (9600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
+46. Author: Anonymous
+     * Type: Race Condition
+     * Method: Registry key manipulation
+     * Target(s): \system32\BitlockerWizardElev.exe
+     * Component(s): Attacker defined
+     * Works from: Windows 7 (7600)
+     * Fixed in: Windows 10 RS4 (>16299)
+        * How: Shell API update
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;

