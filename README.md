@@ -3,7 +3,7 @@
 
 # System Requirements
 
-* x86-32/x64 Windows 7/8/8.1/10(TH1/TH2/RS1/RS2/RS3/RS4) (client, some methods however works on server version too).
+* x86-32/x64 Windows 7/8/8.1/10 (client, some methods however works on server version too).
 * Admin account with UAC set on default settings required.
 
 # Usage
@@ -19,6 +19,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Method: IFileOperation
    * Target(s): \system32\sysprep\sysprep.exe
    * Component(s): cryptbase.dll
+   * Implementation: ucmStandardAutoElevation   
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 8.1 (9600)
       * How: sysprep.exe hardened LoadFrom manifest elements
@@ -27,6 +28,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Method: IFileOperation
    * Target(s): \system32\sysprep\sysprep.exe
    * Component(s): ShCore.dll
+   * Implementation: ucmStandardAutoElevation
    * Works from: Windows 8.1 (9600)
    * Fixed in: Windows 10 TP (> 9600)
       * How: Side effect of ShCore.dll moving to \KnownDlls
@@ -35,6 +37,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Method: IFileOperation
    * Target(s): \system32\oobe\setupsqm.exe
    * Component(s): WdsCore.dll
+   * Implementation: ucmStandardAutoElevation
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TH2 (10558)
       * How: side effect of OOBE redesign
@@ -43,6 +46,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Method: RedirectEXE Shim
    * Target(s): \system32\cliconfg.exe
    * Component(s): -
+   * Implementation: ucmShimRedirectEXE
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TP (> 9600)
       * How: Sdbinst.exe autoelevation removed, KB3045645/KB3048097 for rest Windows versions
@@ -51,6 +55,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Method: ISecurityEditor
    * Target(s): HKLM registry keys
    * Component(s): -
+   * Implmenetation: ucmSimdaTurnOffUac
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TH1 (10147)
       * How: ISecurityEditor interface method changed
@@ -59,6 +64,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Method: WUSA
    * Target(s): \ehome\mcx2prov.exe, \system32\migwiz\migwiz.exe
    * Component(s): WdsCore.dll, CryptBase.dll, CryptSP.dll
+   * Implementation: ucmWusaMethod
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TH1 (10147)
       * How: WUSA /extract option removed
@@ -67,6 +73,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Method: WUSA
    * Target(s): \system32\cliconfg.exe
    * Component(s): ntwdblib.dll
+   * Implementation: ucmWusaMethod
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TH1 (10147)
       * How: WUSA /extract option removed
@@ -75,6 +82,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Method: IFileOperation
    * Target(s): \system32\sysprep\sysprep.exe
    * Component(s): Actionqueue.dll
+   * Implementation: ucmStandardAutoElevation
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 8.1 (9600)
       * How: sysprep.exe hardened LoadFrom manifest
@@ -83,6 +91,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Method: IFileOperation, ISecurityEditor, WUSA
    * Target(s): IFEO registry keys, \system32\cliconfg.exe
    * Component(s): Attacker defined Application Verifier Dll
+   * Implementation: ucmAvrfMethod
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TH1 (10147)
       * How: WUSA /extract option removed, ISecurityEditor interface method changed
@@ -91,6 +100,7 @@ Keys (watch debug output with dbgview or similar for more info):
       * Method: IFileOperation, WUSA
       * Target(s): \system32\\{New}or{Existing}\\{autoelevated}.exe, e.g. winsat.exe
       * Component(s): Attacker defined dll, e.g. PowProf.dll, DevObj.dll
+      * Implementation: ucmWinSATMethod
       * Works from: Windows 7 (7600)
       * Fixed in: Windows 10 TH2 (10548) 
         * How: AppInfo elevated application path control hardening
@@ -99,6 +109,7 @@ Keys (watch debug output with dbgview or similar for more info):
       * Method: Shim Memory Patch
       * Target(s): \system32\iscsicli.exe
       * Component(s): Attacker prepared shellcode
+      * Implementation: ucmShimPatch
       * Works from: Windows 7 (7600)
       * Fixed in: Windows 8.1 (9600)
          * How: Sdbinst.exe autoelevation removed, KB3045645/KB3048097 for rest Windows versions
@@ -107,6 +118,7 @@ Keys (watch debug output with dbgview or similar for more info):
       * Method: IFileOperation
       * Target(s): \system32\sysprep\sysprep.exe
       * Component(s): dbgcore.dll
+      * Implementation: ucmStandardAutoElevation
       * Works from: Windows 10 TH1 (10240)
       * Fixed in: Windows 10 TH2 (10565)
         * How: sysprep.exe manifest updated
@@ -115,6 +127,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IFileOperation
      * Target(s): \system32\mmc.exe EventVwr.msc
      * Component(s): elsext.dll
+     * Implementation: ucmMMCMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS1 (14316)
         * How: Missing dependency removed
@@ -123,6 +136,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IFileOperation
      * Target(s): \system\credwiz.exe, \system32\wbem\oobe.exe
      * Component(s): netutils.dll
+     * Implementation: ucmSirefefMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 TH2 (10548)
         * How: AppInfo elevated application path control hardening
@@ -131,6 +145,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IFileOperation
      * Target(s): \system32\cliconfg.exe
      * Component(s): ntwdblib.dll
+     * Implementation: ucmGenericAutoelevation
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS1 (14316)
         * How: Cliconfg.exe autoelevation removed
@@ -139,6 +154,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IFileOperation
      * Target(s): \system32\GWX\GWXUXWorker.exe, \system32\inetsrv\inetmgr.exe
      * Component(s): SLC.dll
+     * Implementation: ucmGWX
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS1 (14316)
         * How: AppInfo elevated application path control and inetmgr executable hardening
@@ -147,6 +163,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IFileOperation
      * Target(s): \system32\sysprep\sysprep.exe
      * Component(s): unbcl.dll
+     * Implementation: ucmStandardAutoElevation2
      * Works from: Windows 8.1 (9600)
      * Fixed in: Windows 10 RS1 (14371)
         * How: sysprep.exe manifest updated
@@ -154,7 +171,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: Dll Hijack (Manifest)
      * Method: IFileOperation
      * Target(s): \system32\taskhost.exe, \system32\tzsync.exe (any ms exe without manifest)
-     * Component(s): Attacker defined dll
+     * Component(s): Attacker defined
+     * Implementation: ucmAutoElevateManifest
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS1 (14371)
         * How: Manifest parsing logic reviewed
@@ -163,6 +181,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IFileOperation
      * Target(s): \system32\inetsrv\inetmgr.exe
      * Component(s): MsCoree.dll
+     * Implementation: ucmInetMgrMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS1 (14376)
         * How: inetmgr.exe executable manifest hardening, MitigationPolicy->ProcessImageLoadPolicy->PreferSystem32Images
@@ -171,6 +190,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IFileOperation
      * Target(s): \system32\mmc.exe, Rsop.msc
      * Component(s): WbemComn.dll
+     * Implementation: ucmMMCMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS3 (16232)
         * How: Target requires wbemcomn.dll to be signed by MS
@@ -179,6 +199,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IFileOperation, SxS DotLocal
      * Target(s): \system32\sysprep\sysprep.exe
      * Component(s): comctl32.dll
+     * Implementation: ucmSXSMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS3 (16232)
         * How: sysprep.exe requires MS signed modules to load
@@ -187,6 +208,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IFileOperation, SxS DotLocal
      * Target(s): \system32\consent.exe
      * Component(s): comctl32.dll
+     * Implementation: ucmSXSMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -195,6 +217,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IFileOperation
      * Target(s): \system32\pkgmgr.exe
      * Component(s): DismCore.dll
+     * Implementation: ucmDismMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -202,7 +225,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: Shell API
      * Method: Environment variables expansion
      * Target(s): \system32\CompMgmtLauncher.exe
-     * Component(s): Attacker defined application
+     * Component(s): Attacker defined
+     * Implementation: ucmCometMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS2 (15031)
         * How: CompMgmtLauncher.exe autoelevation removed
@@ -210,7 +234,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: Shell API
      * Method: Registry key manipulation
      * Target(s): \system32\EventVwr.exe, \system32\CompMgmtLauncher.exe
-     * Component(s): Attacker defined application
+     * Component(s): Attacker defined
+     * Implementation: ucmHijackShellCommandMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS2 (15031)
         * How: EventVwr.exe redesigned, CompMgmtLauncher.exe autoelevation removed
@@ -219,6 +244,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: File overwrite
      * Target(s): %temp%\GUID\dismhost.exe
      * Component(s): LogProvider.dll
+     * Implementation: ucmDiskCleanupRaceCondition
      * Works from: Windows 10 TH1 (10240)
      * AlwaysNotify compatible
      * Fixed in: Windows 10 RS2 (15031)
@@ -226,16 +252,18 @@ Keys (watch debug output with dbgview or similar for more info):
 27. Author: ExpLife
      * Type: Elevated COM interface
      * Method: IARPUninstallStringLauncher
-     * Target(s): Attacker defined application
-     * Component(s): Attacker defined components
+     * Target(s): Attacker defined
+     * Component(s): Attacker defined
+     * Implementation: ucmUninstallLauncherMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS3 (16199)
         * How: UninstallStringLauncher interface removed from COMAutoApprovalList
 28. Author: Exploit/Sandworm
      * Type: Whitelisted component
      * Method: InfDefaultInstall
-     * Target(s): Attacker defined application
-     * Component(s): Attacker defined components
+     * Target(s): Attacker defined
+     * Component(s): Attacker defined
+     * Implementation: ucmSandwormMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 8.1 (9600)
         * How: InfDefaultInstall.exe removed from g_lpAutoApproveEXEList (MS14-060)
@@ -243,7 +271,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: Shell API
      * Method: Registry key manipulation
      * Target(s): \system32\sdctl.exe
-     * Component(s): Attacker defined application
+     * Component(s): Attacker defined
+     * Implementation: ucmAppPathMethod
      * Works from: Windows 10 TH1 (10240)
      * Fixed in: Windows 10 RS3 (16215)
         * How: Shell API update
@@ -252,6 +281,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: WOW64 logger
      * Target(s): \syswow64\\{any elevated exe, e.g wusa.exe}
      * Component(s): wow64log.dll
+     * Implementation: ucmWow64LoggerMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -259,7 +289,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: Shell API
      * Method: Registry key manipulation
      * Target(s): \system32\sdctl.exe
-     * Component(s): Attacker defined application
+     * Component(s): Attacker defined
+     * Implementation: ucmSdcltIsolatedCommandMethod
      * Works from: Windows 10 TH1 (10240)
      * Fixed in: Windows 10 RS4 (17025)
         * How: Shell API / Windows components update
@@ -268,6 +299,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: UIPI bypass with uiAccess application
      * Target(s): \Program Files\Windows Media Player\osk.exe, \system32\EventVwr.exe, \system32\mmc.exe
      * Component(s): duser.dll, osksupport.dll
+     * Implementation: ucmUiAccessMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -275,7 +307,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: Shell API 
      * Method: Registry key manipulation
      * Target(s): \system32\fodhelper.exe
-     * Component(s): Attacker defined application
+     * Component(s): Attacker defined
+     * Implementation: ucmMsSettingsDelegateExecuteMethod
      * Works from: Windows 10 TH1 (10240)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -283,7 +316,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: Shell API 
      * Method: Environment variables expansion
      * Target(s): \system32\svchost.exe via \system32\schtasks.exe
-     * Component(s): Attacker defined application
+     * Component(s): Attacker defined
+     * Implementation: ucmDiskCleanupEnvironmentVariable
      * Works from: Windows 8.1 (9600)
      * AlwaysNotify compatible
      * Fixed in: unfixed :see_no_evil:
@@ -292,7 +326,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: Impersonation
      * Method: Token Manipulations
      * Target(s): Autoelevated applications
-     * Component(s): Attacker defined applications
+     * Component(s): Attacker defined
+     * Implementation: ucmTokenModification
      * Works from: Windows 7 (7600)
      * AlwaysNotify compatible, see note
      * Fixed in: unfixed :see_no_evil:
@@ -302,6 +337,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: NTFS reparse point & Dll Hijack
      * Target(s): wusa.exe
      * Component(s): dcomcnfg.exe, mmc.exe, ole32.dll, MsCoree.dll
+     * Implementation: ucmJunctionMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -310,6 +346,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: SxS DotLocal, NTFS reparse point
      * Target(s): \system32\dccw.exe
      * Component(s): GdiPlus.dll
+     * Implementation: ucmSXSMethodDccw
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -317,7 +354,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: Whitelisted component
      * Method: APPINFO command line spoofing
      * Target(s): \system32\mmc.exe
-     * Component(s): Attacker defined components
+     * Component(s): Attacker defined
+     * Implementation: ucmMethodHakril
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -325,7 +363,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: Dll Hijack
      * Method: .NET Code Profiler
      * Target(s): \system32\mmc.exe
-     * Component(s): Attacker defined components
+     * Component(s): Attacker defined
+     * Implementation: ucmMethodCorProfiler
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -333,7 +372,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: COM Handler hijack
      * Method: Registry key manipulation
      * Target(s): \system32\mmc.exe, \System32\recdisc.exe
-     * Component(s): Attacker defined components
+     * Component(s): Attacker defined
+     * Implementation: ucmMethodCOMHandlers
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -342,6 +382,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: ICMLuaUtil
      * Target(s): Attacker defined
      * Component(s): Attacker defined
+     * Implementation: ucmCMLuaUtilShellExecMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -350,6 +391,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IFwCplLua
      * Target(s): Attacker defined
      * Component(s): Attacker defined
+     * Implementation: ucmFwCplLuaMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -358,6 +400,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: IColorDataProxy, ICMLuaUtil
      * Target(s): Attacker defined
      * Component(s): Attacker defined
+     * Implementation: ucmDccwCOMMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -366,6 +409,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: Environment variables expansion
      * Target(s): Multiple auto-elevated processes
      * Component(s): Various per target
+     * Implementation: ucmMethodVolatileEnv
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS3 (16299)
         * How: Current user system directory variables ignored during process creation
@@ -374,6 +418,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: Registry key manipulation
      * Target(s): \system32\slui.exe
      * Component(s): Attacker defined
+     * Implementation: ucmMethodSluiHijack
      * Works from: Windows 8.1 (9600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -382,6 +427,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: Registry key manipulation
      * Target(s): \system32\BitlockerWizardElev.exe
      * Component(s): Attacker defined
+     * Implementation: ucmBitlockerRCMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS4 (>16299)
         * How: Shell API update
@@ -423,7 +469,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # Other usage
 * Currently used as "signature" by "THOR APT" scanner (handmade pattern matching fraudware from Germany). We do  not take any responsibility for this tool usage in the fraudware;
-* The scamware project called "uacguard" has references to UACMe from their platform. We do not take any responsibility for this tool usage in the scamware. This repository and it contents are the only genuine source for UACMe code. We have nothing to do with external links to this project, mentions anywhere as well as modifications (forks);
+* The scamware project called "uacguard" has references to UACMe from their platform. We do not take any responsibility for this tool usage in the scamware. The repository https://github.com/hfiref0x/UACME and it contents are the only genuine source for UACMe code. We have nothing to do with external links to this project, mentions anywhere as well as modifications (forks);
 * In July 2016 so-called "security company" Cymmetria released report about script-kiddie malware bundle called "Patchwork" and false flagged it as APT. They stated it was using "UACME method", which in fact is just slightly and unprofessionally modified injector dll from UACMe v1.9 and was using Carberp/Pitou hybrid method in malware self-implemented way. We do not take any responsibility for UACMe usage in the dubious advertising campaigns from third party "security companies".
 
 # Build 

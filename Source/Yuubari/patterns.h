@@ -1,18 +1,18 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       PATTERNS.H
 *
-*  VERSION:     1.26
+*  VERSION:     1.28
 *
-*  DATE:        04 Oct 2017
+*  DATE:        08 Feb 2018
 *
 *  Patterns for supported AppInfo versions.
 *
 *  Minimum client: 7600
 *
-*  Maximum client: 16299
+*  Maximum client: 17093
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -43,4 +43,7 @@ unsigned char ptMmcBlock_10240[] = {
 };
 unsigned char ptMmcBlock_10586_16299[] = {
     0x49, 0x8B, 0x16, 0x49, 0x8B, 0xCD, 0xFF, 0x15 
+};
+unsigned char ptMmcBlock_16300_17093[] = {                //FIXME: change this after RS4 release
+    0x41, 0x8B, 0xF7, 0x49, 0x8B, 0x16, 0x48, 0x8B
 };

@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.27
+*  VERSION:     1.28
 *
-*  DATE:        08 Jan 2018
+*  DATE:        08 Feb 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -30,14 +30,15 @@ pfnSymUnloadModule64    pSymUnloadModule64 = NULL;
 pfnSymFromAddrW         pSymFromAddrW = NULL;
 pfnSymCleanup           pSymCleanup = NULL;
 
-#define SUPPORTED_PATTERNS_COUNT 6
+#define SUPPORTED_PATTERNS_COUNT 7
 UAC_PATTERN g_MmcPatterns[SUPPORTED_PATTERNS_COUNT] = {
-    { ptMmcBlock_7600, sizeof(ptMmcBlock_7600), 7600, 7600 },
-    { ptMmcBlock_7601, sizeof(ptMmcBlock_7601), 7601, 7601 },
-    { ptMmcBlock_9200, sizeof(ptMmcBlock_9200), 9200, 9200 },
-    { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 9600, 9600 },
-    { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 10240, 10240 },
-    { ptMmcBlock_10586_16299, sizeof(ptMmcBlock_10586_16299), 10586, 16299 }
+    { ptMmcBlock_7600, sizeof(ptMmcBlock_7600), 4, 7600, 7600 },
+    { ptMmcBlock_7601, sizeof(ptMmcBlock_7601), 4, 7601, 7601 },
+    { ptMmcBlock_9200, sizeof(ptMmcBlock_9200), 4, 9200, 9200 },
+    { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 4, 9600, 9600 },
+    { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 4, 10240, 10240 },
+    { ptMmcBlock_10586_16299, sizeof(ptMmcBlock_10586_16299), 4, 10586, 16299 },
+    { ptMmcBlock_16300_17093, sizeof(ptMmcBlock_16300_17093), 4, 16300, 17093 }
 };
 
 #define TestChar(x)  (((WCHAR)x >= L'A') && ((WCHAR)x <= L'z')) 
@@ -51,8 +52,8 @@ UAC_PATTERN g_MmcPatterns[SUPPORTED_PATTERNS_COUNT] = {
 *
 */
 BOOL GetAppInfoBuildVersion(
-    LPWSTR lpFileName,
-    ULONG *BuildNumber
+    _In_ LPWSTR lpFileName,
+    _Out_ ULONG *BuildNumber
     )
 {
     BOOL bResult = FALSE;
@@ -61,8 +62,7 @@ BOOL GetAppInfoBuildVersion(
     UINT Length;
     VS_FIXEDFILEINFO *pFileInfo;
 
-    if (BuildNumber == NULL)
-        return FALSE;
+    *BuildNumber = 0;
 
     dwHandle = 0;
     dwSize = GetFileVersionInfoSize(lpFileName, &dwHandle);
@@ -162,8 +162,8 @@ BOOL InitDbgHelp(
 *
 */
 VOID SymbolAddToList(
-    LPWSTR SymbolName,
-    DWORD64 lpAddress
+    _In_ LPWSTR SymbolName,
+    _In_ DWORD64 lpAddress
     )
 {
     PSYMBOL_ENTRY Entry;
@@ -205,7 +205,7 @@ VOID SymbolAddToList(
 *
 */
 DWORD64 SymbolAddressFromName(
-    LPWSTR lpszName
+    _In_ LPWSTR lpszName
     )
 {
     PSYMBOL_ENTRY Entry;
@@ -250,9 +250,10 @@ BOOL CALLBACK SymEnumSymbolsProc(
 *
 */
 BOOL GetSupportedPattern(
-    UAC_PATTERN *Patterns,
-    PVOID *OutputPattern,
-    ULONG *OutputPatternSize
+    _In_ UAC_PATTERN *Patterns,
+    _In_ PVOID *OutputPattern,
+    _In_ ULONG *OutputPatternSize,
+    _In_ ULONG *SubtractBytes
     )
 {
     ULONG i;
@@ -266,6 +267,7 @@ BOOL GetSupportedPattern(
         {
             *OutputPattern = Patterns[i].PatternData;
             *OutputPatternSize = Patterns[i].PatternSize;
+            *SubtractBytes = Patterns[i].SubtractBytes;
             return TRUE;
         }
     }
@@ -285,7 +287,7 @@ VOID QueryAiMmcBlock(
     _In_ SIZE_T DllVirtualSize
     )
 {
-    ULONG       PatternSize;
+    ULONG       PatternSize = 0, SubtractBytes = 0;
     ULONG_PTR   rel = 0;
     PVOID       Pattern = NULL, PatternData = NULL, TestPtr = NULL;
 
@@ -293,10 +295,10 @@ VOID QueryAiMmcBlock(
         return;
 
     g_AiData.MmcBlock = NULL;
-    if (GetSupportedPattern(g_MmcPatterns, &PatternData, &PatternSize)) {
+    if (GetSupportedPattern(g_MmcPatterns, &PatternData, &PatternSize, &SubtractBytes)) {
         Pattern = supFindPattern(DllBase, DllVirtualSize, PatternData, PatternSize);
         if (Pattern != NULL) {
-            rel = *(DWORD*)((ULONG_PTR)Pattern - 4);
+            rel = *(DWORD*)((ULONG_PTR)Pattern - SubtractBytes);
             TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)Pattern + rel);
             if (IN_REGION(TestPtr, DllBase, DllVirtualSize)) {
                 g_AiData.MmcBlock = TestPtr;

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     2.85
+*  VERSION:     2.87
 *
-*  DATE:        01 Dec 2017
+*  DATE:        19 Jan 2018
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -25,6 +25,8 @@
 * Purpose:
 *
 * Build and install fake msu package then run target application.
+*
+* Fixed in Windows 10 TH1
 *
 */
 BOOL ucmWusaMethod(

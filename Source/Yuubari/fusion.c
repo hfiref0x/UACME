@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       FUSION.C
 *
-*  VERSION:     1.25
+*  VERSION:     1.28
 *
-*  DATE:        10 May 2017
+*  DATE:        08 Feb 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -17,35 +17,6 @@
 #include "global.h"
 
 ptrWTGetSignatureInfo WTGetSignatureInfo = NULL;
-
-/*
-* SxsGetSectionDataTypeBySize
-*
-* Purpose:
-*
-* Return data type determinated by data size.
-*
-*/
-ULONG SxsGetSectionDataTypeBySize(
-    _In_ ULONG DataSize
-)
-{
-    switch (DataSize) {
-    case sizeof(ACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION) :
-        return dtAssemblyInfo;
-    case sizeof(ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION) :
-        return dtDllRedirection;
-    case sizeof(ACTIVATION_CONTEXT_DATA_WINDOW_CLASS_REDIRECTION) :
-        return dtWindowClassRedirection;
-    case sizeof(ACTIVATION_CONTEXT_DATA_COM_PROGID_REDIRECTION) :
-        return dtComDataTypeLibraryRedirection;
-    case sizeof(ACTIVATION_CONTEXT_DATA_APPLICATION_SETTINGS) :
-        return dtApplicationSettings;
-    default:
-        break;
-    }
-    return dtUnknown;
-}
 
 /*
 * SxsGetTocHeaderFromActivationContext
@@ -125,7 +96,7 @@ NTSTATUS SxsGetTocHeaderFromActivationContext(
             result = STATUS_SUCCESS;
 
         } while (bCond);
-        
+
         if (!NT_SUCCESS(result)) {
             OutputDebugString(szLog);
             return STATUS_SXS_CORRUPTION;
@@ -151,22 +122,17 @@ NTSTATUS SxsGetStringSectionRedirectionDlls(
     _Inout_ PDLL_REDIRECTION_LIST DllList
 )
 {
-    ULONG SegmentIndex, EntrySize;
+    ULONG SegmentIndex;
     NTSTATUS result = STATUS_SXS_KEY_NOT_FOUND;
     ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION *DataDll = NULL;
     ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION_PATH_SEGMENT *DllPathSegment = NULL;
     DLL_REDIRECTION_LIST_ENTRY *DllListEntry = NULL;
     WCHAR *wszDllName = NULL;
 
+    if (DllList == NULL)
+        return STATUS_INVALID_PARAMETER;
+
     __try {
-
-        if (DllList == NULL)
-            return STATUS_INVALID_PARAMETER;
-
-        EntrySize = *(DWORD*)(((LPBYTE)SectionHeader) + StringEntry->Offset);
-
-        if (SxsGetSectionDataTypeBySize(EntrySize) != dtDllRedirection)
-            return STATUS_SXS_WRONG_SECTION_TYPE;
 
         DataDll = (ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION*)(((LPBYTE)SectionHeader) + StringEntry->Offset);
         if (DataDll->PathSegmentOffset) {
@@ -252,16 +218,18 @@ NTSTATUS SxsGetDllRedirectionFromActivationContext(
                         break;
                     }
 
-                    StringEntry = (ACTIVATION_CONTEXT_STRING_SECTION_ENTRY*)(((LPBYTE)SectionHeader) + SectionHeader->ElementListOffset);
-                    status = SxsGetStringSectionRedirectionDlls(SectionHeader, StringEntry, DllList);
-                    if (status == STATUS_SXS_CORRUPTION)
-                        continue;
-
-                    for (j = 1; j < SectionHeader->ElementCount; j++) {
-                        StringEntry = (ACTIVATION_CONTEXT_STRING_SECTION_ENTRY*)(((LPBYTE)StringEntry) + sizeof(ACTIVATION_CONTEXT_STRING_SECTION_ENTRY));
+                    if (TocEntry->Id == ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION) {
+                        StringEntry = (ACTIVATION_CONTEXT_STRING_SECTION_ENTRY*)(((LPBYTE)SectionHeader) + SectionHeader->ElementListOffset);
                         status = SxsGetStringSectionRedirectionDlls(SectionHeader, StringEntry, DllList);
                         if (status == STATUS_SXS_CORRUPTION)
                             continue;
+                        
+                        for (j = 1; j < SectionHeader->ElementCount; j++) {
+                            StringEntry = (ACTIVATION_CONTEXT_STRING_SECTION_ENTRY*)(((LPBYTE)StringEntry) + sizeof(ACTIVATION_CONTEXT_STRING_SECTION_ENTRY));
+                            status = SxsGetStringSectionRedirectionDlls(SectionHeader, StringEntry, DllList);
+                            if (status == STATUS_SXS_CORRUPTION)
+                                continue;
+                        }
                     }
                 }
                 TocEntry = (ACTIVATION_CONTEXT_DATA_TOC_ENTRY*)(((LPBYTE)TocEntry) + sizeof(ACTIVATION_CONTEXT_DATA_TOC_ENTRY));
@@ -296,7 +264,7 @@ NTSTATUS FusionProbeForRedirectedDlls(
     _In_ LPWSTR lpFileName,
     _In_ ACTIVATION_CONTEXT *ActivationContext,
     _In_ FUSIONCALLBACK OutputCallback
-    )
+)
 {
     NTSTATUS status;
     SLIST_ENTRY *ListEntry = NULL;
@@ -530,7 +498,7 @@ VOID FusionCheckFile(
         RtlSecureZeroMemory(&ctxrl, sizeof(ctxrl));
         status = RtlQueryInformationActivationContext(
             RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_NO_ADDREF,
-            hActCtx, NULL, RunlevelInformationInActivationContext, 
+            hActCtx, NULL, RunlevelInformationInActivationContext,
             (PVOID)&ctxrl, sizeof(ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION), NULL);
         if (NT_SUCCESS(status)) {
             RtlCopyMemory(&FusionCommonData.RunLevel, &ctxrl, sizeof(ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION));

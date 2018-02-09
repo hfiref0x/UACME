@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2017
+*  (C) COPYRIGHT AUTHORS, 2015 - 2018
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     2.85
+*  VERSION:     2.87
 *
-*  DATE:        01 Dec 2017
+*  DATE:        19 Jan 2018
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -112,6 +112,8 @@ DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
 *
 * Disable UAC using AutoElevated undocumented ISecurityEditor interface.
 * Used by WinNT/Simda starting from 2010 year.
+*
+* Fixed in Windows 10 TH1
 *
 */
 BOOL ucmSimdaTurnOffUac(

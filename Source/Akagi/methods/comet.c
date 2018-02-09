@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2017
+*  (C) COPYRIGHT AUTHORS, 2016 - 2018
 *
 *  TITLE:       COMET.C
 *
-*  VERSION:     2.85
+*  VERSION:     2.87
 *
-*  DATE:        01 Dec 2017
+*  DATE:        19 Jan 2018
 *
 *  Comet method (c) BreakingMalware
 *  For description please visit original URL 
@@ -30,6 +30,8 @@
 * Fool autoelevated application with help of manipulation of the current user environment variables.
 * CompMgmtLauncher.exe is a moronic .LNK ShellExecute launcher application.
 * Only MS do system trusted applications which only purpose is to LAUNCH .LNK files.
+*
+* Fixed in Windows 10 RS2
 *
 */
 BOOL ucmCometMethod(

@@ -37,6 +37,8 @@ UCM_ENIGMA0x3_CTX g_EnigmaThreadCtx;
 *
 * Overwrite Default value of mscfile shell command with your payload.
 *
+* Fixed in Windows 10 RS2
+*
 */
 BOOL ucmHijackShellCommandMethod(
     _In_opt_ LPWSTR lpszPayload,
@@ -270,6 +272,8 @@ DWORD ucmDiskCleanupWorkerThread(
 * RC friendly.
 * Warning: this method works with AlwaysNotify UAC level.
 *
+* Fixed in Windows 10 RS2
+*
 */
 BOOL ucmDiskCleanupRaceCondition(
     _In_ PVOID PayloadDll,
@@ -328,6 +332,8 @@ BOOL ucmDiskCleanupRaceCondition(
 * Create key HKCU\Software\Microsoft\Windows\CurrentVersion\App Paths\<lpszAppPathTarget>
 * Set default key value to <lpszPayload>
 * Run <lpszTargetApp>
+*
+* Fixed in Windows 10 RS3
 *
 */
 BOOL ucmAppPathMethod(
@@ -429,6 +435,8 @@ BOOL ucmAppPathMethod(
 *                        rstrui.exe with /runonce param
 *                        SystemSettingsAdminFlows.exe with PushButtonReset param
 *
+* Fixed in Windows 10 RS4 (all cases)
+*
 */
 BOOL ucmSdcltIsolatedCommandMethod(
     _In_ LPWSTR lpszPayload
@@ -498,7 +506,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
         if (lResult == ERROR_SUCCESS) {
             _strcpy(szBuffer, g_ctx.szSystemDirectory);
             _strcat(szBuffer, SDCLT_EXE);
-            bResult = supRunProcess(szBuffer, L"/KICKOFFELEV");
+            bResult = supRunProcess(szBuffer, TEXT("/KICKOFFELEV"));
             if (bExist == FALSE) {
                 //
                 // We created this value, remove it.

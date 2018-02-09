@@ -29,6 +29,8 @@ ELOAD_PARAMETERS_SIREFEF g_ElevParamsSirefef;
 *
 * Acquire elevation through Application Verifier dll injection.
 *
+* Fixed in Windows 10 TH1
+*
 */
 BOOL ucmAvrfMethod(
     _In_ PVOID AvrfDll,
@@ -158,6 +160,8 @@ BOOL ucmAvrfMethod(
 * Slightly modified target and proxydll can work almost with every autoelevated/whitelisted application.
 * This method uses advantage of wusa to write to the protected folders, but can be adapted to IFileOperation too.
 * WinSAT used for demonstration purposes only.
+*
+* Fixed in Windows 10 TH2 (complete vector)
 *
 */
 BOOL ucmWinSATMethod(
@@ -322,10 +326,8 @@ BOOL ucmMMCMethod(
 
         _strcat(szDest, lpTargetDll);
 
-        if (PathFileExists(szDest)) {
-            supDebugPrint(TEXT("ucmMMCMethod"), ERROR_ALREADY_EXISTS);
+        if (PathFileExists(szDest))
             break;
-        }
 
         //target dir
         RtlSecureZeroMemory(szDest, sizeof(szDest));
@@ -487,6 +489,8 @@ PZA_CONTROL_CONTEXT ucmSirefefBuildControlContext(
 * Purpose:
 *
 * Bypass UAC by abusing OOBE.exe backdoor hardcoded in appinfo.dll
+*
+* Fixed in Windows 10 TH2
 *
 */
 BOOL ucmSirefefMethod(
@@ -675,6 +679,8 @@ BOOL ucmGenericAutoelevation(
 * Since this method very out-dated (GWX program expired long time ago) starting from 2.5.6 Kongou module removed from program resources.
 * To use it again place KongouXX.cd to the program directory, where XX is platform (32 or 64).
 * Kongou located in project "bin" directory in encrypted and compressed state, Akagi will load, decrypt and decompress it.
+*
+* Fixed in Windows 10 RS1
 *
 */
 BOOL ucmGWX(
@@ -879,6 +885,8 @@ BOOL ucmAutoElevateManifestW7(
 * Bypass UAC by abusing appinfo whitelist and SXS undocumented feature.
 * Ironically revealed by Microsoft itself in their attempt to fix UAC exploit.
 * Supported at Windows 7 minimum (older versions not checked).
+*
+* Fixed in Windows 10 RS1
 *
 */
 BOOL ucmAutoElevateManifest(
@@ -1157,6 +1165,8 @@ BOOL ucmxScanFiles(
 * This component installed only if user choose to install IIS which most of people don't use at all.
 * InetMgr component sits in winsxs folder (packed in win8+). We will simple use it (expand if needed) and abuse dll hijack
 * as always directly with their hardcoded "safe" file path.
+*
+* Fixed in Windows 10 RS1
 *
 */
 BOOL ucmInetMgrMethod(

@@ -36,6 +36,8 @@
 *
 * Bypass UAC using self defined %SystemRoot% environment variable in "Volatile Environment" registry key.
 *
+* Fixed in Windows 10 RS3
+*
 */
 BOOL ucmMethodVolatileEnv(
     _In_ PVOID ProxyDll,

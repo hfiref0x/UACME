@@ -1,13 +1,13 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017,
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018,
 *  (C) MS FixIT Shim Patches revealed by Jon Erickson
 *
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     2.85
+*  VERSION:     2.87
 *
-*  DATE:        01 Dec 2017
+*  DATE:        19 Jan 2018
 *
 *  Gootkit based AutoElevation using AppCompat.
 *
@@ -115,6 +115,8 @@ BOOL ucmRegisterAndRunTarget(
 * Initially used in BlackEnergy2 and Gootkit by mzH (alive-green).
 * Used in number of trojans (Win32/Dyre, WinNT/Cridex).
 *
+* Fixed in Windows 10 TH1, KB3045645/KB3048097 for everything else
+*
 */
 BOOL ucmShimRedirectEXE(
     _In_ LPWSTR lpszPayloadEXE
@@ -209,6 +211,8 @@ BOOL ucmShimRedirectEXE(
 *
 * Build, register shim patch database and execute target app with forced Entry Point Override.
 * Aside from UAC bypass this is also dll injection technique.
+*
+* Fixed in Windows 10 TH1, KB3045645/KB3048097 for everything else
 *
 */
 BOOL ucmShimPatch(

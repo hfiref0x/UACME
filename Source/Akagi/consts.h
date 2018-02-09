@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.86
+*  VERSION:     2.87
 *
-*  DATE:        15 Jan 2018
+*  DATE:        19 Jan 2018
 *
 *  Global consts definition file.
 *
@@ -187,7 +187,7 @@
 //
 //COM Handlers hijack
 //
-#define T_CLSID_EVENTVWR_BYPASSS             L"{0A29FF9E-7F9C-4437-8B11-F424491E3931}"
+#define T_CLSID_EVENTVWR_BYPASS              L"{0A29FF9E-7F9C-4437-8B11-F424491E3931}"
 
 #define T_REG_SOFTWARECLASSESCLSID      L"Software\\Classes\\CLSID\\"
 #define T_REG_INPROCSERVER32            L"\\InProcServer32"

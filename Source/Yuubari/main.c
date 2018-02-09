@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.27
+*  VERSION:     1.28
 *
-*  DATE:        28 Oct 2017
+*  DATE:        08 Feb 2018
 *
 *  Program entry point.
 *
@@ -352,6 +352,12 @@ VOID ListFusion(
 
     //scan Windows first
     cuiPrintText(g_ConOut, TEXT("\n[UacView] Autoelevated applications in Windows directory\n"), TRUE, TRUE);
+
+#ifdef _DEBUG
+    FusionScanDirectory(L"C:\\sxs", (FUSIONCALLBACK)FusionOutputCallback);
+    return;
+#endif
+
     FusionScanDirectory(USER_SHARED_DATA->NtSystemRoot, (FUSIONCALLBACK)FusionOutputCallback);
     LoggerWrite(g_LogFile, TEXT("================================================\n"), TRUE);
 
@@ -450,8 +456,8 @@ VOID main()
 #ifndef _DEBUG
         ListBasicSettings();
         ListCOMFromRegistry();
-        ListAppInfo();
 #endif
+        ListAppInfo();
         ListFusion();
 
         if (g_LogFile != INVALID_HANDLE_VALUE)

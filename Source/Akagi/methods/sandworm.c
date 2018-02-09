@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017
+*  (C) COPYRIGHT AUTHORS, 2017 - 2018
 *
 *  TITLE:       SANDWORM.C
 *
-*  VERSION:     2.70
+*  VERSION:     2.87
 *
-*  DATE:        25 Mar 2017
+*  DATE:        19 Jan 2018
 *
 *  Sandworm method.
 *
@@ -79,6 +79,8 @@ static const unsigned char g_SandwormInf[319] = {
 * Originally Sandworm used InfDefaultInstall to write to the HKLM.
 * We will use it for dll hijack.
 * Target application in our case will be cliconfg.exe
+*
+* Fixed in MS14-060
 *
 */
 BOOL ucmSandwormMethod(
