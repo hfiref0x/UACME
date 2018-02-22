@@ -55,7 +55,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Method: ISecurityEditor
    * Target(s): HKLM registry keys
    * Component(s): -
-   * Implmenetation: ucmSimdaTurnOffUac
+   * Implementation: ucmSimdaTurnOffUac
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TH1 (10147)
       * How: ISecurityEditor interface method changed
