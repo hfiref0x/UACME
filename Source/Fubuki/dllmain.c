@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.80
+*  VERSION:     2.87
 *
-*  DATE:        06 Sept 2017
+*  DATE:        02 Mar 2018
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *

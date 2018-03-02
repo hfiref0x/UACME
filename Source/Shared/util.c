@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017
+*  (C) COPYRIGHT AUTHORS, 2017 - 2018
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     2.84
+*  VERSION:     2.87
 *
-*  DATE:        22 Nov 2017
+*  DATE:        02 Mar 2018
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -497,7 +497,7 @@ BOOL ucmLaunchPayload(
     _In_opt_ LPWSTR pszPayload,
     _In_opt_ DWORD cbPayload)
 {
-    BOOL                    bResult = FALSE, bAppNameAllocated = FALSE;
+    BOOL                    bResult = FALSE, bCommandLineAllocated = FALSE;
     WCHAR                   cmdbuf[MAX_PATH * 2]; //complete process command line
     WCHAR                   sysdir[MAX_PATH + 1]; //process working directory
     STARTUPINFO             startupInfo;
@@ -506,7 +506,7 @@ BOOL ucmLaunchPayload(
     DWORD                   dwCreationFlags = CREATE_NEW_CONSOLE;
 
     HANDLE                  ProcessHeap = NtCurrentPeb()->ProcessHeap;
-    LPWSTR                  lpApplicationName = NULL;
+    LPWSTR                  lpApplicationName = NULL, lpCommandLine = NULL;
     SIZE_T                  memIO;
 
 
@@ -537,17 +537,17 @@ BOOL ucmLaunchPayload(
         //
         memIO = 0x1000 + cbPayload;
 
-        lpApplicationName = RtlAllocateHeap(
+        lpCommandLine = RtlAllocateHeap(
             ProcessHeap,
             HEAP_ZERO_MEMORY,
             (SIZE_T)memIO);
 
-        if (lpApplicationName) {
+        if (lpCommandLine) {
 
             dwCreationFlags = 0;
-            bAppNameAllocated = TRUE;
+            bCommandLineAllocated = TRUE;
             RtlCopyMemory(
-                lpApplicationName,
+                lpCommandLine,
                 pszPayload,
                 cbPayload);
 
@@ -563,7 +563,8 @@ BOOL ucmLaunchPayload(
         _strcat(cmdbuf, L"cmd.exe");
 
         lpApplicationName = cmdbuf;
-        bAppNameAllocated = FALSE;
+        lpCommandLine = NULL;
+        bCommandLineAllocated = FALSE;
         dwCreationFlags = CREATE_NEW_CONSOLE;
     }
 
@@ -577,7 +578,7 @@ BOOL ucmLaunchPayload(
     //
     bResult = CreateProcessAsUser(NULL,
         lpApplicationName,
-        NULL,
+        lpCommandLine,
         NULL,
         NULL,
         FALSE,
@@ -598,8 +599,8 @@ BOOL ucmLaunchPayload(
     //
     // Post execution cleanup if required.
     //
-    if (bAppNameAllocated)
-        RtlFreeHeap(ProcessHeap, 0, lpApplicationName);
+    if (bCommandLineAllocated)
+        RtlFreeHeap(ProcessHeap, 0, lpCommandLine);
 
     return bResult;
 }
@@ -617,7 +618,7 @@ BOOL ucmLaunchPayloadEx(
     _In_opt_ LPWSTR pszPayload,
     _In_opt_ DWORD cbPayload)
 {
-    BOOL                    bResult = FALSE, bAppNameAllocated = FALSE;
+    BOOL                    bResult = FALSE, bCommandLineAllocated = FALSE;
     WCHAR                   cmdbuf[MAX_PATH * 2]; //complete process command line
     WCHAR                   sysdir[MAX_PATH + 1]; //process working directory
     STARTUPINFO             startupInfo;
@@ -626,7 +627,7 @@ BOOL ucmLaunchPayloadEx(
     DWORD                   dwCreationFlags = CREATE_NEW_CONSOLE, cch;
 
     HANDLE                  ProcessHeap = NtCurrentPeb()->ProcessHeap;
-    LPWSTR                  lpApplicationName = NULL;
+    LPWSTR                  lpApplicationName = NULL, lpCommandLine = NULL;
     SIZE_T                  memIO;
 
     if (pCreateProcess == NULL)
@@ -657,17 +658,17 @@ BOOL ucmLaunchPayloadEx(
         //
         memIO = 0x1000 + cbPayload;
 
-        lpApplicationName = RtlAllocateHeap(
+        lpCommandLine = RtlAllocateHeap(
             ProcessHeap,
             HEAP_ZERO_MEMORY,
             (SIZE_T)memIO);
 
-        if (lpApplicationName) {
+        if (lpCommandLine) {
 
             dwCreationFlags = 0;
-            bAppNameAllocated = TRUE;
+            bCommandLineAllocated = TRUE;
             RtlCopyMemory(
-                lpApplicationName,
+                lpCommandLine,
                 pszPayload,
                 cbPayload);
 
@@ -683,7 +684,8 @@ BOOL ucmLaunchPayloadEx(
         _strcat(cmdbuf, L"cmd.exe");
 
         lpApplicationName = cmdbuf;
-        bAppNameAllocated = FALSE;
+        lpCommandLine = NULL;
+        bCommandLineAllocated = FALSE;
         dwCreationFlags = CREATE_NEW_CONSOLE;
     }
 
@@ -697,7 +699,7 @@ BOOL ucmLaunchPayloadEx(
     //
     bResult = pCreateProcess(
         lpApplicationName,
-        NULL,
+        lpCommandLine,
         NULL,
         NULL,
         FALSE,
@@ -718,8 +720,8 @@ BOOL ucmLaunchPayloadEx(
     //
     // Post execution cleanup if required.
     //
-    if (bAppNameAllocated)
-        RtlFreeHeap(ProcessHeap, 0, lpApplicationName);
+    if (bCommandLineAllocated)
+        RtlFreeHeap(ProcessHeap, 0, lpCommandLine);
 
     return bResult;
 }
@@ -738,7 +740,7 @@ BOOL ucmLaunchPayload2(
     _In_opt_ LPWSTR pszPayload,
     _In_opt_ DWORD cbPayload)
 {
-    BOOL                        bResult = FALSE, bAppNameAllocated = FALSE, bSrvExec = FALSE, bCond = FALSE;
+    BOOL                        bResult = FALSE, bCommandLineAllocated = FALSE, bSrvExec = FALSE, bCond = FALSE;
     WCHAR                       cmdbuf[MAX_PATH * 2]; //complete process command line
     WCHAR                       sysdir[MAX_PATH + 1]; //process working directory
     STARTUPINFO                 startupInfo;
@@ -747,7 +749,7 @@ BOOL ucmLaunchPayload2(
     DWORD                       dwCreationFlags = CREATE_NEW_CONSOLE, cch;
 
     HANDLE                      ProcessHeap = NtCurrentPeb()->ProcessHeap;
-    LPWSTR                      lpApplicationName = NULL;
+    LPWSTR                      lpApplicationName = NULL, lpCommandLine = NULL;
     SIZE_T                      memIO;
 
     NTSTATUS                    status;
@@ -838,17 +840,17 @@ BOOL ucmLaunchPayload2(
             //
             memIO = 0x1000 + cbPayload;
 
-            lpApplicationName = RtlAllocateHeap(
+            lpCommandLine = RtlAllocateHeap(
                 ProcessHeap,
                 HEAP_ZERO_MEMORY,
                 (SIZE_T)memIO);
 
-            if (lpApplicationName) {
+            if (lpCommandLine) {
 
                 dwCreationFlags = 0;
-                bAppNameAllocated = TRUE;
+                bCommandLineAllocated = TRUE;
                 RtlCopyMemory(
-                    lpApplicationName,
+                    lpCommandLine,
                     pszPayload,
                     cbPayload);
 
@@ -864,7 +866,8 @@ BOOL ucmLaunchPayload2(
             _strcat(cmdbuf, L"cmd.exe");
 
             lpApplicationName = cmdbuf;
-            bAppNameAllocated = FALSE;
+            lpCommandLine = NULL;
+            bCommandLineAllocated = FALSE;
             dwCreationFlags = CREATE_NEW_CONSOLE;
         }
 
@@ -888,7 +891,7 @@ BOOL ucmLaunchPayload2(
         bResult = CreateProcessAsUser(
             hDupToken,
             lpApplicationName,
-            NULL,
+            lpCommandLine,
             NULL,
             NULL,
             FALSE,
@@ -912,8 +915,8 @@ BOOL ucmLaunchPayload2(
     //
     // Post execution cleanup if required.
     //
-    if (bAppNameAllocated)
-        RtlFreeHeap(ProcessHeap, 0, lpApplicationName);
+    if (bCommandLineAllocated)
+        RtlFreeHeap(ProcessHeap, 0, lpCommandLine);
 
     if (bSrvExec) {
         if (hToken)

@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.86
+*  VERSION:     2.87
 *
-*  DATE:        15 Jan 2018
+*  DATE:        19 Jan 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -1302,7 +1302,7 @@ BOOL supSetEnvVariable(
     _In_opt_ LPWSTR lpVariableData
 )
 {
-    BOOL	bResult = FALSE, bCond = FALSE;
+    BOOL    bResult = FALSE, bCond = FALSE;
     HKEY    hKey = NULL;
     DWORD   cbData;
 

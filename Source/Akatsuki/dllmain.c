@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2017
+*  (C) COPYRIGHT AUTHORS, 2016 - 2018
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.84
+*  VERSION:     2.87
 *
-*  DATE:        22 Nov 2017
+*  DATE:        01 Mar 2018
 *
 *  Proxy dll entry point, Akatsuki.
 *  Special dll for wow64 logger method.

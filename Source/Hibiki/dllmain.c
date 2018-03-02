@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.86
+*  VERSION:     2.87
 *
-*  DATE:        10 Jan 2018
+*  DATE:        02 Mar 2018
 *
 *  AVrf entry point, Hibiki Kai Ni.
 *
