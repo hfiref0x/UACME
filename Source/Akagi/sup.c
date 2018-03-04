@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.87
 *
-*  DATE:        19 Jan 2018
+*  DATE:        03 Mar 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -1933,4 +1933,55 @@ BOOL supQuerySystemRoot(
     if (lpData) supHeapFree(lpData);
 
     return bResult;
+}
+
+/*
+* supGetSystemInfo
+*
+* Purpose:
+*
+* Returns buffer with system information by given InfoClass.
+*
+* Returned buffer must be freed with HeapFree after usage.
+* Function will return error after 20 attempts.
+*
+*/
+PVOID supGetSystemInfo(
+    _In_ SYSTEM_INFORMATION_CLASS InfoClass
+)
+{
+    INT			c = 0;
+    PVOID		Buffer = NULL;
+    ULONG		Size = 0x1000;
+    NTSTATUS	status;
+    ULONG       memIO;
+
+    do {
+        Buffer = supHeapAlloc((SIZE_T)Size);
+        if (Buffer != NULL) {
+            status = NtQuerySystemInformation(InfoClass, Buffer, Size, &memIO);
+        }
+        else {
+            return NULL;
+        }
+        if (status == STATUS_INFO_LENGTH_MISMATCH) {
+            supHeapFree(Buffer);
+            Buffer = NULL;
+            Size *= 2;
+            c++;
+            if (c > 20) {
+                status = STATUS_SECRET_TOO_LONG;
+                break;
+            }
+        }
+    } while (status == STATUS_INFO_LENGTH_MISMATCH);
+
+    if (NT_SUCCESS(status)) {
+        return Buffer;
+    }
+
+    if (Buffer) {
+        supHeapFree(Buffer);
+    }
+    return NULL;
 }

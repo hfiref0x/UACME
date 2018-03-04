@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.86
+*  VERSION:     2.87
 *
-*  DATE:        15 Jan 2018
+*  DATE:        02 Mar 2018
 *
 *  Common header file for the program support routines.
 *
@@ -228,5 +228,8 @@ NTSTATUS supRegReadValue(
 
 BOOL supQuerySystemRoot(
     VOID);
+
+PVOID supGetSystemInfo(
+    _In_ SYSTEM_INFORMATION_CLASS InfoClass);
 
 #define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)
