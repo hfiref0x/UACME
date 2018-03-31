@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     1.20
+*  VERSION:     1.29
 *
-*  DATE:        01 Mar 2017
+*  DATE:        30 Mar 2018
 *
 *  Common header file for the program support routines.
 *

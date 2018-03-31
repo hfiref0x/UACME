@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.28
+*  VERSION:     1.29
 *
-*  DATE:        08 Feb 2018
+*  DATE:        30 Mar 2018
 *
 *  Program entry point.
 *
@@ -394,6 +394,9 @@ VOID ListAppInfo(
     _strcpy(szFileName, USER_SHARED_DATA->NtSystemRoot);
     _strcat(szFileName, TEXT("\\system32\\appinfo.dll"));
 
+#ifdef _DEBUG
+    _strcpy(szFileName, TEXT("D:\\dumps\\appinfo\\17133.dll"));
+#endif
     ScanAppInfo(szFileName, (APPINFODATACALLBACK)AppInfoDataOutputCallback);
 
     LoggerWrite(g_LogFile, TEXT("================================================\n"), TRUE);
