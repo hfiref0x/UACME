@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.87
 *
-*  DATE:        19 Jan 2018
+*  DATE:        08 Apr 2018
 *
 *  Global consts definition file.
 *
@@ -87,6 +87,7 @@
 #define CMD_EXE                     L"cmd.exe"
 #define CLICONFG_EXE                L"cliconfg.exe"
 #define COMPMGMTLAUNCHER_EXE        L"CompMgmtLauncher.exe"
+#define COMPUTERDEFAULTS_EXE        L"computerdefaults.exe"
 #define CONSENT_EXE                 L"consent.exe"
 #define CONTROL_EXE                 L"control.exe"
 #define CREDWIZ_EXE                 L"credwiz.exe"
@@ -119,8 +120,8 @@
 #define MIGWIZ_DIR                  L"migwiz\\"
 #define SYSPREP_DIR                 L"sysprep\\"
 #define SYSTEM32_DIR                L"\\system32\\"
-#define WBEM_DIR                    L"wbem\\"
 #define SYSWOW64_DIR                L"\\syswow64\\"
+#define WBEM_DIR                    L"wbem\\"
 #define MANAGE_VERB                 L"Manage"
 #define RUNAS_VERB                  L"runas"
 #define EVENTVWR_MSC                L"eventvwr.msc"

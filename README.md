@@ -306,7 +306,7 @@ Keys (watch debug output with dbgview or similar for more info):
 33. Author: winscripting.blog
      * Type: Shell API 
      * Method: Registry key manipulation
-     * Target(s): \system32\fodhelper.exe
+     * Target(s): \system32\fodhelper.exe, \system32\computerdefaults.exe
      * Component(s): Attacker defined
      * Implementation: ucmMsSettingsDelegateExecuteMethod
      * Works from: Windows 10 TH1 (10240)

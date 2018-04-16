@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.87
 *
-*  DATE:        02 Mar 2018
+*  DATE:        03 Mar 2018
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -88,7 +88,7 @@ BOOL ucmTokenModification(
     _In_ BOOL fUseCommandLine
 )
 {
-    BOOL bCond = FALSE, bFound = FALSE, bResult = FALSE, bSelfRun = FALSE;
+    BOOL bCond = FALSE, bResult = FALSE, bSelfRun = FALSE;
     ULONG dummy;
     NTSTATUS Status = STATUS_UNSUCCESSFUL;
     HANDLE hTargetProcess = NULL;
@@ -143,7 +143,6 @@ BOOL ucmTokenModification(
                             // Elevated process found, don't close it handles as we will re-use them next.
                             //
                             if (tei.TokenIsElevated > 0) {
-                                bFound = TRUE;
                                 break;
                             }
                         }
