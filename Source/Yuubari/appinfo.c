@@ -6,7 +6,7 @@
 *
 *  VERSION:     1.29
 *
-*  DATE:        30 Mar 2018
+*  DATE:        17 Apr 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -38,7 +38,7 @@ UAC_PATTERN g_MmcPatterns[SUPPORTED_PATTERNS_COUNT] = {
     { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 4, 9600, 9600 },
     { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 4, 10240, 10240 },
     { ptMmcBlock_10586_16299, sizeof(ptMmcBlock_10586_16299), 4, 10586, 16299 },
-    { ptMmcBlock_16300_17133, sizeof(ptMmcBlock_16300_17133), 4, 16300, 17133 }
+    { ptMmcBlock_16300_17134, sizeof(ptMmcBlock_16300_17134), 4, 16300, 17134 }
 };
 
 #define TestChar(x)  (((WCHAR)x >= L'A') && ((WCHAR)x <= L'z')) 

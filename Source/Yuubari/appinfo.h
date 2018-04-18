@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPINFO.H
 *
-*  VERSION:     1.28
+*  VERSION:     1.29
 *
-*  DATE:        08 Feb 2018
+*  DATE:        17 Apr 2018
 *
 *  Header file for the AppInfo scan.
 *

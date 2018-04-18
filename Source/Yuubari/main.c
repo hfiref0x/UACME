@@ -6,7 +6,7 @@
 *
 *  VERSION:     1.29
 *
-*  DATE:        30 Mar 2018
+*  DATE:        17 Apr 2018
 *
 *  Program entry point.
 *
@@ -395,7 +395,7 @@ VOID ListAppInfo(
     _strcat(szFileName, TEXT("\\system32\\appinfo.dll"));
 
 #ifdef _DEBUG
-    _strcpy(szFileName, TEXT("D:\\dumps\\appinfo\\17133.dll"));
+    _strcpy(szFileName, TEXT("D:\\dumps\\appinfo\\17134.dll"));
 #endif
     ScanAppInfo(szFileName, (APPINFODATACALLBACK)AppInfoDataOutputCallback);
 

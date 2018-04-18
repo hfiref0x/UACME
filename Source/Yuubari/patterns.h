@@ -6,13 +6,13 @@
 *
 *  VERSION:     1.29
 *
-*  DATE:        30 Mar 2018
+*  DATE:        17 Apr 2018
 *
 *  Patterns for supported AppInfo versions.
 *
 *  Minimum client: 7600
 *
-*  Maximum client: 17133
+*  Maximum client: 17134
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -44,6 +44,6 @@ unsigned char ptMmcBlock_10240[] = {
 unsigned char ptMmcBlock_10586_16299[] = {
     0x49, 0x8B, 0x16, 0x49, 0x8B, 0xCD, 0xFF, 0x15 
 };
-unsigned char ptMmcBlock_16300_17133[] = {
+unsigned char ptMmcBlock_16300_17134[] = {
     0x41, 0x8B, 0xF7, 0x49, 0x8B, 0x16, 0x48, 0x8B
 };
