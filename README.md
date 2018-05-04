@@ -393,8 +393,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Component(s): Attacker defined
      * Implementation: ucmFwCplLuaMethod
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 RS4 (17134)
+        * How: Shell API update
 43. Author: Oddvar Moe derivative
      * Type: Elevated COM interface
      * Method: IColorDataProxy, ICMLuaUtil

