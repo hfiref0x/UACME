@@ -5,7 +5,7 @@ using Microsoft.Win32;
 //
 // Fujinami payload code
 //
-// Simplified version of old Fubuki version).
+// Simplified version of old Fubuki version.
 // Read registry value with custom parameter and execute it.
 //
 namespace Fujinami
@@ -45,6 +45,8 @@ namespace Fujinami
                 //
                 Environment.Exit(0);
             }
+
+            Environment.Exit(0);
         }
     }
 }

@@ -186,10 +186,7 @@
 #define T_ATTRIBUTES                L"Attributes"
 #define T_ASSEMBLY                  L"Assembly"
 #define T_CLASS                     L"Class"
-#define T_RUNTIMEVERSION            L"RuntimeVersion"
 #define T_CODEBASE                  L"CodeBase"
-
-#define T_MMC_SNAPINFACTORY         L"Microsoft.ManagementConsole.Advanced.FrameworkSnapInFactory"
 
 //
 // COM objects elevation.
@@ -212,7 +209,6 @@
 //
 #define T_CLSID_EVENTVWR_BYPASS              L"{0A29FF9E-7F9C-4437-8B11-F424491E3931}"
 #define T_MMCFrameworkSnapInFactory          L"{D5AB5662-131D-453D-88C8-9BBA87502ADE}"
-#define T_MMC_IMPLEMENTED_CATEGORIES         L"Implemented Categories\\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}"
 
 #define T_FUJINAMI_ASSEMBLY                  L"Fujinami, Version=0.0.0.0, Culture=neutral"
 #define T_FUJINAMI_CLASS                     L"Fujinami.EntryPoint"

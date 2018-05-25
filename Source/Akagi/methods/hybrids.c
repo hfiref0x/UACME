@@ -2361,8 +2361,6 @@ BOOL ucmCOMHandlersMethod2(
     WCHAR szBuffer[MAX_PATH * 2], szKey[MAX_PATH * 2];
     WCHAR szConvertedName[MAX_PATH * 3];
 
-    SHELLEXECUTEINFO shinfo;
-
     do {
 
         //
@@ -2539,18 +2537,8 @@ BOOL ucmCOMHandlersMethod2(
         //
         // Run target.
         //
-        RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
-        shinfo.cbSize = sizeof(shinfo);
-        shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-        shinfo.lpFile = MMC_EXE;
-        shinfo.lpParameters = EVENTVWR_MSC;
-        shinfo.nShow = SW_SHOW;
-        bResult = ShellExecuteEx(&shinfo);
-        if (bResult) {
-            WaitForSingleObject(shinfo.hProcess, 10000);
-            TerminateProcess(shinfo.hProcess, 0);
-            CloseHandle(shinfo.hProcess);
-        }
+
+        bResult = supRunProcess(MMC_EXE, EVENTVWR_MSC);
 
     } while (bCond);
 
