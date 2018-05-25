@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.86
+*  VERSION:     2.88
 *
-*  DATE:        15 Jan 2018
+*  DATE:        11 May 2018
 *
 *  Common header file for the program support routines.
 *
@@ -49,6 +49,7 @@
 #define IKAZUCHI_ID IDR_IKAZUCHI64
 #define AKATSUKI_ID IDR_AKATSUKI64
 #define KAMIKAZE_ID IDR_KAMIKAZE
+#define FUJINAMI_ID IDR_FUJINAMI
 #else
 #include "bin32res.h"
 #define FUBUKI_ID IDR_FUBUKI32
@@ -56,6 +57,7 @@
 #define IKAZUCHI_ID IDR_IKAZUCHI32
 #define AKATSUKI_ID PAYLOAD_ID_NONE //this module unavailable for 32 bit
 #define KAMIKAZE_ID IDR_KAMIKAZE
+#define FUJINAMI_ID IDR_FUJINAMI //this module is dotnet x86 for any supported platform
 #endif
 
 #include <Windows.h>

@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     2.87
+*  VERSION:     2.88
 *
-*  DATE:        19 Jan 2018
+*  DATE:        11 May 2018
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -117,3 +117,7 @@ BOOL ucmDccwCOMMethod(
 
 BOOL ucmBitlockerRCMethod(
     _In_ LPWSTR lpszPayload);
+
+BOOL ucmCOMHandlersMethod2(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);

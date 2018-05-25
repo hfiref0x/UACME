@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017
+*  (C) COPYRIGHT AUTHORS, 2017 - 2018
 *
 *  TITLE:       B33F.H
 *
-*  VERSION:     2.85
+*  VERSION:     2.88
 *
-*  DATE:        01 Dec 2017
+*  DATE:        11 May 2018
 *
 *  Prototypes and definitions for b33f method.
 *
@@ -18,6 +18,6 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmMethodCOMHandlers(
+BOOL ucmCOMHandlersMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);

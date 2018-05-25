@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.87
+*  VERSION:     2.88
 *
-*  DATE:        08 Apr 2018
+*  DATE:        11 May 2018
 *
 *  Global consts definition file.
 *
@@ -34,6 +34,8 @@
 #define T_MSSETTINGS                L"Software\\Classes\\ms-settings"
 #define T_SHELL_OPEN_COMMAND        L"\\shell\\open\\command"
 #define T_SHELL_RUNAS_COMMAND       L"\\shell\\runas\\command" 
+
+#define T_FILE_PREP                 L"file://"
 
 #define T_SCHTASKS_CMD              L"/run /tn \"\\Microsoft\\Windows\\DiskCleanup\\SilentCleanup\" /i"
 #define T_CLSID_MYCOMPUTER_COMET    L"\\Comet.{20D04FE0-3AEA-1069-A2D8-08002B30309D}"
@@ -63,6 +65,7 @@
 #define DISMCORE_DLL                L"dismcore.dll"
 #define DUSER_DLL                   L"duser.dll"
 #define ELSEXT_DLL                  L"elsext.dll"
+#define FUJINAMI_DLL                L"fujinami.dll"
 #define GDIPLUS_DLL                 L"GdiPlus.dll"
 #define HIBIKI_DLL                  L"Hibiki.dll"
 #define KERNEL32_DLL                L"kernel32.dll"
@@ -170,7 +173,26 @@
 #define T_CALIBRATOR_VALUE          L"DisplayCalibrator"
 
 //
-//COM objects elevation.
+// COM related trash.
+//
+#define T_REG_SOFTWARECLASSESCLSID  L"Software\\Classes\\CLSID\\"
+#define T_REG_INPROCSERVER32        L"\\InProcServer32"
+#define T_REG_SHELLFOLDER           L"\\ShellFolder"
+
+#define T_THREADINGMODEL            L"ThreadingModel"
+#define T_APARTMENT                 L"Apartment"
+#define T_LOADWITHOUTCOM            L"LoadWithoutCOM"
+#define T_HIDEONDESKTOPPERUSER      L"HideOnDesktopPerUser"
+#define T_ATTRIBUTES                L"Attributes"
+#define T_ASSEMBLY                  L"Assembly"
+#define T_CLASS                     L"Class"
+#define T_RUNTIMEVERSION            L"RuntimeVersion"
+#define T_CODEBASE                  L"CodeBase"
+
+#define T_MMC_SNAPINFACTORY         L"Microsoft.ManagementConsole.Advanced.FrameworkSnapInFactory"
+
+//
+// COM objects elevation.
 //
 #define T_CLSID_ColorDataProxy               L"{D2E7041B-2927-42fb-8E9F-7CE93B6DC937}"
 #define T_CLSID_CMSTPLUA                     L"{3E5FC7F9-9A51-4367-9063-A120244FBEC7}"
@@ -186,16 +208,11 @@
 #define T_IID_IARPUninstallStringLauncher    L"{F885120E-3789-4FD9-865E-DC9B4A6412D2}"
 
 //
-//COM Handlers hijack
+// COM Handlers hijack.
 //
 #define T_CLSID_EVENTVWR_BYPASS              L"{0A29FF9E-7F9C-4437-8B11-F424491E3931}"
+#define T_MMCFrameworkSnapInFactory          L"{D5AB5662-131D-453D-88C8-9BBA87502ADE}"
+#define T_MMC_IMPLEMENTED_CATEGORIES         L"Implemented Categories\\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}"
 
-#define T_REG_SOFTWARECLASSESCLSID      L"Software\\Classes\\CLSID\\"
-#define T_REG_INPROCSERVER32            L"\\InProcServer32"
-#define T_REG_SHELLFOLDER               L"\\ShellFolder"
-
-#define T_THREADINGMODEL            L"ThreadingModel"
-#define T_APARTMENT                 L"Apartment"
-#define T_LOADWITHOUTCOM            L"LoadWithoutCOM"
-#define T_HIDEONDESKTOPPERUSER      L"HideOnDesktopPerUser"
-#define T_ATTRIBUTES                L"Attributes"
+#define T_FUJINAMI_ASSEMBLY                  L"Fujinami, Version=0.0.0.0, Culture=neutral"
+#define T_FUJINAMI_CLASS                     L"Fujinami.EntryPoint"

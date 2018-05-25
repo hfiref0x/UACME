@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.87
+*  VERSION:     2.88
 *
-*  DATE:        02 Mar 2018
+*  DATE:        11 May 2018
 *
 *  Common header file for the program support routines.
 *
@@ -231,5 +231,8 @@ BOOL supQuerySystemRoot(
 
 PVOID supGetSystemInfo(
     _In_ SYSTEM_INFORMATION_CLASS InfoClass);
+
+BOOL supIsCorImageFile(
+    PVOID ImageBase);
 
 #define PathFileExists(lpszPath) (GetFileAttributes(lpszPath) != (DWORD)-1)

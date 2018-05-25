@@ -4,9 +4,9 @@
 *
 *  TITLE:       B33F.C
 *
-*  VERSION:     2.87
+*  VERSION:     2.88
 *
-*  DATE:        18 Jan 2018
+*  DATE:        11 May 2018
 *
 *  UAC bypass method from Ruben Boonen aka b33f.
 *
@@ -19,7 +19,7 @@
 #include "global.h"
 
 /*
-* ucmMethodCOMHandlers
+* ucmCOMHandlersMethod
 *
 * Purpose:
 *
@@ -27,7 +27,7 @@
 * https://github.com/FuzzySecurity/DefCon25/blob/master/DefCon25_UAC-0day-All-Day_v1.2.pdf
 *
 */
-BOOL ucmMethodCOMHandlers(
+BOOL ucmCOMHandlersMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )

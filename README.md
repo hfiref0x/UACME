@@ -369,11 +369,11 @@ Keys (watch debug output with dbgview or similar for more info):
      * Fixed in: unfixed :see_no_evil:
         * How: -
 40. Author: Ruben Boonen
-     * Type: COM Handler hijack
+     * Type: COM Handler Hijack
      * Method: Registry key manipulation
      * Target(s): \system32\mmc.exe, \System32\recdisc.exe
      * Component(s): Attacker defined
-     * Implementation: ucmMethodCOMHandlers
+     * Implementation: ucmCOMHandlersMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -430,6 +430,15 @@ Keys (watch debug output with dbgview or similar for more info):
      * Implementation: ucmBitlockerRCMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS4 (>16299)
+        * How: Shell API update
+47. Author: clavoillotte & 3gstudent
+     * Type: COM Handler Hijack
+     * Method: Registry key manipulation
+     * Target(s): \system32\mmc.exe
+     * Component(s): Attacker defined
+     * Implementation: ucmCOMHandlersMethod2
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
         * How: Shell API update
 
 Note:
@@ -498,6 +507,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
    2. https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-2.html
    3. https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-3.html 
 * Research on CMSTP.exe, https://msitpros.com/?p=3960
+* UAC bypass via elevated .NET applications, https://offsec.provadys.com/UAC-bypass-dotnet.html
 
 # Authors
 

