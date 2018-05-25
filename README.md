@@ -439,7 +439,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Implementation: ucmCOMHandlersMethod2
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
-        * How: Shell API update
+        * How: -
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;
