@@ -483,7 +483,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # Build 
 
-* UACMe comes with full source code, written in C;
+* UACMe comes with full source code, written in C with some parts written in C#;
 * In order to build from source you need Microsoft Visual Studio 2013/2015 U2 and later versions.
 
 # References
