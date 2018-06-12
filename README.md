@@ -330,8 +330,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Implementation: ucmTokenModification
      * Works from: Windows 7 (7600)
      * AlwaysNotify compatible, see note
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 RS5 (17686)
+        * How: ntoskrnl.exe->SeTokenCanImpersonate additional access token check added
 36. Author: Thomas Vanhoutte
      * Type: Race condition
      * Method: NTFS reparse point & Dll Hijack
