@@ -137,7 +137,7 @@
 #define PACKAGE_XML                 L"ellocnak.xml"
 #define PACKAGE_INF                 L"ellocnak.inf"
 
-#define RUNDLL_EXE_CMD              L"rundll32.exe " //with slash as part of command
+#define RUNDLL_EXE_CMD              L"rundll32.exe " //with space as part of command
 
 #ifdef _WIN64
 #define KONGOU_CD                   L"Kongou64.cd"
@@ -181,7 +181,7 @@
 #define T_MONITOR_PROCESS           L"MonitorProcess"
 #define T_REPORTING_MODE            L"ReportingMode"
 #define T_GLOBAL_FLAG               L"GlobalFlag"
-#define T_SILENT_PROCESS_EXIT       L"\\SilentProcessExit\\"
+#define T_SILENT_PROCESS_EXIT       L"\\SilentProcessExit\\"  //with slash as part of key path
 
 //
 // COM related trash.

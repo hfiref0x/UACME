@@ -105,7 +105,7 @@ BOOL ucmSPPLUAObjectMethod(
     DWORD     dwReportingMode = 1;
     DWORD     dwGlobalFlag = 0x200; //FLG_MONITOR_SILENT_PROCESS_EXIT
 
-    SIZE_T    memIO, szSkipPrep;
+    SIZE_T    memIO, SkipPrep;
 
     WCHAR     szBuffer[MAX_PATH * 2];
     LPWSTR    lpszCommandLine;
@@ -161,8 +161,8 @@ BOOL ucmSPPLUAObjectMethod(
             //
             // Write data to the registry.
             //
-            szSkipPrep = _strlen(T_MACHINE);
-            _strcpy(szBuffer, &T_WINDOWS_CURRENT_VERSION[szSkipPrep]);
+            SkipPrep = _strlen(T_MACHINE);
+            _strcpy(szBuffer, &T_WINDOWS_CURRENT_VERSION[SkipPrep]);
             _strcat(szBuffer, T_SILENT_PROCESS_EXIT);
             _strcat(szBuffer, RRINSTALLER_EXE);
 
@@ -189,7 +189,7 @@ BOOL ucmSPPLUAObjectMethod(
                 if (SUCCEEDED(r)) {
 
                     // 3. IFEO GlobalFlag
-                    _strcpy(szBuffer, &T_IFEO[szSkipPrep]);
+                    _strcpy(szBuffer, &T_IFEO[SkipPrep]);
                     _strcat(szBuffer, TEXT("\\"));
                     _strcat(szBuffer, RRINSTALLER_EXE);
 

@@ -111,7 +111,7 @@ DWORD wdEmulatorAPIHashTable[] = {
 };
 
 /*
-* wdGetHashForString
+* wdxGetHashForString
 *
 * Purpose:
 *
