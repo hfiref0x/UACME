@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.87
+*  VERSION:     2.89
 *
-*  DATE:        15 Apr 2018
+*  DATE:        14 Jun 2018
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -88,7 +88,7 @@ BOOL ucmHijackShellCommandMethod(
             }
 
             //now rundll it
-            _strcpy(lpBuffer, L"rundll32.exe ");
+            _strcpy(lpBuffer, RUNDLL_EXE_CMD);
             _strcat(lpBuffer, szBuffer);
             _strcat(lpBuffer, L",WdsInitialize");
         }

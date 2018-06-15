@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.88
+*  VERSION:     2.89
 *
-*  DATE:        11 May 2018
+*  DATE:        14 June 2018
 *
 *  Hybrid UAC bypass methods.
 *
@@ -97,7 +97,7 @@ BOOL ucmAvrfMethod(
         //
         // Set verifier flag value.
         //
-        lRet = RegSetValueEx(hSubKey, TEXT("GlobalFlag"), 0, REG_DWORD, (BYTE*)&dwValue, sizeof(DWORD));
+        lRet = RegSetValueEx(hSubKey, T_GLOBAL_FLAG, 0, REG_DWORD, (BYTE*)&dwValue, sizeof(DWORD));
         if (lRet != ERROR_SUCCESS)
             break;
 
@@ -2027,6 +2027,8 @@ BOOL ucmMethodCorProfiler(
 * Bypass UAC using FwCplLua undocumented COM interface and mscfile registry hijack.
 * This function expects that supMasqueradeProcess was called on process initialization.
 *
+* Fixed in Windows 10 RS4
+*
 */
 BOOL ucmFwCplLuaMethod(
     _In_ LPWSTR lpszPayload
@@ -2235,6 +2237,8 @@ BOOL ucmDccwCOMMethod(
 * Purpose:
 *
 * Bypass UAC using BitlockerWizardElev race condition.
+*
+* Fixed in Windows 10 RS4
 *
 */
 BOOL ucmBitlockerRCMethod(

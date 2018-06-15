@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.88
+*  VERSION:     2.89
 *
-*  DATE:        11 May 2018
+*  DATE:        14 Jun 2018
 *
 *  Program entry point.
 *
@@ -377,24 +377,25 @@ VOID main()
     int v = 1, d = 0;
     UACME_THREAD_CONTEXT uctx;
 
-    wdCheckEmulatedAPI();
-    
     RtlSecureZeroMemory(&uctx, sizeof(uctx));
 
-    uctx.Frame.Context = &g_fctx;
-    uctx.ucmMain = (pfnEntryPoint)ucmMain;
-    RtlPushFrame((PTEB_ACTIVE_FRAME)&uctx);
+    if (wdIsEmulatorPresent() == STATUS_NOT_SUPPORTED) {
 
-    __try {
-        v = (int)USER_SHARED_DATA->NtProductType;
-        d = (int)USER_SHARED_DATA->AlternativeArchitecture;
-        v = (int)(v / d);
-    }
-    __except (ucmSehHandler(GetExceptionCode(), GetExceptionInformation())) {
-        v = 1;
-    }
+        uctx.Frame.Context = &g_fctx;
+        uctx.ucmMain = (pfnEntryPoint)ucmMain;
+        RtlPushFrame((PTEB_ACTIVE_FRAME)&uctx);
 
-    RtlPopFrame((PTEB_ACTIVE_FRAME)&uctx);   
+        __try {
+            v = (int)USER_SHARED_DATA->NtProductType;
+            d = (int)USER_SHARED_DATA->AlternativeArchitecture;
+            v = (int)(v / d);
+        }
+        __except (ucmSehHandler(GetExceptionCode(), GetExceptionInformation())) {
+            v = 1;
+        }
+
+        RtlPopFrame((PTEB_ACTIVE_FRAME)&uctx);
+    }
     if (v > 0) 
         ExitProcess(uctx.ReturnedResult);
 }

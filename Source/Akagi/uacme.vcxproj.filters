@@ -34,6 +34,9 @@
     <Filter Include="minhook\hde">
       <UniqueIdentifier>{d27ee8cb-a037-41c6-b75f-56bc1b0f46a5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shared">
+      <UniqueIdentifier>{218a1cb5-65d2-499f-a829-e53baee59a9f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -129,9 +132,6 @@
     <ClCompile Include="..\Shared\ldr.c">
       <Filter>ldr</Filter>
     </ClCompile>
-    <ClCompile Include="windefend.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="methods\tyranid.c">
       <Filter>Source Files\methods</Filter>
     </ClCompile>
@@ -173,6 +173,12 @@
     </ClCompile>
     <ClCompile Include="methods\bytecode77.c">
       <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\deroko.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\windefend.c">
+      <Filter>shared</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -248,9 +254,6 @@
     <ClInclude Include="..\Shared\ldr.h">
       <Filter>ldr</Filter>
     </ClInclude>
-    <ClInclude Include="windefend.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="methods\tyranid.h">
       <Filter>Header Files\methods</Filter>
     </ClInclude>
@@ -304,6 +307,18 @@
     </ClInclude>
     <ClInclude Include="methods\bytecode77.h">
       <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\deroko.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\sppluaobject.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\windefend.h">
+      <Filter>shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\shared.h">
+      <Filter>shared</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

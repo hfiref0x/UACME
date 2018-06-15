@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.87
+*  VERSION:     2.89
 *
-*  DATE:        02 Mar 2018
+*  DATE:        14 Jun 2018
 *
 *  AVrf entry point, Hibiki Kai Ni.
 *
@@ -33,6 +33,7 @@
 #include "shared\ntos.h"
 #include "shared\minirtl.h"
 #include "shared\util.h"
+#include "shared\windefend.h"
 
 #if (_MSC_VER >= 1900) 
 #ifdef _DEBUG
@@ -170,6 +171,9 @@ BOOL WINAPI DllMain(
 
     UNREFERENCED_PARAMETER(hinstDLL);
 
+    if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED)
+        return FALSE;
+
     switch (fdwReason) {
 
     case DLL_PROCESS_VERIFIER:
@@ -178,5 +182,6 @@ BOOL WINAPI DllMain(
         *pVPD = &g_avrfProvider;
         break;
     }
+
     return TRUE;
 }

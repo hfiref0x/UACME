@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.88
+*  VERSION:     2.89
 *
-*  DATE:        11 May 2018
+*  DATE:        14 June 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -1654,7 +1654,8 @@ BOOL supSetupIPCLinkData(
     HANDLE hRoot = NULL, hChild = NULL;
     LPWSTR lpUser;
     NTSTATUS status;
-    UNICODE_STRING ChildName, ParentRoot, usKey;
+    STATIC_UNICODE_STRING(ParentRoot, T_AKAGI_LINK);
+    UNICODE_STRING ChildName, usKey;
     OBJECT_ATTRIBUTES attr;
 
     RtlSecureZeroMemory(&usKey, sizeof(usKey));
@@ -1666,10 +1667,6 @@ BOOL supSetupIPCLinkData(
 
         lpUser = _filename(usKey.Buffer);
 
-        ParentRoot.Buffer = NULL;
-        ParentRoot.Length = 0;
-        ParentRoot.MaximumLength = 0;
-        RtlInitUnicodeString(&ParentRoot, T_AKAGI_LINK);
         InitializeObjectAttributes(&attr, &ParentRoot, OBJ_CASE_INSENSITIVE, 0, NULL);
         status = NtCreateDirectoryObject(&hRoot, DIRECTORY_CREATE_SUBDIRECTORY, &attr);
         if (!NT_SUCCESS(status))

@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.87
+*  VERSION:     2.89
 *
-*  DATE:        01 Mar 2018
+*  DATE:        14 Jun 2018
 *
 *  Proxy dll entry point, Akatsuki.
 *  Special dll for wow64 logger method.
@@ -35,6 +35,7 @@
 #include <ntstatus.h>
 #include "shared\minirtl.h"
 #include "shared\util.h"
+#include "shared\windefend.h"
 
 #if (_MSC_VER >= 1900) 
 #ifdef _DEBUG
@@ -168,6 +169,9 @@ BOOL WINAPI DllMain(
 {
     UNREFERENCED_PARAMETER(hinstDLL);
     UNREFERENCED_PARAMETER(lpvReserved);
+
+    if (wdIsEmulatorPresent() == STATUS_NEEDS_REMEDIATION)
+        ExitProcess('Foff');
 
     if (fdwReason == DLL_PROCESS_ATTACH) {
         OutputDebugString(LoadedMsg);

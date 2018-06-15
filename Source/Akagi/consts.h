@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.88
+*  VERSION:     2.89
 *
-*  DATE:        11 May 2018
+*  DATE:        14 June 2018
 *
 *  Global consts definition file.
 *
@@ -21,6 +21,9 @@
 #define AKAGI_XOR_KEY               'naka'
 #define FUBUKI_EXT_ENTRYPOINT       "_FubukiProc1"
 #define FUBUKI_DEFAULT_ENTRYPOINT   "_FubukiProc3"
+#define FUBUKI_DEFAULT_ENTRYPOINTW  L"_FubukiProc3"
+
+#define T_MACHINE                   L"MACHINE\\"
 
 #define T_WINDOWS_CURRENT_VERSION   L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion"
 #define T_IFEO                      L"MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"
@@ -108,6 +111,7 @@
 #define OOBE_EXE                    L"oobe.exe"
 #define SETUPSQM_EXE                L"oobe\\setupsqm.exe" 
 #define OSK_EXE                     L"osk.exe"
+#define RRINSTALLER_EXE             L"rrinstaller.exe"
 #define PERFMON_EXE                 L"perfmon.exe"
 #define PKGMGR_EXE                  L"pkgmgr.exe"
 #define SCHTASKS_EXE                L"schtasks.exe"
@@ -132,6 +136,8 @@
 #define RSOP_MSC                    L"rsop.msc"
 #define PACKAGE_XML                 L"ellocnak.xml"
 #define PACKAGE_INF                 L"ellocnak.inf"
+
+#define RUNDLL_EXE_CMD              L"rundll32.exe " //with slash as part of command
 
 #ifdef _WIN64
 #define KONGOU_CD                   L"Kongou64.cd"
@@ -172,6 +178,11 @@
 
 #define T_CALIBRATOR_VALUE          L"DisplayCalibrator"
 
+#define T_MONITOR_PROCESS           L"MonitorProcess"
+#define T_REPORTING_MODE            L"ReportingMode"
+#define T_GLOBAL_FLAG               L"GlobalFlag"
+#define T_SILENT_PROCESS_EXIT       L"\\SilentProcessExit\\"
+
 //
 // COM related trash.
 //
@@ -196,12 +207,14 @@
 #define T_CLSID_FileOperation                L"{3AD05575-8857-4850-9277-11B85BDB8E09}"
 #define T_CLSID_FwCplLua                     L"{752438CB-E941-433F-BCB4-8B7D2329F0C8}"
 #define T_CLSID_ShellSecurityEditor          L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}"
+#define T_CLSID_SPPLUAObject                 L"{179CC917-3A82-40E7-9F8C-2FC8A3D2212B}"
 #define T_CLSID_UninstallStringLauncher      L"{FCC74B77-EC3E-4DD8-A80B-008A702075A9}"
 
 #define T_IID_IColorDataProxy                L"{0A16D195-6F47-4964-9287-9F4BAB6D9827}"
 #define T_IID_ICMLuaUtil                     L"{6EDD6D74-C007-4E75-B76A-E5740995E24C}"
 #define T_IID_IFwCplLua                      L"{56DA8B35-7FC3-45DF-8768-664147864573}"
 #define T_IID_ISecurityEditor                L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}"
+#define T_IID_SPPLUAObject                   L"{12FBFECB-7CCE-473E-8737-78EE6C9CCAEB}"
 #define T_IID_IARPUninstallStringLauncher    L"{F885120E-3789-4FD9-865E-DC9B4A6412D2}"
 
 //

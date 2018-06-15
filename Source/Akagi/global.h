@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.88
+*  VERSION:     2.89
 *
-*  DATE:        11 May 2018
+*  DATE:        14 June 2018
 *
 *  Common header file for the program support routines.
 *
@@ -70,13 +70,13 @@
 #include "shared\_filename.h"
 #include "shared\ldr.h"
 #include "shared\lsa.h"
+#include "shared\windefend.h"
 #include "consts.h"
 #include "compress.h"
 #include "sup.h"
 #include "aic.h"
 #include "minhook\MinHook.h"
 #include "methods\methods.h"
-#include "windefend.h"
 
 //
 // enable for test

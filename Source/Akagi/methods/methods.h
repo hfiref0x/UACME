@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     2.88
+*  VERSION:     2.89
 *
-*  DATE:        11 May 2018
+*  DATE:        14 June 2018
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -67,6 +67,7 @@ typedef enum _UCM_METHOD {
     UacMethodSluiHijack,    //+
     UacMethodBitlockerRC,   //+
     UacMethodCOMHandlers2,  //+
+    UacMethodSPPLUAObject,  //+
     UacMethodMax
 } UCM_METHOD;
 
@@ -108,6 +109,7 @@ typedef struct _UCM_API_DISPATCH_ENTRY {
 #include "cdproxy.h"
 #include "comet.h"
 #include "comfileop.h"
+#include "deroko.h"
 #include "enigma0x3.h"
 #include "explife.h"
 #include "fwcpllua.h"
@@ -118,6 +120,7 @@ typedef struct _UCM_API_DISPATCH_ENTRY {
 #include "sandworm.h"
 #include "simda.h"
 #include "sirefef.h"
+#include "sppluaobject.h"
 #include "wusa.h"
 #include "tests\test.h"
 #include "tyranid.h"

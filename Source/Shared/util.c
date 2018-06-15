@@ -4,9 +4,9 @@
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     2.87
+*  VERSION:     2.89
 *
-*  DATE:        02 Mar 2018
+*  DATE:        14 June 2018
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -17,20 +17,7 @@
 *
 *******************************************************************************/
 
-//disable nonmeaningful warnings.
-#pragma warning(disable: 4005) // macro redefinition
-#pragma warning(disable: 4055) // %s : from data pointer %s to function pointer %s
-#pragma warning(disable: 4152) // nonstandard extension, function/data pointer conversion in expression
-#pragma warning(disable: 4201) // nonstandard extension used : nameless struct/union
-#pragma warning(disable: 6102) // Using %s from failed function call at line %u
-
-#include <Windows.h>
-#include <ntstatus.h>
-#include "ntos.h"
-#include "lsa.h"
-#include "minirtl.h"
-#include "_filename.h"
-#include "util.h"
+#include "shared.h"
 
 /*
 * ucmPrivilegeEnabled
@@ -147,11 +134,9 @@ NTSTATUS ucmCreateSyncMutant(
     _Out_ PHANDLE phMutant
 )
 {
-    UNICODE_STRING us;
+    STATIC_UNICODE_STRING(us, L"\\BaseNamedObjects\\Nagumo");
     OBJECT_ATTRIBUTES obja;
 
-    us.Buffer = NULL;
-    RtlInitUnicodeString(&us, L"\\BaseNamedObjects\\Nagumo");
     InitializeObjectAttributes(&obja, &us, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     return NtCreateMutant(phMutant, MUTANT_ALL_ACCESS, &obja, FALSE);
@@ -1557,6 +1542,8 @@ BOOL ucmReadParameters(
     ULONG                           cbRegistryUser = sizeof(szRegistryUser) - sizeof(WCHAR);
     ULONG                           cbAkagiKey = sizeof(szAkagiKey) - sizeof(WCHAR);
 
+    STATIC_UNICODE_STRING(usLoveLetter, L"LoveLetter");
+
     do {
 
         //
@@ -1684,10 +1671,8 @@ BOOL ucmReadParameters(
         // Read parameter size and allocate memory for it.
         //
         LengthNeeded = 0;
-        usValue.Buffer = NULL;
-        RtlInitUnicodeString(&usValue, L"LoveLetter");
         RtlSecureZeroMemory(&kvpi, sizeof(kvpi));
-        status = NtQueryValueKey(hKey, &usValue, KeyValuePartialInformation, &kvpi,
+        status = NtQueryValueKey(hKey, &usLoveLetter, KeyValuePartialInformation, &kvpi,
             sizeof(KEY_VALUE_PARTIAL_INFORMATION), &LengthNeeded);
 
         if ((status != STATUS_SUCCESS) &&
@@ -1705,7 +1690,7 @@ BOOL ucmReadParameters(
             //
             status = NtQueryValueKey(
                 hKey,
-                &usValue,
+                &usLoveLetter,
                 KeyValuePartialInformation,
                 lpData,
                 LengthNeeded,

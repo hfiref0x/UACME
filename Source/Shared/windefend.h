@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2017
+*  (C) COPYRIGHT AUTHORS, 2015 - 2018
 *
 *  TITLE:       WINDEFEND.H
 *
-*  VERSION:     2.72
+*  VERSION:     2.89
 *
-*  DATE:        25 May 2017
+*  DATE:        14 June 2018
 *
 *  MSE / Windows Defender anti-emulation part header file.
 *
@@ -21,11 +21,11 @@
 VOID wdCheckEmulatedVFS(
     VOID);
 
-VOID wdCheckEmulatedAPI(
-    VOID);
-
 LRESULT CALLBACK wdDummyWindowProc(
     HWND hwnd,
     UINT uMsg,
     WPARAM wParam,
     LPARAM lParam);
+
+NTSTATUS wdIsEmulatorPresent(
+    VOID);

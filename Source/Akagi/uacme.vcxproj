@@ -371,6 +371,7 @@
     <ClCompile Include="..\Shared\u64tohex.c" />
     <ClCompile Include="..\Shared\ultohex.c" />
     <ClCompile Include="..\Shared\ultostr.c" />
+    <ClCompile Include="..\Shared\windefend.c" />
     <ClCompile Include="..\Shared\_filename.c" />
     <ClCompile Include="..\shared\_strcat.c" />
     <ClCompile Include="..\shared\_strcmp.c" />
@@ -391,6 +392,7 @@
     <ClCompile Include="methods\bytecode77.c" />
     <ClCompile Include="methods\carberp.c" />
     <ClCompile Include="methods\comet.c" />
+    <ClCompile Include="methods\deroko.c" />
     <ClCompile Include="methods\enigma0x3.c" />
     <ClCompile Include="methods\explife.c" />
     <ClCompile Include="methods\gootkit.c" />
@@ -410,12 +412,13 @@
     <ClCompile Include="minhook\trampoline.c" />
     <ClCompile Include="sup.c" />
     <ClCompile Include="tests\test.c" />
-    <ClCompile Include="windefend.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Shared\ldr.h" />
     <ClInclude Include="..\shared\minirtl.h" />
     <ClInclude Include="..\shared\rtltypes.h" />
+    <ClInclude Include="..\Shared\shared.h" />
+    <ClInclude Include="..\Shared\windefend.h" />
     <ClInclude Include="..\Shared\_filename.h" />
     <ClInclude Include="aic.h" />
     <ClInclude Include="compress.h" />
@@ -431,6 +434,7 @@
     <ClInclude Include="methods\cdproxy.h" />
     <ClInclude Include="methods\comet.h" />
     <ClInclude Include="methods\comfileop.h" />
+    <ClInclude Include="methods\deroko.h" />
     <ClInclude Include="methods\enigma0x3.h" />
     <ClInclude Include="methods\explife.h" />
     <ClInclude Include="methods\fwcpllua.h" />
@@ -442,6 +446,7 @@
     <ClInclude Include="methods\sandworm.h" />
     <ClInclude Include="methods\simda.h" />
     <ClInclude Include="methods\sirefef.h" />
+    <ClInclude Include="methods\sppluaobject.h" />
     <ClInclude Include="methods\tyranid.h" />
     <ClInclude Include="methods\wusa.h" />
     <ClInclude Include="minhook\buffer.h" />
@@ -455,7 +460,6 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="sup.h" />
     <ClInclude Include="tests\test.h" />
-    <ClInclude Include="windefend.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="bin32res.rc">
