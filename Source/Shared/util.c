@@ -4,9 +4,9 @@
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     2.89
+*  VERSION:     2.90
 *
-*  DATE:        14 June 2018
+*  DATE:        10 July 2018
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -134,11 +134,11 @@ NTSTATUS ucmCreateSyncMutant(
     _Out_ PHANDLE phMutant
 )
 {
-    STATIC_UNICODE_STRING(us, L"\\BaseNamedObjects\\Nagumo");
+    UNICODE_STRING us = RTL_CONSTANT_STRING(L"\\BaseNamedObjects\\Nagumo");
     OBJECT_ATTRIBUTES obja;
-
+    
     InitializeObjectAttributes(&obja, &us, OBJ_CASE_INSENSITIVE, NULL, NULL);
-
+        
     return NtCreateMutant(phMutant, MUTANT_ALL_ACCESS, &obja, FALSE);
 }
 
@@ -1542,7 +1542,7 @@ BOOL ucmReadParameters(
     ULONG                           cbRegistryUser = sizeof(szRegistryUser) - sizeof(WCHAR);
     ULONG                           cbAkagiKey = sizeof(szAkagiKey) - sizeof(WCHAR);
 
-    STATIC_UNICODE_STRING(usLoveLetter, L"LoveLetter");
+    UNICODE_STRING                  usLoveLetter = RTL_CONSTANT_STRING(L"LoveLetter");
 
     do {
 

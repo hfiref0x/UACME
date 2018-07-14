@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     2.88
+*  VERSION:     2.90
 *
-*  DATE:        11 May 2018
+*  DATE:        10 July 2018
 *
 *  Common header file for the program support routines.
 *
@@ -62,9 +62,6 @@ BOOLEAN supIsProcess32bit(
 
 BOOL supGetElevationType(
     _Out_ TOKEN_ELEVATION_TYPE *lpType);
-
-HANDLE supGetExplorerHandle(
-    VOID);
 
 BOOL supWriteBufferToFile(
     _In_ LPWSTR lpFileName,
@@ -183,14 +180,6 @@ BOOL supSetMountPoint(
 
 BOOL supDeleteMountPoint(
     _In_ HANDLE hDirectory);
-
-BOOL supDeleteSymlink(
-    _In_ HANDLE hDirectory);
-
-BOOL supSetSymlink(
-    _In_ HANDLE hDirectory,
-    _In_ LPWSTR lpTarget,
-    _In_ LPWSTR lpPrintName);
 
 HANDLE supOpenDirectoryForReparse(
     _In_ LPWSTR lpDirectory);

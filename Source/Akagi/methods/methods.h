@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     2.89
+*  VERSION:     2.90
 *
-*  DATE:        14 June 2018
+*  DATE:        10 July 2018
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -78,26 +78,42 @@ typedef struct _UCM_METHOD_AVAILABILITY {
     ULONG MinimumExpectedFixedWindowsBuild;        //if the current build equal or greater this value this method is not working here or fixed
 } UCM_METHOD_AVAILABILITY;
 
+typedef enum _UCM_METHOD_EXECUTE_TYPE {
+    ucmExTypeDefault = 0,
+    ucmExTypeRemediationRequired = 1,
+    ucmExTypeContainerLoad = 2,
+    ucmExTypeMax
+} UCM_METHOD_EXECUTE_TYPE;
+
+typedef ULONG(CALLBACK *PUCM_EXTRA_ROUTINE)(
+    PVOID Parameter
+    );
+
+typedef struct _UCM_EXTRA_CONTEXT {
+    PUCM_EXTRA_ROUTINE Routine;
+    PVOID Parameter;
+} UCM_EXTRA_CONTEXT, *PUCM_EXTRA_CONTEXT;
+
 typedef BOOL(CALLBACK *PUCM_API_ROUTINE)(
     UCM_METHOD Method,
-    _Inout_opt_ PVOID ExtraContext,
+    _In_opt_ PUCM_EXTRA_CONTEXT ExtraContext,
     _In_opt_ PVOID PayloadCode,
     _In_opt_ ULONG PayloadSize
     );
 
 #define UCM_API(n) BOOL CALLBACK n(     \
     _In_ UCM_METHOD Method,             \
-    _Inout_opt_ PVOID ExtraContext,     \
+    _In_opt_ PUCM_EXTRA_CONTEXT ExtraContext, \
     _In_opt_ PVOID PayloadCode,         \
     _In_opt_ ULONG PayloadSize)
 
 typedef struct _UCM_API_DISPATCH_ENTRY {
     PUCM_API_ROUTINE Routine;               //method to execute
-    PVOID ExtraContext;                     //unused, future use
+    PUCM_EXTRA_CONTEXT ExtraContext;        //extra context to be executed depending on method
     UCM_METHOD_AVAILABILITY Availability;   //min and max supported Windows builds
     ULONG PayloadResourceId;                //which payload dll must be used
-    BOOL Win32OrWow64Required;              
-    BOOL DisallowWow64;                     
+    BOOL Win32OrWow64Required;
+    BOOL DisallowWow64;
     BOOL SetParametersInRegistry;           //need shared parameters to be set in the registry
 } UCM_API_DISPATCH_ENTRY, *PUCM_API_DISPATCH_ENTRY;
 

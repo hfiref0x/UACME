@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     2.89
+*  VERSION:     2.90
 *
-*  DATE:        14 June 2018
+*  DATE:        10 July 2018
 *
 *  Global consts definition file.
 *
@@ -22,6 +22,8 @@
 #define FUBUKI_EXT_ENTRYPOINT       "_FubukiProc1"
 #define FUBUKI_DEFAULT_ENTRYPOINT   "_FubukiProc3"
 #define FUBUKI_DEFAULT_ENTRYPOINTW  L"_FubukiProc3"
+
+#define T_USAGE_HELP                L"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
 
 #define T_MACHINE                   L"MACHINE\\"
 
@@ -159,7 +161,7 @@
 #define GDIPLUS_SXS                 L"microsoft.windows.gdiplus"
 
 #define APPCMDLINE                  L"Not a security boundary! Just hack-o-rama. Keep it as is!"
-#define PROGRAMTITLE                L"UACMe"
+#define PROGRAMTITLE_VERSION        L"UACMe v 2.9.0.1807"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"

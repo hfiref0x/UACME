@@ -346,7 +346,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: SxS DotLocal, NTFS reparse point
      * Target(s): \system32\dccw.exe
      * Component(s): GdiPlus.dll
-     * Implementation: ucmSXSMethodDccw
+     * Implementation: ucmSXSDccwMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -355,7 +355,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: APPINFO command line spoofing
      * Target(s): \system32\mmc.exe
      * Component(s): Attacker defined
-     * Implementation: ucmMethodHakril
+     * Implementation: ucmHakrilMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -364,7 +364,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: .NET Code Profiler
      * Target(s): \system32\mmc.exe
      * Component(s): Attacker defined
-     * Implementation: ucmMethodCorProfiler
+     * Implementation: ucmCorProfilerMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -409,7 +409,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: Environment variables expansion
      * Target(s): Multiple auto-elevated processes
      * Component(s): Various per target
-     * Implementation: ucmMethodVolatileEnv
+     * Implementation: ucmVolatileEnvMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS3 (16299)
         * How: Current user system directory variables ignored during process creation
@@ -418,7 +418,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: Registry key manipulation
      * Target(s): \system32\slui.exe
      * Component(s): Attacker defined
-     * Implementation: ucmMethodSluiHijack
+     * Implementation: ucmSluiHijackMethod
      * Works from: Windows 8.1 (9600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -525,3 +525,5 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 # 3rd party components usage
 
 MinHook - The Minimalistic x86/x64 API Hooking Library for Windows, https://github.com/TsudaKageyu/minhook
+
+[![HitCount](http://hits.dwyl.io/hfiref0x/uacme.svg)](http://hits.dwyl.io/hfiref0x/uacme)

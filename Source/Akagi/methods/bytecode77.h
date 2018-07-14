@@ -4,9 +4,9 @@
 *
 *  TITLE:       BYTECODE77.H
 *
-*  VERSION:     2.86
+*  VERSION:     2.90
 *
-*  DATE:        15 Jan 2018
+*  DATE:        10 July 2018
 *
 *  Prototypes and definitions for bytecode77 methods.
 *
@@ -18,9 +18,9 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmMethodVolatileEnv(
+BOOL ucmVolatileEnvMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmMethodSluiHijack(
+BOOL ucmSluiHijackMethod(
     _In_ LPWSTR lpszPayload);

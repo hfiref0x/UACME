@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.89
 *
-*  DATE:        14 Jun 2018
+*  DATE:        01 July 2018
 *
 *  Program entry point.
 *
@@ -26,6 +26,30 @@ UACMECONTEXT g_ctx;
 TEB_ACTIVE_FRAME_CONTEXT g_fctx = { 0, "(=^..^=)" };
 
 static pfnDecompressPayload pDecryptPayload = NULL;
+
+
+/*
+* ucmDummyWindowProc
+*
+* Purpose:
+*
+* Part of antiemulation, does nothing, serves as a window for ogl operations.
+*
+*/
+LRESULT CALLBACK ucmDummyWindowProc(
+    HWND hwnd,
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam
+)
+{
+    switch (uMsg) {
+    case WM_CLOSE:
+        PostQuitMessage(0);
+        break;
+    }
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
 
 /*
 * ucmInit
@@ -168,7 +192,7 @@ UINT ucmInit(
 
         wincls.cbSize = sizeof(WNDCLASSEX);
         wincls.style = CS_OWNDC;
-        wincls.lpfnWndProc = &wdDummyWindowProc;
+        wincls.lpfnWndProc = &ucmDummyWindowProc;
         wincls.cbClsExtra = 0;
         wincls.cbWndExtra = 0;
         wincls.hInstance = inst;
@@ -323,7 +347,7 @@ UINT ucmMain()
         break;
 
     case ERROR_BAD_ARGUMENTS:
-        ucmShowMessage(TEXT("Usage: Akagi.exe [Method] [OptionalParamToExecute]"));
+        ucmShowMessage(T_USAGE_HELP);
         break;
     default:
         break;

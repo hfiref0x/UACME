@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUSION.C
 *
-*  VERSION:     1.28
+*  VERSION:     1.29
 *
-*  DATE:        08 Feb 2018
+*  DATE:        15 June 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -46,6 +46,8 @@ NTSTATUS SxsGetTocHeaderFromActivationContext(
     __try {
 
         do {
+
+            RtlSecureZeroMemory(szLog, sizeof(szLog));
 
             ContextData = ActivationContext->ActivationContextData;
 

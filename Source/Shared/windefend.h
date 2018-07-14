@@ -4,9 +4,9 @@
 *
 *  TITLE:       WINDEFEND.H
 *
-*  VERSION:     2.89
+*  VERSION:     2.90
 *
-*  DATE:        14 June 2018
+*  DATE:        10 July 2018
 *
 *  MSE / Windows Defender anti-emulation part header file.
 *
@@ -18,14 +18,90 @@
 *******************************************************************************/
 #pragma once
 
+typedef HANDLE *PMPHANDLE;
+typedef HANDLE MPHANDLE;
+
+typedef struct tagMPCOMPONENT_VERSION {
+    ULONGLONG      Version;
+    ULARGE_INTEGER UpdateTime;
+} MPCOMPONENT_VERSION, *PMPCOMPONENT_VERSION;
+
+typedef struct tagMPVERSION_INFO {
+    MPCOMPONENT_VERSION Product;
+    MPCOMPONENT_VERSION Service;
+    MPCOMPONENT_VERSION FileSystemFilter;
+    MPCOMPONENT_VERSION Engine;
+    MPCOMPONENT_VERSION ASSignature;
+    MPCOMPONENT_VERSION AVSignature;
+    MPCOMPONENT_VERSION NISEngine;
+    MPCOMPONENT_VERSION NISSignature;
+    MPCOMPONENT_VERSION Reserved[4];
+} MPVERSION_INFO, *PMPVERSION_INFO;
+
+typedef enum tagMPSTATUS_FLAG {
+    MP_STATUS_FLAG_NONE = 0,
+    MP_STATUS_FLAG_SERVICE_UNAVAILABLE = 1 << 0,
+    MP_STATUS_FLAG_MPENGINE_UNAVAILABLE = 1 << 1,
+    MP_STATUS_FLAG_THREAT_FULLSCAN_REQUIRED = 1 << 2,
+    MP_STATUS_FLAG_THREAT_REBOOT_REQUIRED = 1 << 3,
+    MP_STATUS_FLAG_THREAT_MANUAL_STEPS_REQUIRED = 1 << 4,
+    MP_STATUS_FLAG_DUE_AV_SIGNATURE = 1 << 5,
+    MP_STATUS_FLAG_DUE_AS_SIGNATURE = 1 << 6,
+    MP_STATUS_FLAG_DUE_QUICK_SCAN = 1 << 7,
+    MP_STATUS_FLAG_DUE_FULL_SCAN = 1 << 8,
+    MP_STATUS_FLAG_INPROGRESS_SYSTEM_SCAN = 1 << 9,
+    MP_STATUS_FLAG_INPROGRESS_ROUTINE_CLEANING = 1 << 10,
+    MP_STATUS_FLAG_DUE_SAMPLES = 1 << 11,
+    MP_STATUS_FLAG_EVALUATION_MODE = 1 << 12,
+    MP_STATUS_FLAG_NONGENUINE = 1 << 13,
+    MP_STATUS_FLAG_PRODUCT_EXPIRED = 1 << 14,
+    MP_STATUS_FLAG_THREAT_CALLISTO_REQUIRED = 1 << 15,
+    MP_STATUS_FLAG_SERVICE_ON_SYSTEM_SHUTDOWN = 1 << 16,
+    MP_STATUS_FLAG_SERVICE_CRITICAL_FAILURE = 1 << 17,
+    MP_STATUS_FLAG_SERVICE_NON_CRITICAL_FAILURE = 1 << 18,
+    MP_STATUS_FLAG_HEALTH_INITIALIZED = 1 << 19,
+    MP_STATUS_FLAG_DUE_PLATFORM_UPDATE = 1 << 20,
+    MP_STATUS_FLAG_INPROGRESS_PLATFORM_UPDATE = 1 << 21,
+    MP_STATUS_FLAG_PLATFORM_ABOUT_TO_BE_OUTDATED = 1 << 22,
+    MP_STATUS_FLAG_END_OF_LIFE = 1 << 23,
+    MP_STATUS_FLAG_MAX = 1 << 23,
+    MP_STATUS_FLAG_ALL = (1 << 24) - 1
+} MPSTATUS_FLAG, *PMPSTATUS_FLAG;
+
+typedef HRESULT (WINAPI *pfnWDStatus)(
+    _Out_ BOOL* pfEnabled);
+
+typedef HRESULT (WINAPI *pfnMpManagerOpen)(
+    _In_  DWORD dwReserved,
+    _Out_ PMPHANDLE phMpHandle);
+
+typedef HRESULT (WINAPI *pfnMpHandleClose)(
+    _In_ MPHANDLE hMpHandle);
+
+typedef HRESULT (WINAPI *pfnMpManagerVersionQuery)(
+    _In_  MPHANDLE hMpHandle,
+    _Out_ PMPVERSION_INFO pVersionInfo);
+
+typedef HRESULT (WINAPI *pfnMpErrorMessageFormat)(
+    _In_  MPHANDLE hMpHandle,
+    _In_  HRESULT  hrError,
+    _Out_ LPWSTR   *pwszErrorDesc);
+
 VOID wdCheckEmulatedVFS(
     VOID);
 
-LRESULT CALLBACK wdDummyWindowProc(
-    HWND hwnd,
-    UINT uMsg,
-    WPARAM wParam,
-    LPARAM lParam);
-
 NTSTATUS wdIsEmulatorPresent(
     VOID);
+
+NTSTATUS wdRegSetValueIndirectHKCU(
+    _In_ LPWSTR TargetKey,
+    _In_opt_ LPWSTR ValueName,
+    _In_ LPWSTR lpData,
+    _In_ ULONG cbData);
+
+NTSTATUS wdRemoveRegLinkHKCU(
+    VOID);
+
+NTSTATUS wdLoadAndQueryState(
+    _In_ BOOL IsWow64, 
+    _Out_opt_ PVOID *MpClientBase);

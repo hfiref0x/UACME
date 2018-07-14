@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       BASIC.C
 *
-*  VERSION:     1.11
+*  VERSION:     1.30
 *
-*  DATE:        27 Feb 2017
+*  DATE:        14 July 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -37,7 +37,8 @@ VOID ScanBasicUacData(
     if (OutputCallback == NULL)
         return;
 
-    RtlQueryElevationFlags(&Flags);
+    if (!NT_SUCCESS(RtlQueryElevationFlags(&Flags)))
+        return;
 
     RtlSecureZeroMemory(&Data, sizeof(Data));
 
@@ -67,7 +68,6 @@ VOID ScanBasicUacData(
         }
 
         Data.Value = 0;
-        Data.IsValueBool = FALSE;
         lRet = supRegReadDword(hKey, T_UAC_RESTRICTED_AUTOAPPROVE, &Data.Value);
         if (lRet == ERROR_SUCCESS) {
             Data.Name = T_UAC_RESTRICTED_AUTOAPPROVE;
@@ -78,6 +78,27 @@ VOID ScanBasicUacData(
         lRet = supRegReadDword(hKey, T_UAC_AUTOAPPROVEIC, &Data.Value);
         if (lRet == ERROR_SUCCESS) {
             Data.Name = T_UAC_AUTOAPPROVEIC;
+            OutputCallback(&Data);
+        }
+
+        Data.Value = 0;
+        lRet = supRegReadDword(hKey, T_UAC_AUTOAPPROVEMP, &Data.Value);
+        if (lRet == ERROR_SUCCESS) {
+            Data.Name = T_UAC_AUTOAPPROVEMP;
+            OutputCallback(&Data);
+        }
+
+        Data.Value = 0;
+        lRet = supRegReadDword(hKey, T_UAC_AUTOAPPROVEHARDCLAIMS, &Data.Value);
+        if (lRet == ERROR_SUCCESS) {
+            Data.Name = T_UAC_AUTOAPPROVEHARDCLAIMS;
+            OutputCallback(&Data);
+        }
+
+        Data.Value = 0;
+        lRet = supRegReadDword(hKey, T_UAC_ENABLESECUREUIPATHS, &Data.Value);
+        if (lRet == ERROR_SUCCESS) {
+            Data.Name = T_UAC_ENABLESECUREUIPATHS;
             OutputCallback(&Data);
         }
 

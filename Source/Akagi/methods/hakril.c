@@ -4,9 +4,9 @@
 *
 *  TITLE:       HAKRIL.C
 *
-*  VERSION:     2.86
+*  VERSION:     2.90
 *
-*  DATE:        15 Jan 2018
+*  DATE:        10 July 2018
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -55,7 +55,7 @@ ULONG_PTR WINAPI AicLaunchAdminProcessHook(
 }
 
 /*
-* ucmMethodHakril
+* ucmHakrilMethod
 *
 * Purpose:
 *
@@ -68,7 +68,7 @@ ULONG_PTR WINAPI AicLaunchAdminProcessHook(
 * execution of remote script on local machine with High IL.
 *
 */
-BOOL ucmMethodHakril(
+BOOL ucmHakrilMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )

@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.89
+*  VERSION:     2.90
 *
-*  DATE:        14 June 2018
+*  DATE:        10 July 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -105,32 +105,6 @@ BOOL supGetElevationType(
         *lpType = TokenType;
 
     return (NT_SUCCESS(status));
-}
-
-/*
-* supGetExplorerHandle
-*
-* Purpose:
-*
-* Returns Explorer process handle opened with maximum allowed rights or NULL on error.
-*
-*/
-HANDLE supGetExplorerHandle(
-    VOID
-)
-{
-    HWND	hTrayWnd = NULL;
-    DWORD	dwProcessId = 0;
-
-    hTrayWnd = FindWindow(TEXT("Shell_TrayWnd"), NULL);
-    if (hTrayWnd == NULL)
-        return NULL;
-
-    GetWindowThreadProcessId(hTrayWnd, &dwProcessId);
-    if (dwProcessId == 0)
-        return NULL;
-
-    return OpenProcess(MAXIMUM_ALLOWED, FALSE, dwProcessId);
 }
 
 /*
@@ -859,7 +833,7 @@ VOID ucmShowMessage(
     _In_ LPWSTR lpszMsg
 )
 {
-    MessageBoxW(GetDesktopWindow(), lpszMsg, PROGRAMTITLE, MB_ICONINFORMATION);
+    MessageBoxW(GetDesktopWindow(), lpszMsg, PROGRAMTITLE_VERSION, MB_ICONINFORMATION);
 }
 
 /*
@@ -874,7 +848,7 @@ INT ucmShowQuestion(
     _In_ LPWSTR lpszMsg
 )
 {
-    return MessageBoxW(GetDesktopWindow(), lpszMsg, PROGRAMTITLE, MB_YESNO);
+    return MessageBoxW(GetDesktopWindow(), lpszMsg, PROGRAMTITLE_VERSION, MB_YESNO);
 }
 
 /*
@@ -1468,134 +1442,6 @@ BOOL supSetMountPoint(
 }
 
 /*
-* supDeleteSymlink
-*
-* Purpose:
-*
-* Removes reparse point of type symbolic link.
-*
-*/
-BOOL supDeleteSymlink(
-    _In_ HANDLE hDirectory
-)
-{
-    NTSTATUS        status;
-    IO_STATUS_BLOCK IoStatusBlock;
-
-    REPARSE_GUID_DATA_BUFFER Buffer;
-
-    RtlSecureZeroMemory(&Buffer, sizeof(REPARSE_GUID_DATA_BUFFER));
-    Buffer.ReparseTag = IO_REPARSE_TAG_SYMLINK;
-
-    status = NtFsControlFile(hDirectory,
-        NULL,
-        NULL,
-        NULL,
-        &IoStatusBlock,
-        FSCTL_DELETE_REPARSE_POINT,
-        &Buffer,
-        REPARSE_GUID_DATA_BUFFER_HEADER_SIZE,
-        NULL,
-        0);
-
-    if (status == STATUS_NOT_A_REPARSE_POINT) {
-        SetLastError(ERROR_INVALID_PARAMETER);
-    }
-    else {
-        SetLastError(RtlNtStatusToDosError(status));
-    }
-
-    return NT_SUCCESS(status);
-}
-
-/*
-* supSetSymlink
-*
-* Purpose:
-*
-* Install reparse point of type symbolic link to target.
-*
-*/
-BOOL supSetSymlink(
-    _In_ HANDLE hDirectory,
-    _In_ LPWSTR lpTarget,
-    _In_ LPWSTR lpPrintName
-)
-{
-    ULONG           memIO;
-    USHORT          cbTarget, cbPrintName, reparseDataLength;
-    NTSTATUS        status;
-    SIZE_T          BufferOffset;
-    IO_STATUS_BLOCK IoStatusBlock;
-
-    REPARSE_DATA_BUFFER *Buffer;
-
-    if ((lpTarget == NULL) || (lpPrintName == NULL)) {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    //
-    // Calculate required buffer size.
-    // Header + length of input strings + safe space.
-    //
-    cbTarget = (USHORT)(_strlen(lpTarget) * sizeof(WCHAR));
-    cbPrintName = (USHORT)(_strlen(lpPrintName) * sizeof(WCHAR));
-
-    reparseDataLength = cbTarget + cbPrintName + 12;
-    memIO = (ULONG)(reparseDataLength + REPARSE_DATA_BUFFER_HEADER_LENGTH);
-
-    Buffer = supHeapAlloc((SIZE_T)memIO);
-    if (Buffer == NULL)
-        return FALSE;
-
-    //
-    // Setup reparse point structure.
-    //
-    Buffer->ReparseTag = IO_REPARSE_TAG_SYMLINK;
-    Buffer->ReparseDataLength = reparseDataLength;
-    Buffer->SymbolicLinkReparseBuffer.Flags = 1; // SYMLINK_FLAG_RELATIVE
-
-    //
-    // Setup Target and PrintName.
-    //
-    Buffer->SymbolicLinkReparseBuffer.PrintNameOffset = 0;
-    Buffer->SymbolicLinkReparseBuffer.PrintNameLength = cbPrintName;
-
-    Buffer->SymbolicLinkReparseBuffer.SubstituteNameOffset = Buffer->SymbolicLinkReparseBuffer.PrintNameLength;
-    Buffer->SymbolicLinkReparseBuffer.SubstituteNameLength = cbTarget;
-
-    BufferOffset = Buffer->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR);
-    RtlCopyMemory(&Buffer->SymbolicLinkReparseBuffer.PathBuffer[BufferOffset],
-        lpTarget,
-        cbTarget);
-
-    BufferOffset = Buffer->SymbolicLinkReparseBuffer.PrintNameOffset / sizeof(WCHAR);
-    RtlCopyMemory(&Buffer->SymbolicLinkReparseBuffer.PathBuffer[BufferOffset],
-        lpPrintName,
-        cbPrintName);
-
-    //
-    // Set reparse point.
-    //
-    status = NtFsControlFile(hDirectory,
-        NULL,
-        NULL,
-        NULL,
-        &IoStatusBlock,
-        FSCTL_SET_REPARSE_POINT,
-        Buffer,
-        memIO,
-        NULL,
-        0);
-
-    supHeapFree(Buffer);
-
-    SetLastError(RtlNtStatusToDosError(status));
-    return NT_SUCCESS(status);
-}
-
-/*
 * supOpenDirectoryForReparse
 *
 * Purpose:
@@ -1654,9 +1500,9 @@ BOOL supSetupIPCLinkData(
     HANDLE hRoot = NULL, hChild = NULL;
     LPWSTR lpUser;
     NTSTATUS status;
-    STATIC_UNICODE_STRING(ParentRoot, T_AKAGI_LINK);
     UNICODE_STRING ChildName, usKey;
     OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING ParentRoot = RTL_CONSTANT_STRING(T_AKAGI_LINK);
 
     RtlSecureZeroMemory(&usKey, sizeof(usKey));
 

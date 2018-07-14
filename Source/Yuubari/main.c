@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.29
+*  VERSION:     1.30
 *
-*  DATE:        17 Apr 2018
+*  DATE:        14 July 2018
 *
 *  Program entry point.
 *
@@ -452,7 +452,7 @@ VOID main()
 
         g_LogFile = LoggerCreate(szBuffer);
         if (g_LogFile != INVALID_HANDLE_VALUE) {
-            cuiPrintText(g_ConOut, TEXT("Output will be logged to file"), TRUE, TRUE);
+            cuiPrintText(g_ConOut, TEXT("Output will be logged to the file"), TRUE, TRUE);
             cuiPrintText(g_ConOut, szBuffer, TRUE, TRUE);
         }
 

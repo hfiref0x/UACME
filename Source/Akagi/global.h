@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.89
+*  VERSION:     2.90
 *
-*  DATE:        14 June 2018
+*  DATE:        10 July 2018
 *
 *  Common header file for the program support routines.
 *
@@ -97,6 +97,7 @@ typedef struct _UACME_CONTEXT {
     HINSTANCE               hKernel32;
     HINSTANCE               hOle32;
     HINSTANCE               hShell32;
+    UCM_METHOD_EXECUTE_TYPE MethodExecuteType;
     ULONG                   dwBuildNumber;
     ULONG                   AkagiFlag;
     ULONG                   IFileOperationFlags;

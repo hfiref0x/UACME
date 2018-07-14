@@ -35,7 +35,7 @@
       <UniqueIdentifier>{d27ee8cb-a037-41c6-b75f-56bc1b0f46a5}</UniqueIdentifier>
     </Filter>
     <Filter Include="shared">
-      <UniqueIdentifier>{218a1cb5-65d2-499f-a829-e53baee59a9f}</UniqueIdentifier>
+      <UniqueIdentifier>{629ff935-c53a-4df8-99ee-29698f72e6b8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -314,10 +314,10 @@
     <ClInclude Include="methods\sppluaobject.h">
       <Filter>Header Files\methods</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shared\windefend.h">
+    <ClInclude Include="..\Shared\shared.h">
       <Filter>shared</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shared\shared.h">
+    <ClInclude Include="..\Shared\windefend.h">
       <Filter>shared</Filter>
     </ClInclude>
   </ItemGroup>
