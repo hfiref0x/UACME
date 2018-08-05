@@ -34,6 +34,8 @@
 #define T_APP_PATH                  L"Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\"
 #define T_DISPLAY_CALIBRATION       L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ICM\\Calibration"
 #define T_DOTNET_CLIENT             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\KnownFunctionTableDlls"
+#define T_UNINSTALL                 L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\"
+
 #define T_MSC_SHELL                 L"Software\\Classes\\mscfile"
 #define T_EXEFILE_SHELL             L"Software\\Classes\\exefile"
 #define T_MSSETTINGS                L"Software\\Classes\\ms-settings"
@@ -51,6 +53,8 @@
 
 #define T_ISOLATEDCOMMAND           L"IsolatedCommand"
 #define T_DELEGATEEXECUTE           L"DelegateExecute"
+
+#define T_UNINSTALL_STRING          L"UninstallString"
 
 #define BINARYPATH_TAG              L"binarypatch01"
 

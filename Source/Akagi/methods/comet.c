@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMET.C
 *
-*  VERSION:     2.87
+*  VERSION:     2.90
 *
-*  DATE:        19 Jan 2018
+*  DATE:        16 July 2018
 *
 *  Comet method (c) BreakingMalware
 *  For description please visit original URL 
@@ -123,7 +123,7 @@ BOOL ucmCometMethod(
                         persistFile->lpVtbl->Release(persistFile);
 
                         _strcpy(szCombinedPath, g_ctx.szTempDirectory);
-                        _strcat(szCombinedPath, L"huy32");
+                        _strcat(szCombinedPath, SOMEOTHERNAME);
                         _strcpy(szLinkFile, szCombinedPath);
                         _strcat(szLinkFile, T_CLSID_MYCOMPUTER_COMET);
 

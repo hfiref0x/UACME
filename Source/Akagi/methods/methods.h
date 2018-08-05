@@ -6,7 +6,7 @@
 *
 *  VERSION:     2.90
 *
-*  DATE:        10 July 2018
+*  DATE:        01 Aug 2018
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
