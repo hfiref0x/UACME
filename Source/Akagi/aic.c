@@ -4,9 +4,9 @@
 *
 *  TITLE:       AIC.C
 *
-*  VERSION:     2.87
+*  VERSION:     3.00
 *
-*  DATE:        17 Apr 2018
+*  DATE:        25 Aug 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -41,20 +41,20 @@ unsigned char LaunchAdminProcessSignature14393[] = {
     0xEC, 0x20, 0x04, 0x00, 0x00
 };
 
-unsigned char LaunchAdminProcessSignature_15063_17134[] = {
+unsigned char LaunchAdminProcessSignature_15063_18219[] = {
     0x40, 0x53, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x81,
     0xEC, 0x20, 0x04, 0x00, 0x00
 };
 
 /*
-* AipFindLaunchAdminProcess
+* AicFindLaunchAdminProcess
 *
 * Purpose:
 *
 * Locate unexported AppInfo routine in memory by signature.
 *
 */
-ULONG_PTR AipFindLaunchAdminProcess(
+ULONG_PTR AicFindLaunchAdminProcess(
     _In_ PULONG ErrorCode)
 {
     ULONG_PTR Address = 0;
@@ -96,8 +96,8 @@ ULONG_PTR AipFindLaunchAdminProcess(
     case 16299:
     case 17134:
     default:
-        Pattern = LaunchAdminProcessSignature_15063_17134;
-        PatternSize = sizeof(LaunchAdminProcessSignature_15063_17134);
+        Pattern = LaunchAdminProcessSignature_15063_18219;
+        PatternSize = sizeof(LaunchAdminProcessSignature_15063_18219);
         ScanModule = WINDOWS_STORAGE_DLL;
         break;
     }
@@ -131,3 +131,81 @@ ULONG_PTR AipFindLaunchAdminProcess(
     return Address;
 }
 
+/*
+* AipWriteVirtualMemory
+*
+* Purpose:
+*
+* Change region protection, write memory and restore region protection.
+*
+*/
+BOOL AipWriteVirtualMemory(
+    _In_ PVOID ProcedureAddress,
+    _In_ LPCBYTE pbBuffer,
+    _In_ SIZE_T cbBuffer)
+{
+    ULONG oldProtect;
+    NTSTATUS status;
+    PVOID BaseAddress;
+    SIZE_T RegionSize;
+
+    BaseAddress = ProcedureAddress;
+    
+    RegionSize = ALIGN_UP(cbBuffer, PAGE_SIZE);
+
+    status = NtProtectVirtualMemory(
+        NtCurrentProcess(),
+        &BaseAddress,
+        &RegionSize,
+        PAGE_EXECUTE_READWRITE,
+        &oldProtect);
+
+    if (NT_SUCCESS(status)) {
+        
+        RtlCopyMemory(ProcedureAddress, pbBuffer, cbBuffer);
+
+        status = NtProtectVirtualMemory(
+            NtCurrentProcess(),
+            &BaseAddress,
+            &RegionSize,
+            oldProtect,
+            &oldProtect);
+    }
+    return NT_SUCCESS(status);
+}
+
+/*
+* AicSetRemoveFunctionBreakpoint
+*
+* Purpose:
+*
+* Install or remove Int3 breakpoint at function.
+* No sync.
+*
+*/
+BOOL AicSetRemoveFunctionBreakpoint(
+    _In_ PVOID pfnTargetRoutine,
+    _Inout_ BYTE *pbRestoreBuffer,
+    _In_ ULONG cbRestoreBuffer,
+    _In_ BOOL bSet,
+    _Out_opt_ PULONG pcbBytesWritten
+    )
+{
+    BYTE bByte;
+
+    if ((pbRestoreBuffer == NULL) || (cbRestoreBuffer != sizeof(BYTE))) 
+        return FALSE;
+
+    if (bSet) {
+        *pbRestoreBuffer = *(BYTE*)pfnTargetRoutine;
+    }
+    if (pcbBytesWritten)
+        *pcbBytesWritten = sizeof(BYTE);
+
+    if (bSet)
+        bByte = 0xCC;
+    else
+        bByte = *pbRestoreBuffer;
+
+    return AipWriteVirtualMemory(pfnTargetRoutine, &bByte, sizeof(BYTE));
+}

@@ -4,9 +4,9 @@
 *
 *  TITLE:       DEROKO.H
 *
-*  VERSION:     2.89
+*  VERSION:     3.00
 *
-*  DATE:        14 Jun 2018
+*  DATE:        25 Aug 2018
 *
 *  Prototypes and definitions for deroko method.
 *
@@ -18,7 +18,17 @@
 *******************************************************************************/
 #pragma once
 
+#include "elvint.h"
+
+HRESULT ucmSPLUAObjectRegSetValue(
+    _In_ PVOID InterfaceObject,
+    _In_ SSLUA_ROOTKEY RegType,
+    _In_ LPWSTR KeyName,
+    _In_ LPWSTR ValueName,
+    _In_ DWORD dwType,
+    _In_ PVOID lpData,
+    _In_ ULONG cbData);
+
 BOOL ucmSPPLUAObjectMethod(
     _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize
-    );
+    _In_ DWORD ProxyDllSize);

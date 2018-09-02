@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMOBJ.C
 *
-*  VERSION:     1.24
+*  VERSION:     1.32
 *
-*  DATE:        20 Mar 2017
+*  DATE:        25 Aug 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -376,7 +376,7 @@ VOID CopScanAutoApprovalList(
     IUnknown *Interface = NULL;
     IUnknown *TestObject = NULL;
 
-    if (CoInitialize(NULL) != S_OK)
+    if (CoInitializeEx(NULL, COINIT_APARTMENTTHREADED) != S_OK)
         return;
 
     RtlSecureZeroMemory(&InterfaceList, sizeof(InterfaceList));

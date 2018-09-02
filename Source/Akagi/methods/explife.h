@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2017
+*  (C) COPYRIGHT AUTHORS, 2016 - 2018
 *
 *  TITLE:       EXPLIFE.H
 *
-*  VERSION:     2.70
+*  VERSION:     3.00
 *
-*  DATE:        25 Mar 2017
+*  DATE:        25 Aug 2018
 *
 *  Prototypes and definitions for ExpLife method.
 *
@@ -17,44 +17,6 @@
 *
 *******************************************************************************/
 #pragma once
-
-typedef interface IARPUninstallStringLauncher IARPUninstallStringLauncher;
-
-typedef struct IARPUninstallStringLauncherVtbl {
-
-    BEGIN_INTERFACE
-
-        HRESULT(STDMETHODCALLTYPE *QueryInterface)(
-            __RPC__in IARPUninstallStringLauncher * This,
-            __RPC__in REFIID riid,
-            _COM_Outptr_  void **ppvObject);
-
-        ULONG(STDMETHODCALLTYPE *AddRef)(
-            __RPC__in IARPUninstallStringLauncher * This);
-
-        ULONG(STDMETHODCALLTYPE *Release)(
-            __RPC__in IARPUninstallStringLauncher * This);
-
-        HRESULT(STDMETHODCALLTYPE *LaunchUninstallStringAndWait)(
-            __RPC__in IARPUninstallStringLauncher * This,
-            _In_ HKEY hKey,
-            _In_ LPCOLESTR Item,
-            _In_ BOOL bModify,
-            _In_ HWND hWnd);
-
-        HRESULT(STDMETHODCALLTYPE *RemoveBrokenItemFromInstalledProgramsList)(
-            __RPC__in IARPUninstallStringLauncher * This,
-            _In_ HKEY hKey,
-            _In_ LPCOLESTR Item);
-
-    END_INTERFACE
-
-} *PIARPUninstallStringLauncherVtbl;
-
-interface IARPUninstallStringLauncher
-{
-    CONST_VTBL struct IARPUninstallStringLauncherVtbl *lpVtbl;
-};
 
 BOOL ucmUninstallLauncherMethod(
     _In_ LPWSTR lpszExecutable);

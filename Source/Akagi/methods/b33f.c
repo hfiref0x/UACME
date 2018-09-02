@@ -4,9 +4,9 @@
 *
 *  TITLE:       B33F.C
 *
-*  VERSION:     2.88
+*  VERSION:     3.00
 *
-*  DATE:        11 May 2018
+*  DATE:        27 Aug 2018
 *
 *  UAC bypass method from Ruben Boonen aka b33f.
 *

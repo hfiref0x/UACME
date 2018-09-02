@@ -277,6 +277,7 @@
     <ClCompile Include="..\Shared\strtoul.c" />
     <ClCompile Include="..\Shared\_filename.c" />
     <ClCompile Include="..\Shared\_strcat.c" />
+    <ClCompile Include="..\Shared\_strcmpi.c" />
     <ClCompile Include="..\Shared\_strcpy.c" />
     <ClCompile Include="..\Shared\_strend.c" />
     <ClCompile Include="..\Shared\_strlen.c" />
@@ -287,6 +288,7 @@
     <ClInclude Include="..\Shared\ntos.h" />
     <ClInclude Include="..\Shared\rtltypes.h" />
     <ClInclude Include="..\Shared\_filename.h" />
+    <ClInclude Include="naka.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

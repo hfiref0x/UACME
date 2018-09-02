@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2016
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       COMPRESS.H
 *
-*  VERSION:     2.70
+*  VERSION:     3.00
 *
-*  DATE:        25 Mar 2017
+*  DATE:        25 Aug 2018
 *
 *  Prototypes and definitions for compression.
 *
@@ -20,6 +20,24 @@
 
 #include <msdelta.h>
 #include <compressapi.h>
+#include <bcrypt.h>
+
+#define UACME_CONTAINER_PACKED_UNIT 'UPCU' //Naka handling
+#define UACME_CONTAINER_PACKED_DATA 'DPCU' //Naka handling
+#define UACME_CONTAINER_PACKED_CODE 'CPCU' //Kuma handling
+#define UACME_CONTAINER_PACKED_KEYS 'KPCU' //Kuma handling
+
+//Initialization vector max bytes
+#define DCU_IV_MAX_BLOCK_LENGTH 16
+
+typedef struct _DCU_HEADER {
+    DWORD Magic;
+    DWORD cbData;
+    DWORD cbDeltaSize;
+    DWORD HeaderCrc;
+    BYTE bIV[DCU_IV_MAX_BLOCK_LENGTH];
+    //PBYTE pbData[1];     /* not a member of the structure */
+} DCU_HEADER, *PDCU_HEADER;
 
 typedef BOOL(WINAPI *pfnCreateDecompressor)(
     _In_ DWORD Algorithm,
@@ -64,28 +82,16 @@ typedef struct _DCS_BLOCK {
 } DCS_BLOCK, *PDCS_BLOCK;
 
 typedef PVOID(*pfnDecompressPayload)(
-    _In_ PVOID CompressedBuffer,
-    _In_ ULONG CompressedBufferSize,
-    _Inout_ PULONG DecompressedBufferSize);
-
-PUCHAR CompressBufferLZNT1(
-    _In_ PUCHAR SrcBuffer,
-    _In_ ULONG SrcSize,
-    _Inout_ PULONG FinalCompressedSize);
-
-PUCHAR DecompressBufferLZNT1(
-    _In_ PUCHAR CompBuffer,
-    _In_ ULONG CompSize,
-    _In_ ULONG UncompressedBufferSize,
-    _Inout_ PULONG FinalUncompressedSize);
-
-VOID CompressPayload(
-    VOID);
+    _In_ ULONG PayloadId,
+    _In_ PVOID pbBuffer,
+    _In_ ULONG cbBuffer,
+    _Out_ PULONG pcbDecompressed);
 
 PVOID DecompressPayload(
-    _In_ PVOID CompressedBuffer,
-    _In_ ULONG CompressedBufferSize,
-    _Inout_ PULONG DecompressedBufferSize);
+    _In_ ULONG PayloadId,
+    _In_ PVOID pbBuffer,
+    _In_ ULONG cbBuffer,
+    _Out_ PULONG pcbDecompressed);
 
 CFILE_TYPE GetTargetFileType(
     VOID *FileBuffer);

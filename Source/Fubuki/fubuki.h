@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUBUKI.H
 *
-*  VERSION:     2.89
+*  VERSION:     3.00
 *
-*  DATE:        14 June 2018
+*  DATE:        25 Aug 2018
 *
 *  Fubuki global include header file.
 *
@@ -23,11 +23,8 @@
 #endif
 
 //disable nonmeaningful warnings.
-#pragma warning(disable: 4005) // macro redefinition
-#pragma warning(disable: 4055) // %s : from data pointer %s to function pointer %s
-#pragma warning(disable: 4152) // nonstandard extension, function/data pointer conversion in expression
-#pragma warning(disable: 4201) // nonstandard extension used : nameless struct/union
-#pragma warning(disable: 6102) // Using %s from failed function call at line %u
+#pragma warning(push)
+#pragma warning(disable: 4005 4201)
 
 #include <windows.h>
 #include "shared\ntos.h"
@@ -38,6 +35,8 @@
 #include "shared\windefend.h"
 #include "unbcl.h"
 #include "wbemcomn.h"
+
+#pragma warning(pop)
 
 #if (_MSC_VER >= 1900) 
 #ifdef _DEBUG

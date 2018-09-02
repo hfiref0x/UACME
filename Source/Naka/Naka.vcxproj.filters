@@ -39,6 +39,9 @@
     <ClCompile Include="..\Shared\strtoul.c">
       <Filter>minirtl</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\_strcmpi.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Shared\minirtl.h">
@@ -52,6 +55,9 @@
     </ClInclude>
     <ClInclude Include="..\Shared\rtltypes.h">
       <Filter>minirtl</Filter>
+    </ClInclude>
+    <ClInclude Include="naka.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

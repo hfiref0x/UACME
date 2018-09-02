@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     2.90
+*  VERSION:     3.00
 *
-*  DATE:        16 July 2018
+*  DATE:        25 Aug 2018
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -633,7 +633,7 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
             _strcat(szTempBuffer, lpTargetApp);
 
             bResult = supRunProcess(szTempBuffer, NULL);
-            supDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSSETTINGS);
+            supRegDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSSETTINGS);
         }
 
     } while (bCond);

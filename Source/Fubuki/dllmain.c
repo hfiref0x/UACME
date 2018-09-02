@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.89
+*  VERSION:     3.00
 *
-*  DATE:        14 Jun 2018
+*  DATE:        25 Aug 2018
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *

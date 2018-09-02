@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     2.88
+*  VERSION:     3.00
 *
-*  DATE:        11 May 2018
+*  DATE:        25 Aug 2018
 *
 *  Compression support.
 *
@@ -17,12 +17,19 @@
 *
 *******************************************************************************/
 #include "global.h"
+#include "secrets.h"
 
 #pragma comment(lib, "msdelta.lib")
+#pragma comment(lib, "Bcrypt.lib")
 
 pfnCloseDecompressor pCloseDecompressor = NULL;
 pfnCreateDecompressor pCreateDecompressor = NULL;
 pfnDecompress pDecompress = NULL;
+
+typedef struct _DCK_HEADER {
+    DWORD Id;
+    BYTE Data[UACME_KEY_SIZE];
+} DCK_HEADER, *PDCK_HEADER;
 
 /*
 * EncodeBuffer
@@ -56,60 +63,358 @@ VOID EncodeBuffer(
 }
 
 /*
-* DecompressBufferLZNT1
+* SelectSecretFromBlob
 *
 * Purpose:
 *
-* Decompress buffer compressed with LZ algorithm.
+* Return key used for decryption by Id from secrets blob.
 *
-* Use NtFreeVirtualMemory to release returned buffer when it no longer needed.
+* Use supHeapFree to release allocated result.
 *
 */
-PUCHAR DecompressBufferLZNT1(
-    _In_ PUCHAR CompBuffer,
-    _In_ ULONG CompSize,
-    _In_ ULONG UncompressedBufferSize,
-    _Inout_ PULONG FinalUncompressedSize
+_Success_(return != NULL)
+PVOID SelectSecretFromBlob(
+    _In_ ULONG Id,
+    _Out_ PDWORD pcbKeyBlob
 )
 {
-    SIZE_T      Size;
-    PUCHAR      UncompBuffer = NULL;
-    NTSTATUS    status;
+    INT i, c;
+    PDCK_HEADER P;
+    PVOID pbSecret = NULL;
 
-    if (FinalUncompressedSize)
-        *FinalUncompressedSize = 0;
-
-    if (UncompressedBufferSize == 0)
+    c = sizeof(g_bSecrets);
+    P = (PDCK_HEADER)supHeapAlloc(c);
+    if (P == NULL) {
         return NULL;
-
-    Size = (SIZE_T)UncompressedBufferSize;
-    status = NtAllocateVirtualMemory(
-        NtCurrentProcess(),
-        &UncompBuffer,
-        0,
-        &Size,
-        MEM_COMMIT | MEM_RESERVE,
-        PAGE_READWRITE);
-
-    if ((!NT_SUCCESS(status)) || (UncompBuffer == NULL))
-        return NULL;
-
-    status = RtlDecompressBuffer(
-        COMPRESSION_FORMAT_LZNT1,
-        UncompBuffer,
-        UncompressedBufferSize,
-        CompBuffer,
-        CompSize,
-        FinalUncompressedSize
-    );
-
-    if (status != STATUS_SUCCESS) { //accept only success value
-        Size = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &UncompBuffer, &Size, MEM_RELEASE);
-        UncompBuffer = NULL;
     }
 
-    return UncompBuffer;
+    RtlCopyMemory(P, g_bSecrets, c);
+    EncodeBuffer(P, c);
+
+    c = sizeof(g_bSecrets) / sizeof(DCK_HEADER);
+    for (i = 0; i < c; i++) {
+        if (P[i].Id == Id) {
+            pbSecret = supHeapAlloc(UACME_KEY_SIZE);
+            if (pbSecret != NULL) {
+                RtlCopyMemory(pbSecret, P[i].Data, UACME_KEY_SIZE);
+            }
+            break;
+        }
+    }
+
+    if (pbSecret) {
+        if (pcbKeyBlob)
+            *pcbKeyBlob = UACME_KEY_SIZE;
+    }
+
+    return pbSecret;
+}
+
+/*
+* IsValidContainerHeader
+*
+* Purpose:
+*
+* Basic santity checks over container header.
+*
+*/
+BOOL IsValidContainerHeader(
+    _In_ PDCU_HEADER UnitHeader,
+    _In_ DWORD FileSize
+)
+{
+    DWORD HeaderCrc;
+
+    __try {
+        if ((UnitHeader->Magic != UACME_CONTAINER_PACKED_DATA) &&   //Naka
+            (UnitHeader->Magic != UACME_CONTAINER_PACKED_UNIT) &&   //Naka
+            (UnitHeader->Magic != UACME_CONTAINER_PACKED_CODE) &&   //Kuma
+            (UnitHeader->Magic != UACME_CONTAINER_PACKED_KEYS))     //Kuma
+        {
+            return FALSE;
+        }
+
+        //
+        // Note that IV has different meaning in Kuma containers.
+        //
+
+        HeaderCrc = UnitHeader->HeaderCrc;
+        UnitHeader->HeaderCrc = 0;
+        if (RtlComputeCrc32(0, UnitHeader, sizeof(DCU_HEADER)) != HeaderCrc)
+            return FALSE;
+
+        if ((UnitHeader->cbData == 0) ||
+            (UnitHeader->cbDeltaSize == 0))
+            return FALSE;
+        if (UnitHeader->cbData > FileSize)
+            return FALSE;
+        if (UnitHeader->cbDeltaSize > FileSize)
+            return FALSE;
+        if (UnitHeader->cbDeltaSize > UnitHeader->cbData)
+            return FALSE;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/*
+* DecryptBuffer
+*
+* Purpose:
+*
+* Decrypt AES encrypted buffer.
+*
+* Use supVirtualFree to release allocated result.
+*
+*/
+BOOL DecryptBuffer(
+    _In_    PBYTE  pbBuffer,
+    _In_    DWORD  cbBuffer,
+    _In_    PBYTE  pbIV,
+    _In_    PBYTE  pbSecret,
+    _In_    DWORD  cbSecret,
+    _Out_   PBYTE *pbDecryptedBuffer,
+    _Out_   PDWORD pcbDecryptedBuffer
+)
+{
+    BOOL                bCond = FALSE, bResult = FALSE;
+    BCRYPT_ALG_HANDLE   hAlgAes = NULL;
+    BCRYPT_KEY_HANDLE   hKey = NULL;
+    HANDLE              heapCNG = NULL;
+    DWORD               cbCipherData, cbKeyObject, cbResult, cbBlockLen;
+    PBYTE               pbKeyObject = NULL, pbCipherData = NULL;
+    SIZE_T              memIO;
+    NTSTATUS            status;
+
+    do {
+
+        heapCNG = HeapCreate(0, 0, 0);
+        if (heapCNG == NULL)
+            break;
+
+        if (!NT_SUCCESS(BCryptOpenAlgorithmProvider(
+            &hAlgAes,
+            BCRYPT_AES_ALGORITHM,
+            NULL,
+            0)))
+        {
+            break;
+        }
+
+        cbKeyObject = 0;
+        cbResult = 0;
+
+        if (!NT_SUCCESS(BCryptGetProperty(
+            hAlgAes,
+            BCRYPT_OBJECT_LENGTH,
+            (PUCHAR)&cbKeyObject,
+            sizeof(DWORD),
+            &cbResult,
+            0)))
+        {
+            break;
+        }
+
+        pbKeyObject = HeapAlloc(heapCNG, HEAP_ZERO_MEMORY, cbKeyObject);
+        if (pbKeyObject == NULL)
+            break;
+
+        cbBlockLen = 0;
+
+        if (!NT_SUCCESS(BCryptGetProperty(hAlgAes,
+            BCRYPT_BLOCK_LENGTH,
+            (PUCHAR)&cbBlockLen,
+            sizeof(DWORD),
+            &cbResult,
+            0)))
+        {
+            break;
+        }
+
+        if (cbBlockLen > DCU_IV_MAX_BLOCK_LENGTH)
+            break;
+
+        if (!NT_SUCCESS(BCryptGenerateSymmetricKey(
+            hAlgAes,
+            &hKey,
+            pbKeyObject,
+            cbKeyObject,
+            pbSecret,
+            cbSecret,
+            0)))
+        {
+            break;
+        }
+
+        cbCipherData = 0;
+        if (!NT_SUCCESS(BCryptDecrypt(
+            hKey,
+            pbBuffer,
+            cbBuffer,
+            NULL,
+            pbIV,
+            cbBlockLen,
+            NULL,
+            0,
+            &cbCipherData,
+            BCRYPT_BLOCK_PADDING)))
+        {
+            break;
+        }
+
+        memIO = (SIZE_T)cbCipherData;
+
+        pbCipherData = supVirtualAlloc(
+            &memIO,
+            DEFAULT_ALLOCATION_TYPE,
+            DEFAULT_PROTECT_TYPE,
+            &status);
+
+        if ((!NT_SUCCESS(status)) || (pbCipherData == NULL))
+            break;
+
+        cbResult = 0;
+        if (!NT_SUCCESS(BCryptDecrypt(
+            hKey,
+            pbBuffer,
+            cbBuffer,
+            NULL,
+            pbIV,
+            cbBlockLen,
+            pbCipherData,
+            cbCipherData,
+            &cbResult,
+            BCRYPT_BLOCK_PADDING)))
+        {
+            break;
+        }
+
+        BCryptDestroyKey(hKey);
+        hKey = NULL;
+
+        *pbDecryptedBuffer = pbCipherData;
+        *pcbDecryptedBuffer = cbCipherData;
+
+        bResult = TRUE;
+
+    } while (bCond);
+
+    if (hKey != NULL)
+        BCryptDestroyKey(hKey);
+
+    if (hAlgAes != NULL)
+        BCryptCloseAlgorithmProvider(hAlgAes, 0);
+
+    if (heapCNG) HeapDestroy(heapCNG);
+
+    if (bResult == FALSE) {
+        if (pbCipherData) supVirtualFree(pbCipherData, NULL);
+        *pbDecryptedBuffer = NULL;
+        *pcbDecryptedBuffer = 0;
+    }
+
+    return bResult;
+}
+
+/*
+* DecompressContainerUnit
+*
+* Purpose:
+*
+* Decompress given container.
+*
+* Use supVirtualFree to release allocated result.
+*
+*/
+PVOID DecompressContainerUnit(
+    _In_ PBYTE pbBuffer,
+    _In_ DWORD cbBuffer,
+    _In_ PBYTE pbSecret,
+    _In_ DWORD cbSecret,
+    _Out_ PDWORD pcbDecompressed
+)
+{
+    BOOL            bCond = FALSE;
+
+    PDCU_HEADER     UnitHeader;
+
+    PBYTE           pbDecryptedBuffer = NULL;
+    DWORD           cbDecryptedBuffer = 0;
+
+    DELTA_INPUT     diDelta, diSource;
+    DELTA_OUTPUT    doOutput;
+
+    PVOID           UncompressedData = NULL;
+    SIZE_T          memIO;
+
+    PBYTE           DataPtr;
+
+    NTSTATUS        status;
+
+    if (pcbDecompressed)
+        *pcbDecompressed = 0;
+
+    do {
+
+        UnitHeader = (PDCU_HEADER)pbBuffer;
+
+        if (!IsValidContainerHeader(UnitHeader, cbBuffer))
+            break;
+
+        DataPtr = (PBYTE)UnitHeader + sizeof(DCU_HEADER);
+
+        if (!DecryptBuffer(
+            (PBYTE)DataPtr,
+            (DWORD)UnitHeader->cbData,
+            (PBYTE)UnitHeader->bIV,
+            (PBYTE)pbSecret,
+            (DWORD)cbSecret,
+            (PBYTE*)&pbDecryptedBuffer,
+            (PDWORD)&cbDecryptedBuffer))
+        {
+            break;
+        }
+
+        if (cbDecryptedBuffer > cbBuffer)
+            break;
+
+        RtlSecureZeroMemory(&diSource, sizeof(DELTA_INPUT));
+        RtlSecureZeroMemory(&diDelta, sizeof(DELTA_INPUT));
+        RtlSecureZeroMemory(&doOutput, sizeof(DELTA_OUTPUT));
+
+        diDelta.Editable = FALSE;
+        diDelta.lpcStart = pbDecryptedBuffer;
+        diDelta.uSize = UnitHeader->cbDeltaSize;
+
+        if (ApplyDeltaB(DELTA_FILE_TYPE_RAW, diSource, diDelta, &doOutput)) {
+
+            memIO = doOutput.uSize;
+            UncompressedData = supVirtualAlloc(
+                &memIO,
+                DEFAULT_ALLOCATION_TYPE,
+                DEFAULT_PROTECT_TYPE,
+                &status);
+
+            if ((NT_SUCCESS(status)) && (UncompressedData != NULL)) {
+
+                RtlCopyMemory(UncompressedData, doOutput.lpStart, doOutput.uSize);
+                if (pcbDecompressed)
+                    *pcbDecompressed = (ULONG)doOutput.uSize;
+
+            }
+            DeltaFree(doOutput.lpStart);
+        }
+
+    } while (bCond);
+
+    if (pbDecryptedBuffer != NULL) {
+        supVirtualFree(pbDecryptedBuffer, NULL);
+    }
+
+    return UncompressedData;
 }
 
 /*
@@ -121,55 +426,75 @@ PUCHAR DecompressBufferLZNT1(
 *
 */
 PVOID DecompressPayload(
-    _In_ PVOID CompressedBuffer,
-    _In_ ULONG CompressedBufferSize,
-    _Inout_ PULONG DecompressedBufferSize
+    _In_ ULONG PayloadId,
+    _In_ PVOID pbBuffer,
+    _In_ ULONG cbBuffer,
+    _Out_ PULONG pcbDecompressed
 )
 {
-    BOOL        cond = FALSE, bResult;
-    ULONG       FinalDecompressedSize = 0, k, c;
+    BOOL        cond = FALSE, bResult = FALSE;
+    ULONG       FinalDecompressedSize = 0;
+    SIZE_T      memIO;
+    PUCHAR      UncompressedData = NULL;
+
+    PVOID       Data = NULL;
+
+    PBYTE       pbSecret = NULL;
+    DWORD       cbSecret = 0, DataSize;
+
     NTSTATUS    status;
-    SIZE_T      Size;
-    PUCHAR      Data = NULL, UncompressedData = NULL, Ptr;
 
     __try {
 
-        bResult = FALSE;
+        DataSize = cbBuffer;
 
         do {
 
-            Size = (SIZE_T)CompressedBufferSize;
-            status = NtAllocateVirtualMemory(
-                NtCurrentProcess(),
-                &Data,
-                0,
-                &Size,
-                MEM_COMMIT | MEM_RESERVE,
-                PAGE_READWRITE);
+            //
+            // Make a writeable buffer copy.
+            //
+
+            memIO = DataSize;
+            Data = supVirtualAlloc(
+                (PSIZE_T)&memIO,
+                DEFAULT_ALLOCATION_TYPE,
+                DEFAULT_PROTECT_TYPE,
+                &status);
 
             if ((!NT_SUCCESS(status)) || (Data == NULL))
                 break;
 
-            supCopyMemory(Data, (SIZE_T)CompressedBufferSize, CompressedBuffer, (SIZE_T)CompressedBufferSize);
+            supCopyMemory(Data, memIO, pbBuffer, DataSize);
 
-            EncodeBuffer(Data, CompressedBufferSize);
+            //
+            // Get key for decryption.
+            //
+            pbSecret = SelectSecretFromBlob(PayloadId, &cbSecret);
+            if ((pbSecret == NULL) || (cbSecret == 0))
+                break;
 
-            Ptr = Data;
-            c = *(PULONG)&Ptr[0]; //query original size
-            Ptr += sizeof(ULONG); //skip header
-            k = (ULONG)(CompressedBufferSize - sizeof(ULONG)); //new compressed size without header
+            UncompressedData = DecompressContainerUnit(
+                Data,
+                DataSize,
+                pbSecret,
+                cbSecret,
+                &FinalDecompressedSize);
 
-            UncompressedData = DecompressBufferLZNT1(Ptr, k, c, &FinalDecompressedSize);
             if (UncompressedData == NULL)
                 break;
- 
+
             //
             // Validate uncompressed data, skip for dotnet.
             //
             if (!supVerifyMappedImageMatchesChecksum(UncompressedData, FinalDecompressedSize)) {
 
                 if (!supIsCorImageFile(UncompressedData)) {
-                    supDebugPrint(TEXT("DecompressPayload"), ERROR_DATA_CHECKSUM_ERROR);
+
+#ifdef _DEBUG
+                    supDebugPrint(
+                        TEXT("DecompressPayload"),
+                        ERROR_DATA_CHECKSUM_ERROR);
+#endif
                     break;
                 }
             }
@@ -183,23 +508,22 @@ PVOID DecompressPayload(
         return NULL;
     }
 
-    if (Data != NULL) {
-        Size = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &Data, &Size, MEM_RELEASE);
+    if (pbSecret) supHeapFree(pbSecret);
+
+    if (Data) {
+        supVirtualFree(Data, NULL);
     }
 
     if (bResult == FALSE) {
         if (UncompressedData != NULL) {
-            Size = 0;
-            NtFreeVirtualMemory(NtCurrentProcess(), &UncompressedData, &Size, MEM_RELEASE);
+            supVirtualFree(UncompressedData, NULL);
             UncompressedData = NULL;
         }
         FinalDecompressedSize = 0;
     }
 
-    if (DecompressedBufferSize) {
-        *DecompressedBufferSize = FinalDecompressedSize;
-    }
+    if (pcbDecompressed)
+        *pcbDecompressed = FinalDecompressedSize;
 
     return UncompressedData;
 }
@@ -429,7 +753,7 @@ BOOL ProcessFileDCS(
         Block = (PDCS_BLOCK)FileHeader->FirstBlock;
 
         while (NumberOfBlocks > 0) {
-            
+
             if (BytesRead + Block->CompressedBlockSize > SourceFileSize)
                 break;
 

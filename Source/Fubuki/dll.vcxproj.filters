@@ -30,9 +30,6 @@
     <ClInclude Include="unbcl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shared\_filename.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Shared\util.h">
       <Filter>shared</Filter>
     </ClInclude>
@@ -47,6 +44,9 @@
     </ClInclude>
     <ClInclude Include="..\Shared\shared.h">
       <Filter>shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\_filename.h">
+      <Filter>minirtl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -93,6 +93,9 @@
     </ClCompile>
     <ClCompile Include="..\Shared\windefend.c">
       <Filter>shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\ultohex.c">
+      <Filter>minirtl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

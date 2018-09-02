@@ -4,9 +4,9 @@
 *
 *  TITLE:       WINDEFEND.C
 *
-*  VERSION:     2.90
+*  VERSION:     3.00
 *
-*  DATE:        10 July 2018
+*  DATE:        25 Aug 2018
 *
 *  MSE / Windows Defender anti-emulation part.
 *
@@ -33,24 +33,33 @@
 
 #include "shared.h"
 
-#define WD_REG_LINK L"\\Software\\KureND"
+#pragma warning(push)
+#pragma warning(disable: 4152)
 
-#define WDSTATUS_HASH               0x5ED47491
-#define MPMANAGEROPEN_HASH          0x156DB96C
-#define MPHANDLECLOSE               0x1117328A
-#define MPERRORMESSAGEFORMAT_HASH   0xCA83DF68
-#define MPMANAGERVERSIONQUERY_HASH  0x16F1FB24
+//
+// General purpose hashes start here.
+//
 
-/*
-//MpThreatOpen
-//MpThreatEnumerate
-//MpFreeMemory
-//incomplete, future use
-*/
+#define WDStatus_Hash               0x5ed47491
+#define MpManagerOpen_Hash          0x156db96c
+#define MpHandleClose_Hash          0x1117328a
+#define MpManagerVersionQuery_Hash  0x214efb07
+
+//
+// End of general purpose hashes.
+//
+
+//
+// Kuma related hashes start here.
+//
+
+//
+// End of Kuma related hashes.
+//
 
 #define WD_HASH_TABLE_ITEMS 21
 
-DWORD wdEmulatorAPIHashTable[] = {
+DWORD wdxEmulatorAPIHashTable[] = {
     0x3E3CBE69, //VFS_CopyFile
     0x00633A7F, //VFS_DeleteFile
     0x331245AB, //VFS_DeleteFileByHandle
@@ -73,6 +82,118 @@ DWORD wdEmulatorAPIHashTable[] = {
     0xFC14FE63, //VFS_Write
     0xD4908D6E  //NtControlChannel
 };
+
+MP_API g_MpApiSet;
+
+PVOID wdxGetProcedureAddressByHash(
+    _In_ PVOID MpClientBase,
+    _In_ ULONG ProcedureHash);
+
+/*
+* wdxInitApiSet
+*
+* Purpose:
+*
+* Retrieve required routine pointers from client dll.
+*
+*/
+BOOL wdxInitApiSet(
+    _In_ PVOID MpClientBase)
+{
+    g_MpApiSet.WDStatus.Hash = WDStatus_Hash;
+    g_MpApiSet.WDStatus.Routine = wdxGetProcedureAddressByHash(
+        MpClientBase,
+        g_MpApiSet.WDStatus.Hash);
+
+    if (g_MpApiSet.WDStatus.Routine == NULL) return FALSE;
+
+    g_MpApiSet.MpHandleClose.Hash = MpHandleClose_Hash;
+    g_MpApiSet.MpHandleClose.Routine = wdxGetProcedureAddressByHash(
+        MpClientBase,
+        g_MpApiSet.MpHandleClose.Hash);
+
+    if (g_MpApiSet.MpHandleClose.Routine == NULL) return FALSE;
+
+    g_MpApiSet.MpManagerOpen.Hash = MpManagerOpen_Hash;
+    g_MpApiSet.MpManagerOpen.Routine = wdxGetProcedureAddressByHash(
+        MpClientBase,
+        g_MpApiSet.MpManagerOpen.Hash);
+
+    if (g_MpApiSet.MpManagerOpen.Routine == NULL) return FALSE;
+
+    g_MpApiSet.MpManagerVersionQuery.Hash = MpManagerVersionQuery_Hash;
+    g_MpApiSet.MpManagerVersionQuery.Routine = wdxGetProcedureAddressByHash(
+        MpClientBase,
+        g_MpApiSet.MpManagerVersionQuery.Hash);
+
+    if (g_MpApiSet.MpManagerVersionQuery.Routine == NULL) return FALSE;
+
+    //
+    //  Kuma part.
+    //
+
+    return TRUE;
+}
+
+/*
+* wdGetAVSignatureVersion
+*
+* Purpose:
+*
+* Retrieve current AV signature version.
+*
+*/
+_Success_(return != FALSE)
+BOOL wdGetAVSignatureVersion(
+    _Out_ PMPCOMPONENT_VERSION SignatureVersion
+)
+{
+    BOOL bResult = FALSE;
+    MPHANDLE MpHandle;
+
+    MPVERSION_INFO VersionInfo;
+
+    pfnMpManagerOpen MpManagerOpen = (pfnMpManagerOpen)g_MpApiSet.MpManagerOpen.Routine;
+    pfnMpHandleClose MpHandleClose = (pfnMpHandleClose)g_MpApiSet.MpHandleClose.Routine;
+    pfnMpManagerVersionQuery MpManagerVersionQuery = (pfnMpManagerVersionQuery)g_MpApiSet.MpManagerVersionQuery.Routine;
+
+    if (S_OK == MpManagerOpen(0, &MpHandle)) {
+        RtlSecureZeroMemory(&VersionInfo, sizeof(VersionInfo));
+        bResult = (S_OK == MpManagerVersionQuery(MpHandle, &VersionInfo));
+        RtlCopyMemory(SignatureVersion, &VersionInfo.AVSignature, sizeof(VersionInfo.AVSignature));
+        MpHandleClose(MpHandle);
+    }
+    return bResult;
+}
+
+/*
+* wdIsEnabled
+*
+* Purpose:
+*
+* Return STATUS_TOO_MANY_SECRETS if WD is present and active.
+*
+*/
+NTSTATUS wdIsEnabled(
+    VOID)
+{
+    BOOL fEnabled = FALSE;
+    NTSTATUS status = STATUS_NOTHING_TO_TERMINATE;
+    pfnWDStatus WDStatus = (pfnWDStatus)g_MpApiSet.WDStatus.Routine;
+
+    if (WDStatus) 
+        if (SUCCEEDED(WDStatus(&fEnabled)))
+        {
+            if (fEnabled)
+                status = STATUS_TOO_MANY_SECRETS;
+            else
+                status = STATUS_NO_SECRETS;
+        }
+        else
+            status = STATUS_NO_SECRETS;
+
+    return status;
+}
 
 /*
 * wdxGetHashForString
@@ -143,37 +264,27 @@ PVOID wdxGetProcedureAddressByHash(
 }
 
 /*
-* wdLoadAndQueryState
+* wdLoadClient
 *
 * Purpose:
 *
-* Load mpengine client dll, retrieve Windows Defender state.
-* If MpClientBase specified then routine will return client image base otherwise client dll will be unloaded.
-*
-* Return values:
-*
-*   STATUS_NOTHING_TO_TERMINATE - general status, error query WD state, WD maybe be not present.
-*   STATUS_NO_SECRETS - WD present and disabled.
-*   STATUS_TOO_MANY_SECRETS - WD present and enabled.
-*   Any other status indicate error.
+* Load mpengine client dll for further work (e.g. Kuma).
 *
 * Limitations:
 *
 *   Warning: This routine will produce incorrect results under MS AV emulator.
 *
 */
-NTSTATUS wdLoadAndQueryState(
+_Success_(return != NULL)
+PVOID wdLoadClient(
     _In_ BOOL IsWow64,
-    _Out_opt_ PVOID *MpClientBase
+    _Out_opt_ PNTSTATUS Status
 )
 {
-    BOOL        bFound = FALSE, bEnabled = FALSE;
+    BOOL        bFound = FALSE;
     HANDLE      hHeap = NtCurrentPeb()->ProcessHeap;
     PVOID       ImageBase = NULL;
-    NTSTATUS    status = STATUS_NOTHING_TO_TERMINATE;
-    HRESULT     hResult;
-
-    pfnWDStatus WDStatus = NULL;
+    NTSTATUS    status = STATUS_UNSUCCESSFUL;
 
     PWCHAR EnvironmentBlock = NtCurrentPeb()->ProcessParameters->Environment;
     PWCHAR ptr, lpProgramFiles, lpBuffer;
@@ -196,7 +307,6 @@ NTSTATUS wdLoadAndQueryState(
         if (*ptr == 0)
             break;
 
-        RtlSecureZeroMemory(&usTemp, sizeof(usTemp));
         RtlInitUnicodeString(&usTemp, ptr);
         if (RtlPrefixUnicodeString(us, &usTemp, TRUE)) {
             bFound = TRUE;
@@ -207,52 +317,41 @@ NTSTATUS wdLoadAndQueryState(
 
     } while (1);
 
-    if (!bFound) {
-        
-        if (MpClientBase)
-            *MpClientBase = NULL;
+    if (bFound) {
 
-        return status;
-    }
+        lpProgramFiles = (ptr + us->Length / sizeof(WCHAR));
 
-    lpProgramFiles = (ptr + us->Length / sizeof(WCHAR));
+        memIO = (MAX_PATH + _strlen(lpProgramFiles)) * sizeof(WCHAR);
+        lpBuffer = RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
+        if (lpBuffer) {
+            _strcpy(lpBuffer, lpProgramFiles);
+            _strcat(lpBuffer, TEXT("\\Windows Defender\\MpClient.dll"));
 
-    memIO = (MAX_PATH + _strlen(lpProgramFiles)) * sizeof(WCHAR);
-    lpBuffer = RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
-    if (lpBuffer) {
-        _strcpy(lpBuffer, lpProgramFiles);
-        _strcat(lpBuffer, TEXT("\\Windows Defender\\MpClient.dll"));
+            RtlInitUnicodeString(&usTemp, lpBuffer);
 
-        RtlInitUnicodeString(&usTemp, lpBuffer);
+            status = LdrLoadDll(NULL, NULL, &usTemp, &ImageBase);
 
-        status = LdrLoadDll(NULL, NULL, &usTemp, &ImageBase);
-        if (NT_SUCCESS(status)) {           
-
-            WDStatus = wdxGetProcedureAddressByHash(ImageBase, WDSTATUS_HASH);
-            if (WDStatus) {
-                hResult = WDStatus(&bEnabled);
-                if (SUCCEEDED(hResult))
-                    if (bEnabled)
-                        status = STATUS_TOO_MANY_SECRETS;
-                    else
-                        status = STATUS_NO_SECRETS;
+            if (NT_SUCCESS(status)) {
+                if (!wdxInitApiSet(ImageBase)) {
+                    status = STATUS_PROCEDURE_NOT_FOUND;
+                    LdrUnloadDll(ImageBase);
+                    ImageBase = NULL;
+                }
             }
 
-            //
-            // Return client dll imagebase of requested, otherwise unload dll.
-            //
-            if (MpClientBase)
-                *MpClientBase = ImageBase;
-            else
-                LdrUnloadDll(ImageBase);
-
+            RtlFreeHeap(hHeap, 0, lpBuffer);
         }
-        RtlFreeHeap(hHeap, 0, lpBuffer);
+        else {
+            status = STATUS_NO_MEMORY;
+        }
     }
     else
-        status = STATUS_MEMORY_NOT_ALLOCATED;
+        status = STATUS_VARIABLE_NOT_FOUND;
 
-    return status;
+    if (Status) 
+        *Status = status;
+
+    return ImageBase;
 }
 
 /*
@@ -320,7 +419,7 @@ NTSTATUS wdIsEmulatorPresent(
     for (i = 0; i < Exports->NumberOfNames; i++) {
         Hash = wdxGetHashForString((char *)((PBYTE)DosHeader + Names[i]));
         for (c = 0; c < WD_HASH_TABLE_ITEMS; c++) {
-            if (Hash == wdEmulatorAPIHashTable[c])
+            if (Hash == wdxEmulatorAPIHashTable[c])
                 return STATUS_NEEDS_REMEDIATION;
         }
     }
@@ -329,211 +428,23 @@ NTSTATUS wdIsEmulatorPresent(
 }
 
 /*
-* wdRegSetValueIndirectHKCU
+* wdSelfTraverse
 *
 * Purpose:
 *
-* Indirectly set registry Value for TargetKey in the current user hive.
+* Determine if we can use Kuma to send a torpedo to the WD.
 *
 */
-NTSTATUS wdRegSetValueIndirectHKCU(
-    _In_ LPWSTR TargetKey,
-    _In_opt_ LPWSTR ValueName,
-    _In_ LPWSTR lpData,
-    _In_ ULONG cbData
-)
-{
-    BOOL bCond = FALSE;
-    HANDLE hKey = NULL;
-    NTSTATUS status = STATUS_UNSUCCESSFUL;
-    UNICODE_STRING usCurrentUser, usLinkPath;
-    OBJECT_ATTRIBUTES obja;
-    UNICODE_STRING CmSymbolicLinkValue = RTL_CONSTANT_STRING(L"SymbolicLinkValue");
-
-    HANDLE hHeap = NtCurrentPeb()->ProcessHeap;
-
-    SIZE_T memIO;
-
-    PWSTR lpLinkKeyBuffer = NULL, lpBuffer = NULL;
-    ULONG cbKureND = sizeof(WD_REG_LINK) - sizeof(WCHAR);
-    ULONG dummy;
-
-    status = RtlFormatCurrentUserKeyPath(&usCurrentUser);
-    if (!NT_SUCCESS(status))
-        return status;
-
-    do {
-
-        memIO = sizeof(UNICODE_NULL) + usCurrentUser.MaximumLength + cbKureND;
-        lpLinkKeyBuffer = RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
-        if (lpLinkKeyBuffer == NULL)
-            break;
-
-        usLinkPath.Buffer = lpLinkKeyBuffer;
-        usLinkPath.Length = 0;
-        usLinkPath.MaximumLength = (USHORT)memIO;
-
-        status = RtlAppendUnicodeStringToString(&usLinkPath, &usCurrentUser);
-        if (!NT_SUCCESS(status))
-            break;
-
-        status = RtlAppendUnicodeToString(&usLinkPath, WD_REG_LINK);
-        if (!NT_SUCCESS(status))
-            break;
-
-        InitializeObjectAttributes(&obja, &usLinkPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
-
-        //
-        // Create link key.
-        //
-        status = NtCreateKey(&hKey, KEY_ALL_ACCESS,
-            &obja, 0, NULL,
-            REG_OPTION_CREATE_LINK | REG_OPTION_VOLATILE,
-            &dummy);
-
-        //
-        // If link already created, update it.
-        //
-        if (status == STATUS_OBJECT_NAME_COLLISION) {
-
-            obja.Attributes |= OBJ_OPENLINK;
-
-            status = NtOpenKey(&hKey,
-                KEY_ALL_ACCESS,
-                &obja);
-
-        }
-
-        if (!NT_SUCCESS(status))
-            break;
-
-        memIO = sizeof(UNICODE_NULL) + usCurrentUser.MaximumLength + ((1 + _strlen(TargetKey)) * sizeof(WCHAR));
-        lpBuffer = RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
-        if (lpBuffer == NULL)
-            break;
-
-        _strcpy(lpBuffer, usCurrentUser.Buffer);
-        _strcat(lpBuffer, L"\\");
-        _strcat(lpBuffer, TargetKey);
-
-        memIO = _strlen(lpBuffer) * sizeof(WCHAR); //no null termination
-        status = NtSetValueKey(hKey, &CmSymbolicLinkValue, 0, REG_LINK, (PVOID)lpBuffer, (ULONG)memIO);
-        NtClose(hKey);
-        hKey = NULL;
-
-        if (!NT_SUCCESS(status))
-            break;
-
-        //
-        // Set value indirect.
-        //
-        obja.Attributes = OBJ_CASE_INSENSITIVE;
-        status = NtOpenKey(&hKey, KEY_ALL_ACCESS, &obja);
-        if (NT_SUCCESS(status)) {
-
-            //
-            // If this is Default value - supply empty US.
-            //
-            if (ValueName == NULL) {
-                RtlSecureZeroMemory(&usLinkPath, sizeof(usLinkPath));
-            }
-            else {
-                RtlInitUnicodeString(&usLinkPath, ValueName);
-            }
-            status = NtSetValueKey(hKey, &usLinkPath, 0, REG_SZ, (PVOID)lpData, (ULONG)cbData);
-            NtClose(hKey);
-            hKey = NULL;
-        }
-
-    } while (bCond);
-
-    if (lpLinkKeyBuffer) RtlFreeHeap(hHeap, 0, lpLinkKeyBuffer);
-    if (lpBuffer) RtlFreeHeap(hHeap, 0, lpBuffer);
-    if (hKey) NtClose(hKey);
-    RtlFreeUnicodeString(&usCurrentUser);
-
-    return status;
-}
-
-/*
-* wdRemoveRegLinkHKCU
-*
-* Purpose:
-*
-* Remove registry symlink for current user.
-*
-*/
-NTSTATUS wdRemoveRegLinkHKCU(
-    VOID
-)
-{
-    BOOL bCond = FALSE;
-    NTSTATUS status = STATUS_UNSUCCESSFUL;
-
-    ULONG cbKureND = sizeof(WD_REG_LINK) - sizeof(WCHAR);
-
-    UNICODE_STRING usCurrentUser, usLinkPath;
-    OBJECT_ATTRIBUTES obja;
-    UNICODE_STRING CmSymbolicLinkValue = RTL_CONSTANT_STRING(L"SymbolicLinkValue");
-
-    HANDLE hHeap = NtCurrentPeb()->ProcessHeap;
-
-    PWSTR lpLinkKeyBuffer = NULL;
-    SIZE_T memIO;
-
-    HANDLE hKey = NULL;
-
-    InitializeObjectAttributes(&obja, &usLinkPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
-
-    status = RtlFormatCurrentUserKeyPath(&usCurrentUser);
-    if (!NT_SUCCESS(status))
-        return status;
-
-    do {
-
-        memIO = sizeof(UNICODE_NULL) + usCurrentUser.MaximumLength + cbKureND;
-        lpLinkKeyBuffer = RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
-        if (lpLinkKeyBuffer == NULL)
-            break;
-
-        usLinkPath.Buffer = lpLinkKeyBuffer;
-        usLinkPath.Length = 0;
-        usLinkPath.MaximumLength = (USHORT)memIO;
-
-        status = RtlAppendUnicodeStringToString(&usLinkPath, &usCurrentUser);
-        if (!NT_SUCCESS(status))
-            break;
-
-        status = RtlAppendUnicodeToString(&usLinkPath, WD_REG_LINK);
-        if (!NT_SUCCESS(status))
-            break;
-
-        InitializeObjectAttributes(&obja, &usLinkPath, OBJ_CASE_INSENSITIVE | OBJ_OPENLINK, NULL, NULL);
-
-        status = NtOpenKey(&hKey,
-            KEY_ALL_ACCESS,
-            &obja);
-
-        if (NT_SUCCESS(status)) {
-
-            status = NtDeleteValueKey(hKey, &CmSymbolicLinkValue);
-            if (NT_SUCCESS(status))
-                status = NtDeleteKey(hKey);
-
-            NtClose(hKey);
-        }
-
-    } while (bCond);
-
-    if (lpLinkKeyBuffer) RtlFreeHeap(hHeap, 0, lpLinkKeyBuffer);
-    RtlFreeUnicodeString(&usCurrentUser);
-
-    return status;
-}
-
 NTSTATUS wdSelfTraverse(
     _In_ PVOID MpClientBase)
 {
     UNREFERENCED_PARAMETER(MpClientBase);
+
+    //  
+    // Note: wdxInitApiSet must reflect difference between versions otherwise Kuma will fail.
+    //
+
     return STATUS_NOT_IMPLEMENTED;
 }
+
+#pragma warning(pop)

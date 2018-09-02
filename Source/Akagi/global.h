@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     2.90
+*  VERSION:     3.00
 *
-*  DATE:        10 July 2018
+*  DATE:        31 Aug 2018
 *
 *  Common header file for the program support routines.
 *
@@ -41,6 +41,7 @@
 #pragma warning(disable: 6320) // exception-filter expression is the constant EXCEPTION_EXECUTE_HANDLER
 
 #define PAYLOAD_ID_NONE MAXDWORD
+#define KONGOU_IDR 0xFFFFFFFE
 
 #ifdef _WIN64
 #include "bin64res.h"
@@ -50,20 +51,25 @@
 #define AKATSUKI_ID IDR_AKATSUKI64
 #define KAMIKAZE_ID IDR_KAMIKAZE
 #define FUJINAMI_ID IDR_FUJINAMI
+#define CHIYODA_ID IDR_CHIYODA
+#define KONGOU_ID KONGOU_IDR
 #else
 #include "bin32res.h"
 #define FUBUKI_ID IDR_FUBUKI32
 #define HIBIKI_ID IDR_HIBIKI32
 #define IKAZUCHI_ID IDR_IKAZUCHI32
 #define AKATSUKI_ID PAYLOAD_ID_NONE //this module unavailable for 32 bit
-#define KAMIKAZE_ID IDR_KAMIKAZE
+#define KAMIKAZE_ID PAYLOAD_ID_NONE //this module unavailable for 32 bit
 #define FUJINAMI_ID IDR_FUJINAMI //this module is dotnet x86 for any supported platform
+#define CHIYODA_ID PAYLOAD_ID_NONE //this module unavailable for 32 bit
+#define KONGOU_ID KONGOU_IDR
 #endif
 
 #include <Windows.h>
 #include <ntstatus.h>
 #include <CommCtrl.h>
 #include <shlobj.h>
+#include <AccCtrl.h>
 #include "shared\ntos.h"
 #include "shared\minirtl.h"
 #include "shared\cmdline.h"
@@ -72,10 +78,9 @@
 #include "shared\lsa.h"
 #include "shared\windefend.h"
 #include "consts.h"
-#include "compress.h"
 #include "sup.h"
+#include "compress.h"
 #include "aic.h"
-#include "minhook\MinHook.h"
 #include "methods\methods.h"
 
 //
@@ -92,11 +97,14 @@
 
 typedef struct _UACME_CONTEXT {
     BOOL                    IsWow64;
+    ULONG                   Cookie;
     PVOID                   ucmHeap;
-    pfnDecompressPayload    DecryptRoutine;
+    pfnDecompressPayload    DecompressRoutine;
+    HINSTANCE               hNtdll;
     HINSTANCE               hKernel32;
     HINSTANCE               hOle32;
     HINSTANCE               hShell32;
+    HINSTANCE               hMpClient;
     UCM_METHOD_EXECUTE_TYPE MethodExecuteType;
     ULONG                   dwBuildNumber;
     ULONG                   AkagiFlag;

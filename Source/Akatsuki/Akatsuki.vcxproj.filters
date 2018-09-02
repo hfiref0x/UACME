@@ -63,6 +63,9 @@
     <ClCompile Include="..\Shared\windefend.c">
       <Filter>shared</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\ultohex.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Shared\rtltypes.h">

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     2.85
+*  VERSION:     3.00
 *
-*  DATE:        01 Dec 2017
+*  DATE:        25 Aug 2018
 *
 *  Leo Davidson based IFileOperation auto-elevation.
 *
@@ -25,8 +25,7 @@
 *
 * Bypass UAC by abusing appinfo g_lpAutoApproveEXEList
 *
-* UAC contain whitelist of trusted fusion processes with only names and no other special restrictions
-* Most of them unknown shit and list does not properly handled by system itself, use this fact.
+* UAC contain whitelist of trusted fusion processes with only names and no other special restrictions.
 *
 */
 BOOL ucmStandardAutoElevation2(

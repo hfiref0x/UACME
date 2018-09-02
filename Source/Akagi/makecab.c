@@ -171,7 +171,7 @@ long DIAMONDAPI fnFCISEEK(
     return ndist.LowPart;
     */
 
-    iResult = SetFilePointer((HANDLE)hf, dist, NULL, seektype);
+    iResult = SetFilePointer((HANDLE)hf, dist, NULL, seektype); //-V303
     if (iResult == -1) {
         if (err) {
             *err = GetLastError();

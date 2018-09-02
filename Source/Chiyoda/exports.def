@@ -1,0 +1,30 @@
+EXPORTS
+
+DllInstall                           = DummyFunc PRIVATE
+DllRegisterServer                    = DummyFunc PRIVATE
+DllUnregisterServer                  = DummyFunc PRIVATE
+fnW32TmI_ScSetServiceBits            = DummyFunc
+fnW32TmRegisterServiceCtrlHandlerEx  = DummyFunc
+fnW32TmSetServiceStatus              = DummyFunc
+SvchostEntry_W32Time                 = ServiceMain
+SvchostPushServiceGlobals            = DummyFunc 
+TimeProvClose                        = DummyFunc
+TimeProvCommand                      = DummyFunc
+TimeProvOpen                         = DummyFunc
+W32TimeBufferFree                    = DummyFunc
+W32TimeDcPromo                       = DummyFunc
+W32TimeDeleteConfig                  = DummyFunc
+W32TimeGetNetlogonServiceBits        = DummyFunc
+W32TimeLog                           = DummyFunc
+W32TimeQueryConfig                   = DummyFunc
+W32TimeQueryConfiguration            = DummyFunc
+W32TimeQueryHardwareProviderStatus   = DummyFunc
+W32TimeQueryNtpProviderConfiguration = DummyFunc
+W32TimeQueryNTPProviderStatus        = DummyFunc
+W32TimeQuerySource                   = DummyFunc
+W32TimeQueryStatus                   = DummyFunc
+W32TimeSetConfig                     = DummyFunc
+W32TimeSyncNow                       = DummyFunc 
+W32TimeVerifyJoinConfig              = DummyFunc
+W32TimeVerifyUnjoinConfig            = DummyFunc 
+W32TmServiceMain                     = DummyFunc

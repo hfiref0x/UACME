@@ -4,9 +4,9 @@
 *
 *  TITLE:       WUSA.C
 *
-*  VERSION:     2.87
+*  VERSION:     3.00
 *
-*  DATE:        03 May 2018
+*  DATE:        31 Aug 2018
 *
 *  Windows Update Standalone Installer (WUSA) based routines.
 *
@@ -244,7 +244,6 @@ DWORD ucmxDirectoryWatchdogThread(
         //
         // Open directory for change notification.
         //
-        usWatchDirectory.Buffer = NULL;
         RtlInitUnicodeString(&usWatchDirectory, szBuffer);
         InitializeObjectAttributes(&ObjectAttributes, &usWatchDirectory, OBJ_CASE_INSENSITIVE, 0, NULL);
 
@@ -304,7 +303,6 @@ DWORD ucmxDirectoryWatchdogThread(
                         //
                         // Open new directory to set reparse point.
                         //
-                        usReparseDirectory.Buffer = NULL;
                         RtlInitUnicodeString(&usReparseDirectory, CapturedDirectoryName);
                         InitializeObjectAttributes(&ObjectAttributes, &usReparseDirectory, OBJ_CASE_INSENSITIVE, NULL, NULL);
                         status = NtCreateFile(&hReparseDirectory, 

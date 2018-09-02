@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     2.90
+*  VERSION:     3.00
 *
-*  DATE:        10 July 2018
+*  DATE:        25 Aug 2018
 *
 *  Proxy dll entry point, Akatsuki.
 *  Special dll for wow64 logger method.
@@ -24,11 +24,8 @@
 #endif
 
 //disable nonmeaningful warnings.
-#pragma warning(disable: 4005) // macro redefinition
-#pragma warning(disable: 4055) // %s : from data pointer %s to function pointer %s
-#pragma warning(disable: 4152) // nonstandard extension, function/data pointer conversion in expression
-#pragma warning(disable: 4201) // nonstandard extension used : nameless struct/union
-#pragma warning(disable: 6102) // Using %s from failed function call at line %u
+#pragma warning(push)
+#pragma warning(disable: 4005 4201)
 
 #include <windows.h>
 #include "shared\ntos.h"
@@ -36,6 +33,8 @@
 #include "shared\minirtl.h"
 #include "shared\util.h"
 #include "shared\windefend.h"
+
+#pragma warning(pop)
 
 #if (_MSC_VER >= 1900) 
 #ifdef _DEBUG

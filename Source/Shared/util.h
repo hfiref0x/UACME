@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017
+*  (C) COPYRIGHT AUTHORS, 2017 - 2018
 *
 *  TITLE:       UTIL.H
 *
-*  VERSION:     2.80
+*  VERSION:     3.00
 *
-*  DATE:        07 Sept 2017
+*  DATE:        27 Aug 2018
 *
 *  Global support routines header file shared between payload dlls.
 *
@@ -34,6 +34,15 @@ typedef BOOL(WINAPI* PFNCREATEPROCESSW)(
     LPSTARTUPINFOW lpStartupInfo,
     LPPROCESS_INFORMATION lpProcessInformation);
 
+typedef struct tagUCM_PROCESS_MITIGATION_POLICIES {
+    PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY ExtensionPointDisablePolicy;
+    PROCESS_MITIGATION_DYNAMIC_CODE_POLICY_W10 DynamicCodePolicy;
+    PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY_W10 SignaturePolicy;
+    PROCESS_MITIGATION_IMAGE_LOAD_POLICY_W10 ImageLoadPolicy;
+    PROCESS_MITIGATION_SYSTEM_CALL_FILTER_POLICY_W10 SystemCallFilterPolicy;
+    PROCESS_MITIGATION_PAYLOAD_RESTRICTION_POLICY_W10 PayloadRestrictionPolicy;
+} UCM_PROCESS_MITIGATION_POLICIES, *PUCM_PROCESS_MITIGATION_POLICIES;
+
 typedef struct _OBJSCANPARAM {
     PWSTR Buffer;
     SIZE_T BufferSize;
@@ -41,9 +50,12 @@ typedef struct _OBJSCANPARAM {
 
 typedef struct _SXS_SEARCH_CONTEXT {
     LPWSTR DllName;
-    LPWSTR PartialPath;
+    LPWSTR SxsKey;
     LPWSTR FullDllPath;
 } SXS_SEARCH_CONTEXT, *PSXS_SEARCH_CONTEXT;
+
+VOID ucmPingBack(
+    VOID);
 
 BOOLEAN ucmPrivilegeEnabled(
     _In_ HANDLE hToken,
@@ -126,7 +138,19 @@ wchar_t *sxsFilePathNoSlash(
     _In_ const wchar_t *fname,
     _In_ wchar_t *fpath);
 
-VOID NTAPI sxsFindDllCallback(
-    _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
-    _In_ PVOID Context,
-    _In_ OUT BOOLEAN *StopEnumeration);
+BOOL sxsFindLoaderEntry(
+    _In_ PSXS_SEARCH_CONTEXT Context);
+
+UCM_PROCESS_MITIGATION_POLICIES *ucmGetRemoteCodeExecPolicies(
+    _In_ HANDLE hProcess);
+
+BOOL ucmGetProcessMitigationPolicy(
+    _In_ HANDLE hProcess,
+    _In_ PROCESS_MITIGATION_POLICY Policy,
+    _In_ SIZE_T Size,
+    _Out_writes_bytes_(Size) PVOID Buffer);
+
+_Success_(return == TRUE)
+BOOL ucmQueryProcessTokenIL(
+    _In_ HANDLE hProcess,
+    _Out_ PULONG IntegrityLevel);
