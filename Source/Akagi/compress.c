@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.00
 *
-*  DATE:        25 Aug 2018
+*  DATE:        02 Sep 2018
 *
 *  Compression support.
 *
@@ -97,15 +97,15 @@ PVOID SelectSecretFromBlob(
             pbSecret = supHeapAlloc(UACME_KEY_SIZE);
             if (pbSecret != NULL) {
                 RtlCopyMemory(pbSecret, P[i].Data, UACME_KEY_SIZE);
+                if (pcbKeyBlob)
+                    *pcbKeyBlob = UACME_KEY_SIZE;
             }
             break;
         }
     }
 
-    if (pbSecret) {
-        if (pcbKeyBlob)
-            *pcbKeyBlob = UACME_KEY_SIZE;
-    }
+    RtlSecureZeroMemory(P, sizeof(g_bSecrets));
+    supHeapFree(P);
 
     return pbSecret;
 }
