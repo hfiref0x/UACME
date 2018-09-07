@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.00
 *
-*  DATE:        25 Aug 2018
+*  DATE:        03 Sep 2018
 *
 *  Naka, support payload compressor.
 *
@@ -584,7 +584,7 @@ PVOID supReadBufferFromFile(
     HANDLE hFile = INVALID_HANDLE_VALUE;
     LARGE_INTEGER fileSize;
 
-    do {   
+    do {
 
         hFile = CreateFile(
             lpFileName,
@@ -744,7 +744,7 @@ void DecompressContainerUnit(
             break;
 
         UnitHeader = (PDCU_HEADER)FileData;
-       
+
         if (!IsValidContainerHeader(UnitHeader, FileSize.LowPart))
             break;
 
@@ -1040,51 +1040,39 @@ VOID EncodeBuffer(
 //
 // Keep in sync with Akagi
 //
-
 #define IDR_FUBUKI64 100
 #define IDR_HIBIKI64 101
 #define IDR_IKAZUCHI64 102
 #define IDR_AKATSUKI64 103
 #define IDR_KAMIKAZE64 104
 #define IDR_FUJINAMI64 105
-#define IDR_CHIYODA64 106
+#define IDR_CHIYODA64 106  
 #define IDR_KONGOU64 0xFFFFFFFE
 
 #define IDR_FUBUKI32 200
 #define IDR_HIBIKI32 201
 #define IDR_IKAZUCHI32 202
-#define IDR_KAMIKAZE32 203
 #define IDR_FUJINAMI32 204
 #define IDR_KONGOU32 0xFFFFFFFE
 
 BOOL ProcessUnit(
-    PWSTR UnitKeyName,
-    ULONG UnitID,
-    PDCK_HEADER UnitHeader)
+    _In_ PWSTR UnitKeyName,
+    _In_ ULONG UnitID,
+    _In_ PDCK_HEADER UnitHeader)
 {
-    WCHAR szDir[MAX_PATH + 1];
-    WCHAR szName[MAX_PATH * 2];
-
     PWCHAR pBuffer;
     LARGE_INTEGER fs;
 
-    RtlSecureZeroMemory(szDir, sizeof(szDir));
-
-#ifdef _DEBUG
-    _strcpy(szDir, L"Z:\\HE\\UACME\\Compress");
-#else
-    GetCurrentDirectory(MAX_PATH, szDir);
-#endif
-
-    _strcat(szDir, L"\\");
-
-    _strcpy(szName, szDir);
-    _strcat(szName, UnitKeyName);
-
-    pBuffer = supReadBufferFromFile(szName, &fs);
+    pBuffer = supReadBufferFromFile(UnitKeyName, &fs);
     if (pBuffer) {
         if (fs.LowPart != UACME_KEY_SIZE) {
-            MessageBox(GetDesktopWindow(), L"Unexpected key size.", NULL, MB_ICONERROR);
+
+            MessageBox(
+                GetDesktopWindow(),
+                L"Unexpected key size.",
+                NULL,
+                MB_ICONERROR);
+
             return FALSE;
         }
 
@@ -1093,7 +1081,14 @@ BOOL ProcessUnit(
         HeapFree(GetProcessHeap(), 0, pBuffer);
     }
     else {
-        MessageBox(GetDesktopWindow(), L"File read error, memory not allocated.", NULL, MB_ICONERROR);
+
+        MessageBox(
+            GetDesktopWindow(),
+            L"File read error, memory not allocated.",
+            NULL,
+            MB_ICONERROR);
+
+        return FALSE;
     }
     return TRUE;
 }
@@ -1101,51 +1096,108 @@ BOOL ProcessUnit(
 VOID CreateSecretTables(VOID)
 {
     INT c = 0;
+    SIZE_T l = 0;
     DCK_HEADER S[UACME_MAX_UNITS];
+
+    WCHAR szFileName[MAX_PATH * 2];
+
+    RtlSecureZeroMemory(szFileName, sizeof(szFileName));
+
+#ifdef _DEBUG
+    _strcpy(szFileName, L"Z:\\HE\\UACME\\Compress");
+#else
+    GetCurrentDirectory(MAX_PATH, szFileName);
+#endif
+
+    _strcat(szFileName, L"\\");
+
+    l = _strlen(szFileName);
+    szFileName[l] = 0;
 
     //
     // Build secrets64
     //
     c = 0;
     RtlSecureZeroMemory(S, sizeof(S));
-    if (ProcessUnit(L"Akatsuki64.key", IDR_AKATSUKI64, &S[c]))
+
+    _strcat(&szFileName[l], L"Akatsuki64.key");
+    if (ProcessUnit(szFileName, IDR_AKATSUKI64, &S[c]))
         c++;
-    if (ProcessUnit(L"Fubuki64.key", IDR_FUBUKI64, &S[c]))
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Fubuki64.key");
+    if (ProcessUnit(szFileName, IDR_FUBUKI64, &S[c]))
         c++;
-    if (ProcessUnit(L"Hibiki64.key", IDR_HIBIKI64, &S[c]))
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Hibiki64.key");
+    if (ProcessUnit(szFileName, IDR_HIBIKI64, &S[c]))
         c++;
-    if (ProcessUnit(L"Ikazuchi64.key", IDR_IKAZUCHI64, &S[c]))
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Ikazuchi64.key");
+    if (ProcessUnit(szFileName, IDR_IKAZUCHI64, &S[c]))
         c++;
-    if (ProcessUnit(L"Kamikaze.key", IDR_KAMIKAZE64, &S[c]))
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Kamikaze.key");
+    if (ProcessUnit(szFileName, IDR_KAMIKAZE64, &S[c]))
         c++;
-    if (ProcessUnit(L"Fujinami.key", IDR_FUJINAMI64, &S[c]))
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Fujinami.key");
+    if (ProcessUnit(szFileName, IDR_FUJINAMI64, &S[c]))
         c++;
-    if (ProcessUnit(L"Chiyoda64.key", IDR_CHIYODA64, &S[c]))
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Chiyoda64.key");
+    if (ProcessUnit(szFileName, IDR_CHIYODA64, &S[c]))
         c++;
-    if (ProcessUnit(L"Kongou64.key", IDR_KONGOU64, &S[c]))
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Kongou64.key");
+    if (ProcessUnit(szFileName, IDR_KONGOU64, &S[c]))
         c++;
 
     EncodeBuffer(S, c * sizeof(DCK_HEADER));
-    supWriteBufferToFile(L"secrets64.bin", S, c * sizeof(DCK_HEADER));
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"secrets64.bin");
+    supWriteBufferToFile(szFileName, S, c * sizeof(DCK_HEADER));
 
     //
     // Build secrets32
     //
     c = 0;
     RtlSecureZeroMemory(S, sizeof(S));
-    if (ProcessUnit(L"Fubuki32.key", IDR_FUBUKI32, &S[c]))
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Fubuki32.key");
+    if (ProcessUnit(szFileName, IDR_FUBUKI32, &S[c]))
         c++;
-    if (ProcessUnit(L"Hibiki32.key", IDR_HIBIKI32, &S[c]))
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Hibiki32.key");
+    if (ProcessUnit(szFileName, IDR_HIBIKI32, &S[c]))
         c++;
-    if (ProcessUnit(L"Ikazuchi32.key", IDR_IKAZUCHI32, &S[c]))
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Ikazuchi32.key");
+    if (ProcessUnit(szFileName, IDR_IKAZUCHI32, &S[c]))
         c++;
-    if (ProcessUnit(L"Fujinami.key", IDR_FUJINAMI32, &S[c]))
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Fujinami.key");
+    if (ProcessUnit(szFileName, IDR_FUJINAMI32, &S[c]))
         c++;
-    if (ProcessUnit(L"Kongou32.key", IDR_KONGOU32, &S[c]))
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Kongou32.key");
+    if (ProcessUnit(szFileName, IDR_KONGOU32, &S[c]))
         c++;
 
     EncodeBuffer(S, c * sizeof(DCK_HEADER));
-    supWriteBufferToFile(L"secrets32.bin", S, c * sizeof(DCK_HEADER));
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"secrets32.bin");
+    supWriteBufferToFile(szFileName, S, c * sizeof(DCK_HEADER));
 }
 
 /*
@@ -1164,6 +1216,7 @@ void main()
 
     szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
     if (szArglist) {
+
         if (nArgs > 1) {
             FirstParam = szArglist[1];
             if (FirstParam) {
@@ -1176,7 +1229,11 @@ void main()
             }
         }
         else {
-            MessageBox(GetDesktopWindow(), TEXT("Input file not specified"), TEXT("Naka"), MB_ICONINFORMATION);
+            MessageBox(
+                GetDesktopWindow(), 
+                TEXT("Input file not specified"), 
+                TEXT("Naka"), 
+                MB_ICONINFORMATION);
         }
 
         LocalFree(szArglist);
