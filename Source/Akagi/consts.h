@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.01
 *
-*  DATE:        26 Aug 2018
+*  DATE:        30 Sep 2018
 *
 *  Global consts definition file.
 *

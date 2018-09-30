@@ -393,8 +393,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Component(s): Attacker defined
      * Implementation: ucmFwCplLuaMethod
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 RS4 (17134)
+        * How: Shell API update
 43. Author: Oddvar Moe derivative
      * Type: Elevated COM interface
      * Method: IColorDataProxy, ICMLuaUtil
@@ -447,8 +447,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Component(s): Attacker defined
      * Implementation: ucmSPPLUAObjectMethod
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 RS5 (17763)
+        * How: ISPPLUAObject interface method changed 
 49. Author: RinN
      * Type: Elevated COM interface
      * Method: ICreateNewLink
@@ -465,8 +465,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Component(s): w32time.dll
      * Implementation: ucmDateTimeStateWriterMethod
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 RS5 (17763)
+        * How: Side effect of ISPPLUAObject interface change
 51. Author: bytecode77 derivative
      * Type: Elevated COM interface
      * Method: IAccessibilityCplAdmin

