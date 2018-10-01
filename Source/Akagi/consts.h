@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.01
+*  VERSION:     3.02
 *
-*  DATE:        30 Sep 2018
+*  DATE:        01 Oct 2018
 *
 *  Global consts definition file.
 *
@@ -195,7 +195,7 @@
 
 #define RUNDLL_EXE_CMD              L"rundll32.exe " //with space as part of command
 
-#define REG_HKCU                    L"HKCU"
+#define REG_HKCU                    L"HKEY_CURRENT_USER"
 
 #ifdef _WIN64
 #define KONGOU_CD                   L"Kongou64.cd"
@@ -217,7 +217,7 @@
 #define COMCTL32_SXS                L"microsoft.windows.common-controls"
 #define GDIPLUS_SXS                 L"microsoft.windows.gdiplus"
 
-#define PROGRAMTITLE_VERSION        L"UACMe v 3.0.0.1809"
+#define PROGRAMTITLE_VERSION        L"UACMe v 3.0.2.1810"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"

