@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.00
 *
-*  DATE:        25 Aug 2018
+*  DATE:        02 Sep 2018
 *
 *  MSE / Windows Defender anti-emulation part.
 *

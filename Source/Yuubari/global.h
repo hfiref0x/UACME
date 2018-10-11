@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     1.29
+*  VERSION:     1.33
 *
-*  DATE:        30 Mar 2018
+*  DATE:        11 Oct 2018
 *
 *  Common header file for the program support routines.
 *
@@ -22,14 +22,7 @@
 #error ANSI build is not supported
 #endif
 
-#if (_MSC_VER >= 1900) 
-#ifdef _DEBUG
-#pragma comment(lib, "vcruntimed.lib")
-#pragma comment(lib, "ucrtd.lib")
-#else
-#pragma comment(lib, "libvcruntime.lib")
-#endif
-#endif
+#include "shared\libinc.h"
 
 //disable nonmeaningful warnings.
 #pragma warning(disable: 28278) // Function name appears with no prototype in scope
@@ -44,11 +37,11 @@
 #include <Windows.h>
 #include <ntstatus.h>
 #include <CommCtrl.h>
-#include "..\shared\ntos.h"
-#include "..\Shared\ntsxs.h"
-#include "..\shared\minirtl.h"
-#include "..\Shared\_filename.h"
-#include "..\Shared\cmdline.h"
+#include "shared\ntos.h"
+#include "shared\ntsxs.h"
+#include "shared\minirtl.h"
+#include "shared\_filename.h"
+#include "shared\cmdline.h"
 #include "consts.h"
 #include "logger.h"
 #include "wintrustex.h"

@@ -4,9 +4,9 @@
 *
 *  TITLE:       NAKA.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.03
 *
-*  DATE:        25 Aug 2018
+*  DATE:        11 Oct 2018
 *
 *  Common header file for Naka.
 *
@@ -24,14 +24,7 @@
 #error ANSI build is not supported
 #endif
 
-#if (_MSC_VER >= 1900) 
-#ifdef _DEBUG
-#pragma comment(lib, "vcruntimed.lib")
-#pragma comment(lib, "ucrtd.lib")
-#else
-#pragma comment(lib, "libvcruntime.lib")
-#endif
-#endif
+#include "shared\libinc.h"
 
 #pragma comment(lib, "msdelta.lib")
 #pragma comment(lib, "Bcrypt.lib")

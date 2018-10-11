@@ -154,3 +154,9 @@ _Success_(return == TRUE)
 BOOL ucmQueryProcessTokenIL(
     _In_ HANDLE hProcess,
     _Out_ PULONG IntegrityLevel);
+
+#ifdef _DEBUG
+#define ucmDbgMsg(Message)  OutputDebugString(Message)
+#else
+#define ucmDbgMsg(Message)  
+#endif

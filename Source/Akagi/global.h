@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.03
 *
-*  DATE:        31 Aug 2018
+*  DATE:        11 Oct 2018
 *
 *  Common header file for the program support routines.
 *
@@ -22,14 +22,7 @@
 #error ANSI build is not supported
 #endif
 
-#if (_MSC_VER >= 1900) 
-#ifdef _DEBUG
-#pragma comment(lib, "vcruntimed.lib")
-#pragma comment(lib, "ucrtd.lib")
-#else
-#pragma comment(lib, "libvcruntime.lib")
-#endif
-#endif
+#include "shared\libinc.h"
 
 //disable nonmeaningful warnings.
 #pragma warning(disable: 4005) // macro redefinition

@@ -525,6 +525,18 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * UACMe comes with full source code, written in C with some parts written in C#;
 * In order to build from source you need Microsoft Visual Studio 2013/2015 U2 and later versions.
 
+## Instructions
+
+* Select Platform ToolSet first for project in solution you want to build (Project->Properties->General): 
+  * v120 for Visual Studio 2013;
+  * v140 for Visual Studio 2015; 
+  * v141 for Visual Studio 2017.
+* For v140 and above set Target Platform Version (Project->Properties->General):
+  * If v140 then select 8.1 (Note that Windows 8.1 SDK must be installed);
+  * If v141 then select 10.0.17134.0 (Note that Windows 10.0.17134 SDK must be installed). 
+  
+* Note that Fujinami module built with .NET Framework 3.0 (this is requirement for it work), so .NET Framework 3.0 must be installed if you want to build this module.  
+
 # References
 
 * Windows 7 UAC whitelist, http://www.pretentiousname.com/misc/win7_uac_whitelist2.html

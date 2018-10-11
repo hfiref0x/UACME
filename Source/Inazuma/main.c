@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2017
+*  (C) COPYRIGHT AUTHORS, 2015 - 2018
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     2.73
+*  VERSION:     3.03
 *
-*  DATE:        27 May 2017
+*  DATE:        11 Oct 2018
 *
 *  ShellCode.
 *
@@ -26,15 +26,7 @@
 
 #include <Windows.h>
 #include "shared\ntos.h"
-
-#if (_MSC_VER >= 1900) 
-#ifdef _DEBUG
-#pragma comment(lib, "vcruntimed.lib")
-#pragma comment(lib, "ucrtd.lib")
-#else
-#pragma comment(lib, "libvcruntime.lib")
-#endif
-#endif
+#include "shared\libinc.h"
 
 typedef HMODULE(WINAPI *pfnLoadLibraryA)(LPCSTR lpLibFileName);
 typedef DWORD(WINAPI *pfnExpandEnvironmentStringsA)(LPCSTR lpSrc, LPSTR lpDst, DWORD nSize);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.03
 *
-*  DATE:        25 Aug 2018
+*  DATE:        11 Oct 2018
 *
 *  AVrf entry point, Hibiki Kai Ni.
 *
@@ -34,14 +34,7 @@
 
 #pragma warning(pop)
 
-#if (_MSC_VER >= 1900) 
-#ifdef _DEBUG
-#pragma comment(lib, "vcruntimed.lib")
-#pragma comment(lib, "ucrtd.lib")
-#else
-#pragma comment(lib, "libvcruntime.lib")
-#endif
-#endif
+#include "shared\libinc.h"
 
 #define LoadedMsg      "Hibiki lock and loaded"
 

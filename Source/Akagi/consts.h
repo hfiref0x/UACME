@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.02
+*  VERSION:     3.03
 *
-*  DATE:        01 Oct 2018
+*  DATE:        11 Oct 2018
 *
 *  Global consts definition file.
 *
@@ -217,7 +217,7 @@
 #define COMCTL32_SXS                L"microsoft.windows.common-controls"
 #define GDIPLUS_SXS                 L"microsoft.windows.gdiplus"
 
-#define PROGRAMTITLE_VERSION        L"UACMe v 3.0.2.1810"
+#define PROGRAMTITLE_VERSION        L"UACMe v 3.0.3.1810"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
