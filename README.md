@@ -476,6 +476,15 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS4 (17134)
         * How: Shell API update
+52. Author: David Wells
+     * Type: Whitelisted component
+     * Method: AipNormalizePath parsing abuse
+     * Target(s): Attacker defined
+     * Component(s): Attacker defined
+     * Implementation: ucmDirectoryMockMethod
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -		
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;
@@ -559,6 +568,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
    3. https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-3.html 
 * Research on CMSTP.exe, https://msitpros.com/?p=3960
 * UAC bypass via elevated .NET applications, https://offsec.provadys.com/UAC-bypass-dotnet.html
+* UAC Bypass by Mocking Trusted Directories, https://medium.com/tenable-techblog/uac-bypass-by-mocking-trusted-directories-24a96675f6e
 
 # Authors
 

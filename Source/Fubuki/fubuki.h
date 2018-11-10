@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUBUKI.H
 *
-*  VERSION:     3.03
+*  VERSION:     3.04
 *
-*  DATE:        11 Oct 2018
+*  DATE:        10 Nov 2018
 *
 *  Fubuki global include header file.
 *
@@ -35,6 +35,7 @@
 #include "shared\windefend.h"
 #include "unbcl.h"
 #include "wbemcomn.h"
+#include "winmm.h"
 
 #pragma warning(pop)
 

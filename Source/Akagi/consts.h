@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.03
+*  VERSION:     3.04
 *
-*  DATE:        11 Oct 2018
+*  DATE:        10 Nov 2018
 *
 *  Global consts definition file.
 *
@@ -114,6 +114,7 @@
 #define WBEMCOMN_DLL                L"wbemcomn.dll"
 #define WDSCORE_DLL                 L"wdscore.dll"
 #define WINDOWS_STORAGE_DLL         L"windows.storage.dll"
+#define WINMM_DLL                   L"winmm.dll"
 #define WOW64LOG_DLL                L"wow64log.dll"
 #define W32TIME_DLL                 L"w32time.dll"
 

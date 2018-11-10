@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.04
 *
-*  DATE:        25 Aug 2018
+*  DATE:        10 Nov 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -2831,4 +2831,46 @@ UCM_PROCESS_MITIGATION_POLICIES *supGetRemoteCodeExecPolicies(
         &Policies->PayloadRestrictionPolicy);
 
     return Policies;
+}
+
+/*
+* supCreateDirectory
+*
+* Purpose:
+*
+* Native create directory.
+*
+*/
+NTSTATUS supCreateDirectory(
+    _Out_opt_ PHANDLE phDirectory,
+    _In_ OBJECT_ATTRIBUTES *ObjectAttributes,
+    _In_ ULONG DirectoryShareFlags,
+    _In_ ULONG DirectoryAttributes
+)
+{
+    NTSTATUS         status;
+    HANDLE           DirectoryHandle = NULL;
+    IO_STATUS_BLOCK  IoStatusBlock;
+
+    if (DirectoryAttributes == 0)
+        DirectoryAttributes = FILE_ATTRIBUTE_NORMAL;
+
+    status = NtCreateFile(
+        &DirectoryHandle,
+        FILE_GENERIC_WRITE,
+        ObjectAttributes,
+        &IoStatusBlock,
+        NULL,
+        DirectoryAttributes,
+        DirectoryShareFlags,
+        FILE_OPEN_IF,
+        FILE_DIRECTORY_FILE,
+        NULL,
+        0);
+
+    if (NT_SUCCESS(status)) {
+        if (phDirectory)
+            *phDirectory = DirectoryHandle;
+    }
+    return status;
 }

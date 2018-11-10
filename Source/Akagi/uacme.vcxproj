@@ -393,6 +393,7 @@
     <ClCompile Include="methods\carberp.c" />
     <ClCompile Include="methods\comet.c" />
     <ClCompile Include="methods\deroko.c" />
+    <ClCompile Include="methods\dwells.c" />
     <ClCompile Include="methods\enigma0x3.c" />
     <ClCompile Include="methods\explife.c" />
     <ClCompile Include="methods\gootkit.c" />
@@ -420,6 +421,7 @@
     <ClInclude Include="compress.h" />
     <ClInclude Include="consts.h" />
     <ClInclude Include="global.h" />
+    <ClInclude Include="methods\dwells.h" />
     <ClInclude Include="methods\elvint.h" />
     <ClInclude Include="methods\rinn.h" />
     <ClInclude Include="secrets.h" />

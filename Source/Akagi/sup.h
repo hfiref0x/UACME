@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.04
 *
-*  DATE:        25 Aug 2018
+*  DATE:        10 Nov 2018
 *
 *  Common header file for the program support routines.
 *
@@ -304,6 +304,12 @@ PVOID supEncodePointer(
 
 PVOID supDecodePointer(
     _In_ PVOID Pointer);
+
+NTSTATUS supCreateDirectory(
+    _Out_opt_ PHANDLE phDirectory,
+    _In_ OBJECT_ATTRIBUTES *ObjectAttributes,
+    _In_ ULONG DirectoryShareFlags,
+    _In_ ULONG DirectoryAttributes);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.04
 *
-*  DATE:        27 Aug 2018
+*  DATE:        10 Nov 2018
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -71,6 +71,7 @@ typedef enum _UCM_METHOD {
     UacMethodCreateNewLink, //+
     UacMethodDateTimeWriter,//+
     UacMethodAcCplAdmin,    //+
+    UacMethodDirectoryMock, //+
     UacMethodMax
 } UCM_METHOD;
 
@@ -130,6 +131,7 @@ typedef struct _UCM_API_DISPATCH_ENTRY {
 #include "comet.h"
 #include "comsup.h"
 #include "deroko.h"
+#include "dwells.h"
 #include "enigma0x3.h"
 #include "explife.h"
 #include "gootkit.h"

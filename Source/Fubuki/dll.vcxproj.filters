@@ -48,6 +48,12 @@
     <ClInclude Include="..\Shared\_filename.h">
       <Filter>minirtl</Filter>
     </ClInclude>
+    <ClInclude Include="wbemcomn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="winmm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="version.rc">
