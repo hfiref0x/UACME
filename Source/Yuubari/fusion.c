@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUSION.C
 *
-*  VERSION:     1.29
+*  VERSION:     1.34
 *
-*  DATE:        15 June 2018
+*  DATE:        11 Nov 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -348,7 +348,7 @@ VOID FusionCheckFile(
             break;
 
         sz = (_strlen(lpDirectory) + _strlen(fdata->cFileName)) * sizeof(WCHAR) + sizeof(UNICODE_NULL);
-        sz = ALIGN_UP(sz, 0x1000);
+        sz = ALIGN_UP_BY(sz, PAGE_SIZE);
         FileName = VirtualAlloc(NULL, sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if (FileName == NULL)
             break;

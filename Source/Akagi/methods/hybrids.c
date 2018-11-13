@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.02
+*  VERSION:     3.10
 *
-*  DATE:        01 Oct 2018
+*  DATE:        11 Nov 2018
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1281,7 +1281,7 @@ BOOL ucmSXSMethod(
         if (lpszDirectoryName == NULL)
             break;
 
-        sz = 0x1000 + (_strlen(lpszDirectoryName) * sizeof(WCHAR));
+        sz = PAGE_SIZE + (_strlen(lpszDirectoryName) * sizeof(WCHAR));
 
         lpSxsPath = supVirtualAlloc(
             &sz,
@@ -1352,8 +1352,6 @@ BOOL ucmSXSMethod(
             if (!bResult)
                 break;
 
-            //put a link to Ikazuchi, so she can find proper key.
-            supSetupIPCLinkData();
         }
 
         //run target process
@@ -1452,10 +1450,6 @@ BOOL ucmWow64LoggerMethod(
 {
     BOOL bResult = FALSE;
     WCHAR szTarget[MAX_PATH * 2];
-
-    if (g_ctx.dwBuildNumber > 15063) {
-        supSetupIPCLinkData();
-    }
 
     //
     // Build target application full path.
@@ -1826,7 +1820,7 @@ BOOL ucmSXSDccwMethod(
         if (lpszDirectoryName == NULL)
             break;
 
-        sz = 0x1000 + (_strlen(lpszDirectoryName) * sizeof(WCHAR));
+        sz = PAGE_SIZE + (_strlen(lpszDirectoryName) * sizeof(WCHAR));
 
         lpSxsPath = supVirtualAlloc(
             &sz,
@@ -2906,11 +2900,6 @@ BOOL ucmDateTimeStateWriterMethod(
     }
 
     hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-
-    //
-    // Setup IPC link for Chiyoda.
-    //
-    supSetupIPCLinkData();
 
     do {
 

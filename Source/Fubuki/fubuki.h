@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUBUKI.H
 *
-*  VERSION:     3.04
+*  VERSION:     3.10
 *
-*  DATE:        10 Nov 2018
+*  DATE:        11 Nov 2018
 *
 *  Fubuki global include header file.
 *

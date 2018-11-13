@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.10
 *
-*  DATE:        25 Aug 2018
+*  DATE:        11 Nov 2018
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -61,7 +61,7 @@ BOOL ucmHijackShellCommandMethod(
 
         sz = 0;
         if (lpszPayload == NULL) {
-            sz = 0x1000;
+            sz = PAGE_SIZE;
         }
         else {
             sz = (1 + _strlen(lpszPayload)) * sizeof(WCHAR);

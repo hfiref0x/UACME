@@ -419,7 +419,6 @@
     <ClInclude Include="..\Shared\_filename.h" />
     <ClInclude Include="aic.h" />
     <ClInclude Include="compress.h" />
-    <ClInclude Include="consts.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="methods\dwells.h" />
     <ClInclude Include="methods\elvint.h" />

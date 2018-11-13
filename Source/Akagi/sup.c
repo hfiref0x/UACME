@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.04
+*  VERSION:     3.10
 *
-*  DATE:        10 Nov 2018
+*  DATE:        11 Nov 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -26,7 +26,7 @@
 */
 PVOID supEncodePointer(
     _In_ PVOID Pointer)
-{   
+{
     NTSTATUS Status;
     ULONG Cookie, retLength;
 
@@ -55,7 +55,7 @@ PVOID supEncodePointer(
         Cookie & 0x3f));
 #else
     return (PVOID)(RotateRight32(
-        (ULONG_PTR)Pointer ^ Cookie, 
+        (ULONG_PTR)Pointer ^ Cookie,
         Cookie & 0x1f));
 #endif
 }
@@ -93,11 +93,11 @@ PVOID supDecodePointer(
 
 #ifdef _WIN64
     return (PVOID)(RotateRight64(
-        (ULONG_PTR)Pointer, 
+        (ULONG_PTR)Pointer,
         0x40 - (Cookie & 0x3f)) ^ Cookie);
 #else
     return (PVOID)(RotateRight32(
-        (ULONG_PTR)Pointer, 
+        (ULONG_PTR)Pointer,
         0x20 - (Cookie & 0x1f)) ^ Cookie);
 #endif
 }
@@ -119,7 +119,7 @@ PVOID supVirtualAlloc(
     NTSTATUS status;
     PVOID Buffer = NULL;
     SIZE_T size;
-    
+
     size = *Size;
 
     status = NtAllocateVirtualMemory(
@@ -368,7 +368,7 @@ BOOL supGetElevationType(
     NTSTATUS status;
     ULONG bytesRead = 0;
     TOKEN_ELEVATION_TYPE TokenType = TokenElevationTypeDefault;
-   
+
     status = NtOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken);
     if (NT_SUCCESS(status)) {
 
@@ -598,9 +598,9 @@ PBYTE supReadFileToBuffer(
         }
 
         InitializeObjectAttributes(&attr, &usName, OBJ_CASE_INSENSITIVE, 0, NULL);
-        
+
         status = NtCreateFile(
-            &hRoot, 
+            &hRoot,
             FILE_LIST_DIRECTORY | SYNCHRONIZE,
             &attr,
             &iost,
@@ -641,36 +641,36 @@ PBYTE supReadFileToBuffer(
         }
 
         RtlSecureZeroMemory(&fi, sizeof(fi));
-        
+
         status = NtQueryInformationFile(
-            hFile, 
-            &iost, 
-            &fi, 
-            sizeof(FILE_STANDARD_INFORMATION), 
+            hFile,
+            &iost,
+            &fi,
+            sizeof(FILE_STANDARD_INFORMATION),
             FileStandardInformation);
-        
+
         if (!NT_SUCCESS(status))
             break;
 
         sz = (SIZE_T)fi.EndOfFile.LowPart;
 
         Buffer = supVirtualAlloc(
-            &sz, 
-            DEFAULT_ALLOCATION_TYPE, 
-            DEFAULT_PROTECT_TYPE, 
+            &sz,
+            DEFAULT_ALLOCATION_TYPE,
+            DEFAULT_PROTECT_TYPE,
             &status);
 
         if (NT_SUCCESS(status)) {
 
             status = NtReadFile(
-                hFile, 
-                NULL, 
-                NULL, 
-                NULL, 
-                &iost, 
-                Buffer, 
-                fi.EndOfFile.LowPart, 
-                NULL, 
+                hFile,
+                NULL,
+                NULL,
+                NULL,
+                &iost,
+                Buffer,
+                fi.EndOfFile.LowPart,
+                NULL,
                 NULL);
 
             if (NT_SUCCESS(status)) {
@@ -907,7 +907,7 @@ HANDLE NTAPI supRunProcessIndirect(
                     }
 
                 }
-            
+
                 if (si.lpAttributeList)
                     DeleteProcThreadAttributeList(si.lpAttributeList); //dumb empty routine
             }
@@ -1027,95 +1027,6 @@ LPWSTR supQueryEnvironmentVariableOffset(
 }
 
 /*
-* supSaveAkagiParameters
-*
-* Purpose:
-*
-* Store Akagi parameters.
-*
-*/
-BOOL supSaveAkagiParameters(
-    VOID
-)
-{
-    BOOL bResult = FALSE;
-    HKEY hKey = NULL;
-    LRESULT lRet;
-
-    DWORD bytesIO = 0;
-    WCHAR szQuery[100];
-    WCHAR szParameter[MAX_PATH];
-
-    ULONG SessionId = NtCurrentPeb()->SessionId;
-
-    szQuery[0] = 0;
-    szParameter[0] = 0;
-
-    lRet = RegCreateKeyEx(HKEY_CURRENT_USER, T_AKAGI_KEY, 0, NULL,
-        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL);
-
-    if ((lRet == ERROR_SUCCESS) && (hKey != NULL)) {
-
-        //
-        // Save current session id.
-        //
-        lRet = RegSetValueEx(
-            hKey,
-            T_AKAGI_SESSION,
-            0,
-            REG_DWORD,
-            (BYTE *)&SessionId,
-            sizeof(DWORD));
-
-        //
-        // Save flag.
-        //
-        if (lRet == ERROR_SUCCESS) {
-
-            lRet = RegSetValueEx(
-                hKey,
-                T_AKAGI_FLAG,
-                0,
-                REG_DWORD,
-                (BYTE *)&g_ctx.AkagiFlag,
-                sizeof(DWORD));
-
-        }
-
-        //
-        // Save WinStation + Desktop.
-        //
-        RtlSecureZeroMemory(&szQuery, sizeof(szQuery));
-        RtlSecureZeroMemory(&szParameter, sizeof(szParameter));
-        if (supWinstationToName(NULL, szQuery, sizeof(szQuery), &bytesIO)) {
-            _strcpy(szParameter, szQuery);
-            _strcat(szParameter, TEXT("\\"));
-
-            RtlSecureZeroMemory(&szQuery, sizeof(szQuery));
-            if (supDesktopToName(NULL, szQuery, sizeof(szQuery), &bytesIO)) {
-                _strcat(szParameter, szQuery);
-
-                bytesIO = (DWORD)((1 + _strlen(szParameter)) * sizeof(WCHAR));
-
-                lRet = RegSetValueEx(
-                    hKey,
-                    T_AKAGI_DESKTOP,
-                    0,
-                    REG_SZ,
-                    (LPBYTE)&szParameter,
-                    bytesIO);
-            }
-        }
-
-        bResult = (lRet == ERROR_SUCCESS);
-
-        RegCloseKey(hKey);
-    }
-
-    return bResult;
-}
-
-/*
 * supSetParameter
 *
 * Purpose:
@@ -1136,7 +1047,7 @@ BOOL supSetParameter(
         REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL);
 
     if ((lRet == ERROR_SUCCESS) && (hKey != NULL)) {
-        
+
         //
         // Write optional parameter.
         //
@@ -1424,7 +1335,7 @@ VOID supMasqueradeProcess(
     if (Restore == FALSE) {
 
         g_lpszExplorer = NULL;
-        RegionSize = 0x1000;
+        RegionSize = PAGE_SIZE;
         Status = NtAllocateVirtualMemory(
             NtCurrentProcess(),
             &g_lpszExplorer,
@@ -2013,70 +1924,6 @@ HANDLE supOpenDirectoryForReparse(
 }
 
 /*
-* supSetupIPCLinkData
-*
-* Purpose:
-*
-* Setup shared variable.
-*
-*/
-BOOL supSetupIPCLinkData(
-    VOID
-)
-{
-    BOOL bCond = FALSE, bResult = FALSE;
-    HANDLE hRoot = NULL, hChild = NULL;
-    LPWSTR lpUser;
-    NTSTATUS status;
-    UNICODE_STRING ChildName, usKey;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING ParentRoot = RTL_CONSTANT_STRING(T_AKAGI_LINK);
-
-    RtlSecureZeroMemory(&usKey, sizeof(usKey));
-
-    do {
-        status = RtlFormatCurrentUserKeyPath(&usKey);
-        if (!NT_SUCCESS(status))
-            break;
-
-        lpUser = _filename(usKey.Buffer);
-
-        InitializeObjectAttributes(&attr, &ParentRoot, OBJ_CASE_INSENSITIVE, 0, NULL);
-        status = NtCreateDirectoryObject(&hRoot, DIRECTORY_CREATE_SUBDIRECTORY, &attr);
-        if (!NT_SUCCESS(status))
-            break;
-
-        RtlInitUnicodeString(&ChildName, lpUser);
-        attr.RootDirectory = hRoot;
-        attr.ObjectName = &ChildName;
-        status = NtCreateDirectoryObject(&hChild, DIRECTORY_ALL_ACCESS, &attr);
-        if (!NT_SUCCESS(status))
-            break;
-
-        bResult = TRUE;
-
-    } while (bCond);
-
-    //
-    // Cleanup created objects if something went wrong.
-    // Otherwise objects will die together with process at exit.
-    //
-    if (bResult == FALSE) {
-        if (hRoot) {
-            NtClose(hRoot);
-        }
-        if (hChild) {
-            NtClose(hChild);
-        }
-    }
-
-    if (usKey.Buffer) {
-        RtlFreeUnicodeString(&usKey);
-    }
-    return bResult;
-}
-
-/*
 * supWinstationToName
 *
 * Purpose:
@@ -2319,7 +2166,7 @@ PVOID supGetSystemInfo(
 {
     INT			c = 0;
     PVOID		Buffer = NULL;
-    ULONG		Size = 0x1000;
+    ULONG		Size = PAGE_SIZE;
     NTSTATUS	status;
     ULONG       memIO;
 
@@ -2599,17 +2446,17 @@ BOOL supExecuteWithDelay(
 {
     BOOL bResult = FALSE;
     HANDLE hTimer = NULL;
-    LARGE_INTEGER liDueTime; 
+    LARGE_INTEGER liDueTime;
     OBJECT_ATTRIBUTES obja;
 
     liDueTime.QuadPart = -(LONGLONG)UInt32x32To64(Milliseconds, 10000);
 
     InitializeObjectAttributes(&obja, NULL, 0, NULL, NULL);
-    
+
     if (NT_SUCCESS(NtCreateTimer(&hTimer,
         TIMER_ALL_ACCESS,
         &obja,
-        NotificationTimer))) 
+        NotificationTimer)))
     {
         if (NT_SUCCESS(NtSetTimer(
             hTimer,
@@ -2654,7 +2501,7 @@ BOOL supIsConsentApprovedInterface(
     ULONG               Index = 0;
 
     BYTE               *Buffer;
-    ULONG               Size = 0x1000;
+    ULONG               Size = PAGE_SIZE;
 
     PKEY_VALUE_BASIC_INFORMATION ValueInformation;
 
@@ -2873,4 +2720,227 @@ NTSTATUS supCreateDirectory(
             *phDirectory = DirectoryHandle;
     }
     return status;
+}
+
+/*
+* supxCreateBoundaryDescriptorSID
+*
+* Purpose:
+*
+* Create special SID to access isolated namespace.
+*
+*/
+PSID supxCreateBoundaryDescriptorSID(
+    SID_IDENTIFIER_AUTHORITY *SidAuthority,
+    UCHAR SubAuthorityCount,
+    ULONG *SubAuthorities
+)
+{
+    BOOL    bCond = FALSE, bResult = FALSE;
+    ULONG   i;
+    PSID    pSid = NULL;
+
+    do {
+
+        pSid = supHeapAlloc(RtlLengthRequiredSid(SubAuthorityCount));
+        if (pSid == NULL)
+            break;
+
+        if (!NT_SUCCESS(RtlInitializeSid(pSid, SidAuthority, SubAuthorityCount)))
+            break;
+
+        for (i = 0; i < SubAuthorityCount; i++)
+            *RtlSubAuthoritySid(pSid, i) = SubAuthorities[i];
+
+        bResult = TRUE;
+
+    } while (bCond);
+
+    if (bResult == FALSE) {
+        if (pSid) supHeapFree(pSid);
+        pSid = NULL;
+    }
+
+    return pSid;
+}
+
+/*
+* supCreateSharedParametersBlock
+*
+* Purpose:
+*
+* Create parameters block to be shared with payload dlls.
+*
+*/
+BOOL supCreateSharedParametersBlock(
+    VOID)
+{
+    BOOL    bCond = FALSE, bResult = FALSE;
+    ULONG   r;
+    HANDLE  hBoundary = NULL;
+    PVOID   SharedBuffer = NULL;
+    SIZE_T  ViewSize;
+
+    LARGE_INTEGER liSectionSize;
+    PSID pWorldSid = NULL;
+
+    SID_IDENTIFIER_AUTHORITY SidWorldAuthority = SECURITY_WORLD_SID_AUTHORITY;
+
+    UNICODE_STRING usName = RTL_CONSTANT_STRING(BDESCRIPTOR_NAME);
+    OBJECT_ATTRIBUTES obja = RTL_INIT_OBJECT_ATTRIBUTES(NULL, 0);
+
+    UACME_PARAM_BLOCK ParamBlock;
+
+    ULONG SubAuthoritiesWorld[] = { SECURITY_WORLD_RID };
+
+    //
+    // Fill parameters block.
+    // 
+    RtlSecureZeroMemory(&ParamBlock, sizeof(ParamBlock));
+
+    if (g_ctx.OptionalParameterLength != 0) {
+        _strncpy(ParamBlock.szParameter, MAX_PATH,
+            g_ctx.szOptionalParameter, MAX_PATH);
+    }
+
+    _strcpy(ParamBlock.szSignalObject, AKAGI_COMPLETION_EVENT);
+
+    ParamBlock.AkagiFlag = g_ctx.AkagiFlag;
+    ParamBlock.SessionId = NtCurrentPeb()->SessionId;
+
+    supWinstationToName(NULL, ParamBlock.szWinstation, MAX_PATH * 2, &r);
+    supDesktopToName(NULL, ParamBlock.szDesktop, MAX_PATH * 2, &r);
+
+    ParamBlock.Crc32 = RtlComputeCrc32(0, &ParamBlock, sizeof(ParamBlock));
+
+    do {
+        //
+        // Create and assign boundary descriptor.
+        //
+        hBoundary = RtlCreateBoundaryDescriptor(&usName, 0);
+        if (hBoundary == NULL)
+            break;
+
+        pWorldSid = supxCreateBoundaryDescriptorSID(
+            &SidWorldAuthority,
+            1,
+            SubAuthoritiesWorld);
+        if (pWorldSid == NULL)
+            break;
+
+        if (!NT_SUCCESS(RtlAddSIDToBoundaryDescriptor(&hBoundary, pWorldSid))) {
+            break;
+        }
+
+        //
+        // Create private namespace.
+        //
+        if (!NT_SUCCESS(NtCreatePrivateNamespace(
+            &g_ctx.SharedContext.hIsolatedNamespace,
+            MAXIMUM_ALLOWED,
+            &obja,
+            hBoundary)))
+        {
+            break;
+        }
+
+        obja.Attributes = OBJ_CASE_INSENSITIVE;
+        obja.RootDirectory = g_ctx.SharedContext.hIsolatedNamespace;
+        obja.ObjectName = &usName;
+
+        //
+        // Create completion event.
+        //
+        RtlInitUnicodeString(&usName, AKAGI_COMPLETION_EVENT);
+        if (!NT_SUCCESS(NtCreateEvent(
+            &g_ctx.SharedContext.hCompletionEvent,
+            EVENT_ALL_ACCESS,
+            &obja,
+            NotificationEvent,
+            FALSE)))
+        {
+            break;
+        }
+
+        //
+        // Create shared section.
+        //
+        liSectionSize.QuadPart = PAGE_SIZE;
+        ViewSize = PAGE_SIZE;
+
+        RtlInitUnicodeString(&usName, AKAGI_SHARED_SECTION);
+        if (NT_SUCCESS(NtCreateSection(
+            &g_ctx.SharedContext.hSharedSection,
+            SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_QUERY,
+            &obja,
+            &liSectionSize,
+            PAGE_READWRITE,
+            SEC_COMMIT,
+            NULL)))
+        {
+            //
+            // Write data to shared section.
+            //
+            if (NT_SUCCESS(NtMapViewOfSection(
+                g_ctx.SharedContext.hSharedSection,
+                NtCurrentProcess(),
+                &SharedBuffer,
+                0,
+                PAGE_SIZE,
+                NULL,
+                &ViewSize,
+                ViewUnmap,
+                MEM_TOP_DOWN,
+                PAGE_READWRITE)))
+            {
+                RtlSecureZeroMemory(SharedBuffer, PAGE_SIZE);
+                RtlCopyMemory(SharedBuffer, &ParamBlock, sizeof(ParamBlock));
+                NtUnmapViewOfSection(NtCurrentProcess(), SharedBuffer);
+                bResult = TRUE;
+            }
+        }
+
+
+    } while (bCond);
+
+    //
+    // Cleanup.
+    //
+    if (pWorldSid)
+        supHeapFree(pWorldSid);
+    if (hBoundary)
+        RtlDeleteBoundaryDescriptor(hBoundary);
+
+    if (bResult == FALSE) {
+        if (g_ctx.SharedContext.hIsolatedNamespace) {
+            NtDeletePrivateNamespace(g_ctx.SharedContext.hIsolatedNamespace);
+            NtClose(g_ctx.SharedContext.hIsolatedNamespace);
+        }
+    }
+
+    return bResult;
+}
+
+/*
+* supDestroySharedParametersBlock
+*
+* Purpose:
+*
+* Free shared resources.
+*
+*/
+VOID supDestroySharedParametersBlock(
+    VOID)
+{
+    if (g_ctx.SharedContext.hIsolatedNamespace) {
+
+        if (g_ctx.SharedContext.hCompletionEvent)
+            NtClose(g_ctx.SharedContext.hCompletionEvent);
+
+        if (g_ctx.SharedContext.hSharedSection)
+            NtClose(g_ctx.SharedContext.hSharedSection);
+
+        NtDeletePrivateNamespace(g_ctx.SharedContext.hIsolatedNamespace);
+        NtClose(g_ctx.SharedContext.hIsolatedNamespace);
+    }
 }

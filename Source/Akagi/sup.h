@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.04
+*  VERSION:     3.10
 *
-*  DATE:        10 Nov 2018
+*  DATE:        11 Nov 2018
 *
 *  Common header file for the program support routines.
 *
@@ -136,9 +136,6 @@ BOOL supSetParameter(
     _In_ LPWSTR lpParameter,
     _In_ DWORD cbParameter);
 
-BOOL supSaveAkagiParameters(
-    VOID);
-
 DWORD supCalculateCheckSumForMappedFile(
     _In_ PVOID BaseAddress,
     _In_ ULONG FileLength);
@@ -224,9 +221,6 @@ BOOL supDeleteMountPoint(
 HANDLE supOpenDirectoryForReparse(
     _In_ LPWSTR lpDirectory);
 
-BOOL supSetupIPCLinkData(
-    VOID);
-
 BOOL supWinstationToName(
     _In_opt_ HWINSTA hWinsta,
     _In_ LPWSTR lpBuffer,
@@ -310,6 +304,12 @@ NTSTATUS supCreateDirectory(
     _In_ OBJECT_ATTRIBUTES *ObjectAttributes,
     _In_ ULONG DirectoryShareFlags,
     _In_ ULONG DirectoryAttributes);
+
+BOOL supCreateSharedParametersBlock(
+    VOID);
+
+VOID supDestroySharedParametersBlock(
+    VOID);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

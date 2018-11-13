@@ -191,9 +191,6 @@
     <ClInclude Include="compress.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="consts.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="manifest.h">
       <Filter>Header Files</Filter>
     </ClInclude>

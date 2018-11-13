@@ -4,9 +4,9 @@
 *
 *  TITLE:       HAKRIL.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.10
 *
-*  DATE:        25 Aug 2018
+*  DATE:        11 Nov 2018
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -206,7 +206,7 @@ BOOL ucmHakrilMethod(
         //
         // Allocate and fill snap-in parameters buffer.
         //
-        g_SnapInParameters = supHeapAlloc(0x1000);
+        g_SnapInParameters = supHeapAlloc(PAGE_SIZE);
         if (g_SnapInParameters == NULL)
             break;
 

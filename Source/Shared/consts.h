@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.04
+*  VERSION:     3.10
 *
-*  DATE:        10 Nov 2018
+*  DATE:        11 Nov 2018
 *
 *  Global consts definition file.
 *
@@ -70,6 +70,10 @@
 
 #define OBJECT_LOCALSYSTEM          L"LocalSystem"
 #define OBJECT_LOCALSERVICE         L"NT AUTHORITY\\LocalService"
+
+#define BDESCRIPTOR_NAME            L"ArisuTsuberuku"
+#define AKAGI_SHARED_SECTION        L"AkagiSharedSection"
+#define AKAGI_COMPLETION_EVENT      L"AkagiCompletionEvent"
 
 #define SIGNAL_OBJECT               L"\\BaseNamedObjects\\CZ2128"
 
@@ -210,15 +214,13 @@
 #define T_KUREND                    L"KureND"
 #define T_SYMLINK                   L"\\Software\\KureND"
 
-#define T_AKAGI_LINK                L"\\Rpc Control\\Akagi"
-
 #define LOCAL_SXS                   L".local"
 #define FAKE_LOCAL_SXS              L".hawawa"
 #define INETMGR_SXS                 L"microsoft-windows-iis-managementconsole"
 #define COMCTL32_SXS                L"microsoft.windows.common-controls"
 #define GDIPLUS_SXS                 L"microsoft.windows.gdiplus"
 
-#define PROGRAMTITLE_VERSION        L"UACMe v 3.0.3.1810"
+#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.0.1811"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"

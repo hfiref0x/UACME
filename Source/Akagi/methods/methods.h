@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     3.04
+*  VERSION:     3.10
 *
-*  DATE:        10 Nov 2018
+*  DATE:        11 Nov 2018
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -119,7 +119,7 @@ typedef struct _UCM_API_DISPATCH_ENTRY {
     ULONG PayloadResourceId;                //which payload dll must be used
     BOOL Win32OrWow64Required;
     BOOL DisallowWow64;
-    BOOL SetParametersInRegistry;           //need shared parameters to be set in the registry
+    BOOL SetParameters;                     //need shared parameters to be set
 } UCM_API_DISPATCH_ENTRY, *PUCM_API_DISPATCH_ENTRY;
 
 #include "elvint.h"

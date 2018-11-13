@@ -4,9 +4,9 @@
 *
 *  TITLE:       SHARED.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.10
 *
-*  DATE:        25 Aug 2018
+*  DATE:        11 Nov 2018
 *
 *  Shared include header file.
 *
@@ -32,5 +32,6 @@
 #include "_filename.h"
 #include "util.h"
 #include "windefend.h"
+#include "consts.h"
 
 #pragma warning(pop)

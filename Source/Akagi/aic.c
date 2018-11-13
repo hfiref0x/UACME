@@ -4,9 +4,9 @@
 *
 *  TITLE:       AIC.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.10
 *
-*  DATE:        25 Aug 2018
+*  DATE:        11 Nov 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -41,7 +41,7 @@ unsigned char LaunchAdminProcessSignature14393[] = {
     0xEC, 0x20, 0x04, 0x00, 0x00
 };
 
-unsigned char LaunchAdminProcessSignature_15063_18219[] = {
+unsigned char LaunchAdminProcessSignature_15063_18272[] = {
     0x40, 0x53, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x81,
     0xEC, 0x20, 0x04, 0x00, 0x00
 };
@@ -95,9 +95,10 @@ ULONG_PTR AicFindLaunchAdminProcess(
     case 15063:
     case 16299:
     case 17134:
+    case 17763:
     default:
-        Pattern = LaunchAdminProcessSignature_15063_18219;
-        PatternSize = sizeof(LaunchAdminProcessSignature_15063_18219);
+        Pattern = LaunchAdminProcessSignature_15063_18272;
+        PatternSize = sizeof(LaunchAdminProcessSignature_15063_18272);
         ScanModule = WINDOWS_STORAGE_DLL;
         break;
     }

