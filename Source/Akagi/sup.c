@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        11 Nov 2018
+*  DATE:        13 Nov 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -1024,42 +1024,6 @@ LPWSTR supQueryEnvironmentVariableOffset(
     } while (1);
 
     return (ptr + Value->Length / sizeof(WCHAR));
-}
-
-/*
-* supSetParameter
-*
-* Purpose:
-*
-* Set parameter for payload execution.
-*
-*/
-BOOL supSetParameter(
-    _In_ LPWSTR lpParameter,
-    _In_ DWORD cbParameter
-)
-{
-    BOOL bResult = FALSE;
-    HKEY hKey = NULL;
-    LRESULT lRet;
-
-    lRet = RegCreateKeyEx(HKEY_CURRENT_USER, T_AKAGI_KEY, 0, NULL,
-        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL);
-
-    if ((lRet == ERROR_SUCCESS) && (hKey != NULL)) {
-
-        //
-        // Write optional parameter.
-        //
-        lRet = RegSetValueEx(hKey, T_AKAGI_PARAM, 0, REG_SZ,
-            (LPBYTE)lpParameter, cbParameter);
-
-        bResult = (lRet == ERROR_SUCCESS);
-
-        RegCloseKey(hKey);
-    }
-
-    return bResult;
 }
 
 /*

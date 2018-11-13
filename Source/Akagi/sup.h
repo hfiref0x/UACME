@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        11 Nov 2018
+*  DATE:        13 Nov 2018
 *
 *  Common header file for the program support routines.
 *
@@ -131,10 +131,6 @@ DWORD supQueryEntryPointRVA(
 
 LPWSTR supQueryEnvironmentVariableOffset(
     _In_ PUNICODE_STRING Value);
-
-BOOL supSetParameter(
-    _In_ LPWSTR lpParameter,
-    _In_ DWORD cbParameter);
 
 DWORD supCalculateCheckSumForMappedFile(
     _In_ PVOID BaseAddress,

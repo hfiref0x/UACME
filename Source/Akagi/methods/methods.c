@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        11 Nov 2018
+*  DATE:        13 Nov 2018
 *
 *  UAC bypass dispatch.
 *
@@ -384,21 +384,7 @@ BOOL MethodsManagerCall(
     //   2. Optional parameter from Akagi command line.
     //
     if (Entry->SetParameters) {
-        //
-        // Special case for dotnet unit.
-        // Reimplementation pending.
-        //
-        if (Entry->PayloadResourceId == FUJINAMI_ID) {
-            if (g_ctx.OptionalParameterLength != 0) {
-                supSetParameter(
-                    (LPWSTR)&g_ctx.szOptionalParameter,
-                    (DWORD)(g_ctx.OptionalParameterLength * sizeof(WCHAR))
-                );
-            }
-        }
-        else {
-            bParametersBlockSet = supCreateSharedParametersBlock();
-        }
+        bParametersBlockSet = supCreateSharedParametersBlock();
     }
 
     bResult = (BOOL)Entry->Routine(&ParamsBlock);

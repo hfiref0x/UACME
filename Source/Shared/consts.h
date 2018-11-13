@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        11 Nov 2018
+*  DATE:        13 Nov 2018
 *
 *  Global consts definition file.
 *
@@ -224,11 +224,6 @@
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
-#define T_AKAGI_KEY                 L"Software\\Akagi"
-#define T_AKAGI_PARAM               L"LoveLetter"
-#define T_AKAGI_FLAG                L"Flag"
-#define T_AKAGI_SESSION             L"SessionId"
-#define T_AKAGI_DESKTOP             L"Desktop"
 #define T_VOLATILE_ENV              L"Volatile Environment"
 #define T_SYSTEMROOT_VAR            L"SYSTEMROOT"
 #define T_REGISTRY_PREP             L"\\REGISTRY\\" //end slash included
