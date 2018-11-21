@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        11 Nov 2018
+*  DATE:        18 Nov 2018
 *
 *  Hybrid UAC bypass methods.
 *
@@ -82,7 +82,7 @@ BOOL ucmAvrfMethod(
         _strcat(szBuffer, T_IFEO);
         RtlInitUnicodeString(&ustr, szBuffer);
         InitializeObjectAttributes(&obja, &ustr, OBJ_CASE_INSENSITIVE, NULL, NULL);
-        if (!NT_SUCCESS(NtOpenKey(&hKey, MAXIMUM_ALLOWED, &obja)))
+        if (!NT_SUCCESS(NtOpenKey((PHANDLE)&hKey, MAXIMUM_ALLOWED, &obja)))
             break;
 
         //
@@ -991,7 +991,7 @@ BOOL ucmInetMgrFindCallback(
         if (hFileMapping == NULL)
             break;
 
-        MappedFile = MapViewOfFile(hFileMapping, PAGE_READWRITE, 0, 0, 0);
+        MappedFile = (PDWORD)MapViewOfFile(hFileMapping, PAGE_READWRITE, 0, 0, 0);
         if (MappedFile == NULL)
             break;
 
@@ -1261,7 +1261,7 @@ BOOL ucmSXSMethod(
 
         sz = UNICODE_STRING_MAX_BYTES;
         
-        lpszFullDllPath = supVirtualAlloc(
+        lpszFullDllPath = (WCHAR*)supVirtualAlloc(
             &sz,
             DEFAULT_ALLOCATION_TYPE,
             DEFAULT_PROTECT_TYPE,
@@ -1283,7 +1283,7 @@ BOOL ucmSXSMethod(
 
         sz = PAGE_SIZE + (_strlen(lpszDirectoryName) * sizeof(WCHAR));
 
-        lpSxsPath = supVirtualAlloc(
+        lpSxsPath = (LPWSTR)supVirtualAlloc(
             &sz,
             DEFAULT_ALLOCATION_TYPE,
             DEFAULT_PROTECT_TYPE,
@@ -1800,7 +1800,7 @@ BOOL ucmSXSDccwMethod(
 
         sz = UNICODE_STRING_MAX_BYTES;
 
-        lpszFullDllPath = supVirtualAlloc(
+        lpszFullDllPath = (WCHAR*)supVirtualAlloc(
             &sz, 
             DEFAULT_ALLOCATION_TYPE, 
             DEFAULT_PROTECT_TYPE, 
@@ -1822,7 +1822,7 @@ BOOL ucmSXSDccwMethod(
 
         sz = PAGE_SIZE + (_strlen(lpszDirectoryName) * sizeof(WCHAR));
 
-        lpSxsPath = supVirtualAlloc(
+        lpSxsPath = (LPWSTR)supVirtualAlloc(
             &sz,
             DEFAULT_ALLOCATION_TYPE,
             DEFAULT_PROTECT_TYPE,

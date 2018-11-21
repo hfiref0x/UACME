@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        11 Nov 2018
+*  DATE:        18 Nov 2018
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -157,7 +157,7 @@ HANDLE ucmOpenAkagiNamespace(
     SID_IDENTIFIER_AUTHORITY SidWorldAuthority = SECURITY_WORLD_SID_AUTHORITY;
 
     UNICODE_STRING usName = RTL_CONSTANT_STRING(BDESCRIPTOR_NAME);
-    OBJECT_ATTRIBUTES obja = RTL_INIT_OBJECT_ATTRIBUTES(NULL, 0);
+    OBJECT_ATTRIBUTES obja = RTL_INIT_OBJECT_ATTRIBUTES((PUNICODE_STRING)NULL, 0);
 
     ULONG SubAuthoritiesWorld[] = { SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -562,7 +562,7 @@ BOOL ucmLaunchPayload(
         //
         memIO = PAGE_SIZE + (SIZE_T)cbPayload;
 
-        lpCommandLine = RtlAllocateHeap(
+        lpCommandLine = (LPWSTR)RtlAllocateHeap(
             ProcessHeap,
             HEAP_ZERO_MEMORY,
             (SIZE_T)memIO);
@@ -683,7 +683,7 @@ BOOL ucmLaunchPayloadEx(
         //
         memIO = PAGE_SIZE + (SIZE_T)cbPayload;
 
-        lpCommandLine = RtlAllocateHeap(
+        lpCommandLine = (LPWSTR)RtlAllocateHeap(
             ProcessHeap,
             HEAP_ZERO_MEMORY,
             (SIZE_T)memIO);
@@ -917,7 +917,7 @@ BOOL ucmLaunchPayload2(
             //
             memIO = PAGE_SIZE + (SIZE_T)cbPayload;
 
-            lpCommandLine = RtlAllocateHeap(
+            lpCommandLine = (LPWSTR)RtlAllocateHeap(
                 ProcessHeap,
                 HEAP_ZERO_MEMORY,
                 (SIZE_T)memIO);
@@ -1056,7 +1056,7 @@ LPWSTR ucmQueryRuntimeInfo(
     if (GetModuleFileName(NULL, (LPWSTR)&szBuffer, MAX_PATH) == 0)
         return NULL;
 
-    lpReport = RtlAllocateHeap(
+    lpReport = (LPWSTR)RtlAllocateHeap(
         hHeap,
         HEAP_ZERO_MEMORY,
         0x2000);
@@ -1255,7 +1255,7 @@ LPWSTR ucmQueryRuntimeInfo(
                     status = LsaOpenPolicy(
                         NULL,
                         &lobja,
-                        LSA_POLICY_LOOKUP_NAMES,
+                        POLICY_LOOKUP_NAMES,
                         &PolicyHandle);
 
                     if (NT_SUCCESS(status)) {
@@ -1455,7 +1455,7 @@ NTSTATUS ucmIsUserHasInteractiveSid(
         if (status != STATUS_BUFFER_TOO_SMALL)
             break;
 
-        groupInfo = RtlAllocateHeap(
+        groupInfo = (PTOKEN_GROUPS)RtlAllocateHeap(
             hHeap,
             HEAP_ZERO_MEMORY,
             LengthNeeded);
@@ -1736,7 +1736,7 @@ UCM_PROCESS_MITIGATION_POLICIES *ucmGetRemoteCodeExecPolicies(
 {
     UCM_PROCESS_MITIGATION_POLICIES *Policies = NULL;
 
-    Policies = RtlAllocateHeap(
+    Policies = (UCM_PROCESS_MITIGATION_POLICIES*)RtlAllocateHeap(
         NtCurrentPeb()->ProcessHeap,
         HEAP_ZERO_MEMORY,
         sizeof(UCM_PROCESS_MITIGATION_POLICIES));
@@ -1746,37 +1746,37 @@ UCM_PROCESS_MITIGATION_POLICIES *ucmGetRemoteCodeExecPolicies(
 
     ucmGetProcessMitigationPolicy(
         hProcess,
-        ProcessExtensionPointDisablePolicy,
+        (PROCESS_MITIGATION_POLICY)ProcessExtensionPointDisablePolicy,
         sizeof(PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY),
         &Policies->ExtensionPointDisablePolicy);
 
     ucmGetProcessMitigationPolicy(
         hProcess,
-        ProcessSignaturePolicy,
+        (PROCESS_MITIGATION_POLICY)ProcessSignaturePolicy,
         sizeof(PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY_W10),
         &Policies->SignaturePolicy);
 
     ucmGetProcessMitigationPolicy(
         hProcess,
-        ProcessDynamicCodePolicy,
+        (PROCESS_MITIGATION_POLICY)ProcessDynamicCodePolicy,
         sizeof(PROCESS_MITIGATION_DYNAMIC_CODE_POLICY_W10),
         &Policies->DynamicCodePolicy);
 
     ucmGetProcessMitigationPolicy(
         hProcess,
-        ProcessImageLoadPolicy,
+        (PROCESS_MITIGATION_POLICY)ProcessImageLoadPolicy,
         sizeof(PROCESS_MITIGATION_IMAGE_LOAD_POLICY_W10),
         &Policies->ImageLoadPolicy);
 
     ucmGetProcessMitigationPolicy(
         hProcess,
-        ProcessSystemCallFilterPolicy,
+        (PROCESS_MITIGATION_POLICY)ProcessSystemCallFilterPolicy,
         sizeof(PROCESS_MITIGATION_SYSTEM_CALL_FILTER_POLICY_W10),
         &Policies->SystemCallFilterPolicy);
 
     ucmGetProcessMitigationPolicy(
         hProcess,
-        ProcessPayloadRestrictionPolicy,
+        (PROCESS_MITIGATION_POLICY)ProcessPayloadRestrictionPolicy,
         sizeof(PROCESS_MITIGATION_PAYLOAD_RESTRICTION_POLICY_W10),
         &Policies->PayloadRestrictionPolicy);
 

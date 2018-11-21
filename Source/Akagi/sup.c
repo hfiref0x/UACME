@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        13 Nov 2018
+*  DATE:        18 Nov 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -283,7 +283,7 @@ HANDLE supGetProcessWithILAsCaller(
         if (!supQueryProcessTokenIL(NtCurrentProcess(), &Level))
             break;
 
-        ProcessList = supGetSystemInfo(SystemProcessInformation);
+        ProcessList = (PSYSTEM_PROCESSES_INFORMATION)supGetSystemInfo(SystemProcessInformation);
         if (ProcessList) {
             pList = ProcessList;
             for (;;) {
@@ -443,7 +443,7 @@ VOID supDebugPrint(
     if (ApiName)
         sz += _strlen(ApiName);
 
-    lpBuffer = supHeapAlloc(sz * sizeof(WCHAR));
+    lpBuffer = (LPWSTR)supHeapAlloc(sz * sizeof(WCHAR));
     if (lpBuffer) {
         _strcpy(lpBuffer, TEXT("[UCM] "));
         if (ApiName) {
@@ -496,7 +496,7 @@ NTSTATUS supRegReadValue(
     Status = NtQueryValueKey(hKey, &usName, KeyValuePartialInformation, NULL, 0, &Length);
     if (Status == STATUS_BUFFER_TOO_SMALL) {
 
-        kvpi = RtlAllocateHeap(Heap, HEAP_ZERO_MEMORY, Length);
+        kvpi = (KEY_VALUE_PARTIAL_INFORMATION *)RtlAllocateHeap(Heap, HEAP_ZERO_MEMORY, Length);
         if (kvpi) {
 
             Status = NtQueryValueKey(hKey, &usName, KeyValuePartialInformation, kvpi, Length, &Length);
@@ -654,7 +654,7 @@ PBYTE supReadFileToBuffer(
 
         sz = (SIZE_T)fi.EndOfFile.LowPart;
 
-        Buffer = supVirtualAlloc(
+        Buffer = (PBYTE)supVirtualAlloc(
             &sz,
             DEFAULT_ALLOCATION_TYPE,
             DEFAULT_PROTECT_TYPE,
@@ -779,7 +779,7 @@ HANDLE NTAPI supRunProcessEx(
         return NULL;
 
     ccb = (1 + _strlen(lpszParameters)) * sizeof(WCHAR);
-    pszBuffer = supHeapAlloc(ccb);
+    pszBuffer = (LPWSTR)supHeapAlloc(ccb);
     if (pszBuffer == NULL)
         return NULL;
 
@@ -852,7 +852,7 @@ HANDLE NTAPI supRunProcessIndirect(
     RtlSecureZeroMemory(&si, sizeof(si));
 
     size = (1 + _strlen(lpszParameters)) * sizeof(WCHAR);
-    pszBuffer = supHeapAlloc(size);
+    pszBuffer = (LPWSTR)supHeapAlloc(size);
     if (pszBuffer) {
 
         _strcpy(pszBuffer, lpszParameters);
@@ -988,7 +988,7 @@ DWORD supQueryEntryPointRVA(
         //AddressOfEntryPoint is in standard fields.
         epRVA = poh->AddressOfEntryPoint;
 
-        FreeLibrary(ImageBase);
+        FreeLibrary((HMODULE)ImageBase);
     }
     return epRVA;
 }
@@ -1008,7 +1008,7 @@ LPWSTR supQueryEnvironmentVariableOffset(
     UNICODE_STRING   str1;
     PWCHAR           EnvironmentBlock, ptr;
 
-    EnvironmentBlock = RtlGetCurrentPeb()->ProcessParameters->Environment;
+    EnvironmentBlock = (PWCHAR)RtlGetCurrentPeb()->ProcessParameters->Environment;
     ptr = EnvironmentBlock;
 
     do {
@@ -1193,7 +1193,7 @@ PBYTE supLdrQueryResourceData(
 
         status = LdrFindResource_U(DllHandle, (ULONG_PTR*)&IdPath, 3, &DataEntry);
         if (NT_SUCCESS(status)) {
-            status = LdrAccessResource(DllHandle, DataEntry, &Data, &SizeOfData);
+            status = LdrAccessResource(DllHandle, DataEntry, (PVOID*)&Data, &SizeOfData);
             if (NT_SUCCESS(status)) {
                 if (DataSize) {
                     *DataSize = SizeOfData;
@@ -1302,7 +1302,7 @@ VOID supMasqueradeProcess(
         RegionSize = PAGE_SIZE;
         Status = NtAllocateVirtualMemory(
             NtCurrentProcess(),
-            &g_lpszExplorer,
+            (PVOID*)&g_lpszExplorer,
             0,
             &RegionSize,
             MEM_COMMIT | MEM_RESERVE,
@@ -1340,7 +1340,7 @@ VOID supMasqueradeProcess(
         RegionSize = 0;
         NtFreeVirtualMemory(
             NtCurrentProcess(),
-            &g_lpszExplorer,
+            (PVOID*)&g_lpszExplorer,
             &RegionSize,
             MEM_RELEASE);
 
@@ -1514,7 +1514,7 @@ PVOID supFindPattern(
     BufferSize -= PatternSize;
 
     do {
-        p = memchr(p, Pattern[0], BufferSize - (p - Buffer));
+        p = (PBYTE)memchr(p, Pattern[0], BufferSize - (p - Buffer));
         if (p == NULL)
             break;
 
@@ -1794,7 +1794,7 @@ BOOL supSetMountPoint(
     reparseDataLength = cbTarget + cbPrintName + 12;
     memIO = (ULONG)(reparseDataLength + REPARSE_DATA_BUFFER_HEADER_LENGTH);
 
-    Buffer = supHeapAlloc((SIZE_T)memIO);
+    Buffer = (REPARSE_DATA_BUFFER*)supHeapAlloc((SIZE_T)memIO);
     if (Buffer == NULL)
         return FALSE;
 
@@ -2074,7 +2074,7 @@ BOOL supQuerySystemRoot(
         if (!NT_SUCCESS(Status))
             break;
 
-        Status = supRegReadValue(hKey, L"SystemRoot", REG_SZ, &lpData, &Length, g_ctx.ucmHeap);
+        Status = supRegReadValue(hKey, L"SystemRoot", REG_SZ, (PVOID*)&lpData, &Length, g_ctx.ucmHeap);
         if (!NT_SUCCESS(Status))
             break;
 
@@ -2181,7 +2181,7 @@ BOOL supIsCorImageFile(
     IMAGE_COR20_HEADER *CliHeader;
 
     if (ImageBase) {
-        CliHeader = RtlImageDirectoryEntryToData(ImageBase, TRUE,
+        CliHeader = (IMAGE_COR20_HEADER*)RtlImageDirectoryEntryToData(ImageBase, TRUE,
             IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &sz);
 
         if ((CliHeader == NULL) || (sz < sizeof(IMAGE_COR20_HEADER)))
@@ -2228,7 +2228,7 @@ NTSTATUS supRegSetValueIndirectHKCU(
     do {
 
         memIO = sizeof(UNICODE_NULL) + usCurrentUser.MaximumLength + cbKureND;
-        lpLinkKeyBuffer = RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
+        lpLinkKeyBuffer = (PWSTR)RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
         if (lpLinkKeyBuffer == NULL)
             break;
 
@@ -2271,7 +2271,7 @@ NTSTATUS supRegSetValueIndirectHKCU(
             break;
 
         memIO = sizeof(UNICODE_NULL) + usCurrentUser.MaximumLength + ((1 + _strlen(TargetKey)) * sizeof(WCHAR));
-        lpBuffer = RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
+        lpBuffer = (PWSTR)RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
         if (lpBuffer == NULL)
             break;
 
@@ -2355,7 +2355,7 @@ NTSTATUS supRemoveRegLinkHKCU(
     do {
 
         memIO = sizeof(UNICODE_NULL) + usCurrentUser.MaximumLength + cbKureND;
-        lpLinkKeyBuffer = RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
+        lpLinkKeyBuffer = (PWSTR)RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
         if (lpLinkKeyBuffer == NULL)
             break;
 
@@ -2460,7 +2460,7 @@ BOOL supIsConsentApprovedInterface(
     NTSTATUS            status = STATUS_UNSUCCESSFUL;
     ULONG               dummy;
 
-    HKEY                hKey = NULL;
+    HANDLE              hKey = NULL;
 
     ULONG               Index = 0;
 
@@ -2597,7 +2597,7 @@ UCM_PROCESS_MITIGATION_POLICIES *supGetRemoteCodeExecPolicies(
 {
     UCM_PROCESS_MITIGATION_POLICIES *Policies = NULL;
 
-    Policies = RtlAllocateHeap(
+    Policies = (UCM_PROCESS_MITIGATION_POLICIES*)RtlAllocateHeap(
         NtCurrentPeb()->ProcessHeap,
         HEAP_ZERO_MEMORY,
         sizeof(UCM_PROCESS_MITIGATION_POLICIES));
@@ -2607,37 +2607,37 @@ UCM_PROCESS_MITIGATION_POLICIES *supGetRemoteCodeExecPolicies(
 
     supGetProcessMitigationPolicy(
         hProcess,
-        ProcessExtensionPointDisablePolicy,
+        (PROCESS_MITIGATION_POLICY)ProcessExtensionPointDisablePolicy,
         sizeof(PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY),
         &Policies->ExtensionPointDisablePolicy);
 
     supGetProcessMitigationPolicy(
         hProcess,
-        ProcessSignaturePolicy,
+        (PROCESS_MITIGATION_POLICY)ProcessSignaturePolicy,
         sizeof(PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY_W10),
         &Policies->SignaturePolicy);
 
     supGetProcessMitigationPolicy(
         hProcess,
-        ProcessDynamicCodePolicy,
+        (PROCESS_MITIGATION_POLICY)ProcessDynamicCodePolicy,
         sizeof(PROCESS_MITIGATION_DYNAMIC_CODE_POLICY_W10),
         &Policies->DynamicCodePolicy);
 
     supGetProcessMitigationPolicy(
         hProcess,
-        ProcessImageLoadPolicy,
+        (PROCESS_MITIGATION_POLICY)ProcessImageLoadPolicy,
         sizeof(PROCESS_MITIGATION_IMAGE_LOAD_POLICY_W10),
         &Policies->ImageLoadPolicy);
 
     supGetProcessMitigationPolicy(
         hProcess,
-        ProcessSystemCallFilterPolicy,
+        (PROCESS_MITIGATION_POLICY)ProcessSystemCallFilterPolicy,
         sizeof(PROCESS_MITIGATION_SYSTEM_CALL_FILTER_POLICY_W10),
         &Policies->SystemCallFilterPolicy);
 
     supGetProcessMitigationPolicy(
         hProcess,
-        ProcessPayloadRestrictionPolicy,
+        (PROCESS_MITIGATION_POLICY)ProcessPayloadRestrictionPolicy,
         sizeof(PROCESS_MITIGATION_PAYLOAD_RESTRICTION_POLICY_W10),
         &Policies->PayloadRestrictionPolicy);
 
@@ -2751,7 +2751,7 @@ BOOL supCreateSharedParametersBlock(
     SID_IDENTIFIER_AUTHORITY SidWorldAuthority = SECURITY_WORLD_SID_AUTHORITY;
 
     UNICODE_STRING usName = RTL_CONSTANT_STRING(BDESCRIPTOR_NAME);
-    OBJECT_ATTRIBUTES obja = RTL_INIT_OBJECT_ATTRIBUTES(NULL, 0);
+    OBJECT_ATTRIBUTES obja = RTL_INIT_OBJECT_ATTRIBUTES((PUNICODE_STRING)NULL, 0);
 
     UACME_PARAM_BLOCK ParamBlock;
 

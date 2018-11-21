@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTSXS.H
 *
-*  VERSION:     1.03
+*  VERSION:     1.04
 *
-*  DATE:        17 Aug 2018
+*  DATE:        18 Nov 2018
 *
 *  Common header file for the SxS related API functions and definitions.
 *
@@ -16,6 +16,19 @@
 * PARTICULAR PURPOSE.
 *
 ************************************************************************************/
+
+#ifndef NTSXS_RTL
+#define NTSXS_RTL
+
+//
+// NTSXS_RTL HEADER BEGIN
+//
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#pragma warning(push)
 #pragma warning(disable: 4214) // nonstandard extension used : bit field types other than int
 
 #define ACTCTX_PROCESS_DEFAULT ((void*)NULL)
@@ -441,13 +454,19 @@ typedef struct _ACTIVATION_CONTEXT {
 
 #define RTL_ACTIVATE_ACTIVATION_CONTEXT_EX_FLAG_RELEASE_ON_STACK_DEALLOCATION (0x00000001)
 
-NTSTATUS NTAPI RtlActivateActivationContextEx(
+NTSYSAPI
+NTSTATUS 
+NTAPI 
+RtlActivateActivationContextEx(
     _In_ ULONG Flags,
     _In_ PTEB Teb,
     _In_ PACTIVATION_CONTEXT ActivationContext,
     _Out_ PULONG_PTR Cookie);
 
-NTSTATUS NTAPI RtlQueryInformationActivationContext(
+NTSYSAPI
+NTSTATUS 
+NTAPI 
+RtlQueryInformationActivationContext(
     _In_ ULONG Flags,
     _In_ PCACTIVATION_CONTEXT ActivationContext,
     _In_opt_ PVOID SubInstanceIndex,
@@ -456,19 +475,31 @@ NTSTATUS NTAPI RtlQueryInformationActivationContext(
     _In_ SIZE_T ActivationContextInformationLength,
     _Out_opt_ PSIZE_T ReturnLength);
 
-NTSTATUS NTAPI RtlQueryInformationActiveActivationContext(
+NTSYSAPI
+NTSTATUS 
+NTAPI 
+RtlQueryInformationActiveActivationContext(
     _In_ ACTIVATION_CONTEXT_INFO_CLASS ActivationContextInformationClass,
     _Out_ PVOID ActivationContextInformation,
     _In_ SIZE_T ActivationContextInformationLength,
     _Out_opt_ PSIZE_T ReturnLength);
 
-NTSTATUS NTAPI RtlAllocateActivationContextStack(
+NTSYSAPI
+NTSTATUS 
+NTAPI 
+RtlAllocateActivationContextStack(
     _Inout_ PACTIVATION_CONTEXT_STACK *ActivationContextStackPointer);
 
-VOID NTAPI RtlFreeActivationContextStack(
+NTSYSAPI
+VOID 
+NTAPI 
+RtlFreeActivationContextStack(
     _In_ PACTIVATION_CONTEXT_STACK ActivationContextStackPointer);
 
-NTSTATUS NTAPI RtlCreateActivationContext(
+NTSYSAPI
+NTSTATUS 
+NTAPI 
+RtlCreateActivationContext(
     _In_ ULONG Flags,
     _In_ const PACTIVATION_CONTEXT_DATA ActivationContextData,
     _In_opt_ ULONG ExtraBytes,
@@ -476,22 +507,40 @@ NTSTATUS NTAPI RtlCreateActivationContext(
     _In_opt_ PVOID NotificationContext,
     _Out_ PACTIVATION_CONTEXT *ActivationContext);
 
-VOID NTAPI RtlAddRefActivationContext(
+NTSYSAPI
+VOID 
+NTAPI 
+RtlAddRefActivationContext(
     _In_ PACTIVATION_CONTEXT AppCtx);
 
-VOID NTAPI RtlReleaseActivationContext(
+NTSYSAPI
+VOID 
+NTAPI 
+RtlReleaseActivationContext(
     _In_ PACTIVATION_CONTEXT AppCtx);
 
-NTSTATUS NTAPI RtlZombifyActivationContext(
+NTSYSAPI
+NTSTATUS 
+NTAPI 
+RtlZombifyActivationContext(
     _In_ PACTIVATION_CONTEXT ActivationContext);
 
-NTSTATUS NTAPI RtlGetActiveActivationContext(
+NTSYSAPI
+NTSTATUS 
+NTAPI 
+RtlGetActiveActivationContext(
     _Out_ PACTIVATION_CONTEXT *ActivationContext);
 
-BOOLEAN NTAPI RtlIsActivationContextActive(
+NTSYSAPI
+BOOLEAN 
+NTAPI 
+RtlIsActivationContextActive(
     _In_ PACTIVATION_CONTEXT ActivationContext);
 
-NTSTATUS NTAPI RtlQueryActivationContextApplicationSettings(
+NTSYSAPI
+NTSTATUS
+NTAPI 
+RtlQueryActivationContextApplicationSettings(
     _In_opt_      DWORD dwFlags,
     _In_opt_      HANDLE hActCtx,
     _In_opt_      PCWSTR settingsNameSpace,
@@ -500,9 +549,25 @@ NTSTATUS NTAPI RtlQueryActivationContextApplicationSettings(
     _In_      SIZE_T dwBuffer,
     _Out_opt_ SIZE_T *pdwWrittenOrRequired);
 
-NTSTATUS NTAPI RtlFindActivationContextSectionString(
+NTSYSAPI
+NTSTATUS 
+NTAPI 
+RtlFindActivationContextSectionString(
     _In_        ULONG Flags,
     _In_opt_    CONST GUID *ExtensionGuid,
     _In_        ULONG SectionId,
     _In_        PCUNICODE_STRING StringToFind,
     _Inout_     PACTIVATION_CONTEXT_SECTION_KEYED_DATA ReturnedData);
+
+//
+// NTSXS_RTL HEADER END
+//
+
+#pragma warning(pop)
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif NTSXS_RTL

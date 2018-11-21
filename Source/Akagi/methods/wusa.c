@@ -4,9 +4,9 @@
 *
 *  TITLE:       WUSA.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.10
 *
-*  DATE:        31 Aug 2018
+*  DATE:        19 Nov 2018
 *
 *  Windows Update Standalone Installer (WUSA) based routines.
 *
@@ -293,7 +293,7 @@ DWORD ucmxDirectoryWatchdogThread(
                     memIO = pInfo->FileNameLength +
                         ((1 + _strlen(szBuffer)) * sizeof(WCHAR));
 
-                    CapturedDirectoryName = supHeapAlloc(memIO);
+                    CapturedDirectoryName = (LPWSTR)supHeapAlloc(memIO);
 
                     if (CapturedDirectoryName) {
                         _strcpy(CapturedDirectoryName, szBuffer);

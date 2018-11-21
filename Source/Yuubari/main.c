@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.31
+*  VERSION:     1.35
 *
-*  DATE:        10 Aug 2018
+*  DATE:        19 Nov 2018
 *
 *  Program entry point.
 *
@@ -42,7 +42,7 @@ VOID AppInfoDataOutputCallback(
         return;
 
     sz = (_strlen(Data->Name) * sizeof(WCHAR)) + MAX_PATH;
-    lpLog = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
+    lpLog = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
     if (lpLog) {
         switch (Data->Type) {
         case AiSnapinFile:
@@ -101,7 +101,7 @@ VOID WINAPI BasicDataOutputCallback(
         return;
 
     sz = (_strlen(Data->Name) * sizeof(WCHAR)) + MAX_PATH;
-    lpLog = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
+    lpLog = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
     if (lpLog) {
         _strcpy(lpLog, Data->Name);
         _strcat(lpLog, TEXT("="));
@@ -279,7 +279,7 @@ VOID WINAPI FusionOutputCallback(
     if (Data->DataType == UacFusionDataRedirectedDllType) {
         Dll = (UAC_FUSION_DATA_DLL*)Data;
         sz = _strlen(Dll->DllName) + _strlen(Dll->FileName) + MAX_PATH;
-        lpLog = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz * sizeof(WCHAR));
+        lpLog = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz * sizeof(WCHAR));
         if (lpLog) {
             _strcpy(lpLog, TEXT("DllRedirection: "));
             _strcat(lpLog, Dll->FileName);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       WINDEFEND.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.10
 *
-*  DATE:        02 Sep 2018
+*  DATE:        18 Nov 2018
 *
 *  MSE / Windows Defender anti-emulation part.
 *
@@ -34,6 +34,7 @@
 #include "shared.h"
 
 #pragma warning(push)
+#pragma warning(disable: 4055)
 #pragma warning(disable: 4152)
 
 //
@@ -87,7 +88,7 @@ MP_API g_MpApiSet;
 
 PVOID wdxGetProcedureAddressByHash(
     _In_ PVOID MpClientBase,
-    _In_ ULONG ProcedureHash);
+    _In_ DWORD ProcedureHash);
 
 /*
 * wdxInitApiSet
@@ -101,28 +102,28 @@ BOOL wdxInitApiSet(
     _In_ PVOID MpClientBase)
 {
     g_MpApiSet.WDStatus.Hash = WDStatus_Hash;
-    g_MpApiSet.WDStatus.Routine = wdxGetProcedureAddressByHash(
+    g_MpApiSet.WDStatus.Routine = (pfnMpRoutine)wdxGetProcedureAddressByHash(
         MpClientBase,
         g_MpApiSet.WDStatus.Hash);
 
     if (g_MpApiSet.WDStatus.Routine == NULL) return FALSE;
 
     g_MpApiSet.MpHandleClose.Hash = MpHandleClose_Hash;
-    g_MpApiSet.MpHandleClose.Routine = wdxGetProcedureAddressByHash(
+    g_MpApiSet.MpHandleClose.Routine = (pfnMpRoutine)wdxGetProcedureAddressByHash(
         MpClientBase,
         g_MpApiSet.MpHandleClose.Hash);
 
     if (g_MpApiSet.MpHandleClose.Routine == NULL) return FALSE;
 
     g_MpApiSet.MpManagerOpen.Hash = MpManagerOpen_Hash;
-    g_MpApiSet.MpManagerOpen.Routine = wdxGetProcedureAddressByHash(
+    g_MpApiSet.MpManagerOpen.Routine = (pfnMpRoutine)wdxGetProcedureAddressByHash(
         MpClientBase,
         g_MpApiSet.MpManagerOpen.Hash);
 
     if (g_MpApiSet.MpManagerOpen.Routine == NULL) return FALSE;
 
     g_MpApiSet.MpManagerVersionQuery.Hash = MpManagerVersionQuery_Hash;
-    g_MpApiSet.MpManagerVersionQuery.Routine = wdxGetProcedureAddressByHash(
+    g_MpApiSet.MpManagerVersionQuery.Routine = (pfnMpRoutine)wdxGetProcedureAddressByHash(
         MpClientBase,
         g_MpApiSet.MpManagerVersionQuery.Hash);
 
@@ -228,7 +229,7 @@ DWORD wdxGetHashForString(
 */
 PVOID wdxGetProcedureAddressByHash(
     _In_ PVOID MpClientBase,
-    _In_ ULONG ProcedureHash
+    _In_ DWORD ProcedureHash
 )
 {
     DWORD i;
@@ -243,7 +244,7 @@ PVOID wdxGetProcedureAddressByHash(
 
     DosHeader = (IMAGE_DOS_HEADER*)MpClientBase;
 
-    Exports = RtlImageDirectoryEntryToData(MpClientBase, TRUE,
+    Exports = (IMAGE_EXPORT_DIRECTORY*)RtlImageDirectoryEntryToData(MpClientBase, TRUE,
         IMAGE_DIRECTORY_ENTRY_EXPORT, &sz);
 
     if (Exports == NULL)
@@ -286,7 +287,7 @@ PVOID wdLoadClient(
     PVOID       ImageBase = NULL;
     NTSTATUS    status = STATUS_UNSUCCESSFUL;
 
-    PWCHAR EnvironmentBlock = NtCurrentPeb()->ProcessParameters->Environment;
+    PWCHAR EnvironmentBlock = (PWCHAR)NtCurrentPeb()->ProcessParameters->Environment;
     PWCHAR ptr, lpProgramFiles, lpBuffer;
 
     UNICODE_STRING usTemp, *us;
@@ -322,7 +323,7 @@ PVOID wdLoadClient(
         lpProgramFiles = (ptr + us->Length / sizeof(WCHAR));
 
         memIO = (MAX_PATH + _strlen(lpProgramFiles)) * sizeof(WCHAR);
-        lpBuffer = RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
+        lpBuffer = (PWCHAR)RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
         if (lpBuffer) {
             _strcpy(lpBuffer, lpProgramFiles);
             _strcat(lpBuffer, TEXT("\\Windows Defender\\MpClient.dll"));
@@ -404,10 +405,10 @@ NTSTATUS wdIsEmulatorPresent(
 
     UNICODE_STRING usNtdll = RTL_CONSTANT_STRING(L"ntdll.dll");
 
-    if (!NT_SUCCESS(LdrGetDllHandle(NULL, NULL, &usNtdll, &ImageBase)))
+    if (!NT_SUCCESS(LdrGetDllHandle((PCWSTR)NULL, (PULONG)NULL, &usNtdll, (PVOID*)&ImageBase)))
         return STATUS_DLL_NOT_FOUND;
 
-    Exports = RtlImageDirectoryEntryToData(ImageBase, TRUE,
+    Exports = (IMAGE_EXPORT_DIRECTORY*)RtlImageDirectoryEntryToData(ImageBase, TRUE,
         IMAGE_DIRECTORY_ENTRY_EXPORT, &sz);
 
     if (Exports == NULL)

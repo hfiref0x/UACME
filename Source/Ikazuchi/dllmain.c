@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        11 Nov 2018
+*  DATE:        18 Nov 2018
 *
 *  Proxy dll entry point, Ikazuchi.
 *
@@ -21,20 +21,7 @@
 #error ANSI build is not supported
 #endif
 
-//disable nonmeaningful warnings.
-#pragma warning(push)
-#pragma warning(disable: 4005 4201)
-
-#include <windows.h>
-#include "shared\ntos.h"
-#include <ntstatus.h>
-#include "shared\minirtl.h"
-#include "shared\_filename.h"
-#include "shared\util.h"
-#include "shared\windefend.h"
-
-#pragma warning(pop)
-
+#include "shared\shared.h"
 #include "shared\libinc.h"
 
 #define LoadedMsg      TEXT("Ikazuchi lock and loaded")
@@ -108,7 +95,7 @@ HRESULT WINAPI TaskDialogIndirectForward(
         
         if (!NT_SUCCESS(NtAllocateVirtualMemory(
             NtCurrentProcess(),
-            &lpszFullDllPath,
+            (PVOID*)&lpszFullDllPath,
             0,
             &sz,
             MEM_COMMIT | MEM_RESERVE,
@@ -137,7 +124,7 @@ HRESULT WINAPI TaskDialogIndirectForward(
 
         if (!NT_SUCCESS(NtAllocateVirtualMemory(
             NtCurrentProcess(), 
-            &lpSxsPath, 
+            (PVOID*)&lpSxsPath, 
             0, 
             &sz, 
             MEM_COMMIT | MEM_RESERVE, 
@@ -169,12 +156,12 @@ HRESULT WINAPI TaskDialogIndirectForward(
 
     if (lpszFullDllPath) {
         sz = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &lpszFullDllPath, &sz, MEM_RELEASE);
+        NtFreeVirtualMemory(NtCurrentProcess(), (PVOID*)&lpszFullDllPath, &sz, MEM_RELEASE);
     }
 
     if (lpSxsPath) {
         sz = 0;
-        NtFreeVirtualMemory(NtCurrentProcess(), &lpSxsPath, &sz, MEM_RELEASE);
+        NtFreeVirtualMemory(NtCurrentProcess(), (PVOID*)&lpSxsPath, &sz, MEM_RELEASE);
     }
 
     return hr;

@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        11 Nov 2018
+*  DATE:        18 Nov 2018
 *
 *  Fubuki global include header file.
 *
@@ -22,24 +22,15 @@
 #error ANSI build is not supported
 #endif
 
-//disable nonmeaningful warnings.
-#pragma warning(push)
-#pragma warning(disable: 4005 4201)
+#include "shared\shared.h"
+#include "shared\libinc.h"
 
-#include <windows.h>
-#include "shared\ntos.h"
-#include <ntstatus.h>
-#include "shared\minirtl.h"
-#include "shared\_filename.h"
-#include "shared\util.h"
-#include "shared\windefend.h"
+//
+// Forwards
+//
 #include "unbcl.h"
 #include "wbemcomn.h"
 #include "winmm.h"
-
-#pragma warning(pop)
-
-#include "shared\libinc.h"
 
 #define LoadedMsg      TEXT("Fubuki lock and loaded")
 

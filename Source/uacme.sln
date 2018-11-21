@@ -23,7 +23,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{49552A
 		Shared\cmdline.c = Shared\cmdline.c
 		Shared\consts.h = Shared\consts.h
 		Shared\libinc.h = Shared\libinc.h
-		Shared\lsa.h = Shared\lsa.h
 		shared\minirtl.h = shared\minirtl.h
 		Shared\mpclient.h = Shared\mpclient.h
 		shared\ntos.h = shared\ntos.h

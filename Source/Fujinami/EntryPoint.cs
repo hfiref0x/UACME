@@ -149,8 +149,10 @@ namespace Fujinami
                             PayloadToExecute = SharedParams.szParameter;
                         }
 
+                        //Environment.ExpandEnvironmentVariables("%ComSpec%")
+
                         if (PayloadToExecute == string.Empty)
-                            PayloadToExecute = "cmd.exe";
+                            PayloadToExecute = Environment.ExpandEnvironmentVariables("%ComSpec%");
 
                         Process.Start(PayloadToExecute);
 

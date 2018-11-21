@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        11 Nov 2018
+*  DATE:        18 Nov 2018
 *
 *  AVrf entry point, Hibiki Kai Ni.
 *
@@ -21,19 +21,7 @@
 #error ANSI build is not supported
 #endif
 
-//disable nonmeaningful warnings.
-#pragma warning(push)
-#pragma warning(disable: 4005 4201)
-
-#include <windows.h>
-#include <ntstatus.h>
-#include "shared\ntos.h"
-#include "shared\minirtl.h"
-#include "shared\util.h"
-#include "shared\windefend.h"
-
-#pragma warning(pop)
-
+#include "shared\shared.h"
 #include "shared\libinc.h"
 
 #define LoadedMsg      "Hibiki lock and loaded"
@@ -77,7 +65,7 @@ VOID NTAPI ucmLoadCallback(
     }
 
     if (_strcmpi(DllName, L"kernel32.dll") == 0) {
-        g_pvKernel32 = DllBase;
+        g_pvKernel32 = (HMODULE)DllBase;
     }
 
     if (_strcmpi(DllName, L"user32.dll") == 0) {
@@ -86,7 +74,7 @@ VOID NTAPI ucmLoadCallback(
 #pragma warning(push)
 #pragma warning(disable: 4152)
 
-            pCreateProcessW = ucmLdrGetProcAddress(
+            pCreateProcessW = (PFNCREATEPROCESSW)ucmLdrGetProcAddress(
                 (PCHAR)g_pvKernel32,
                 "CreateProcessW");
 
@@ -177,7 +165,7 @@ BOOL WINAPI DllMain(
     _In_ LPVOID lpvReserved
 )
 {
-    PRTL_VERIFIER_PROVIDER_DESCRIPTOR* pVPD = lpvReserved;
+    PRTL_VERIFIER_PROVIDER_DESCRIPTOR* pVPD = (PRTL_VERIFIER_PROVIDER_DESCRIPTOR*)lpvReserved;
 
     UNREFERENCED_PARAMETER(hinstDLL);
 

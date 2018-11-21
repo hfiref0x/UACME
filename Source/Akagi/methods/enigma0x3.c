@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        11 Nov 2018
+*  DATE:        18 Nov 2018
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -66,7 +66,7 @@ BOOL ucmHijackShellCommandMethod(
         else {
             sz = (1 + _strlen(lpszPayload)) * sizeof(WCHAR);
         }
-        lpBuffer = supHeapAlloc(sz);
+        lpBuffer = (LPWSTR)supHeapAlloc(sz);
         if (lpBuffer == NULL)
             break;
 
@@ -369,7 +369,7 @@ BOOL ucmAppPathMethod(
     do {
 
         sz = (1 + _strlen(lpszAppPathTarget)) * sizeof(WCHAR) + sizeof(T_APP_PATH);
-        lpKeyPath = supHeapAlloc(sz);
+        lpKeyPath = (LPWSTR)supHeapAlloc(sz);
         if (lpKeyPath == NULL)
             break;
 

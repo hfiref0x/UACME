@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        13 Nov 2018
+*  DATE:        18 Nov 2018
 *
 *  UAC bypass dispatch.
 *
@@ -150,7 +150,7 @@ ULONG CALLBACK SetMethodExecutionType(
 #ifdef _DEBUG
     WCHAR szBuffer[100];
 #endif
-    UCM_METHOD Method = PtrToUlong(Parameter);
+    UCM_METHOD Method = (UCM_METHOD)PtrToUlong(Parameter);
     MPCOMPONENT_VERSION SignatureVersion;
 
     if (g_ctx.hMpClient == NULL)

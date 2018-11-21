@@ -6,15 +6,13 @@ typedef enum _SIGNATURE_INFO_TYPE {
     SIT_CATALOG = 0x2
 } SIGNATURE_INFO_TYPE;
 
-typedef enum _SIGNATURE_INFO_FLAGS {
-    SIF_AUTHENTICODE_SIGNED = 0x1,
-    SIF_CATALOG_SIGNED = 0x2,
-    SIF_VERSION_INFO = 0x4,
-    SIF_CHECK_OS_BINARY = 0x800,
-    SIF_BASE_VERIFICATION = 0x1000,
-    SIF_CATALOG_FIRST = 0x2000,
-    SIF_MOTW = 0x4000
-} SIGNATURE_INFO_FLAGS;
+#define SIF_AUTHENTICODE_SIGNED 0x1
+#define SIF_CATALOG_SIGNED      0x2
+#define SIF_VERSION_INFO        0x4
+#define SIF_CHECK_OS_BINARY     0x800
+#define SIF_BASE_VERIFICATION   0x1000
+#define SIF_CATALOG_FIRST       0x2000
+#define SIF_MOTW                0x4000
 
 typedef enum _SIGNATURE_STATE {
     SIGNATURE_STATE_UNSIGNED_MISSING = 0x0,
@@ -47,7 +45,7 @@ typedef struct _SIGNATURE_INFO {
 typedef LONG (WINAPI *ptrWTGetSignatureInfo)(
     LPWSTR pszFile,
     HANDLE hFile,
-    SIGNATURE_INFO_FLAGS sigInfoFlags,
+    ULONG sigInfoFlags, //SIF_*
     SIGNATURE_INFO *siginfo,
     VOID *ppCertContext,
     VOID *phWVTStateData

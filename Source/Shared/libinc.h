@@ -4,9 +4,9 @@
 *
 *  TITLE:       LIBINC.H
 *
-*  VERSION:     1.0.01
+*  VERSION:     1.0.02
 *
-*  DATE:        16 Nov 2018
+*  DATE:        18 Nov 2018
 *
 *  Master header file for C Runtime libraries include.
 *
@@ -20,20 +20,13 @@
 #pragma once
 
 #if defined (_MSC_VER)
-#if (_MSC_VER >= 1910) //Visual Studio 2017
-#ifdef _DEBUG
-#pragma comment(lib, "vcruntimed.lib")
-#pragma comment(lib, "ucrtd.lib")
-#else
-#pragma comment(lib, "libucrt.lib")
-#pragma comment(lib, "libvcruntime.lib")
-#endif
-#elif (_MSC_VER == 1900) //Visual Studio 2015
-#ifdef _DEBUG
-#pragma comment(lib, "vcruntimed.lib")
-#pragma comment(lib, "ucrtd.lib")
-#else
-#pragma comment(lib, "libvcruntime.lib")
-#endif
-#endif
+    #if (_MSC_VER >= 1900) //VS15, 17 etc
+        #ifdef _DEBUG
+            #pragma comment(lib, "vcruntimed.lib")
+            #pragma comment(lib, "ucrtd.lib")
+        #else
+            #pragma comment(lib, "libucrt.lib")
+            #pragma comment(lib, "libvcruntime.lib")
+        #endif
+    #endif
 #endif

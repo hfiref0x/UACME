@@ -145,7 +145,7 @@ BOOL ucmSPPLUAObjectMethod(
             + _strlen(RUNDLL_EXE_CMD)\
             + _strlen(FUBUKI_DEFAULT_ENTRYPOINTW)) * sizeof(WCHAR);
 
-        lpszCommandLine = supHeapAlloc(memIO);
+        lpszCommandLine = (LPWSTR)supHeapAlloc(memIO);
         if (lpszCommandLine) {
 
             _strcpy(lpszCommandLine, g_ctx.szSystemDirectory);

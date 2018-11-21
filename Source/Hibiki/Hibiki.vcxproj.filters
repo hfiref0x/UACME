@@ -77,9 +77,6 @@
     <ClInclude Include="..\Shared\util.h">
       <Filter>shared</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shared\lsa.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Shared\shared.h">
       <Filter>shared</Filter>
     </ClInclude>

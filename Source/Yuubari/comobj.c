@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMOBJ.C
 *
-*  VERSION:     1.32
+*  VERSION:     1.35
 *
-*  DATE:        25 Aug 2018
+*  DATE:        19 Nov 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -82,7 +82,7 @@ VOID CopQuerySubKey(
                 dwDataSize = 0;
                 t = supReadKeyString(RootKey, TEXT("LocalizedString"), &dwDataSize);
                 if (t) {
-                    lpLocalizedString = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)MAX_PATH * 2);
+                    lpLocalizedString = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)MAX_PATH * 2);
                     if (lpLocalizedString) {
                         SHLoadIndirectString(t, lpLocalizedString, MAX_PATH, NULL);
                     }
@@ -93,7 +93,7 @@ VOID CopQuerySubKey(
                 dwDataSize = 0;
                 t = supReadKeyString(RootKey, TEXT("AppId"), &dwDataSize);
                 if (t) {
-                    lpAppId = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)dwDataSize + 32);
+                    lpAppId = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)dwDataSize + 32);
                     if (lpAppId) {
                         _strcpy(lpAppId, TEXT("AppId\\"));
                         _strcat(lpAppId, t);
@@ -148,7 +148,7 @@ VOID CopQuerySubKey(
                     Data.LocalizedString = TEXT("undefined");
                 }
 
-                Data.Key = supQueryKeyName(RootKey, NULL);
+                Data.Key = (LPWSTR)supQueryKeyName(RootKey, NULL);
                 Data.DataType = UacCOMDataCommonType;
                 OutputCallback(&Data);
 
@@ -198,7 +198,7 @@ VOID CopEnumSubKey(
 
     do {
         dwcbName = 32 * 1024;
-        lpKeyName = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwcbName);
+        lpKeyName = (LPTSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwcbName);
         if (lpKeyName == NULL)
             break;
 
@@ -310,7 +310,7 @@ BOOL CopEnumInterfaces(
             __leave;
 
         cMaxLength = (DWORD)((cMaxLength + 1) * sizeof(WCHAR));
-        lpKeyName = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
+        lpKeyName = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
         if (lpKeyName == NULL)
             __leave;
 
@@ -396,7 +396,7 @@ VOID CopScanAutoApprovalList(
             __leave;
 
         cMaxLength = (DWORD)((cMaxLength + 1) * sizeof(WCHAR));
-        lpValue = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
+        lpValue = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
         if (lpValue == NULL)
             __leave;
 

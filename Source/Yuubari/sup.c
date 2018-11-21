@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2018
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.0F
+*  VERSION:     1.35
 *
-*  DATE:        13 Feb 2017
+*  DATE:        19 Nov 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -33,7 +33,7 @@ BOOL supIsCorImageFile(
     IMAGE_COR20_HEADER *CliHeader;
 
     if (ImageBase) {
-        CliHeader = RtlImageDirectoryEntryToData(ImageBase, TRUE,
+        CliHeader = (IMAGE_COR20_HEADER*)RtlImageDirectoryEntryToData(ImageBase, TRUE,
             IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &sz);
 
         if ((CliHeader == NULL) || (sz < sizeof(IMAGE_COR20_HEADER)))
@@ -66,7 +66,7 @@ LPWSTR supReadKeyString(
     lRet = RegQueryValueEx(hKey, KeyValue, NULL,
         NULL, NULL, pdwDataSize);
     if (lRet == ERROR_SUCCESS) {
-        lpString = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *pdwDataSize);
+        lpString = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *pdwDataSize);
         if (lpString != NULL) {
             lRet = RegQueryValueEx(hKey, KeyValue, NULL,
                 NULL, (LPBYTE)lpString, pdwDataSize);
@@ -172,7 +172,7 @@ PVOID supFindPattern(
     BufferSize -= PatternSize;
 
     do {
-        p = memchr(p, Pattern[0], BufferSize - (p - Buffer));
+        p = (PBYTE)memchr(p, Pattern[0], BufferSize - (p - Buffer));
         if (p == NULL)
             break;
 

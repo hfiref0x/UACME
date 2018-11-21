@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.10
 *
-*  DATE:        25 Aug 2018
+*  DATE:        18 Nov 2018
 *
 *  Program entry point.
 *
@@ -22,7 +22,7 @@
 #pragma comment(lib, "opengl32.lib")
 #pragma comment(lib, "comctl32.lib")
 
-UACMECONTEXT g_ctx = { FALSE, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, {0}, {0}, {0}, {0}, {0} };
+UACMECONTEXT g_ctx;
 TEB_ACTIVE_FRAME_CONTEXT g_fctx = { 0, "(=^..^=)" };
 
 static pfnDecompressPayload pDecryptPayload = NULL;
@@ -100,7 +100,7 @@ UINT ucmInit(
         PFD_MAIN_PLANE, 0, 0, 0, 0
     };
 
-    *Out = 0;
+    *Out = (UCM_METHOD)UacMethodInvalid;
 
     do {
 
@@ -159,12 +159,12 @@ UINT ucmInit(
                 supDebugPrint(L"wdLoadClient", Status);
             }
 #else
-            g_ctx.hMpClient = wdLoadClient(g_ctx.IsWow64, NULL);
+            g_ctx.hMpClient = (HINSTANCE)wdLoadClient(g_ctx.IsWow64, NULL);
 #endif
         }
 
         g_ctx.AkagiFlag = AKAGI_FLAG_KILO;
-        inst = NtCurrentPeb()->ImageBaseAddress;
+        inst = (HINSTANCE)NtCurrentPeb()->ImageBaseAddress;
 
         bytesIO = 0;
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
@@ -172,7 +172,7 @@ UINT ucmInit(
         if (bytesIO == 0)
             return ERROR_BAD_ARGUMENTS;
 
-        Method = strtoul(szBuffer);
+        Method = (UCM_METHOD)strtoul(szBuffer);
         *Out = Method;
 
 #ifndef _DEBUG
@@ -347,7 +347,7 @@ UINT ucmInit(
 UINT ucmMain()
 {
     UINT        uResult;
-    UCM_METHOD  Method = 0;
+    UCM_METHOD  Method = UacMethodInvalid;
 
     wdCheckEmulatedVFS();
 
@@ -401,7 +401,7 @@ INT ucmSehHandler(
         }
         if (uctx) {
             if (uctx->ucmMain) {
-                uctx->ucmMain = supDecodePointer(uctx->ucmMain);
+                uctx->ucmMain = (pfnEntryPoint)supDecodePointer(uctx->ucmMain);
                 uctx->ReturnedResult = uctx->ucmMain();
             }
         }

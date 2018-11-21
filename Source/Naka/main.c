@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.10
 *
-*  DATE:        03 Sep 2018
+*  DATE:        18 Nov 2018
 *
 *  Naka, support payload compressor.
 *
@@ -70,7 +70,7 @@ BOOL CreateSha256HashForBuffer(
             break;
         }
 
-        pbKeyObject = HeapAlloc(
+        pbKeyObject = (PBYTE)HeapAlloc(
             hHeap,
             HEAP_ZERO_MEMORY,
             cbKeyObject);
@@ -93,7 +93,7 @@ BOOL CreateSha256HashForBuffer(
             break;
         }
 
-        _pbHash = HeapAlloc(
+        _pbHash = (PBYTE)HeapAlloc(
             hHeap,
             HEAP_ZERO_MEMORY,
             _cbHash);
@@ -262,7 +262,7 @@ BOOL DecryptBuffer(
             break;
         }
 
-        pbKeyObject = HeapAlloc(heapCNG, HEAP_ZERO_MEMORY, cbKeyObject);
+        pbKeyObject = (PBYTE)HeapAlloc(heapCNG, HEAP_ZERO_MEMORY, cbKeyObject);
         if (pbKeyObject == NULL)
             break;
 
@@ -309,7 +309,7 @@ BOOL DecryptBuffer(
             break;
         }
 
-        pbCipherData = HeapAlloc(
+        pbCipherData = (PBYTE)HeapAlloc(
             GetProcessHeap(),
             HEAP_ZERO_MEMORY,
             cbCipherData);
@@ -417,7 +417,7 @@ BOOL EncryptBuffer(
             break;
         }
 
-        pbObject = HeapAlloc(heapCNG, HEAP_ZERO_MEMORY, cbObject);
+        pbObject = (PBYTE)HeapAlloc(heapCNG, HEAP_ZERO_MEMORY, cbObject);
         if (pbObject == NULL)
             break;
 
@@ -483,7 +483,7 @@ BOOL EncryptBuffer(
             break;
         }
 
-        pbCipherData = HeapAlloc(
+        pbCipherData = (PBYTE)HeapAlloc(
             GetProcessHeap(),
             HEAP_ZERO_MEMORY,
             cbCipherData);
@@ -729,17 +729,17 @@ void DecompressContainerUnit(
 
     do {
         sz = (1 + _strlen(lpInputFile)) * sizeof(WCHAR);
-        NewName = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sz);
+        NewName = (LPWSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sz);
         if (NewName == NULL)
             break;
 
         FileSize.QuadPart = 0;
-        FileData = supReadBufferFromFile(lpInputFile, &FileSize);
+        FileData = (PUCHAR)supReadBufferFromFile(lpInputFile, &FileSize);
         if ((FileData == NULL) || (FileSize.QuadPart == 0))
             break;
 
         KeyFileSize.QuadPart = 0;
-        pbKeyBlob = supReadBufferFromFile(lpKeyFile, &KeyFileSize);
+        pbKeyBlob = (PBYTE)supReadBufferFromFile(lpKeyFile, &KeyFileSize);
         if ((pbKeyBlob == NULL) || (KeyFileSize.QuadPart == 0))
             break;
 
@@ -840,18 +840,18 @@ void CreateContainerPackedUnit(
         RtlSecureZeroMemory(&d_out, sizeof(DELTA_OUTPUT));
 
         sz = (1 + _strlen(lpInputFile)) * sizeof(WCHAR);
-        NewName = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sz);
+        NewName = (LPWSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sz);
         if (NewName == NULL)
             break;
 
 #ifdef _DEBUG
-        KeyName = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sz);
+        KeyName = (LPWSTR)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sz);
         if (KeyName == NULL)
             break;
 #endif
 
         FileSize.QuadPart = 0;
-        FileData = supReadBufferFromFile(lpInputFile, &FileSize);
+        FileData = (PUCHAR)supReadBufferFromFile(lpInputFile, &FileSize);
         if ((FileData == NULL) || (FileSize.QuadPart == 0))
             break;
 
@@ -923,7 +923,7 @@ void CreateContainerPackedUnit(
         RtlSecureZeroMemory(&bIV, sizeof(bIV));
 
         if (!EncryptBuffer(
-            d_out.lpStart,
+            (PBYTE)d_out.lpStart,
             (DWORD)d_out.uSize,
             (PBYTE)&bIV,
             pbHash,
@@ -1027,7 +1027,7 @@ VOID EncodeBuffer(
 
     k = AKAGI_XOR_KEY;
     c = BufferSize;
-    ptr = Buffer;
+    ptr = (PUCHAR)Buffer;
 
     do {
         *ptr ^= k;
@@ -1063,7 +1063,7 @@ BOOL ProcessUnit(
     PWCHAR pBuffer;
     LARGE_INTEGER fs;
 
-    pBuffer = supReadBufferFromFile(UnitKeyName, &fs);
+    pBuffer = (PWCHAR)supReadBufferFromFile(UnitKeyName, &fs);
     if (pBuffer) {
         if (fs.LowPart != UACME_KEY_SIZE) {
 

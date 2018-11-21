@@ -4,9 +4,9 @@
 *
 *  TITLE:       WINDEFEND.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.10
 *
-*  DATE:        02 Sep 2018
+*  DATE:        18 Nov 2018
 *
 *  MSE / Windows Defender anti-emulation part header file.
 *

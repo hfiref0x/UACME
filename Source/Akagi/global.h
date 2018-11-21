@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        12 Nov 2018
+*  DATE:        18 Nov 2018
 *
 *  Common header file for the program support routines.
 *
@@ -68,7 +68,6 @@
 #include "shared\cmdline.h"
 #include "shared\_filename.h"
 #include "shared\ldr.h"
-#include "shared\lsa.h"
 #include "shared\windefend.h"
 #include "shared\consts.h"
 #include "sup.h"

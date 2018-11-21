@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        11 Nov 2018
+*  DATE:        18 Nov 2018
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -74,6 +74,8 @@ typedef enum _UCM_METHOD {
     UacMethodDirectoryMock, //+
     UacMethodMax
 } UCM_METHOD;
+
+#define UacMethodInvalid UacMethodTest
 
 #define UCM_DISPATCH_ENTRY_MAX UacMethodMax
 

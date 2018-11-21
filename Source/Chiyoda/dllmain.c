@@ -26,19 +26,7 @@
 #error ANSI build is not supported
 #endif
 
-//disable nonmeaningful warnings.
-#pragma warning(push)
-#pragma warning(disable: 4005 4100 4201) 
-
-#include <windows.h>
-#include <ntstatus.h>
-#include "shared\ntos.h"
-#include "shared\minirtl.h"
-#include "shared\util.h"
-#include "shared\windefend.h"
-
-#pragma warning (pop)
-
+#include "shared\shared.h"
 #include "shared\libinc.h"
 
 #define LoadedMsg      L"Chiyoda lock and loaded"
