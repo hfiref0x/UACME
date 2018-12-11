@@ -108,7 +108,8 @@ BOOL ucmUninstallLauncherMethod(
                     (BYTE*)lpszExecutable,
                     (DWORD)cbData);
 
-                if (lResult == ERROR_SUCCESS) {
+                if (lResult == ERROR_SUCCESS)
+                {
                     bResult = ucmMasqueradedAPRLaunchFile(szGuid);
                 }
 
