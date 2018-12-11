@@ -74,6 +74,7 @@ BOOL ucmUninstallLauncherMethod(
     HRESULT     hr_init;
     SIZE_T      cbData;
     HKEY        hKey = NULL;
+    LRESULT	    lResult;
     GUID        guid;
     WCHAR       szKeyName[MAX_PATH], szGuid[64];
 
@@ -85,7 +86,7 @@ BOOL ucmUninstallLauncherMethod(
         if (StringFromGUID2(&guid, szGuid, sizeof(szGuid) / sizeof(WCHAR))) {
 
             _strcat(szKeyName, szGuid);
-            if (RegCreateKeyEx(
+            lResult = RegCreateKeyEx(
                 HKEY_CURRENT_USER,
                 szKeyName,
                 0,
@@ -94,17 +95,20 @@ BOOL ucmUninstallLauncherMethod(
                 MAXIMUM_ALLOWED,
                 NULL,
                 &hKey,
-                NULL))
+                NULL);
+
+            if (lResult == ERROR_SUCCESS)
             {
                 cbData = (1 + _strlen(lpszExecutable)) * sizeof(WCHAR);
-                if (RegSetValueEx(
+                lResult = RegSetValueEx(
                     hKey,
                     T_UNINSTALL_STRING,
                     0,
                     REG_SZ,
                     (BYTE*)lpszExecutable,
-                    (DWORD)cbData))
-                {
+                    (DWORD)cbData);
+
+                if (lResult == ERROR_SUCCESS) {
                     bResult = ucmMasqueradedAPRLaunchFile(szGuid);
                 }
 
