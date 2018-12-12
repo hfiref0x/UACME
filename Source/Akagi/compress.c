@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.10
 *
-*  DATE:        18 Nov 2018
+*  DATE:        21 Nov 2018
 *
 *  Compression support.
 *
@@ -40,8 +40,9 @@ typedef struct _DCK_HEADER {
 *
 */
 VOID EncodeBuffer(
-    PVOID Buffer,
-    ULONG BufferSize
+    _In_ PVOID Buffer,
+    _In_ ULONG BufferSize,
+    _In_ ULONG Key
 )
 {
     ULONG k, c;
@@ -50,7 +51,7 @@ VOID EncodeBuffer(
     if ((Buffer == NULL) || (BufferSize == 0))
         return;
 
-    k = AKAGI_XOR_KEY;
+    k = Key;
     c = BufferSize;
     ptr = (PUCHAR)Buffer;
 
@@ -89,7 +90,7 @@ PVOID SelectSecretFromBlob(
     }
 
     RtlCopyMemory(P, g_bSecrets, c);
-    EncodeBuffer(P, c);
+    EncodeBuffer(P, c, AKAGI_XOR_KEY);
 
     c = sizeof(g_bSecrets) / sizeof(DCK_HEADER);
     for (i = 0; i < c; i++) {
@@ -715,8 +716,10 @@ BOOL ProcessFileDCS(
     PDCS_HEADER FileHeader = (PDCS_HEADER)SourceFile;
     PDCS_BLOCK Block;
 
+    SIZE_T BytesRead;
+
     DWORD NumberOfBlocks = 0;
-    DWORD BytesRead, BytesDecompressed, NextOffset;
+    DWORD BytesDecompressed, NextOffset;
 
     if ((SourceFile == NULL) ||
         (OutputFileBuffer == NULL) ||

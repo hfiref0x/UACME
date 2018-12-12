@@ -4,9 +4,9 @@
 *
 *  TITLE:       WUSA.C
 *
-*  VERSION:     3.10
+*  VERSION:     3.11
 *
-*  DATE:        19 Nov 2018
+*  DATE:        23 Nov 2018
 *
 *  Windows Update Standalone Installer (WUSA) based routines.
 *
@@ -41,7 +41,7 @@ BOOL ucmWusaExtractPackage(
         return FALSE;
 
     RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
-    _strcpy(szMsuFileName, g_ctx.szTempDirectory);
+    _strcpy(szMsuFileName, g_ctx->szTempDirectory);
     _strcat(szMsuFileName, ELLOCNAK_MSU);
 
     Size = ((1 + _strlen(lpTargetDirectory) +
@@ -97,7 +97,7 @@ BOOL ucmCreateCabinetForSingleFile(
 
         //build cabinet
         RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
-        _strcpy(szMsuFileName, g_ctx.szTempDirectory);
+        _strcpy(szMsuFileName, g_ctx->szTempDirectory);
         _strcat(szMsuFileName, ELLOCNAK_MSU);
 
         Cabinet = cabCreate(szMsuFileName);
@@ -136,7 +136,7 @@ VOID ucmWusaCabinetCleanup(
     WCHAR    szMsuFileName[MAX_PATH * 2];
 
     RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
-    _strcpy(szMsuFileName, g_ctx.szTempDirectory);
+    _strcpy(szMsuFileName, g_ctx->szTempDirectory);
     _strcat(szMsuFileName, ELLOCNAK_MSU);
     DeleteFile(szMsuFileName);
 }
@@ -164,12 +164,12 @@ DWORD ucmxInvokeWusaThread(
 
     RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
 
-    _strcpy(szProcess, g_ctx.szSystemDirectory);
+    _strcpy(szProcess, g_ctx->szSystemDirectory);
     _strcat(szProcess, WUSA_EXE);
 
     RtlSecureZeroMemory(szParameters, sizeof(szParameters));
     _strcpy(szParameters, TEXT(" /quiet "));
-    _strcat(szParameters, g_ctx.szTempDirectory);
+    _strcat(szParameters, g_ctx->szTempDirectory);
     _strcat(szParameters, ELLOCNAK_MSU);
 
     shinfo.cbSize = sizeof(shinfo);
@@ -239,7 +239,7 @@ DWORD ucmxDirectoryWatchdogThread(
         szBuffer[1] = L'?';
         szBuffer[2] = L'?';
         szBuffer[3] = L'\\';
-        _strncpy(&szBuffer[4], MAX_PATH, g_ctx.szSystemDirectory, 3);
+        _strncpy(&szBuffer[4], MAX_PATH, g_ctx->szSystemDirectory, 3);
 
         //
         // Open directory for change notification.

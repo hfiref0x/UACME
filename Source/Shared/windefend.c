@@ -4,9 +4,9 @@
 *
 *  TITLE:       WINDEFEND.C
 *
-*  VERSION:     3.10
+*  VERSION:     3.11
 *
-*  DATE:        18 Nov 2018
+*  DATE:        23 Nov 2018
 *
 *  MSE / Windows Defender anti-emulation part.
 *
@@ -426,6 +426,37 @@ NTSTATUS wdIsEmulatorPresent(
     }
 
     return STATUS_NOT_SUPPORTED;
+}
+
+/*
+* wdIsEmulatorPresent2
+*
+* Purpose:
+*
+* Detect MS emulator state 2.
+*
+* Microsoft AV defines virtual environment dlls loaded in runtime from VDM files.
+* These fake libraries implement additional detection layer and come with a lot of
+* predefined values.
+*
+*/
+BOOL wdIsEmulatorPresent2(
+    VOID)
+{
+    BOOL bResult = FALSE;
+    HANDLE hProcess = NULL;
+
+    hProcess = OpenProcess(
+        PROCESS_QUERY_INFORMATION,
+        FALSE,
+        GetCurrentProcessId());
+
+    if (hProcess) {
+        bResult = ((ULONG_PTR)hProcess == 0x1234);
+        CloseHandle(hProcess);
+    }
+
+    return bResult;
 }
 
 /*

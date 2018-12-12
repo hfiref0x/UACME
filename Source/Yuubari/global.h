@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     1.33
+*  VERSION:     1.35
 *
-*  DATE:        11 Oct 2018
+*  DATE:        21 Nov 2018
 *
 *  Common header file for the program support routines.
 *
@@ -26,13 +26,13 @@
 
 //disable nonmeaningful warnings.
 #pragma warning(disable: 28278) // Function name appears with no prototype in scope
-#pragma warning(disable: 4005) // macro redefinition
-#pragma warning(disable: 4055) // %s : from data pointer %s to function pointer %s
+#pragma warning(disable: 4005)  // macro redefinition
+#pragma warning(disable: 4055)  // %s : from data pointer %s to function pointer %s
 #pragma warning(disable: 4091)  // 'typedef ': ignored on left of '' when no variable is declared
-#pragma warning(disable: 4152) // nonstandard extension, function/data pointer conversion in expression
-#pragma warning(disable: 4201) // nonstandard extension used : nameless struct/union
-#pragma warning(disable: 6102) // Using %s from failed function call at line %u
-#pragma warning(disable: 6320) // exception-filter expression is the constant EXCEPTION_EXECUTE_HANDLER
+#pragma warning(disable: 4152)  // nonstandard extension, function/data pointer conversion in expression
+#pragma warning(disable: 4201)  // nonstandard extension used : nameless struct/union
+#pragma warning(disable: 6102)  // Using %s from failed function call at line %u
+#pragma warning(disable: 6320)  // exception-filter expression is the constant EXCEPTION_EXECUTE_HANDLER
 
 #include <Windows.h>
 #include <ntstatus.h>

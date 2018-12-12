@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMSUP.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.11
 *
-*  DATE:        26 Aug 2018
+*  DATE:        23 Nov 2018
 *
 *  IFileOperation based routines.
 *
@@ -157,7 +157,7 @@ BOOL ucmMasqueradedRenameElementCOM(
 
         if (S_OK != FileOperation->lpVtbl->SetOperationFlags(
             FileOperation,
-            g_ctx.IFileOperationFlags))
+            g_ctx->IFileOperationFlags))
         {
             break;
         }
@@ -247,7 +247,7 @@ BOOL ucmMasqueradedCreateSubDirectoryCOM(
 
         if (S_OK != FileOperation->lpVtbl->SetOperationFlags(
             FileOperation,
-            g_ctx.IFileOperationFlags))
+            g_ctx->IFileOperationFlags))
         {
             break;
         }
@@ -340,7 +340,7 @@ BOOL ucmMasqueradedMoveCopyFileCOM(
 
         if (S_OK != FileOperation->lpVtbl->SetOperationFlags(
             FileOperation,
-            g_ctx.IFileOperationFlags))
+            g_ctx->IFileOperationFlags))
         {
             break;
         }

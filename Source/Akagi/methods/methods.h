@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     3.10
+*  VERSION:     3.11
 *
-*  DATE:        18 Nov 2018
+*  DATE:        23 Nov 2018
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -19,63 +19,62 @@
 #pragma once
 
 typedef enum _UCM_METHOD {
-    UacMethodTest = 0,      //+
-    UacMethodSysprep1 = 1,  //+
-    UacMethodSysprep2,      //+
-    UacMethodOobe,          //+
-    UacMethodRedirectExe,   //+
-    UacMethodSimda,         //+
-    UacMethodCarberp1,      //+
-    UacMethodCarberp2,      //+
-    UacMethodTilon,         //+
-    UacMethodAVrf,          //+
-    UacMethodWinsat,        //+
-    UacMethodShimPatch,     //+
-    UacMethodSysprep3,      //+
-    UacMethodMMC1,          //+
-    UacMethodSirefef,       //+
-    UacMethodGeneric,       //+
-    UacMethodGWX,           //+
-    UacMethodSysprep4,      //+
-    UacMethodManifest,      //+
-    UacMethodInetMgr,       //+
-    UacMethodMMC2,          //+
-    UacMethodSXS,           //+
-    UacMethodSXSConsent,    //+
-    UacMethodDISM,          //+
-    UacMethodComet,         //+
-    UacMethodEnigma0x3,     //+
-    UacMethodEnigma0x3_2,   //+
-    UacMethodExpLife,       //+
-    UacMethodSandworm,      //+
-    UacMethodEnigma0x3_3,   //+
-    UacMethodWow64Logger,   //+
-    UacMethodEnigma0x3_4,   //+
-    UacMethodUiAccess,      //+
-    UacMethodMsSettings,    //+
-    UacMethodTyranid,       //+
-    UacMethodTokenMod,      //+
-    UacMethodJunction,      //+
-    UacMethodSXSDccw,       //+
-    UacMethodHakril,        //+
-    UacMethodCorProfiler,   //+
-    UacMethodCOMHandlers,   //+
-    UacMethodCMLuaUtil,     //+
-    UacMethodFwCplLua,      //+
-    UacMethodDccwCOM,       //+
-    UacMethodVolatileEnv,   //+
-    UacMethodSluiHijack,    //+
-    UacMethodBitlockerRC,   //+
-    UacMethodCOMHandlers2,  //+
-    UacMethodSPPLUAObject,  //+
-    UacMethodCreateNewLink, //+
-    UacMethodDateTimeWriter,//+
-    UacMethodAcCplAdmin,    //+
-    UacMethodDirectoryMock, //+
-    UacMethodMax
+    UacMethodTest = 0,          //+
+    UacMethodSysprep1 = 1,      //+
+    UacMethodSysprep2,          //+
+    UacMethodOobe,              //+
+    UacMethodRedirectExe,       //+
+    UacMethodSimda,             //+
+    UacMethodCarberp1,          //+
+    UacMethodCarberp2,          //+
+    UacMethodTilon,             //+
+    UacMethodAVrf,              //+
+    UacMethodWinsat,            //+
+    UacMethodShimPatch,         //+
+    UacMethodSysprep3,          //+
+    UacMethodMMC1,              //+
+    UacMethodSirefef,           //+
+    UacMethodGeneric,           //+
+    UacMethodGWX,               //+
+    UacMethodSysprep4,          //+
+    UacMethodManifest,          //+
+    UacMethodInetMgr,           //+
+    UacMethodMMC2,              //+
+    UacMethodSXS,               //+
+    UacMethodSXSConsent,        //+
+    UacMethodDISM,              //+
+    UacMethodComet,             //+
+    UacMethodEnigma0x3,         //+
+    UacMethodEnigma0x3_2,       //+
+    UacMethodExpLife,           //+
+    UacMethodSandworm,          //+
+    UacMethodEnigma0x3_3,       //+
+    UacMethodWow64Logger,       //+
+    UacMethodEnigma0x3_4,       //+
+    UacMethodUiAccess,          //+
+    UacMethodMsSettings,        //+
+    UacMethodTyranid,           //+
+    UacMethodTokenMod,          //+
+    UacMethodJunction,          //+
+    UacMethodSXSDccw,           //+
+    UacMethodHakril,            //+
+    UacMethodCorProfiler,       //+
+    UacMethodCOMHandlers,       //+
+    UacMethodCMLuaUtil,         //+
+    UacMethodFwCplLua,          //+
+    UacMethodDccwCOM,           //+
+    UacMethodVolatileEnv,       //+
+    UacMethodSluiHijack,        //+
+    UacMethodBitlockerRC,       //+
+    UacMethodCOMHandlers2,      //+
+    UacMethodSPPLUAObject,      //+
+    UacMethodCreateNewLink,     //+
+    UacMethodDateTimeWriter,    //+
+    UacMethodAcCplAdmin,        //+
+    UacMethodDirectoryMock,     //+
+    UacMethodMax,
+    UacMethodInvalid = 0xabcdef
 } UCM_METHOD;
-
-#define UacMethodInvalid UacMethodTest
 
 #define UCM_DISPATCH_ENTRY_MAX UacMethodMax
 

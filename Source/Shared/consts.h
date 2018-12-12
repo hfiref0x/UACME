@@ -4,11 +4,14 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.10
+*  VERSION:     3.11
 *
-*  DATE:        13 Nov 2018
+*  DATE:        08 Dec 2018
 *
 *  Global consts definition file.
+*
+*  If you are looking for unique enough pattern look for values/regions marked as "PYSH".
+*  Get rid of these values, or customize them otherwise.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -19,12 +22,7 @@
 #pragma once
 
 #define AKAGI_XOR_KEY               'naka'
-#define FUBUKI_EXT_ENTRYPOINT       "_FubukiProc1"
-#define FUBUKI_DEFAULT_ENTRYPOINT   "_FubukiProc3"
-#define FUBUKI_DEFAULT_ENTRYPOINTW  L"_FubukiProc3"
-#define CHIYODA_EXT_ENTRYPOINT      "ChiyodaMain"
-
-#define T_USAGE_HELP                L"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
+#define AKAGI_XOR_KEY2              ' pta'
 
 #define T_MACHINE                   L"MACHINE\\"
 
@@ -46,8 +44,8 @@
 
 #define T_FILE_PREP                 L"file://"
 
-#define T_SCHTASKS_CMD              L"/run /tn \"\\Microsoft\\Windows\\DiskCleanup\\SilentCleanup\" /i"
-#define T_CLSID_MYCOMPUTER_COMET    L"\\Comet.{20D04FE0-3AEA-1069-A2D8-08002B30309D}"
+#define T_SCHTASKS_CMD              L"/run /tn \"\\Microsoft\\Windows\\DiskCleanup\\SilentCleanup\" /i" //PYSH
+#define T_CLSID_MYCOMPUTER_COMET    L"\\Comet.{20D04FE0-3AEA-1069-A2D8-08002B30309D}" //PYSH
 #define T_SDDL_ALL_FOR_EVERYONE     L"D:(A;;GA;;;WD)"
 #define T_PROGRAMDATA               L"ProgramData"
 #define T_WINDIR                    L"windir"
@@ -58,36 +56,40 @@
 
 #define T_UNINSTALL_STRING          L"UninstallString"
 
-#define BINARYPATH_TAG              L"binarypatch01"
+#define BINARYPATH_TAG              L"binarypatch01" //PYSH
 
 #define MSFT_FULL                   L"Microsoft Corporation"
 #define MSFT_MIN                    L"Microsoft"
 
-#define INAZUMA_REV                 L"amuzani"
+#define INAZUMA_REV                 L"amuzani" //PYSH
 
 #define MANIFEST_EXT                L".manifest"
-#define ELLOCNAK_MSU                L"ellocnak.msu"
+#define ELLOCNAK_MSU                L"update.msu" //PYSH
 
 #define OBJECT_LOCALSYSTEM          L"LocalSystem"
 #define OBJECT_LOCALSERVICE         L"NT AUTHORITY\\LocalService"
 
-#define BDESCRIPTOR_NAME            L"ArisuTsuberuku"
-#define AKAGI_SHARED_SECTION        L"AkagiSharedSection"
-#define AKAGI_COMPLETION_EVENT      L"AkagiCompletionEvent"
+#define BDESCRIPTOR_NAME            L"ArisuTsuberuku"  //PYSH
+#define AKAGI_SHARED_SECTION        L"AkagiSharedSection" //PYSH
+#define AKAGI_COMPLETION_EVENT      L"AkagiCompletionEvent" //PYSH
 
-#define SIGNAL_OBJECT               L"\\BaseNamedObjects\\CZ2128"
+#define SIGNAL_OBJECT               L"\\BaseNamedObjects\\CZ2128" //PYSH
 
 //
-// Unit names.
+// Unit names and entrypoints.
 //
+#pragma region PYSH
 #define FUBUKI_DLL                  L"Fubuki.dll"
 #define FUJINAMI_DLL                L"Fujinami.dll"
 #define HIBIKI_DLL                  L"Hibiki.dll"
 #define KUMA_DLL                    L"lzx32.dll"
-
-#define KAMIKAZE_MSC                L"kmkze.msc"
-
+#define KAMIKAZE_MSC                L"kmkze.msc" 
 #define FUBUKI_EXE                  L"Fubuki.exe"
+#define FUBUKI_EXT_ENTRYPOINT       "_FubukiProc1"
+#define FUBUKI_DEFAULT_ENTRYPOINT   "_FubukiProc3"
+#define FUBUKI_DEFAULT_ENTRYPOINTW  L"_FubukiProc3"
+#define CHIYODA_EXT_ENTRYPOINT      "ChiyodaMain"
+#pragma endregion
 
 //
 // Windows dll names.
@@ -195,13 +197,17 @@
 #define EVENTVWR_MSC                L"eventvwr.msc"
 #define RSOP_MSC                    L"rsop.msc"
 
-#define PACKAGE_XML                 L"ellocnak.xml"
-#define PACKAGE_INF                 L"ellocnak.inf"
+#define PACKAGE_XML                 L"oemsetup.xml"
+#define PACKAGE_INF                 L"oemsetup.inf"
 
 #define RUNDLL_EXE_CMD              L"rundll32.exe " //with space as part of command
 
 #define REG_HKCU                    L"HKEY_CURRENT_USER"
 
+//
+// Units specific values
+//
+#pragma region PYSH
 #ifdef _WIN64
 #define KONGOU_CD                   L"Kongou64.cd"
 #else
@@ -213,17 +219,22 @@
 
 #define T_KUREND                    L"KureND"
 #define T_SYMLINK                   L"\\Software\\KureND"
+#pragma endregion
 
 #define LOCAL_SXS                   L".local"
-#define FAKE_LOCAL_SXS              L".hawawa"
+#define FAKE_LOCAL_SXS              L".hawawa" //PYSH
 #define INETMGR_SXS                 L"microsoft-windows-iis-managementconsole"
 #define COMCTL32_SXS                L"microsoft.windows.common-controls"
 #define GDIPLUS_SXS                 L"microsoft.windows.gdiplus"
 
-#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.0.1811"
+#pragma region PYSH
+#define T_USAGE_HELP                L"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
+#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.1.1812"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
+#pragma endregion
+
 #define T_VOLATILE_ENV              L"Volatile Environment"
 #define T_SYSTEMROOT_VAR            L"SYSTEMROOT"
 #define T_REGISTRY_PREP             L"\\REGISTRY\\" //end slash included
@@ -295,5 +306,5 @@
 #define T_CLSID_EVENTVWR_BYPASS              L"{0A29FF9E-7F9C-4437-8B11-F424491E3931}"
 #define T_MMCFrameworkSnapInFactory          L"{D5AB5662-131D-453D-88C8-9BBA87502ADE}"
 
-#define T_FUJINAMI_ASSEMBLY                  L"Fujinami, Version=0.0.0.0, Culture=neutral"
-#define T_FUJINAMI_CLASS                     L"Fujinami.EntryPoint"
+#define T_FUJINAMI_ASSEMBLY                  L"Fujinami, Version=0.0.0.0, Culture=neutral" //PYSH
+#define T_FUJINAMI_CLASS                     L"Fujinami.EntryPoint" //PYSH

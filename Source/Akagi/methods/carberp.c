@@ -4,9 +4,9 @@
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.11
 *
-*  DATE:        25 Aug 2018
+*  DATE:        23 Nov 2018
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -40,9 +40,9 @@ BOOL ucmWusaMethod(
     WCHAR  szTargetProcess[MAX_PATH * 2];
     WCHAR  szTargetDirectory[MAX_PATH * 2];
 
-    _strcpy(szTargetProcess, g_ctx.szSystemDirectory);
-    _strcpy(szTargetDirectory, g_ctx.szSystemDirectory);
-    _strcpy(szSourceDll, g_ctx.szTempDirectory);
+    _strcpy(szTargetProcess, g_ctx->szSystemDirectory);
+    _strcpy(szTargetDirectory, g_ctx->szSystemDirectory);
+    _strcpy(szSourceDll, g_ctx->szTempDirectory);
 
     switch (Method) {
 

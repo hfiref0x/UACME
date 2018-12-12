@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENTRYPOINT.CS
 *
-*  VERSION:     3.10
+*  VERSION:     3.11
 *
-*  DATE:        13 Nov 2018
+*  DATE:        23 Nov 2018
 *
 *  Fujinami entrypoint.
 * 
@@ -149,8 +149,9 @@ namespace Fujinami
                             PayloadToExecute = SharedParams.szParameter;
                         }
 
-                        //Environment.ExpandEnvironmentVariables("%ComSpec%")
-
+                        //
+                        // If no parameter present - select default.
+                        //
                         if (PayloadToExecute == string.Empty)
                             PayloadToExecute = Environment.ExpandEnvironmentVariables("%ComSpec%");
 

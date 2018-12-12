@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.11
 *
-*  DATE:        25 Aug 2018
+*  DATE:        04 Dec 2018
 *
 *  Prototypes and definitions for compression.
 *
@@ -113,6 +113,11 @@ BOOL ProcessFileMZ(
     SIZE_T SourceFileSize,
     PVOID *OutputFileBuffer,
     PSIZE_T OutputFileBufferSize);
+
+VOID EncodeBuffer(
+    _In_ PVOID Buffer,
+    _In_ ULONG BufferSize,
+    _In_ ULONG Key);
 
 BOOL InitCabinetDecompressionAPI(
     VOID);

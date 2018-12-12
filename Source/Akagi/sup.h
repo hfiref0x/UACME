@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.10
+*  VERSION:     3.11
 *
-*  DATE:        13 Nov 2018
+*  DATE:        23 Nov 2018
 *
 *  Common header file for the program support routines.
 *
@@ -90,6 +90,12 @@ BOOL supWriteBufferToFile(
     _In_ PVOID Buffer,
     _In_ DWORD BufferSize);
 
+BOOL supDecodeAndWriteBufferToFile(
+    _In_ LPWSTR lpFileName,
+    _In_ CONST PVOID Buffer,
+    _In_ DWORD BufferSize,
+    _In_ ULONG Key);
+
 PBYTE supReadFileToBuffer(
     _In_ LPWSTR lpFileName,
     _Inout_opt_ LPDWORD lpBufferSize);
@@ -145,6 +151,7 @@ BOOLEAN supSetCheckSumForMappedFile(
     _In_ ULONG CheckSum);
 
 VOID ucmShowMessage(
+    _In_ BOOL OutputToDebugger,
     _In_ LPWSTR lpszMsg);
 
 INT ucmShowQuestion(
@@ -188,6 +195,11 @@ PVOID supVirtualAlloc(
 
 BOOL supVirtualFree(
     _In_ PVOID Memory,
+    _Out_opt_ NTSTATUS *Status);
+
+BOOL supSecureVirtualFree(
+    _In_ PVOID Memory,
+    _In_ SIZE_T MemorySize,
     _Out_opt_ NTSTATUS *Status);
 
 PVOID FORCEINLINE supHeapAlloc(
@@ -246,7 +258,7 @@ NTSTATUS supRegReadValue(
     _In_opt_ HANDLE hHeap);
 
 BOOL supQuerySystemRoot(
-    VOID);
+    _Inout_ PVOID Context);
 
 PVOID supGetSystemInfo(
     _In_ SYSTEM_INFORMATION_CLASS InfoClass);
@@ -262,11 +274,6 @@ NTSTATUS supRegSetValueIndirectHKCU(
 
 NTSTATUS supRemoveRegLinkHKCU(
     VOID);
-
-BOOL supExecuteWithDelay(
-    _In_ ULONG Milliseconds,
-    _In_opt_ PTIMER_APC_ROUTINE CompletionRoutine,
-    _In_opt_ PVOID CompletionParameter);
 
 BOOL supIsConsentApprovedInterface(
     _In_ LPWSTR InterfaceName,
@@ -302,10 +309,20 @@ NTSTATUS supCreateDirectory(
     _In_ ULONG DirectoryAttributes);
 
 BOOL supCreateSharedParametersBlock(
-    VOID);
+    _In_ PVOID ucmContext);
 
 VOID supDestroySharedParametersBlock(
-    VOID);
+    _In_ PVOID ucmContext);
+
+PVOID supCreateUacmeContext(
+    _In_ ULONG Method,
+    _In_reads_or_z_opt_(OptionalParameterLength) LPWSTR OptionalParameter,
+    _In_ ULONG OptionalParameterLength,
+    _In_ PVOID DecompressRoutine,
+    _In_ BOOL OutputToDebugger);
+
+VOID supDestroyUacmeContext(
+    _In_ PVOID Context);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

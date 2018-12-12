@@ -4,9 +4,9 @@
 *
 *  TITLE:       AIC.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.10
 *
-*  DATE:        25 Aug 2018
+*  DATE:        21 Nov 2018
 *
 *  Common header file for the AppInfo routines.
 *
@@ -23,6 +23,7 @@ typedef ULONG ELEVATION_REASON;
 ULONG_PTR AicFindLaunchAdminProcess(
     _In_ PULONG ErrorCode);
 
+_Success_(return != FALSE)
 BOOL AicSetRemoveFunctionBreakpoint(
     _In_ PVOID pfnTargetRoutine,
     _Inout_ BYTE *pbRestoreBuffer,

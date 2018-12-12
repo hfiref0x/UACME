@@ -4,9 +4,9 @@
 *
 *  TITLE:       AIC.C
 *
-*  VERSION:     3.10
+*  VERSION:     3.11
 *
-*  DATE:        11 Nov 2018
+*  DATE:        23 Nov 2018
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -41,7 +41,7 @@ unsigned char LaunchAdminProcessSignature14393[] = {
     0xEC, 0x20, 0x04, 0x00, 0x00
 };
 
-unsigned char LaunchAdminProcessSignature_15063_18272[] = {
+unsigned char LaunchAdminProcessSignature_15063_18282[] = {
     0x40, 0x53, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x81,
     0xEC, 0x20, 0x04, 0x00, 0x00
 };
@@ -63,7 +63,7 @@ ULONG_PTR AicFindLaunchAdminProcess(
     IMAGE_NT_HEADERS *NtHeaders;
     LPWSTR ScanModule = NULL;
 
-    switch (g_ctx.dwBuildNumber) {
+    switch (g_ctx->dwBuildNumber) {
 
     case 7600:
     case 7601:
@@ -97,15 +97,15 @@ ULONG_PTR AicFindLaunchAdminProcess(
     case 17134:
     case 17763:
     default:
-        Pattern = LaunchAdminProcessSignature_15063_18272;
-        PatternSize = sizeof(LaunchAdminProcessSignature_15063_18272);
+        Pattern = LaunchAdminProcessSignature_15063_18282;
+        PatternSize = sizeof(LaunchAdminProcessSignature_15063_18282);
         ScanModule = WINDOWS_STORAGE_DLL;
         break;
     }
     
     ScanBase = (PBYTE)GetModuleHandle(ScanModule);
     if (ScanBase == NULL) {
-        ScanBase = (PBYTE)LoadLibraryEx(ScanModule, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+        ScanBase = (PBYTE)LoadLibraryEx(ScanModule, NULL, 0); //is in \KnownDlls
     }
 
     if (ScanBase == NULL) {
@@ -152,7 +152,7 @@ BOOL AipWriteVirtualMemory(
 
     BaseAddress = ProcedureAddress;
     
-    RegionSize = ALIGN_UP(cbBuffer, PAGE_SIZE);
+    RegionSize = ALIGN_UP_BY(cbBuffer, PAGE_SIZE);
 
     status = NtProtectVirtualMemory(
         NtCurrentProcess(),
@@ -184,6 +184,7 @@ BOOL AipWriteVirtualMemory(
 * No sync.
 *
 */
+_Success_(return != FALSE)
 BOOL AicSetRemoveFunctionBreakpoint(
     _In_ PVOID pfnTargetRoutine,
     _Inout_ BYTE *pbRestoreBuffer,
