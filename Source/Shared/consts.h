@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2018
+*  (C) COPYRIGHT AUTHORS, 2015 - 2019
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.11
+*  VERSION:     3.13
 *
-*  DATE:        08 Dec 2018
+*  DATE:        25 Jan 2019
 *
 *  Global consts definition file.
 *
@@ -39,6 +39,7 @@
 #define T_MSC_SHELL                 L"Software\\Classes\\mscfile"
 #define T_EXEFILE_SHELL             L"Software\\Classes\\exefile"
 #define T_MSSETTINGS                L"Software\\Classes\\ms-settings"
+#define T_CLASSESFOLDER             L"Software\\Classes\\Folder"
 #define T_SHELL_OPEN_COMMAND        L"\\shell\\open\\command"
 #define T_SHELL_RUNAS_COMMAND       L"\\shell\\runas\\command" 
 
@@ -115,6 +116,7 @@
 #define PROVPROVIDER_DLL            L"ProvProvider.dll"
 #define SHCORE_DLL                  L"shcore.dll"
 #define SHELL32_DLL                 L"shell32.dll"
+#define SRRSTR_DLL                  L"srrstr.dll"
 #define SLC_DLL                     L"SLC.dll"
 #define UNBCL_DLL                   L"unbcl.dll"
 #define WBEMCOMN_DLL                L"wbemcomn.dll"
@@ -156,7 +158,8 @@
 #define SDBINST_EXE                 L"sdbinst.exe"
 #define SDCLT_EXE                   L"sdclt.exe"
 #define SLUI_EXE                    L"slui.exe"
-#define SYSPREP_EXE                 L"sysprep.exe" 
+#define SYSPREP_EXE                 L"sysprep.exe"
+#define SYSTEMROPERTIESADVANCED_EXE L"SystemPropertiesAdvanced.exe"
 #define TASKHOST_EXE                L"taskhost.exe"
 #define TPMINIT_EXE                 L"tpminit.exe"
 #define TZSYNC_EXE                  L"tzsync.exe"
@@ -229,7 +232,7 @@
 
 #pragma region PYSH
 #define T_USAGE_HELP                L"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
-#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.1.1812"
+#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.3.1901"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"

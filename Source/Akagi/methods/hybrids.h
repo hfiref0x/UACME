@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2018
+*  (C) COPYRIGHT AUTHORS, 2015 - 2019
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.13
 *
-*  DATE:        25 Aug 2018
+*  DATE:        25 Jan 2019
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -150,3 +150,7 @@ BOOL ucmDateTimeStateWriterMethod(
 
 BOOL ucmAcCplAdminMethod(
     _In_ LPWSTR lpszPayload);
+
+BOOL ucmEgre55Method(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);

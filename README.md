@@ -332,7 +332,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * AlwaysNotify compatible, see note
      * Fixed in: Windows 10 RS5 (17686)
         * How: ntoskrnl.exe->SeTokenCanImpersonate additional access token check added
-36. Author: Thomas Vanhoutte
+36. Author: Thomas Vanhoutte aka SandboxEscaper
      * Type: Race condition
      * Method: NTFS reparse point & Dll Hijack
      * Target(s): wusa.exe
@@ -485,10 +485,28 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -		
+53. Author: Emeric Nasi
+     * Type: Shell API
+     * Method: Registry key manipulation
+     * Target(s): \system32\sdclt.exe
+     * Component(s): Attacker defined
+     * Implementation: ucmSdcltDelegateExecuteCommandMethod
+     * Works from: Windows 10 (14393)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+54. Author: egre55
+     * Type: Dll Hijack
+     * Method: Dll path search abuse
+     * Target(s): \syswow64\SystemPropertiesAdvanced.exe and other SystemProperties*.exe
+     * Component(s): \AppData\Local\Microsoft\WindowsApps\srrstr.dll
+     * Implementation: ucmEgre55Method
+     * Works from: Windows 10 (14393)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -		
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;
-* Method (11) implemented in x86-32 version;
+* Method (11) (54) implemented only in x86-32 version;
 * Method (13) (19) (30) (38) (50) implemented only in x64 version;
 * Method (14) require process injection, wow64 unsupported, use x64 version of this tool;
 * Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone;
@@ -569,9 +587,11 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * Research on CMSTP.exe, https://msitpros.com/?p=3960
 * UAC bypass via elevated .NET applications, https://offsec.provadys.com/UAC-bypass-dotnet.html
 * UAC Bypass by Mocking Trusted Directories, https://medium.com/tenable-techblog/uac-bypass-by-mocking-trusted-directories-24a96675f6e
+* Yet another sdclt UAC bypass, http://blog.sevagas.com/?Yet-another-sdclt-UAC-bypass
+* UAC Bypass via SystemPropertiesAdvanced.exe and DLL Hijacking, https://egre55.github.io/system-properties-uac-bypass/
 
 # Authors
 
-(c) 2014 - 2018 UACMe Project
+(c) 2014 - 2019 UACMe Project
 
 [![HitCount](http://hits.dwyl.io/hfiref0x/uacme.svg)](http://hits.dwyl.io/hfiref0x/uacme)

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2017
+*  (C) COPYRIGHT AUTHORS, 2016 - 2019
 *
 *  TITLE:       ENIGMA0X3.H
 *
-*  VERSION:     2.85
+*  VERSION:     3.13
 *
-*  DATE:        01 Dec 2017
+*  DATE:        25 Jan 2019
 *
 *  Prototypes and definitions for Enigma0x3 autoelevation method.
 *
@@ -43,4 +43,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
     _In_ LPWSTR lpszPayload);
 
 BOOL ucmMsSettingsDelegateExecuteMethod(
+    _In_ LPWSTR lpszPayload);
+
+BOOL ucmSdcltDelegateExecuteCommandMethod(
     _In_ LPWSTR lpszPayload);

