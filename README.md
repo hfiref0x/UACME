@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/dvnyciarevyj3vuj?svg=true)](https://ci.appveyor.com/project/hfiref0x/uacme)
+
 # UACMe
 * Defeating Windows User Account Control by abusing built-in Windows AutoElevate backdoor.
 
