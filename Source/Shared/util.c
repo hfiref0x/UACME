@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     3.10
+*  VERSION:     3.15
 *
-*  DATE:        18 Nov 2018
+*  DATE:        15 Feb 2019
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -1851,4 +1851,87 @@ BOOL ucmQueryProcessTokenIL(
     if (hToken) NtClose(hToken);
 
     return bResult;
+}
+
+/*
+* ucmGetProcessElevationType
+*
+* Purpose:
+*
+* Returns process elevation type.
+*
+*/
+BOOL ucmGetProcessElevationType(
+    _In_opt_ HANDLE ProcessHandle,
+    _Out_ TOKEN_ELEVATION_TYPE *lpType
+)
+{
+    HANDLE hToken = NULL, processHandle = ProcessHandle;
+    NTSTATUS Status;
+    ULONG BytesRead = 0;
+    TOKEN_ELEVATION_TYPE TokenType = TokenElevationTypeDefault;
+
+    if (ProcessHandle == NULL) {
+        processHandle = GetCurrentProcess();
+    }
+
+    Status = NtOpenProcessToken(processHandle, TOKEN_QUERY, &hToken);
+    if (NT_SUCCESS(Status)) {
+
+        Status = NtQueryInformationToken(hToken, TokenElevationType, &TokenType,
+            sizeof(TOKEN_ELEVATION_TYPE), &BytesRead);
+
+        NtClose(hToken);
+    }
+
+    if (lpType)
+        *lpType = TokenType;
+
+    return (NT_SUCCESS(Status));
+}
+
+/*
+* ucmIsProcessElevated
+*
+* Purpose:
+*
+* Returns process elevation state.
+*
+*/
+NTSTATUS ucmIsProcessElevated(
+    _In_ ULONG ProcessId,
+    _Out_ PBOOL Elevated)
+{
+    NTSTATUS Status;
+    ULONG Dummy;
+    HANDLE ProcessHandle, TokenHandle;
+    CLIENT_ID ClientId;
+    TOKEN_ELEVATION TokenInfo;
+    OBJECT_ATTRIBUTES ObAttr = RTL_INIT_OBJECT_ATTRIBUTES(NULL, 0);
+
+    ClientId.UniqueProcess = UlongToHandle(ProcessId);
+    ClientId.UniqueThread = NULL;
+
+    if (Elevated) *Elevated = FALSE;
+
+    Status = NtOpenProcess(&ProcessHandle, MAXIMUM_ALLOWED, &ObAttr, &ClientId);
+    if (NT_SUCCESS(Status)) {
+
+        Status = NtOpenProcessToken(ProcessHandle, TOKEN_QUERY, &TokenHandle);
+        if (NT_SUCCESS(Status)) {
+
+            TokenInfo.TokenIsElevated = 0;
+            Status = NtQueryInformationToken(TokenHandle,
+                TokenElevation, &TokenInfo,
+                sizeof(TOKEN_ELEVATION), &Dummy);
+
+            if (NT_SUCCESS(Status)) {
+                if (Elevated) *Elevated = (TokenInfo.TokenIsElevated > 0);
+            }
+            NtClose(TokenHandle);
+        }
+        NtClose(ProcessHandle);
+    }
+
+    return Status;
 }

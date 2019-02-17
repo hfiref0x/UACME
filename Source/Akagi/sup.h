@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2018
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.11
+*  VERSION:     3.15
 *
-*  DATE:        23 Nov 2018
+*  DATE:        15 Feb 2019
 *
 *  Common header file for the program support routines.
 *
@@ -244,10 +244,11 @@ BOOL supDesktopToName(
 BOOL supQueryNtBuildNumber(
     _Inout_ PULONG BuildNumber);
 
-BOOL supConvertDllToExeSetNewEP(
-    _In_ PVOID pvImage,
-    _In_ ULONG dwImageSize,
-    _In_ LPSTR lpszEntryPoint);
+BOOL supReplaceDllEntryPoint(
+    _In_ PVOID DllImage,
+    _In_ ULONG SizeOfDllImage,
+    _In_ LPCSTR lpEntryPointName,
+    _In_ BOOL fConvertToExe);
 
 NTSTATUS supRegReadValue(
     _In_ HANDLE hKey,

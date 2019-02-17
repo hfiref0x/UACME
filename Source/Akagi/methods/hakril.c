@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       HAKRIL.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.15
 *
-*  DATE:        23 Nov 2018
+*  DATE:        15 Feb 2019
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -165,10 +165,11 @@ BOOL ucmHakrilMethod(
         else
             break;
 
-        if (!supConvertDllToExeSetNewEP(
+        if (!supReplaceDllEntryPoint(
             ProxyDll,
             ProxyDllSize,
-            FUBUKI_DEFAULT_ENTRYPOINT))
+            FUBUKI_DEFAULT_ENTRYPOINT,
+            TRUE))
         {
             break;
         }

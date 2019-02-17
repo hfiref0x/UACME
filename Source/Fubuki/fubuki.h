@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018
+*  (C) COPYRIGHT AUTHORS, 2018 - 2019
 *
 *  TITLE:       FUBUKI.H
 *
-*  VERSION:     3.10
+*  VERSION:     3.15
 *
-*  DATE:        18 Nov 2018
+*  DATE:        15 Feb 2019
 *
 *  Fubuki global include header file.
 *
@@ -24,6 +24,9 @@
 
 #include "shared\shared.h"
 #include "shared\libinc.h"
+#include "shared\cmdline.h"
+
+#include "uihacks.h"
 
 //
 // Forwards

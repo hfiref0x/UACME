@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.13
+*  VERSION:     3.15
 *
-*  DATE:        25 Jan 2019
+*  DATE:        15 Feb 2019
 *
 *  Global consts definition file.
 *
@@ -80,16 +80,18 @@
 // Unit names and entrypoints.
 //
 #pragma region PYSH
-#define FUBUKI_DLL                  L"Fubuki.dll"
-#define FUJINAMI_DLL                L"Fujinami.dll"
-#define HIBIKI_DLL                  L"Hibiki.dll"
-#define KUMA_DLL                    L"lzx32.dll"
-#define KAMIKAZE_MSC                L"kmkze.msc" 
-#define FUBUKI_EXE                  L"Fubuki.exe"
-#define FUBUKI_EXT_ENTRYPOINT       "_FubukiProc1"
-#define FUBUKI_DEFAULT_ENTRYPOINT   "_FubukiProc3"
-#define FUBUKI_DEFAULT_ENTRYPOINTW  L"_FubukiProc3"
-#define CHIYODA_EXT_ENTRYPOINT      "ChiyodaMain"
+#define FUBUKI_DLL                      L"Fubuki.dll"
+#define FUJINAMI_DLL                    L"Fujinami.dll"
+#define HIBIKI_DLL                      L"Hibiki.dll"
+#define KUMA_DLL                        L"lzx32.dll"
+#define KAMIKAZE_MSC                    L"kmkze.msc" 
+#define FUBUKI_EXE                      L"Fubuki.exe"
+#define FUBUKI_EXT_ENTRYPOINT           "_FubukiProc1"
+#define FUBUKI_WND_HOOKPROC             "_FubukiProc2"
+#define FUBUKI_DEFAULT_ENTRYPOINT       "_FubukiProc3"
+#define FUBUKI_ENTRYPOINT_UIACCESS2     "_FubukiProc4"
+#define FUBUKI_DEFAULT_ENTRYPOINTW      L"_FubukiProc3"
+#define CHIYODA_EXT_ENTRYPOINT          "ChiyodaMain"
 #pragma endregion
 
 //
@@ -147,6 +149,7 @@
 #define ISCSICLI_EXE                L"iscsicli.exe"
 #define MIGWIZ_EXE                  L"migwiz.exe"
 #define MMC_EXE                     L"mmc.exe"
+#define MSCONFIG_EXE                L"msconfig.exe"
 #define OOBE_EXE                    L"oobe.exe"
 #define SETUPSQM_EXE                L"oobe\\setupsqm.exe" 
 #define OSK_EXE                     L"osk.exe"

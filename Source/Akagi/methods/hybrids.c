@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.13
+*  VERSION:     3.15
 *
-*  DATE:        25 Jan 2019
+*  DATE:        15 Feb 2019
 *
 *  Hybrid UAC bypass methods.
 *
@@ -2910,10 +2910,11 @@ BOOL ucmDateTimeStateWriterMethod(
     }
     else {
 
-        if (supConvertDllToExeSetNewEP(
+        if (supReplaceDllEntryPoint(
             ProxyDll,
             ProxyDllSize,
-            CHIYODA_EXT_ENTRYPOINT) == FALSE)
+            CHIYODA_EXT_ENTRYPOINT,
+            TRUE) == FALSE)
         {
             return bResult;
         }

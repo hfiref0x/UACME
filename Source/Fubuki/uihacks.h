@@ -1,12 +1,14 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2019
+*  (C) COPYRIGHT AUTHORS, 2019
 *
-*  TITLE:       TEST.C
+*  TITLE:       UIHACKS.H
 *
 *  VERSION:     3.15
 *
 *  DATE:        15 Feb 2019
+*
+*  Fubuki UIAccess related code header file.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -14,22 +16,12 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
-#include "global.h"
+#pragma once
 
-/*
-* ucmTestRoutine
-*
-* Purpose:
-*
-* Test routine, can serve multiple purposes.
-*
-*/
-BOOL ucmTestRoutine(
-    _In_opt_ PVOID PayloadCode,
-    _In_opt_ ULONG PayloadSize)
-{
-    UNREFERENCED_PARAMETER(PayloadCode);
-    UNREFERENCED_PARAMETER(PayloadSize);
+typedef struct _SEARCH_WND {
+    HWND hWnd;
+    ULONG ProcessId;
+} SEARCH_WND, *PSEARCH_WND;
 
-    return TRUE;
-}
+VOID ucmUIHackExecute(
+    _In_ LPWSTR lpPayload);

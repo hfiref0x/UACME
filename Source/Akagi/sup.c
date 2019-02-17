@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2018
+*  (C) COPYRIGHT AUTHORS, 2015 - 2019
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.15
 *
-*  DATE:        23 Nov 2018
+*  DATE:        15 Feb 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -2033,54 +2033,50 @@ BOOL supQueryNtBuildNumber(
 }
 
 /*
-* supConvertDllToExeSetNewEP
+* supReplaceDllEntryPoint
 *
 * Purpose:
 *
-* Convert payload dll to exe and set new entrypoint.
+* Replace DLL entry point and optionally convert dll to exe.
 *
 */
-BOOL supConvertDllToExeSetNewEP(
-    _In_ PVOID pvImage,
-    _In_ ULONG dwImageSize,
-    _In_ LPSTR lpszEntryPoint
+BOOL supReplaceDllEntryPoint(
+    _In_ PVOID DllImage,
+    _In_ ULONG SizeOfDllImage,
+    _In_ LPCSTR lpEntryPointName,
+    _In_ BOOL fConvertToExe
 )
 {
-    BOOL              bResult = FALSE;
+    BOOL bResult = FALSE;
     PIMAGE_NT_HEADERS NtHeaders;
-    DWORD             DllVirtualSize;
-    PVOID             EntryPoint, DllBase;
+    DWORD DllVirtualSize;
+    PVOID DllBase, EntryPoint;
 
-    NtHeaders = RtlImageNtHeader(pvImage);
-    if (NtHeaders != NULL) {
+    NtHeaders = RtlImageNtHeader(DllImage);
+    if (NtHeaders) {
 
-        //
-        // Preload image.
-        //
         DllVirtualSize = 0;
-        DllBase = PELoaderLoadImage(pvImage, &DllVirtualSize);
-        if (DllBase != NULL) {
-
+        DllBase = PELoaderLoadImage(DllImage, &DllVirtualSize);
+        if (DllBase) {
             //
-            // Get the new entrypoint from target export.
+            // Get the new entrypoint.
             //
-            EntryPoint = PELoaderGetProcAddress(DllBase, lpszEntryPoint);
-            if (EntryPoint != NULL) {
-
+            EntryPoint = PELoaderGetProcAddress(DllBase, (PCHAR)lpEntryPointName);
+            if (EntryPoint) {
                 //
                 // Set new entrypoint and recalculate checksum.
                 //
                 NtHeaders->OptionalHeader.AddressOfEntryPoint =
                     (ULONG)((ULONG_PTR)EntryPoint - (ULONG_PTR)DllBase);
 
-                NtHeaders->FileHeader.Characteristics &= ~IMAGE_FILE_DLL;
+                if (fConvertToExe)
+                    NtHeaders->FileHeader.Characteristics &= ~IMAGE_FILE_DLL;
 
                 NtHeaders->OptionalHeader.CheckSum =
-                    supCalculateCheckSumForMappedFile(pvImage, dwImageSize);
+                    supCalculateCheckSumForMappedFile(DllImage, SizeOfDllImage);
 
                 bResult = TRUE;
             }
-
             VirtualFree(DllBase, 0, MEM_RELEASE);
         }
     }

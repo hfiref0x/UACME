@@ -3,6 +3,7 @@ DllRegisterServer           = DummyFunc PRIVATE
 _FubukiProc1                = UiAccessMethodDllMain
 _FubukiProc2                = UiAccessMethodHookProc
 _FubukiProc3                = EntryPoint
+_FubukiProc4                = EntryPointUIAccessLoader
 ConstructPartialMsgVW       = DummyFunc
 CurrentIP                   = DummyFunc
 WdsAbortBlackboard          = DummyFunc

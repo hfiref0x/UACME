@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       UTIL.H
 *
-*  VERSION:     3.10
+*  VERSION:     3.15
 *
-*  DATE:        11 Nov 2018
+*  DATE:        15 Feb 2019
 *
 *  Global support routines header file shared between payload dlls.
 *
@@ -146,6 +146,14 @@ BOOL ucmReadSharedParameters(
 
 VOID ucmSetCompletion(
     _In_ LPWSTR lpEvent);
+
+BOOL ucmGetProcessElevationType(
+    _In_opt_ HANDLE ProcessHandle,
+    _Out_ TOKEN_ELEVATION_TYPE *lpType);
+
+NTSTATUS ucmIsProcessElevated(
+    _In_ ULONG ProcessId,
+    _Out_ PBOOL Elevated);
 
 #ifdef _DEBUG
 #define ucmDbgMsg(Message)  OutputDebugString(Message)

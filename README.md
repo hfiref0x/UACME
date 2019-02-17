@@ -504,6 +504,15 @@ Keys (watch debug output with dbgview or similar for more info):
      * Implementation: ucmEgre55Method
      * Works from: Windows 10 (14393)
      * Fixed in: unfixed :see_no_evil:
+        * How: -
+55. Author: James Forshaw
+     * Type: GUI Hack 
+     * Method: UIPI bypass with token modification
+     * Target(s): \system32\osk.exe, \system32\msconfig.exe
+     * Component(s): Attacker defined
+     * Implementation: ucmTokenModUIAccessMethod
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
         * How: -		
 
 Note:
@@ -514,7 +523,8 @@ Note:
 * Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone;
 * Method (30) require x64 because it abuses WOW64 subsystem feature;
 * Method (35) AlwaysNotify compatible as there always will be running autoelevated apps or user will have to launch them anyway;
-* Method (38) require internet connection as it executes remote script located at github.com/hfiref0x/Beacon/blob/master/uac/exec.html.
+* Method (38) require internet connection as it executes remote script located at github.com/hfiref0x/Beacon/blob/master/uac/exec.html;
+* Method (55) is not really reliable (as any GUI hacks) and included just for fun.
 
 Run examples:
 * akagi32.exe 1
@@ -591,6 +601,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * UAC Bypass by Mocking Trusted Directories, https://medium.com/tenable-techblog/uac-bypass-by-mocking-trusted-directories-24a96675f6e
 * Yet another sdclt UAC bypass, http://blog.sevagas.com/?Yet-another-sdclt-UAC-bypass
 * UAC Bypass via SystemPropertiesAdvanced.exe and DLL Hijacking, https://egre55.github.io/system-properties-uac-bypass/
+* Accessing Access Tokens for UIAccess, https://tyranidslair.blogspot.com/2019/02/accessing-access-tokens-for-uiaccess.html
 
 # Authors
 

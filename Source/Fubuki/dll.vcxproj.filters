@@ -51,6 +51,12 @@
     <ClInclude Include="winmm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="uihacks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\cmdline.h">
+      <Filter>minirtl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="version.rc">
@@ -98,6 +104,12 @@
       <Filter>shared</Filter>
     </ClCompile>
     <ClCompile Include="..\Shared\ultohex.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
+    <ClCompile Include="uihacks.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\cmdline.c">
       <Filter>minirtl</Filter>
     </ClCompile>
   </ItemGroup>
