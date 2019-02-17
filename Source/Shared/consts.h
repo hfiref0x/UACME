@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.15
 *
-*  DATE:        15 Feb 2019
+*  DATE:        17 Feb 2019
 *
 *  Global consts definition file.
 *
@@ -235,7 +235,7 @@
 
 #pragma region PYSH
 #define T_USAGE_HELP                L"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
-#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.3.1901"
+#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.5.1902"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
