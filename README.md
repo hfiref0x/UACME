@@ -272,7 +272,7 @@ Keys (watch debug output with dbgview or similar for more info):
 29. Author: Enigma0x3
      * Type: Shell API
      * Method: Registry key manipulation
-     * Target(s): \system32\sdctl.exe
+     * Target(s): \system32\sdclt.exe
      * Component(s): Attacker defined
      * Implementation: ucmAppPathMethod
      * Works from: Windows 10 TH1 (10240)
@@ -290,7 +290,7 @@ Keys (watch debug output with dbgview or similar for more info):
 31. Author: Enigma0x3
      * Type: Shell API
      * Method: Registry key manipulation
-     * Target(s): \system32\sdctl.exe
+     * Target(s): \system32\sdclt.exe
      * Component(s): Attacker defined
      * Implementation: ucmSdcltIsolatedCommandMethod
      * Works from: Windows 10 TH1 (10240)
