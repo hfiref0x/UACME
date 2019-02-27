@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.15
 *
-*  DATE:        15 Feb 2019
+*  DATE:        17 Feb 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -31,5 +31,6 @@ BOOL ucmTestRoutine(
     UNREFERENCED_PARAMETER(PayloadCode);
     UNREFERENCED_PARAMETER(PayloadSize);
 
+    SetEvent(g_ctx->SharedContext.hCompletionEvent);
     return TRUE;
 }

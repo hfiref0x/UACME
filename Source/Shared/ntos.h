@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.102
+*  VERSION:     1.104
 *
-*  DATE:        13 Feb 2019
+*  DATE:        26 Feb 2019
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -28,6 +28,7 @@
 #ifndef NTOS_RTL
 #define NTOS_RTL
 
+
 //
 // NTOS_RTL HEADER BEGIN
 //
@@ -39,6 +40,7 @@ extern "C" {
 #pragma comment(lib, "ntdll.lib")
 
 #pragma warning(push)
+#pragma warning(disable: 4201) // nonstandard extension used : nameless struct/union
 #pragma warning(disable: 4214) // nonstandard extension used : bit field types other than int
 
 #ifndef PAGE_SIZE
@@ -540,7 +542,7 @@ typedef enum _KWAIT_REASON {
     WrDelayExecution,
     WrSuspended,
     WrUserRequest,
-    WrEventPair,
+    WrEventPair, //has no effect after 7
     WrQueue,
     WrLpcReceive,
     WrLpcReply,
@@ -565,6 +567,7 @@ typedef enum _KWAIT_REASON {
     WrRundown,
     WrAlertByThreadId,
     WrDeferredPreempt,
+    WrPhysicalFault,
     MaximumWaitReason
 } KWAIT_REASON;
 
@@ -5089,88 +5092,6 @@ __inline struct _PEB * NtCurrentPeb() { return NtCurrentTeb()->ProcessEnvironmen
 */
 
 /*
-** ALPC START
-*/
-
-typedef struct _PORT_MESSAGE {
-    union {
-        struct {
-            CSHORT DataLength;
-            CSHORT TotalLength;
-        } s1;
-        ULONG Length;
-    } u1;
-    union {
-        struct {
-            CSHORT Type;
-            CSHORT DataInfoOffset;
-        } s2;
-        ULONG ZeroInit;
-    } u2;
-    union {
-        CLIENT_ID ClientId;
-        double DoNotUseThisField;       // Force quadword alignment
-    } u3;
-    ULONG MessageId;
-    union {
-        ULONG ClientViewSize;               // Only valid on LPC_CONNECTION_REQUEST message
-        ULONG CallbackId;                   // Only valid on LPC_REQUEST message
-    } u4;
-    UCHAR Reserved[8];
-} PORT_MESSAGE, *PPORT_MESSAGE;
-
-// end_ntsrv
-
-typedef struct _PORT_DATA_ENTRY {
-    PVOID Base;
-    ULONG Size;
-} PORT_DATA_ENTRY, *PPORT_DATA_ENTRY;
-
-typedef struct _PORT_DATA_INFORMATION {
-    ULONG CountDataEntries;
-    PORT_DATA_ENTRY DataEntries[1];
-} PORT_DATA_INFORMATION, *PPORT_DATA_INFORMATION;
-
-#define LPC_REQUEST             1
-#define LPC_REPLY               2
-#define LPC_DATAGRAM            3
-#define LPC_LOST_REPLY          4
-#define LPC_PORT_CLOSED         5
-#define LPC_CLIENT_DIED         6
-#define LPC_EXCEPTION           7
-#define LPC_DEBUG_EVENT         8
-#define LPC_ERROR_EVENT         9
-#define LPC_CONNECTION_REQUEST 10
-
-#define PORT_VALID_OBJECT_ATTRIBUTES (OBJ_CASE_INSENSITIVE)
-#define PORT_MAXIMUM_MESSAGE_LENGTH 256
-
-typedef struct _LPC_CLIENT_DIED_MSG {
-    PORT_MESSAGE PortMsg;
-    LARGE_INTEGER CreateTime;
-} LPC_CLIENT_DIED_MSG, *PLPC_CLIENT_DIED_MSG;
-
-//#pragma pack(push, 1)
-typedef struct _PORT_VIEW {
-    ULONG Length;
-    HANDLE SectionHandle;
-    ULONG SectionOffset;
-    SIZE_T ViewSize;
-    PVOID ViewBase;
-    PVOID ViewRemoteBase;
-} PORT_VIEW, *PPORT_VIEW;
-
-typedef struct _REMOTE_PORT_VIEW {
-    ULONG Length;
-    SIZE_T ViewSize;
-    PVOID ViewBase;
-} REMOTE_PORT_VIEW, *PREMOTE_PORT_VIEW;
-//#pragma pack(pop)
-/*
-** ALPC END
-*/
-
-/*
 **  MITIGATION POLICY START
 */
 
@@ -5299,6 +5220,19 @@ typedef struct tagPROCESS_MITIGATION_CHILD_PROCESS_POLICY_W10 {
     } DUMMYUNIONNAME;
 } PROCESS_MITIGATION_CHILD_PROCESS_POLICY_W10, *PPROCESS_MITIGATION_CHILD_PROCESS_POLICY_W10;
 
+typedef struct _PROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10 {
+    union {
+        DWORD Flags;
+        struct {
+            DWORD SmtBranchTargetIsolation : 1;
+            DWORD IsolateSecurityDomain : 1;
+            DWORD DisablePageCombine : 1;
+            DWORD SpeculativeStoreBypassDisable : 1;
+            DWORD ReservedFlags : 28;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+} PROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10, *PPROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10;
+
 typedef struct _PROCESS_MITIGATION_POLICY_INFORMATION {
     PROCESS_MITIGATION_POLICY Policy;
     union
@@ -5315,6 +5249,7 @@ typedef struct _PROCESS_MITIGATION_POLICY_INFORMATION {
         PROCESS_MITIGATION_SYSTEM_CALL_FILTER_POLICY_W10 SystemCallFilterPolicy;
         PROCESS_MITIGATION_PAYLOAD_RESTRICTION_POLICY_W10 PayloadRestrictionPolicy;
         PROCESS_MITIGATION_CHILD_PROCESS_POLICY_W10 ChildProcessPolicy;
+        PROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10 SideChannelIsolationPolicy;
     };
 } PROCESS_MITIGATION_POLICY_INFORMATION, *PPROCESS_MITIGATION_POLICY_INFORMATION;
 
@@ -8763,7 +8698,7 @@ NtCreateMailslotFile(
     _In_ ULONG MaximumMessageSize,
     _In_ PLARGE_INTEGER ReadTimeout);
 
-NTSYSCALLAPI
+NTSYSAPI
 NTSTATUS
 NTAPI
 NtDeviceIoControlFile(
@@ -9035,7 +8970,8 @@ NtLoadDriver(
 
 NTSYSAPI
 NTSTATUS
-NTAPI NtUnloadDriver(
+NTAPI
+NtUnloadDriver(
     _In_ PUNICODE_STRING DriverServiceName);
 
 NTSYSAPI
@@ -9120,6 +9056,21 @@ NtCreateSection(
     _In_ ULONG AllocationAttributes,
     _In_opt_ HANDLE FileHandle);
 
+//taken from ph2
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtCreateSectionEx(
+    _Out_ PHANDLE SectionHandle,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
+    _In_opt_ PLARGE_INTEGER MaximumSize,
+    _In_ ULONG SectionPageProtection,
+    _In_ ULONG AllocationAttributes,
+    _In_opt_ HANDLE FileHandle,
+    _In_ PMEM_EXTENDED_PARAMETER ExtendedParameters,
+    _In_ ULONG ExtendedParameterCount);
+
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -9134,7 +9085,7 @@ NTAPI
 NtMapViewOfSection(
     _In_ HANDLE SectionHandle,
     _In_ HANDLE ProcessHandle,
-    _Inout_	PVOID *BaseAddress,
+    _Inout_ _At_(*BaseAddress, _Readable_bytes_(*ViewSize) _Writable_bytes_(*ViewSize) _Post_readable_byte_size_(*ViewSize)) PVOID *BaseAddress,
     _In_ ULONG_PTR ZeroBits,
     _In_ SIZE_T CommitSize,
     _Inout_opt_ PLARGE_INTEGER SectionOffset,
@@ -9146,19 +9097,9 @@ NtMapViewOfSection(
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtQuerySection(
-    _In_ HANDLE SectionHandle,
-    _In_ SECTION_INFORMATION_CLASS SectionInformationClass,
-    _Out_ PVOID SectionInformation,
-    _In_ SIZE_T SectionInformationLength,
-    _Out_opt_ PSIZE_T ReturnLength);
-
-NTSYSAPI
-NTSTATUS
-NTAPI
 NtUnmapViewOfSection(
     _In_ HANDLE ProcessHandle,
-    _In_ PVOID BaseAddress);
+    _In_opt_ PVOID BaseAddress);
 
 NTSYSAPI
 NTSTATUS
@@ -9167,6 +9108,16 @@ NtUnmapViewOfSectionEx(
     _In_ HANDLE ProcessHandle,
     _In_opt_ PVOID BaseAddress,
     _In_ ULONG Flags);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtQuerySection(
+    _In_ HANDLE SectionHandle,
+    _In_ SECTION_INFORMATION_CLASS SectionInformationClass,
+    _Out_writes_bytes_(SectionInformationLength) PVOID SectionInformation,
+    _In_ SIZE_T SectionInformationLength,
+    _Out_opt_ PSIZE_T ReturnLength);
 
 NTSYSAPI
 NTSTATUS
@@ -9206,6 +9157,13 @@ NtFreeUserPhysicalPages(
     _In_ HANDLE ProcessHandle,
     _Inout_ PULONG_PTR NumberOfPages,
     _In_reads_(*NumberOfPages) PULONG_PTR UserPfnArray);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtAreMappedFilesTheSame(
+    _In_ PVOID File1MappedAsAnImage,
+    _In_ PVOID File2MappedAsFile);
 
 NTSYSAPI
 NTSTATUS
@@ -9284,6 +9242,39 @@ NtAccessCheckByTypeResultList(
     _Inout_ PULONG PrivilegeSetLength,
     _Out_writes_(ObjectTypeListLength) PACCESS_MASK GrantedAccess,
     _Out_writes_(ObjectTypeListLength) PNTSTATUS AccessStatus);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtOpenObjectAuditAlarm(
+    _In_ PUNICODE_STRING SubsystemName,
+    _In_opt_ PVOID HandleId,
+    _In_ PUNICODE_STRING ObjectTypeName,
+    _In_ PUNICODE_STRING ObjectName,
+    _In_opt_ PSECURITY_DESCRIPTOR SecurityDescriptor,
+    _In_ HANDLE ClientToken,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_ ACCESS_MASK GrantedAccess,
+    _In_opt_ PPRIVILEGE_SET Privileges,
+    _In_ BOOLEAN ObjectCreation,
+    _In_ BOOLEAN AccessGranted,
+    _Out_ PBOOLEAN GenerateOnClose);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtCloseObjectAuditAlarm(
+    _In_ PUNICODE_STRING SubsystemName,
+    _In_opt_ PVOID HandleId,
+    _In_ BOOLEAN GenerateOnClose);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtDeleteObjectAuditAlarm(
+    _In_ PUNICODE_STRING SubsystemName,
+    _In_opt_ PVOID HandleId,
+    _In_ BOOLEAN GenerateOnClose);
 
 NTSYSAPI
 NTSTATUS
@@ -9798,13 +9789,51 @@ NtTerminateJobObject(
 *
 ************************************************************************************/
 
+//taken from ph2
+
+typedef enum _IO_SESSION_EVENT {
+    IoSessionEventIgnore,
+    IoSessionEventCreated,
+    IoSessionEventTerminated,
+    IoSessionEventConnected,
+    IoSessionEventDisconnected,
+    IoSessionEventLogon,
+    IoSessionEventLogoff,
+    IoSessionEventMax
+} IO_SESSION_EVENT;
+
+typedef enum _IO_SESSION_STATE {
+    IoSessionStateCreated,
+    IoSessionStateInitialized,
+    IoSessionStateConnected,
+    IoSessionStateDisconnected,
+    IoSessionStateDisconnectedLoggedOn,
+    IoSessionStateLoggedOn,
+    IoSessionStateLoggedOff,
+    IoSessionStateTerminated,
+    IoSessionStateMax
+} IO_SESSION_STATE;
+
 NTSYSAPI
-NTSTATUS 
-NTAPI 
+NTSTATUS
+NTAPI
 NtOpenSession(
     _Out_ PHANDLE SessionHandle,
     _In_ ACCESS_MASK DesiredAccess,
     _In_ POBJECT_ATTRIBUTES ObjectAttributes);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtNotifyChangeSession(
+    _In_ HANDLE SessionHandle,
+    _In_ ULONG ChangeSequenceNumber,
+    _In_ PLARGE_INTEGER ChangeTimeStamp,
+    _In_ IO_SESSION_EVENT Event,
+    _In_ IO_SESSION_STATE NewState,
+    _In_ IO_SESSION_STATE PreviousState,
+    _In_reads_bytes_opt_(PayloadSize) PVOID Payload,
+    _In_ ULONG PayloadSize);
 
 /************************************************************************************
 *
@@ -10355,6 +10384,77 @@ NtCreatePagingFile(
 * Port API.
 *
 ************************************************************************************/
+
+typedef struct _PORT_VIEW {
+    ULONG Length;
+    HANDLE SectionHandle;
+    ULONG SectionOffset;
+    SIZE_T ViewSize;
+    PVOID ViewBase;
+    PVOID ViewRemoteBase;
+} PORT_VIEW, *PPORT_VIEW;
+
+typedef struct _REMOTE_PORT_VIEW {
+    ULONG Length;
+    SIZE_T ViewSize;
+    PVOID ViewBase;
+} REMOTE_PORT_VIEW, *PREMOTE_PORT_VIEW;
+
+typedef struct _PORT_MESSAGE {
+    union {
+        struct {
+            CSHORT DataLength;
+            CSHORT TotalLength;
+        } s1;
+        ULONG Length;
+    } u1;
+    union {
+        struct {
+            CSHORT Type;
+            CSHORT DataInfoOffset;
+        } s2;
+        ULONG ZeroInit;
+    } u2;
+    union {
+        CLIENT_ID ClientId;
+        double DoNotUseThisField;       // Force quadword alignment
+    } u3;
+    ULONG MessageId;
+    union {
+        ULONG ClientViewSize;               // Only valid on LPC_CONNECTION_REQUEST message
+        ULONG CallbackId;                   // Only valid on LPC_REQUEST message
+    } u4;
+    UCHAR Reserved[8];
+} PORT_MESSAGE, *PPORT_MESSAGE;
+
+typedef struct _PORT_DATA_ENTRY {
+    PVOID Base;
+    ULONG Size;
+} PORT_DATA_ENTRY, *PPORT_DATA_ENTRY;
+
+typedef struct _PORT_DATA_INFORMATION {
+    ULONG CountDataEntries;
+    PORT_DATA_ENTRY DataEntries[1];
+} PORT_DATA_INFORMATION, *PPORT_DATA_INFORMATION;
+
+#define LPC_REQUEST             1
+#define LPC_REPLY               2
+#define LPC_DATAGRAM            3
+#define LPC_LOST_REPLY          4
+#define LPC_PORT_CLOSED         5
+#define LPC_CLIENT_DIED         6
+#define LPC_EXCEPTION           7
+#define LPC_DEBUG_EVENT         8
+#define LPC_ERROR_EVENT         9
+#define LPC_CONNECTION_REQUEST 10
+
+#define PORT_VALID_OBJECT_ATTRIBUTES (OBJ_CASE_INSENSITIVE)
+#define PORT_MAXIMUM_MESSAGE_LENGTH 256
+
+typedef struct _LPC_CLIENT_DIED_MSG {
+    PORT_MESSAGE PortMsg;
+    LARGE_INTEGER CreateTime;
+} LPC_CLIENT_DIED_MSG, *PLPC_CLIENT_DIED_MSG;
 
 NTSYSAPI
 NTSTATUS

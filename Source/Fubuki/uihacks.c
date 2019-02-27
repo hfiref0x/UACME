@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.15
 *
-*  DATE:        15 Feb 2019
+*  DATE:        17 Feb 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -68,35 +68,13 @@ VOID ucmxSendKeys(
 {
     BOOL NeedShift;
     SIZE_T i;
-    WCHAR c;
     WORD VkAndShift;
 
     HKL kl = LoadKeyboardLayout(TEXT("en-US"), KLF_ACTIVATE);
 
     for (i = 0; i < _strlen(lpString); i++) {
-        c = lpString[i];
-
-        switch (c) {
-        case L':':
-        case L'!':
-        case L'@':
-        case L'#':
-        case L'$':
-        case L'%':
-        case L'^':
-        case L'&':
-        case L'(':
-        case L')':
-        case L'_':
-        case L'+':
-            NeedShift = TRUE;
-            break;
-        default:
-            NeedShift = FALSE;
-            break;
-        }
-
-        VkAndShift = VkKeyScanEx(c, kl);
+        VkAndShift = VkKeyScanEx(lpString[i], kl);
+        NeedShift = ((HIBYTE(VkAndShift) & 1) == 1);
         ucmxSendControlInput(LOBYTE(VkAndShift), NeedShift);
     }
 }
