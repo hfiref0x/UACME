@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.15
+*  VERSION:     3.16
 *
-*  DATE:        15 Feb 2019
+*  DATE:        11 Mar 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -2121,7 +2121,7 @@ BOOL supQuerySystemRoot(
             break;
 
         Status = supRegReadValue(hKey, L"SystemRoot", REG_SZ, (PVOID*)&lpData, &Length, context->ucmHeap);
-        if (!NT_SUCCESS(Status))
+        if (!NT_SUCCESS(Status) || (lpData == NULL))
             break;
 
         ccm = Length / sizeof(WCHAR);

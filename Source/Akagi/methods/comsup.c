@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       COMSUP.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.16
 *
-*  DATE:        23 Nov 2018
+*  DATE:        11 Mar 2019
 *
 *  IFileOperation based routines.
 *
@@ -406,6 +406,92 @@ BOOL ucmMasqueradedMoveCopyFileCOM(
 
     if (idst != NULL)
         idst->lpVtbl->Release(idst);
+
+    if (hr_init == S_OK)
+        CoUninitialize();
+
+    return bResult;
+}
+
+/*
+* ucmMasqueradedDeleteDirectoryFileCOM
+*
+* Purpose:
+*
+* Delete directory or file autoelevated.
+* This function expects that supMasqueradeProcess was called on process initialization.
+*
+*/
+BOOL ucmMasqueradedDeleteDirectoryFileCOM(
+    _In_ LPWSTR FileName
+)
+{
+    BOOL                cond = FALSE, bResult = FALSE;
+    IFileOperation     *FileOperation = NULL;
+    IShellItem         *isrc = NULL;
+    HRESULT             r = E_FAIL, hr_init;
+
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    do {
+
+        //ucmxFileOpCreateAndRelease();
+
+        if (S_OK != ucmAllocateElevatedObject(
+            T_CLSID_FileOperation,
+            &IID_IFileOperation,
+            CLSCTX_LOCAL_SERVER,
+            &FileOperation))
+        {
+            break;
+        }
+
+        if (FileOperation == NULL) {
+            break;
+        }
+
+        if (S_OK != FileOperation->lpVtbl->SetOperationFlags(
+            FileOperation,
+            g_ctx->IFileOperationFlags))
+        {
+            break;
+        }
+
+        if (S_OK != SHCreateItemFromParsingName(
+            FileName,
+            NULL,
+            &IID_IShellItem,
+            &isrc))
+        {
+            break;
+        }
+
+        r = FileOperation->lpVtbl->DeleteItem(
+            FileOperation,
+            isrc,
+            NULL);
+
+        if (r != S_OK)
+            break;
+
+        if (S_OK != FileOperation->lpVtbl->PerformOperations(
+            FileOperation))
+        {
+            break;
+        }
+
+        isrc->lpVtbl->Release(isrc);
+        isrc = NULL;
+
+        bResult = TRUE;
+
+    } while (cond);
+
+    if (FileOperation != NULL)
+        FileOperation->lpVtbl->Release(FileOperation);
+
+    if (isrc != NULL)
+        isrc->lpVtbl->Release(isrc);
 
     if (hr_init == S_OK)
         CoUninitialize();

@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.15
+*  VERSION:     3.16
 *
-*  DATE:        15 Feb 2019
+*  DATE:        11 Mar 2019
 *
 *  Common header file for the program support routines.
 *

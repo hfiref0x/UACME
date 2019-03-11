@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.15
+*  VERSION:     3.16
 *
-*  DATE:        15 Feb 2019
+*  DATE:        11 Mar 2019
 *
 *  UAC bypass dispatch.
 *
@@ -315,6 +315,49 @@ VOID SetupExtraContextCalbacks(
 }
 
 /*
+* PostCleanupAttempt
+*
+* Purpose:
+*
+* Attempt to cleanup left overs.
+*
+*/
+VOID PostCleanupAttempt(
+    _In_ UCM_METHOD Method
+)
+{
+    switch (Method) {
+
+    case UacMethodAVrf:
+        ucmMethodCleanupSingleItemSystem32(HIBIKI_DLL);
+        break;
+
+    case UacMethodDISM:
+        ucmMethodCleanupSingleItemSystem32(DISMCORE_DLL);
+        break;
+
+    case UacMethodJunction:
+        ucmJunctionMethodCleanup();
+        break;
+
+    case UacMethodSXS:
+        ucmSXSMethodCleanup(FALSE);
+        break;
+
+    case UacMethodSXSConsent:
+        ucmSXSMethodCleanup(TRUE);
+        break;
+
+    case UacMethodSXSDccw:
+        ucmSXSDccwMethodCleanup();
+        break;
+
+    default:
+        break;
+    }
+}
+
+/*
 * MethodsManagerCall
 *
 * Purpose:
@@ -411,6 +454,9 @@ BOOL MethodsManagerCall(
             supDestroySharedParametersBlock(g_ctx);
         }
     }
+
+    PostCleanupAttempt(Method);
+
     return bResult;
 }
 

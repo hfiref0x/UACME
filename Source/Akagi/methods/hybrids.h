@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     3.13
+*  VERSION:     3.16
 *
-*  DATE:        25 Jan 2019
+*  DATE:        11 Mar 2019
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -154,3 +154,19 @@ BOOL ucmAcCplAdminMethod(
 BOOL ucmEgre55Method(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
+
+//
+// Post execution cleanup routines.
+//
+
+BOOL ucmMethodCleanupSingleItemSystem32(
+    LPWSTR lpItemName);
+
+BOOL ucmJunctionMethodCleanup(
+    VOID);
+
+BOOL ucmSXSDccwMethodCleanup(
+    VOID);
+
+BOOL ucmSXSMethodCleanup(
+    _In_ BOOL bConsentItself);

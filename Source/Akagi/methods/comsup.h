@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       COMSUP.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.16
 *
-*  DATE:        26 Aug 2018
+*  DATE:        11 Mar 2019
 *
 *  Prototypes and definitions for COM interfaces support and
 *  IFileOperation based routines.
@@ -53,6 +53,9 @@ BOOL ucmMasqueradedMoveCopyFileCOM(
 BOOL ucmMasqueradedMoveFileCOM(
     _In_ LPWSTR SourceFileName,
     _In_ LPWSTR DestinationDir);
+
+BOOL ucmMasqueradedDeleteDirectoryFileCOM(
+    _In_ LPWSTR FileName);
 
 BOOL ucmMasqueradedRenameElementCOM(
     _In_ LPWSTR OldName,
