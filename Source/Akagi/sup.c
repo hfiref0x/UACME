@@ -737,6 +737,7 @@ BOOL supRunProcess2(
     _In_ LPWSTR lpszProcessName,
     _In_opt_ LPWSTR lpszParameters,
     _In_opt_ LPWSTR lpVerb,
+    _In_ INT nShow,
     _In_ BOOL fWait
 )
 {
@@ -751,13 +752,12 @@ BOOL supRunProcess2(
     shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
     shinfo.lpFile = lpszProcessName;
     shinfo.lpParameters = lpszParameters;
-    shinfo.lpDirectory = NULL;
-    shinfo.nShow = SW_SHOW;
+    shinfo.nShow = nShow;
     shinfo.lpVerb = lpVerb;
     bResult = ShellExecuteEx(&shinfo);
     if (bResult) {
         if (fWait) {
-            if (WaitForSingleObject(shinfo.hProcess, 32000) == WAIT_TIMEOUT)
+            if (WaitForSingleObject(shinfo.hProcess, 120000) == WAIT_TIMEOUT)
                 TerminateProcess(shinfo.hProcess, WAIT_TIMEOUT);
         }
         CloseHandle(shinfo.hProcess);
@@ -778,7 +778,7 @@ BOOL supRunProcess(
     _In_opt_ LPWSTR lpszParameters
 )
 {
-    return supRunProcess2(lpszProcessName, lpszParameters, NULL, TRUE);
+    return supRunProcess2(lpszProcessName, lpszParameters, NULL, SW_SHOW, TRUE);
 }
 
 /*

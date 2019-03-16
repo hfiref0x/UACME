@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.16
+*  VERSION:     3.17
 *
-*  DATE:        11 Mar 2019
+*  DATE:        16 Mar 2019
 *
 *  Global consts definition file.
 *
@@ -40,8 +40,9 @@
 #define T_EXEFILE_SHELL             L"Software\\Classes\\exefile"
 #define T_MSSETTINGS                L"Software\\Classes\\ms-settings"
 #define T_CLASSESFOLDER             L"Software\\Classes\\Folder"
+#define T_APPXPACKAGE               L"Software\\Classes\\AppX82a6gwre4fdg3bt635tn5ctqjf8msdd2"
 #define T_SHELL_OPEN_COMMAND        L"\\shell\\open\\command"
-#define T_SHELL_RUNAS_COMMAND       L"\\shell\\runas\\command" 
+#define T_SHELL_RUNAS_COMMAND       L"\\shell\\runas\\command"
 
 #define T_FILE_PREP                 L"file://"
 
@@ -167,6 +168,7 @@
 #define TPMINIT_EXE                 L"tpminit.exe"
 #define TZSYNC_EXE                  L"tzsync.exe"
 #define WINSAT_EXE                  L"winsat.exe"
+#define WSRESET_EXE                 L"WSReset.exe"
 #define WUSA_EXE                    L"wusa.exe"
 
 //
@@ -235,7 +237,7 @@
 
 #pragma region PYSH
 #define T_USAGE_HELP                L"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
-#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.6.1903"
+#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.7.1903"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"

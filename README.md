@@ -492,7 +492,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Method: Registry key manipulation
      * Target(s): \system32\sdclt.exe
      * Component(s): Attacker defined
-     * Implementation: ucmSdcltDelegateExecuteCommandMethod
+     * Implementation: ucmShellDelegateExecuteCommandMethod
      * Works from: Windows 10 (14393)
      * Fixed in: unfixed :see_no_evil:
         * How: -
@@ -512,6 +512,15 @@ Keys (watch debug output with dbgview or similar for more info):
      * Component(s): Attacker defined
      * Implementation: ucmTokenModUIAccessMethod
      * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+56. Author: Hashim Jawad
+     * Type: Shell API
+     * Method: Registry key manipulation
+     * Target(s): \system32\WSReset.exe
+     * Component(s): Attacker defined
+     * Implementation: ucmShellDelegateExecuteCommandMethod
+     * Works from: Windows 10 (17134)
      * Fixed in: unfixed :see_no_evil:
         * How: -		
 
@@ -602,6 +611,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * Yet another sdclt UAC bypass, http://blog.sevagas.com/?Yet-another-sdclt-UAC-bypass
 * UAC Bypass via SystemPropertiesAdvanced.exe and DLL Hijacking, https://egre55.github.io/system-properties-uac-bypass/
 * Accessing Access Tokens for UIAccess, https://tyranidslair.blogspot.com/2019/02/accessing-access-tokens-for-uiaccess.html
+* Fileless UAC Bypass in Windows Store Binary, https://www.activecyber.us/1/post/2019/03/windows-uac-bypass.html
 
 # Authors
 

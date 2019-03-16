@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.16
+*  VERSION:     3.17
 *
-*  DATE:        11 Mar 2019
+*  DATE:        16 Mar 2019
 *
 *  Common header file for the program support routines.
 *
@@ -104,6 +104,7 @@ BOOL supRunProcess2(
     _In_ LPWSTR lpszProcessName,
     _In_opt_ LPWSTR lpszParameters,
     _In_opt_ LPWSTR lpVerb,
+    _In_ INT nShow,
     _In_ BOOL fWait);
 
 BOOL supRunProcess(

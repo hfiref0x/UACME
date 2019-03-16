@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2018
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        23 Nov 2018
+*  DATE:        16 Mar 2019
 *
 *  Program entry point.
 *
@@ -268,7 +268,7 @@ UINT ucmInit(
 * Program entry point.
 *
 */
-UINT ucmMain(
+UINT WINAPI ucmMain(
     _In_opt_ UCM_METHOD Method,
     _In_reads_or_z_opt_(OptionalParameterLength) LPWSTR OptionalParameter,
     _In_opt_ ULONG OptionalParameterLength,

