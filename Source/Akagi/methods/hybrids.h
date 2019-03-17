@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     3.16
+*  VERSION:     3.17
 *
-*  DATE:        11 Mar 2019
+*  DATE:        17 Mar 2019
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -158,6 +158,8 @@ BOOL ucmEgre55Method(
 //
 // Post execution cleanup routines.
 //
+BOOL ucmMMCMethodCleanup(
+    _In_ UCM_METHOD Method);
 
 BOOL ucmMethodCleanupSingleItemSystem32(
     LPWSTR lpItemName);
@@ -170,3 +172,6 @@ BOOL ucmSXSDccwMethodCleanup(
 
 BOOL ucmSXSMethodCleanup(
     _In_ BOOL bConsentItself);
+
+BOOL ucmSirefefMethodCleanup(
+    VOID);

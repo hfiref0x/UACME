@@ -657,7 +657,8 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
 * Purpose:
 *
 * Bypass UAC abusing COM entry hijack.
-* Original author link: http://blog.sevagas.com/?Yet-another-sdclt-UAC-bypass
+* Original authors links: http://blog.sevagas.com/?Yet-another-sdclt-UAC-bypass
+*                         https://www.activecyber.us/1/post/2019/03/windows-uac-bypass.html
 *
 * Targets:
 *            sdclt.exe without params for Emeric Nasi method

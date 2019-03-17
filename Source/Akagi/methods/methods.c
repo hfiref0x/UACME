@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        16 Mar 2019
+*  DATE:        17 Mar 2019
 *
 *  UAC bypass dispatch.
 *
@@ -338,8 +338,25 @@ VOID PostCleanupAttempt(
         ucmMethodCleanupSingleItemSystem32(DISMCORE_DLL);
         break;
 
+    case UacMethodWow64Logger:
+        ucmMethodCleanupSingleItemSystem32(WOW64LOG_DLL);
+        break;
+
+    case UacMethodGeneric:
+        ucmMethodCleanupSingleItemSystem32(NTWDBLIB_DLL);
+        break;
+
     case UacMethodJunction:
         ucmJunctionMethodCleanup();
+        break;
+
+    case UacMethodSirefef:
+        ucmSirefefMethodCleanup();
+        break;
+
+    case UacMethodMMC1:
+    case UacMethodMMC2:
+        ucmMMCMethodCleanup(Method);
         break;
 
     case UacMethodSXS:
@@ -356,6 +373,10 @@ VOID PostCleanupAttempt(
 
     case UacMethodHakril:
         ucmHakrilMethodCleanup();
+        break;
+
+    case UacMethodCreateNewLink:
+        ucmCreateNewLinkMethodCleanup();
         break;
 
     default:

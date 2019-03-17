@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.104
+*  VERSION:     1.107
 *
-*  DATE:        26 Feb 2019
+*  DATE:        15 Mar 2019
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -5233,13 +5233,24 @@ typedef struct _PROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10 {
     } DUMMYUNIONNAME;
 } PROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10, *PPROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10;
 
+typedef struct _PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY_W10 {
+    union {
+        DWORD Flags;
+        struct {
+            DWORD DisallowWin32kSystemCalls : 1;
+            DWORD AuditDisallowWin32kSystemCalls : 1;
+            DWORD ReservedFlags : 30;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+} PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY_W10, *PPROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY_W10;
+
 typedef struct _PROCESS_MITIGATION_POLICY_INFORMATION {
     PROCESS_MITIGATION_POLICY Policy;
     union
     {
         PROCESS_MITIGATION_ASLR_POLICY ASLRPolicy;
         PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY StrictHandleCheckPolicy;
-        PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY SystemCallDisablePolicy;
+        PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY_W10 SystemCallDisablePolicy;
         PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY ExtensionPointDisablePolicy;
         PROCESS_MITIGATION_DYNAMIC_CODE_POLICY_W10 DynamicCodePolicy;
         PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY_W10 ControlFlowGuardPolicy;
@@ -5911,6 +5922,9 @@ CsrClientConnectToServer(
 * RTL Strings API.
 *
 ************************************************************************************/
+
+#define RTL_DUPLICATE_UNICODE_STRING_NULL_TERMINATE (0x00000001)
+#define RTL_DUPLICATE_UNICODE_STRING_ALLOCATE_NULL_STRING (0x00000002)
 
 #ifndef RtlInitEmptyUnicodeString
 #define RtlInitEmptyUnicodeString(_ucStr,_buf,_bufSize) \
@@ -8987,6 +9001,14 @@ NtLoadHotPatch(
 *
 ************************************************************************************/
 
+#define MEM_EXECUTE_OPTION_DISABLE 0x1
+#define MEM_EXECUTE_OPTION_ENABLE 0x2
+#define MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION 0x4
+#define MEM_EXECUTE_OPTION_PERMANENT 0x8
+#define MEM_EXECUTE_OPTION_EXECUTE_DISPATCH_ENABLE 0x10
+#define MEM_EXECUTE_OPTION_IMAGE_DISPATCH_ENABLE 0x20
+#define MEM_EXECUTE_OPTION_VALID_FLAGS 0x3f
+
 typedef enum _MEMORY_PARTITION_INFORMATION_CLASS {
     SystemMemoryPartitionInformation,
     SystemMemoryPartitionMoveMemory,
@@ -9068,7 +9090,7 @@ NtCreateSectionEx(
     _In_ ULONG SectionPageProtection,
     _In_ ULONG AllocationAttributes,
     _In_opt_ HANDLE FileHandle,
-    _In_ PMEM_EXTENDED_PARAMETER ExtendedParameters,
+    _In_ PVOID ExtendedParameters, //PMEM_EXTENDED_PARAMETER
     _In_ ULONG ExtendedParameterCount);
 
 NTSYSAPI

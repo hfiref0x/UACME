@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        16 Mar 2019
+*  DATE:        17 Mar 2019
 *
 *  Program entry point.
 *
@@ -302,6 +302,11 @@ UINT WINAPI ucmMain(
     case ERROR_BAD_ARGUMENTS:
         ucmShowMessage(OutputToDebugger, T_USAGE_HELP);
         break;
+
+    case ERROR_FATAL_APP_EXIT:
+        return uResult;
+        break;
+
     default:
         break;
 

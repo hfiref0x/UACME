@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMSUP.C
 *
-*  VERSION:     3.16
+*  VERSION:     3.17
 *
-*  DATE:        11 Mar 2019
+*  DATE:        16 Mar 2019
 *
 *  IFileOperation based routines.
 *
@@ -495,6 +495,16 @@ BOOL ucmMasqueradedDeleteDirectoryFileCOM(
 
     if (hr_init == S_OK)
         CoUninitialize();
+
+#ifdef _DEBUG
+    if (bResult) {
+        OutputDebugString(FileName);
+        OutputDebugString(TEXT("\r\nCleanup success\r\n"));
+    }
+    else {
+        OutputDebugString(TEXT("\r\nCleanup failed\r\n"));
+    }
+#endif
 
     return bResult;
 }

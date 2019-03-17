@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        16 Mar 2019
+*  DATE:        17 Mar 2019
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -291,15 +291,10 @@ BOOL ucmHakrilMethodCleanup(
     VOID
 )
 {
-    BOOL bResult;
     WCHAR szBuffer[MAX_PATH * 2];
 
     _strcpy(szBuffer, g_ctx->szTempDirectory);
     _strcat(szBuffer, FUBUKI_EXE);
 
-    bResult = DeleteFile(szBuffer);
-    if (bResult) {
-        OutputDebugString(szBuffer);
-    }
-    return bResult;
+    return DeleteFile(szBuffer);
 }
