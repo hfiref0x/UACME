@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        16 Mar 2019
+*  DATE:        18 Mar 2019
 *
 *  Common header file for the program support routines.
 *
@@ -325,6 +325,9 @@ PVOID supCreateUacmeContext(
 
 VOID supDestroyUacmeContext(
     _In_ PVOID Context);
+
+NTSTATUS supEnableDisableWow64Redirection(
+    _In_ BOOL bDisable);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

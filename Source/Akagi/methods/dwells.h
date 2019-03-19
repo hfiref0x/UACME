@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018
+*  (C) COPYRIGHT AUTHORS, 2018 - 2019
 *
 *  TITLE:       DWELLS.H
 *
-*  VERSION:     3.04
+*  VERSION:     3.17
 *
-*  DATE:        10 Nov 2018
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for David Wells method.
 *
@@ -18,6 +18,6 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmDirectoryMockMethod(
+NTSTATUS ucmDirectoryMockMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);

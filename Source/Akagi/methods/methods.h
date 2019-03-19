@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        16 Mar 2019
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -102,11 +102,11 @@ typedef struct tagUCM_PARAMS_BLOCK {
     ULONG PayloadSize;
 } UCM_PARAMS_BLOCK, *PUCM_PARAMS_BLOCK;
 
-typedef ULONG(CALLBACK *PUCM_EXTRA_ROUTINE)(
+typedef NTSTATUS(CALLBACK *PUCM_EXTRA_ROUTINE)(
     PVOID Parameter
     );
 
-typedef ULONG(CALLBACK *PUCM_API_ROUTINE)(
+typedef NTSTATUS(CALLBACK *PUCM_API_ROUTINE)(
     _In_ PUCM_PARAMS_BLOCK Parameter
     );
 
@@ -115,7 +115,7 @@ typedef struct _UCM_EXTRA_CONTEXT {
     PVOID Parameter;
 } UCM_EXTRA_CONTEXT, *PUCM_EXTRA_CONTEXT;
                   
-#define UCM_API(n) ULONG CALLBACK n(     \
+#define UCM_API(n) NTSTATUS CALLBACK n(     \
     _In_ PUCM_PARAMS_BLOCK Parameter)  
 
 typedef struct _UCM_API_DISPATCH_ENTRY {
@@ -151,5 +151,5 @@ typedef struct _UCM_API_DISPATCH_ENTRY {
 #include "tests\test.h"
 #include "tyranid.h"
 
-BOOL MethodsManagerCall(
+NTSTATUS MethodsManagerCall(
     _In_ UCM_METHOD Method);

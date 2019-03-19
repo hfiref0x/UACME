@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.16
+*  VERSION:     3.17
 *
-*  DATE:        11 Mar 2019
+*  DATE:        18 Mar 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -485,7 +485,6 @@ VOID supDebugPrint(
         RtlFreeHeap(Heap, 0, lpBuffer);
     }
 
-    SetLastError(status);
 }
 
 /*
@@ -3133,4 +3132,26 @@ BOOL supDecodeAndWriteBufferToFile(
         return bResult;
     }
     return FALSE;
+}
+
+/*
+* supEnableDisableWow64Redirection
+*
+* Purpose:
+*
+* Enable/Disable Wow64 redirection.
+*
+*/
+NTSTATUS supEnableDisableWow64Redirection(
+    _In_ BOOL bDisable
+)
+{
+    PVOID OldValue = NULL, Value;
+
+    if (bDisable)
+        Value = IntToPtr(TRUE);
+    else
+        Value = IntToPtr(FALSE);
+
+    return RtlWow64EnableFsRedirectionEx(Value, &OldValue);
 }

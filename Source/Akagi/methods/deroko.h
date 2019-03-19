@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018
+*  (C) COPYRIGHT AUTHORS, 2018 - 2019
 *
 *  TITLE:       DEROKO.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.17
 *
-*  DATE:        25 Aug 2018
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for deroko method.
 *
@@ -29,6 +29,6 @@ HRESULT ucmSPLUAObjectRegSetValue(
     _In_ PVOID lpData,
     _In_ ULONG cbData);
 
-BOOL ucmSPPLUAObjectMethod(
+NTSTATUS ucmSPPLUAObjectMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);

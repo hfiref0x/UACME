@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2018
+*  (C) COPYRIGHT AUTHORS, 2016 - 2019
 *
 *  TITLE:       EXPLIFE.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.17
 *
-*  DATE:        25 Aug 2018
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for ExpLife method.
 *
@@ -18,5 +18,5 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmUninstallLauncherMethod(
+NTSTATUS ucmUninstallLauncherMethod(
     _In_ LPWSTR lpszExecutable);

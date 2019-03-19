@@ -4,9 +4,9 @@
 *
 *  TITLE:       TYRANID.H
 *
-*  VERSION:     3.15
+*  VERSION:     3.17
 *
-*  DATE:        15 Feb 2019
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for James Forshaw method(s).
 *
@@ -18,13 +18,13 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmDiskCleanupEnvironmentVariable(
+NTSTATUS ucmDiskCleanupEnvironmentVariable(
     _In_ LPWSTR lpszPayload);
 
-BOOL ucmTokenModification(
+NTSTATUS ucmTokenModification(
     _In_ LPWSTR lpszPayload,
     _In_ BOOL fUseCommandLine);
 
-BOOL ucmTokenModUIAccessMethod(
+NTSTATUS ucmTokenModUIAccessMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);

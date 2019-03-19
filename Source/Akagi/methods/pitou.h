@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       PITOU.H
 *
-*  VERSION:     2.85
+*  VERSION:     3.17
 *
-*  DATE:        01 Dec 2017
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for Leo Davidson method.
 *
@@ -18,11 +18,17 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmStandardAutoElevation(
+NTSTATUS ucmStandardAutoElevation(
     _In_ UCM_METHOD Method,
     _In_  PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmStandardAutoElevation2(
+NTSTATUS ucmStandardAutoElevation2(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
+
+BOOL ucmSysprepMethodsCleanup(
+    UCM_METHOD Method);
+
+BOOL ucmOobeMethodCleanup(
+    VOID);

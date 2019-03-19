@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2018
+*  (C) COPYRIGHT AUTHORS, 2015 - 2019
 *
 *  TITLE:       SIMDA.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.17
 *
-*  DATE:        25 Aug 2018
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for Simda method.
 *
@@ -24,5 +24,5 @@ DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
     _In_ SE_OBJECT_TYPE ObjectType,
     _In_ LPWSTR NewSddl);
 
-BOOL ucmSimdaTurnOffUac(
+NTSTATUS ucmSimdaTurnOffUac(
     VOID);

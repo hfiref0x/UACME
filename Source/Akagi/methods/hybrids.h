@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        17 Mar 2019
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -58,45 +58,45 @@ typedef struct tagLOAD_PARAMETERS_SIREFEF {
     pfnRtlExitUserThread    RtlExitUserThread;
 } LOAD_PARAMETERS_SIREFEF, *PLOAD_PARAMETERS_SIREFEF;
 
-BOOL ucmAvrfMethod(
+NTSTATUS ucmAvrfMethod(
     _In_ PVOID AvrfDll,
     _In_ DWORD AvrfDllSize);
 
-BOOL ucmWinSATMethod(
+NTSTATUS ucmWinSATMethod(
     _In_ LPWSTR lpTargetDll,
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize,
     _In_ BOOL UseWusa);
 
-BOOL ucmMMCMethod(
+NTSTATUS ucmMMCMethod(
     _In_ UCM_METHOD Method,
     _In_ LPWSTR lpTargetDll,
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmSirefefMethod(
+NTSTATUS ucmSirefefMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmGenericAutoelevation(
+NTSTATUS ucmGenericAutoelevation(
     _In_ LPWSTR lpTargetApp,
     _In_ LPWSTR lpTargetDll,
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmGWX(
+NTSTATUS ucmGWX(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmAutoElevateManifest(
+NTSTATUS ucmAutoElevateManifest(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmInetMgrMethod(
+NTSTATUS ucmInetMgrMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmSXSMethod(
+NTSTATUS ucmSXSMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize,
     _In_opt_ LPWSTR lpTargetDirectory,
@@ -104,54 +104,51 @@ BOOL ucmSXSMethod(
     _In_opt_ LPWSTR lpLaunchApplication,
     _In_ BOOL bConsentItself);
 
-BOOL ucmSetupAkagiLink(
-    VOID);
-
-BOOL ucmDismMethod(
+NTSTATUS ucmDismMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmWow64LoggerMethod(
+NTSTATUS ucmWow64LoggerMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmUiAccessMethod(
+NTSTATUS ucmUiAccessMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmJunctionMethod(
+NTSTATUS ucmJunctionMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmSXSDccwMethod(
+NTSTATUS ucmSXSDccwMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmCorProfilerMethod(
+NTSTATUS ucmCorProfilerMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmFwCplLuaMethod(
+NTSTATUS ucmFwCplLuaMethod(
     _In_ LPWSTR lpszPayload);
 
-BOOL ucmDccwCOMMethod(
+NTSTATUS ucmDccwCOMMethod(
     _In_ LPWSTR lpszPayload);
 
-BOOL ucmBitlockerRCMethod(
+NTSTATUS ucmBitlockerRCMethod(
     _In_ LPWSTR lpszPayload);
 
-BOOL ucmCOMHandlersMethod2(
+NTSTATUS ucmCOMHandlersMethod2(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmDateTimeStateWriterMethod(
+NTSTATUS ucmDateTimeStateWriterMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmAcCplAdminMethod(
+NTSTATUS ucmAcCplAdminMethod(
     _In_ LPWSTR lpszPayload);
 
-BOOL ucmEgre55Method(
+NTSTATUS ucmEgre55Method(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 

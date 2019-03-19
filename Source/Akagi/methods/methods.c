@@ -151,7 +151,7 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
 * ExtraContext callback.
 *
 */
-ULONG CALLBACK SetMethodExecutionType(
+NTSTATUS CALLBACK SetMethodExecutionType(
     _In_ PVOID Parameter
 )
 {
@@ -162,10 +162,10 @@ ULONG CALLBACK SetMethodExecutionType(
     MPCOMPONENT_VERSION SignatureVersion;
 
     if (g_ctx->hMpClient == NULL)
-        return ERROR_DLL_NOT_FOUND;
+        return STATUS_DLL_NOT_FOUND;
 
     if (wdIsEnabled() != STATUS_TOO_MANY_SECRETS)
-        return ERROR_NOT_FOUND;
+        return STATUS_NOT_FOUND;
 
     RtlSecureZeroMemory(&SignatureVersion, sizeof(SignatureVersion));
 
@@ -206,7 +206,7 @@ ULONG CALLBACK SetMethodExecutionType(
         }
     }
 
-    return ERROR_SUCCESS;
+    return STATUS_SUCCESS;
 }
 
 /*
@@ -235,7 +235,7 @@ __forceinline BOOL IsMethodImplementedForWin32(
 * Check system requirements of the given method.
 *
 */
-BOOL IsMethodMatchRequirements(
+NTSTATUS IsMethodMatchRequirements(
     _In_ PUCM_API_DISPATCH_ENTRY Entry
 )
 {
@@ -249,8 +249,7 @@ BOOL IsMethodMatchRequirements(
     if (g_ctx->IsWow64) {
         if (Entry->DisallowWow64) {
             ucmShowMessage(g_ctx->OutputToDebugger, WOW64STRING);
-            SetLastError(ERROR_UNSUPPORTED_TYPE);
-            return FALSE;
+            return STATUS_NOT_SUPPORTED;
         }
     }
 #ifdef _WIN64
@@ -260,8 +259,7 @@ BOOL IsMethodMatchRequirements(
         //
         if (Entry->Win32OrWow64Required != FALSE) {
             ucmShowMessage(g_ctx->OutputToDebugger, WOW64WIN32ONLY);
-            SetLastError(ERROR_UNSUPPORTED_TYPE);
-            return FALSE;
+            return STATUS_NOT_SUPPORTED;
         }
     }
 #endif //_WIN64
@@ -277,17 +275,15 @@ BOOL IsMethodMatchRequirements(
         ultostr(Entry->Availability.MinumumWindowsBuildRequired, _strend(szMessage));
         _strcat(szMessage, L"\nAborting execution.");
         ucmShowMessage(g_ctx->OutputToDebugger, szMessage);
-        SetLastError(ERROR_UNSUPPORTED_TYPE);
-        return FALSE;
+        return STATUS_NOT_SUPPORTED;
     }
     if (g_ctx->dwBuildNumber >= Entry->Availability.MinimumExpectedFixedWindowsBuild) {
         if (ucmShowQuestion(UACFIX) == IDNO) {
-            SetLastError(ERROR_UNSUPPORTED_TYPE);
-            return FALSE;
+            return STATUS_NOT_SUPPORTED;
         }
     }
 #endif
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
 /*
@@ -329,6 +325,18 @@ VOID PostCleanupAttempt(
 )
 {
     switch (Method) {
+
+    case UacMethodSysprep1:
+    case UacMethodSysprep2:
+    case UacMethodSysprep3:
+    case UacMethodSysprep4:
+    case UacMethodTilon:
+        ucmSysprepMethodsCleanup(Method);
+        break;
+
+    case UacMethodOobe:
+        ucmOobeMethodCleanup();
+        break;
 
     case UacMethodAVrf:
         ucmMethodCleanupSingleItemSystem32(HIBIKI_DLL);
@@ -392,14 +400,16 @@ VOID PostCleanupAttempt(
 * Run method by method id.
 *
 */
-BOOL MethodsManagerCall(
+NTSTATUS MethodsManagerCall(
     _In_ UCM_METHOD Method
 )
 {
-    BOOL   bResult, bParametersBlockSet = FALSE;
-    ULONG  PayloadSize = 0, DataSize = 0;
-    PVOID  PayloadCode = NULL, Resource = NULL;
-    PVOID  ImageBaseAddress = g_hInstance;
+    BOOL        bParametersBlockSet = FALSE;
+    NTSTATUS    MethodResult, Status;
+    ULONG       PayloadSize = 0, DataSize = 0;
+    PVOID       PayloadCode = NULL, Resource = NULL;
+    PVOID       ImageBaseAddress = g_hInstance;
+
     PUCM_API_DISPATCH_ENTRY Entry;
     PUCM_EXTRA_CONTEXT ExtraContext;
 
@@ -407,22 +417,22 @@ BOOL MethodsManagerCall(
     LARGE_INTEGER liDueTime;
 
     if (Method >= UacMethodMax)
-        return FALSE;
+        return STATUS_INVALID_PARAMETER;
 
     //
     // Is method implemented for Win32?
     //
 #ifndef _WIN64
     if (!IsMethodImplementedForWin32(Method)) {
-        SetLastError(ERROR_INSTALL_PLATFORM_UNSUPPORTED);
-        return FALSE;
+        return STATUS_NOT_SUPPORTED;
     }
 #endif //_WIN64
 
     Entry = &ucmMethodsDispatchTable[Method];
 
-    if (!IsMethodMatchRequirements(Entry))
-        return FALSE;
+    Status = IsMethodMatchRequirements(Entry);
+    if (!NT_SUCCESS(Status))
+        return Status;
 
     if (Entry->PayloadResourceId != PAYLOAD_ID_NONE) {
 
@@ -436,8 +446,7 @@ BOOL MethodsManagerCall(
         }
 
         if ((PayloadCode == NULL) || (PayloadSize == 0)) {
-            SetLastError(ERROR_INVALID_DATA);
-            return FALSE;
+            return STATUS_DATA_ERROR;
         }
     }
 
@@ -462,7 +471,7 @@ BOOL MethodsManagerCall(
         bParametersBlockSet = supCreateSharedParametersBlock(g_ctx);
     }
 
-    bResult = (BOOL)Entry->Routine(&ParamsBlock);
+    MethodResult = Entry->Routine(&ParamsBlock);
 
     if (PayloadCode) {
         RtlSecureZeroMemory(PayloadCode, PayloadSize);
@@ -484,7 +493,7 @@ BOOL MethodsManagerCall(
 
     PostCleanupAttempt(Method);
 
-    return bResult;
+    return MethodResult;
 }
 
 /************************************************************
@@ -533,8 +542,7 @@ UCM_API(MethodACBinaryPath)
 {
 #ifdef _WIN64
     UNREFERENCED_PARAMETER(Parameter);
-    SetLastError(ERROR_INSTALL_PLATFORM_UNSUPPORTED);
-    return FALSE;
+    return STATUS_NOT_SUPPORTED;
 #else
     return ucmShimPatch(
         Parameter->PayloadCode,
@@ -554,8 +562,7 @@ UCM_API(MethodSimda)
     {
         return ucmSimdaTurnOffUac();
     }
-    SetLastError(ERROR_CANCELLED);
-    return FALSE;
+    return STATUS_CANCELLED;
 }
 
 UCM_API(MethodCarberp)
@@ -567,8 +574,7 @@ UCM_API(MethodCarberp)
     if (Parameter->Method == UacMethodCarberp1) {
         if ((g_ctx->IsWow64) && (g_ctx->dwBuildNumber > 7601)) {
             ucmShowMessage(g_ctx->OutputToDebugger, WOW64STRING);
-            SetLastError(ERROR_UNSUPPORTED_TYPE);
-            return FALSE;
+            return STATUS_UNKNOWN_REVISION;
         }
     }
     return ucmWusaMethod(
@@ -625,8 +631,7 @@ UCM_API(MethodMMC)
         Parameter->PayloadSize);
 #else
     UNREFERENCED_PARAMETER(Parameter);
-    SetLastError(ERROR_INSTALL_PLATFORM_UNSUPPORTED);
-    return FALSE;
+    return STATUS_NOT_SUPPORTED;
 #endif
 }
 
@@ -690,8 +695,7 @@ UCM_API(MethodInetMg)
         Parameter->PayloadSize);
 #else
     UNREFERENCED_PARAMETER(Parameter);
-    SetLastError(ERROR_INSTALL_PLATFORM_UNSUPPORTED);
-    return FALSE;
+    return STATUS_NOT_SUPPORTED;
 #endif
 }
 
@@ -721,8 +725,7 @@ UCM_API(MethodSXS)
             if (ucmShowQuestion(
                 TEXT("WARNING: This method will affect UAC interface, are you sure?")) != IDYES)
             {
-                SetLastError(ERROR_CANCELLED);
-                return FALSE;
+                return STATUS_CANCELLED;
             }
 #endif //_DEBUG
             bConsentItself = TRUE;
@@ -733,8 +736,7 @@ UCM_API(MethodSXS)
     }
 
     if (lpTargetApplication == NULL) {
-        SetLastError(ERROR_INVALID_DATA);
-        return FALSE;
+        return STATUS_INVALID_PARAMETER;
     }
 
     return ucmSXSMethod(
@@ -860,8 +862,7 @@ UCM_API(MethodWow64Logger)
         Parameter->PayloadSize);
 #else
     UNREFERENCED_PARAMETER(Parameter);
-    SetLastError(ERROR_INSTALL_PLATFORM_UNSUPPORTED);
-    return FALSE;
+    return STATUS_NOT_SUPPORTED;
 #endif
 }
 
@@ -963,8 +964,7 @@ UCM_API(MethodHakril)
         Parameter->PayloadSize);
 #else
     UNREFERENCED_PARAMETER(Parameter);
-    SetLastError(ERROR_INSTALL_PLATFORM_UNSUPPORTED);
-    return FALSE;
+    return STATUS_NOT_SUPPORTED;
 #endif
 }
 
@@ -1099,8 +1099,7 @@ UCM_API(MethodDateTimeStateWriter)
 {
 #ifndef _WIN64 
     UNREFERENCED_PARAMETER(Parameter);
-    SetLastError(ERROR_INSTALL_PLATFORM_UNSUPPORTED);
-    return FALSE;
+    return STATUS_NOT_SUPPORTED;
 #else
     return ucmDateTimeStateWriterMethod(
         Parameter->PayloadCode,
@@ -1155,8 +1154,7 @@ UCM_API(MethodEgre55)
 {
 #ifdef _WIN64 
     UNREFERENCED_PARAMETER(Parameter);
-    SetLastError(ERROR_INSTALL_PLATFORM_UNSUPPORTED);
-    return FALSE;
+    return STATUS_NOT_SUPPORTED;
 #else
     return ucmEgre55Method(
         Parameter->PayloadCode,

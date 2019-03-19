@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2018
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        23 Nov 2018
+*  DATE:        18 Mar 2019
 *
 *  Common header file for the program support routines.
 *
@@ -136,7 +136,7 @@ typedef UINT(WINAPI *pfnEntryPoint)(
 typedef struct _UACME_THREAD_CONTEXT {
     TEB_ACTIVE_FRAME Frame;
     pfnEntryPoint ucmMain;
-    DWORD ReturnedResult;
+    NTSTATUS ReturnedResult;
     ULONG OptionalParameterLength;
     LPWSTR OptionalParameter;
 } UACME_THREAD_CONTEXT, *PUACME_THREAD_CONTEXT;

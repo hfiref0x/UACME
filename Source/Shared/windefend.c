@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2018
+*  (C) COPYRIGHT AUTHORS, 2015 - 2019
 *
 *  TITLE:       WINDEFEND.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        23 Nov 2018
+*  DATE:        18 Mar 2019
 *
 *  MSE / Windows Defender anti-emulation part.
 *
@@ -446,6 +446,9 @@ BOOL wdIsEmulatorPresent2(
     BOOL bResult = FALSE;
     HANDLE hProcess = NULL;
 
+#pragma warning(push)
+#pragma warning(disable: 6387)
+
     hProcess = OpenProcess(
         PROCESS_QUERY_INFORMATION,
         FALSE,
@@ -455,7 +458,7 @@ BOOL wdIsEmulatorPresent2(
         bResult = ((ULONG_PTR)hProcess == 0x1234);
         CloseHandle(hProcess);
     }
-
+#pragma warning(pop)
     return bResult;
 }
 

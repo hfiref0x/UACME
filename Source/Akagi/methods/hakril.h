@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        16 Mar 2019
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for hakril method.
 *
@@ -29,7 +29,7 @@ typedef ULONG_PTR (WINAPI *pfnAipFindLaunchAdminProcess)(
     PVOID ProcessInfo,
     ELEVATION_REASON *ElevationReason);
 
-BOOL ucmHakrilMethod(
+NTSTATUS ucmHakrilMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 

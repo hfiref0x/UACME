@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       BYTECODE77.H
 *
-*  VERSION:     2.90
+*  VERSION:     3.17
 *
-*  DATE:        10 July 2018
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for bytecode77 methods.
 *
@@ -18,9 +18,9 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmVolatileEnvMethod(
+NTSTATUS ucmVolatileEnvMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-BOOL ucmSluiHijackMethod(
+NTSTATUS ucmSluiHijackMethod(
     _In_ LPWSTR lpszPayload);

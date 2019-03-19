@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       SANDWORM.H
 *
-*  VERSION:     2.70
+*  VERSION:     3.17
 *
-*  DATE:        25 Mar 2017
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for Sandworm method.
 *
@@ -18,6 +18,6 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmSandwormMethod(
+NTSTATUS ucmSandwormMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);

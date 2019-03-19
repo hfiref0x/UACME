@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2017
+*  (C) COPYRIGHT AUTHORS, 2015 - 2019
 *
 *  TITLE:       CARBERP.H
 *
-*  VERSION:     2.85
+*  VERSION:     3.17
 *
-*  DATE:        01 Dec 2017
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for Carberp method.
 *
@@ -18,7 +18,7 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmWusaMethod(
+NTSTATUS ucmWusaMethod(
     _In_ UCM_METHOD Method,
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);

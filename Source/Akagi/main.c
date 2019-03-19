@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        17 Mar 2019
+*  DATE:        18 Mar 2019
 *
 *  Program entry point.
 *
@@ -67,7 +67,7 @@ LRESULT CALLBACK ucmDummyWindowProc(
 * supHeapAlloc unavailable during this routine and calls from it.
 *
 */
-UINT ucmInit(
+NTSTATUS ucmInit(
     _Inout_ UCM_METHOD *RunMethod,
     _In_reads_or_z_opt_(OptionalParameterLength) LPWSTR OptionalParameter,
     _In_opt_ ULONG OptionalParameterLength,
@@ -76,7 +76,7 @@ UINT ucmInit(
 {
     BOOL        cond = FALSE;
     UCM_METHOD  Method;
-    DWORD       Result = ERROR_SUCCESS;
+    NTSTATUS    Result = STATUS_SUCCESS;
     PVOID       Ptr;
     LPWSTR      optionalParameter = NULL;
     ULONG       optionalParameterLength = 0;
@@ -113,12 +113,12 @@ UINT ucmInit(
         bytesIO = 0;
         RtlQueryElevationFlags(&bytesIO);
         if ((bytesIO & DBG_FLAG_ELEVATION_ENABLED) == 0) {
-            Result = ERROR_ELEVATION_REQUIRED;
+            Result = STATUS_ELEVATION_REQUIRED;
             break;
         }
 
         if (FAILED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED))) {
-            Result = ERROR_INTERNAL_ERROR;
+            Result = STATUS_INTERNAL_ERROR;
             break;
         }
 
@@ -133,7 +133,7 @@ UINT ucmInit(
             RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
             GetCommandLineParam(GetCommandLine(), 1, szBuffer, MAX_PATH, &bytesIO);
             if (bytesIO == 0)
-                return ERROR_BAD_ARGUMENTS;
+                return STATUS_INVALID_PARAMETER;
 
             Method = (UCM_METHOD)strtoul(szBuffer);
             *RunMethod = Method;
@@ -145,20 +145,20 @@ UINT ucmInit(
 
 #ifndef _DEBUG
         if (Method == UacMethodTest)
-            return ERROR_BAD_ARGUMENTS;
+            return STATUS_INVALID_PARAMETER;
 #endif
         if (Method >= UacMethodMax)
-            return ERROR_BAD_ARGUMENTS;
+            return STATUS_INVALID_PARAMETER;
 
 #ifndef _DEBUG
         ElevType = TokenElevationTypeDefault;
         if (supGetElevationType(&ElevType)) {
             if (ElevType != TokenElevationTypeLimited) {
-                return ERROR_UNSUPPORTED_TYPE;
+                return STATUS_NOT_SUPPORTED;
             }
         }
         else {
-            Result = ERROR_INTERNAL_ERROR;
+            Result = STATUS_INTERNAL_ERROR;
             break;
         }
 #endif
@@ -254,7 +254,7 @@ UINT ucmInit(
     } while (cond);
 
     if (g_ctx == NULL) {
-        Result = ERROR_FATAL_APP_EXIT;
+        Result = STATUS_FATAL_APP_EXIT;
     }
 
     return Result;
@@ -268,43 +268,39 @@ UINT ucmInit(
 * Program entry point.
 *
 */
-UINT WINAPI ucmMain(
+NTSTATUS WINAPI ucmMain(
     _In_opt_ UCM_METHOD Method,
     _In_reads_or_z_opt_(OptionalParameterLength) LPWSTR OptionalParameter,
     _In_opt_ ULONG OptionalParameterLength,
     _In_ BOOL OutputToDebugger
 )
 {
-    UINT        uResult;
+    NTSTATUS    Status;
     UCM_METHOD  method = Method;
 
     wdCheckEmulatedVFS();
 
-    uResult = ucmInit(&method,
+    Status = ucmInit(&method,
         OptionalParameter,
         OptionalParameterLength,
         OutputToDebugger);
 
-    switch (uResult) {
+    switch (Status) {
 
-    case ERROR_ELEVATION_REQUIRED:
+    case STATUS_ELEVATION_REQUIRED:
         ucmShowMessage(OutputToDebugger, TEXT("Please enable UAC for this account."));
         break;
 
-    case ERROR_UNSUPPORTED_TYPE:
+    case STATUS_NOT_SUPPORTED:
         ucmShowMessage(OutputToDebugger, TEXT("Admin account with limited token required."));
         break;
 
-    case ERROR_INSTALL_PLATFORM_UNSUPPORTED:
-        ucmShowMessage(OutputToDebugger, TEXT("This Windows version is not supported."));
-        break;
-
-    case ERROR_BAD_ARGUMENTS:
+    case STATUS_INVALID_PARAMETER:
         ucmShowMessage(OutputToDebugger, T_USAGE_HELP);
         break;
 
-    case ERROR_FATAL_APP_EXIT:
-        return uResult;
+    case STATUS_FATAL_APP_EXIT:
+        return Status;
         break;
 
     default:
@@ -312,16 +308,13 @@ UINT WINAPI ucmMain(
 
     }
 
-    if (uResult != ERROR_SUCCESS) {
-        return ERROR_INTERNAL_ERROR;
+    if (Status != STATUS_SUCCESS) {
+        return Status;
     }
 
     supMasqueradeProcess(FALSE);
 
-    if (MethodsManagerCall(method))
-        return ERROR_SUCCESS;
-    else
-        return GetLastError();
+    return MethodsManagerCall(method);
 }
 
 /*
@@ -396,7 +389,7 @@ DWORD WINAPI ucmCalleeThread(_In_ LPVOID lpParameter)
 * Dll only export.
 *
 */
-ULONG WINAPI ucmRunMethod(
+NTSTATUS WINAPI ucmRunMethod(
     _In_ UCM_METHOD Method,
     _In_reads_or_z_opt_(OptionalParameterLength) LPWSTR OptionalParameter,
     _In_ ULONG OptionalParameterLength,
@@ -434,13 +427,13 @@ ULONG WINAPI ucmRunMethod(
         }
 
     }
-    return ERROR_ACCESS_DENIED;
+    return STATUS_ACCESS_DENIED;
 #else
     UNREFERENCED_PARAMETER(Method);
     UNREFERENCED_PARAMETER(OptionalParameter);
     UNREFERENCED_PARAMETER(OptionalParameterLength);
     UNREFERENCED_PARAMETER(OutputToDebugger);
-    return ERROR_NOT_SUPPORTED;
+    return STATUS_NOT_IMPLEMENTED;
 #endif
 }
 
@@ -454,7 +447,7 @@ ULONG WINAPI ucmRunMethod(
 *
 */
 #pragma comment(linker, "/ENTRY:main")
-VOID main()
+VOID __cdecl main()
 {
     int v = 1, d = 0;
     UACME_THREAD_CONTEXT uctx;

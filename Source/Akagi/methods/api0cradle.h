@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       API0CRADLE.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.17
 *
-*  DATE:        25 Aug 2018
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for api0cradle method.
 *
@@ -18,5 +18,5 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmCMLuaUtilShellExecMethod(
+NTSTATUS ucmCMLuaUtilShellExecMethod(
     _In_ LPWSTR lpszExecutable);

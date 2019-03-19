@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        17 Mar 2019
+*  DATE:        18 Mar 2019
 *
 *  Prototypes and definitions for RinN method.
 *
@@ -18,7 +18,7 @@
 *******************************************************************************/
 #pragma once
 
-BOOL ucmCreateNewLinkMethod(
+NTSTATUS ucmCreateNewLinkMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 

