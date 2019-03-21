@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.107
+*  VERSION:     1.108
 *
-*  DATE:        15 Mar 2019
+*  DATE:        17 Mar 2019
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -1000,6 +1000,18 @@ typedef struct _PROCESS_HANDLE_SNAPSHOT_INFORMATION {
     ULONG Reserved;
     PROCESS_HANDLE_TABLE_ENTRY_INFO Handles[1];
 } PROCESS_HANDLE_SNAPSHOT_INFORMATION, *PPROCESS_HANDLE_SNAPSHOT_INFORMATION;
+
+//
+// Process/Thread System and User Time
+//  NtQueryInformationProcess using ProcessTimes
+//  NtQueryInformationThread using ThreadTimes
+//
+typedef struct _KERNEL_USER_TIMES {
+    LARGE_INTEGER CreateTime;
+    LARGE_INTEGER ExitTime;
+    LARGE_INTEGER KernelTime;
+    LARGE_INTEGER UserTime;
+} KERNEL_USER_TIMES, *PKERNEL_USER_TIMES;
 
 typedef enum _PS_MITIGATION_OPTION {
     PS_MITIGATION_OPTION_NX,

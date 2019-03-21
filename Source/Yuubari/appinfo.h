@@ -1,12 +1,12 @@
 #/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2018
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       APPINFO.H
 *
-*  VERSION:     1.35
+*  VERSION:     1.40
 *
-*  DATE:        19 Nov 2018
+*  DATE:        19 Mar 2019
 *
 *  Header file for the AppInfo scan.
 *
@@ -51,7 +51,7 @@ typedef struct _UAC_MMC_BLOCK {
 } UAC_MMC_BLOCK, *PUAC_MMC_BLOCK;
 
 typedef struct _UAC_PATTERN {
-    PVOID PatternData;
+    LPCVOID PatternData;
     ULONG PatternSize;
     ULONG SubtractBytes;
     ULONG AppInfoBuildMin;
@@ -70,8 +70,6 @@ typedef struct _UAC_AI_GLOBALS {
     PVOID *lpExemptedAutoApproveExes;
     PVOID *lpExcludedWindowsDirs;
 } UAC_AI_GLOBALS, *PUAC_AI_GLOBALS;
-
-typedef VOID(WINAPI *APPINFODATACALLBACK)(UAC_AI_DATA *Data);
 
 typedef  DWORD(WINAPI *pfnSymSetOptions)(
     _In_ DWORD   SymOptions
@@ -120,5 +118,4 @@ typedef BOOL(WINAPI *pfnSymFromAddrW)(
 
 VOID ScanAppInfo(
     LPWSTR lpFileName,
-    APPINFODATACALLBACK OutputCallback
-    );
+    OUTPUTCALLBACK OutputCallback);

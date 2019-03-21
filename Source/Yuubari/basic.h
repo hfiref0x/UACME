@@ -1,12 +1,12 @@
 #/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       BASIC.H
 *
-*  VERSION:     1.11
+*  VERSION:     1.40
 *
-*  DATE:        27 Feb 2017
+*  DATE:        19 Mar 2019
 *
 *  Header file for the basic UAC info scan.
 *
@@ -24,8 +24,5 @@ typedef struct _UAC_BASIC_DATA {
     BOOL IsValueBool;
 } UAC_BASIC_DATA, *PUAC_BASIC_DATA;
 
-typedef VOID(WINAPI *BASICDATACALLBACK)(UAC_BASIC_DATA *Data);
-
 VOID ScanBasicUacData(
-    BASICDATACALLBACK OutputCallback
-    );
+    OUTPUTCALLBACK OutputCallback);

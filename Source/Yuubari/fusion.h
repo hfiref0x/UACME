@@ -1,12 +1,12 @@
 #/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       FUSION.H
 *
-*  VERSION:     1.25
+*  VERSION:     1.40
 *
-*  DATE:        10 May 2017
+*  DATE:        19 Mar 2019
 *
 *  Header file for the autoelevated applications scan.
 *
@@ -54,16 +54,12 @@ typedef struct _DLL_REDIRECTION_LIST {
     ULONG Depth;
 } DLL_REDIRECTION_LIST, *PDLL_REDIRECTION_LIST;
 
-typedef VOID(WINAPI *FUSIONCALLBACK)(UAC_FUSION_DATA *Data);
-
 NTSTATUS SxsGetDllRedirectionFromActivationContext(
     _In_ PACTIVATION_CONTEXT ActivationContext,
-    _In_ PDLL_REDIRECTION_LIST DllList
-);
+    _In_ PDLL_REDIRECTION_LIST DllList);
 
 VOID FusionScanDirectory(
     LPWSTR lpDirectory,
-    FUSIONCALLBACK OutputCallback
-    );
+    OUTPUTCALLBACK OutputCallback);
 
 extern ptrWTGetSignatureInfo WTGetSignatureInfo;

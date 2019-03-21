@@ -1,12 +1,12 @@
 #/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     1.27
+*  VERSION:     1.40
 *
-*  DATE:        28 Oct 2017
+*  DATE:        19 Mar 2019
 *
 *  Common header file for the program support routines.
 *
@@ -29,8 +29,8 @@ LPWSTR supReadKeyString(
     );
 
 PVOID supQueryKeyName(
-    HKEY hKey,
-    PSIZE_T ReturnedLength
+    _In_ HKEY hKey,
+    _Out_opt_ PSIZE_T ReturnedLength
     );
 
 BOOLEAN supIsProcess32bit(

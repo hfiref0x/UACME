@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       COMOBJ.C
 *
-*  VERSION:     1.35
+*  VERSION:     1.40
 *
-*  DATE:        19 Nov 2018
+*  DATE:        19 Mar 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -23,7 +23,7 @@
 
 VOID CopScanRegistry(
     _In_ HKEY RootKey,
-    _In_ REGCALLBACK OutputCallback
+    _In_ OUTPUTCALLBACK OutputCallback
 );
 
 /*
@@ -38,7 +38,7 @@ VOID CopQuerySubKey(
     _In_ HKEY RootKey,
     _In_ LPWSTR lpKeyName,
     _In_ BOOL ElevationKey,
-    _In_ REGCALLBACK OutputCallback
+    _In_ OUTPUTCALLBACK OutputCallback
 )
 {
     BOOL    bCond = FALSE;
@@ -48,9 +48,6 @@ VOID CopQuerySubKey(
     LPWSTR  lpName = NULL, lpAppId = NULL, lpAppIdName = NULL, lpLocalizedString = NULL, t = NULL;
 
     UAC_REGISTRY_DATA Data;
-
-    if (OutputCallback == NULL)
-        return;
 
     //open each sub key
     lRet = RegOpenKeyEx(RootKey, lpKeyName, 0, KEY_READ, &hSubKey);
@@ -150,7 +147,7 @@ VOID CopQuerySubKey(
 
                 Data.Key = (LPWSTR)supQueryKeyName(RootKey, NULL);
                 Data.DataType = UacCOMDataCommonType;
-                OutputCallback(&Data);
+                OutputCallback((PVOID)&Data);
 
                 if (Data.Key) {
                     HeapFree(GetProcessHeap(), 0, Data.Key);
@@ -185,16 +182,13 @@ VOID CopQuerySubKey(
 VOID CopEnumSubKey(
     _In_ HKEY hKey,
     _In_ DWORD dwKeyIndex,
-    _In_ REGCALLBACK OutputCallback
+    _In_ OUTPUTCALLBACK OutputCallback
 )
 {
     BOOL    bElevation = FALSE;
     LRESULT lRet;
     DWORD   dwcbName = 0, cch;
     LPTSTR  lpKeyName = NULL;
-
-    if (OutputCallback == NULL)
-        return;
 
     do {
         dwcbName = 32 * 1024;
@@ -238,16 +232,13 @@ VOID CopEnumSubKey(
 */
 VOID CopScanRegistry(
     _In_ HKEY RootKey,
-    _In_ REGCALLBACK OutputCallback
+    _In_ OUTPUTCALLBACK OutputCallback
 )
 {
     BOOL    bCond = FALSE;
     HKEY    hKey = NULL;
     LRESULT lRet;
     DWORD   dwcSubKeys = 0, i;
-
-    if (OutputCallback == NULL)
-        return;
 
     do {
         //open root key for enumeration
@@ -351,7 +342,7 @@ BOOL CopEnumInterfaces(
 }
 
 /*
-* CopScanAutoApprovalList
+* CoScanAutoApprovalList
 *
 * Purpose:
 *
@@ -359,8 +350,8 @@ BOOL CopEnumInterfaces(
 * This key was added in RS1 specially for consent.exe comfort
 *
 */
-VOID CopScanAutoApprovalList(
-    _In_ REGCALLBACK OutputCallback
+VOID CoScanAutoApprovalList(
+    _In_ OUTPUTCALLBACK OutputCallback
 )
 {
     HKEY    hKey = NULL;
@@ -417,7 +408,7 @@ VOID CopScanAutoApprovalList(
                                 Data.Name = InterfaceList.List[j].szInterfaceName;
                                 Data.Clsid = clsid;
                                 Data.IID = InterfaceList.List[j].iid;
-                                OutputCallback((UAC_REGISTRY_DATA*)&Data);
+                                OutputCallback((PVOID)&Data);
                             }
                         }
                         Interface->lpVtbl->Release(Interface);
@@ -449,13 +440,10 @@ VOID CopScanAutoApprovalList(
 *
 */
 VOID CoListInformation(
-    _In_ REGCALLBACK OutputCallback
+    _In_ OUTPUTCALLBACK OutputCallback
 )
 {
-    //
-    // AutoApproval COM list added since RS1.
-    //
-    if (g_VerboseOutput) CopScanAutoApprovalList(OutputCallback);
-
-    CopScanRegistry(HKEY_CLASSES_ROOT, OutputCallback);
+    if (OutputCallback) {
+        CopScanRegistry(HKEY_CLASSES_ROOT, OutputCallback);
+    }
 }

@@ -1,12 +1,12 @@
 #/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       COMOBJ.H
 *
-*  VERSION:     1.11
+*  VERSION:     1.40
 *
-*  DATE:        28 Feb 2017
+*  DATE:        19 Mar 2019
 *
 *  Header file for the COM registry objects scan.
 *
@@ -46,11 +46,9 @@ typedef struct _UAC_REGISTRY_DATA {
     LPWSTR LocalizedString;
 } UAC_REGISTRY_DATA, *PUAC_REGISTRY_DATA;
 
-typedef VOID(WINAPI *REGCALLBACK)(
-    _In_ UAC_REGISTRY_DATA *Data
-    );
-
 VOID CoListInformation(
-    _In_ REGCALLBACK OutputCallback
-    );
+    _In_ OUTPUTCALLBACK OutputCallback);
+
+VOID CoScanAutoApprovalList(
+    _In_ OUTPUTCALLBACK OutputCallback);
 
