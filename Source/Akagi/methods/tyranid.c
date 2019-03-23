@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        18 Feb 2019
+*  DATE:        20 Mar 2019
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -298,7 +298,7 @@ NTSTATUS ucmTokenModification(
         // Revert to self.
         //
         hImpToken = NULL;
-        Status = NtSetInformationThread(
+        NtSetInformationThread(
             NtCurrentThread(),
             ThreadImpersonationToken,
             (PVOID)&hImpToken,

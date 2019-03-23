@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2018
+*  (C) COPYRIGHT AUTHORS, 2016 - 2019
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.10
+*  VERSION:     3.17
 *
-*  DATE:        18 Nov 2018
+*  DATE:        20 Mar 2019
 *
 *  Proxy dll entry point, Akatsuki.
 *  Special dll for wow64 logger method.
@@ -136,7 +136,7 @@ VOID DefaultPayload(
         bIsLocalSystem, 
         SessionId, 
         lpParameter, 
-        cbParameter) == TRUE);
+        cbParameter) != FALSE);
 
     //
     // Notify Akagi.

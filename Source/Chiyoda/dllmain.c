@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018
+*  (C) COPYRIGHT AUTHORS, 2018 - 2019
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.10
+*  VERSION:     3.17
 *
-*  DATE:        11 Nov 2018
+*  DATE:        20 Mar 2019
 *
 *  Chiyoda entry point.
 *
@@ -103,7 +103,7 @@ VOID RevertServiceParams()
         RtlSecureZeroMemory(&Data, sizeof(Data));
 
         _strcpy(Data, L"NT AUTHORITY\\LocalService");
-        DataSize = sizeof(UNICODE_NULL) + ((ULONG)_strlen(Data) * sizeof(WCHAR));
+        DataSize = (ULONG)((1 + _strlen(Data)) * sizeof(WCHAR));
         RtlInitUnicodeString(&us, g_svcObjectName);
         Status = NtSetValueKey(hKey, &us, 0, REG_SZ, (PVOID)&Data, DataSize);
         if (NT_SUCCESS(Status)) {
@@ -134,7 +134,7 @@ VOID RevertServiceParams()
                     RtlInitUnicodeString(&us, g_svcImagePath);
                     RtlSecureZeroMemory(&Data, sizeof(Data));
                     _strcpy(Data, L"%SystemRoot%\\system32\\svchost.exe -k LocalService");
-                    DataSize = sizeof(UNICODE_NULL) + ((ULONG)_strlen(Data) * sizeof(WCHAR));
+                    DataSize = (ULONG)((1 + _strlen(Data)) * sizeof(WCHAR));
                     Status = NtSetValueKey(hKey, &us, 0, REG_EXPAND_SZ, (PVOID)&Data, DataSize);
                     if (NT_SUCCESS(Status)) {
                         
@@ -160,7 +160,7 @@ VOID RevertServiceParams()
                     if (NT_SUCCESS(Status)) {
                         RtlSecureZeroMemory(&Data, sizeof(Data));
                         _strcpy(Data, L"%systemroot%\\system32\\w32time.dll");
-                        DataSize = sizeof(UNICODE_NULL) + ((ULONG)_strlen(Data) * sizeof(WCHAR));
+                        DataSize = (ULONG)((1 + _strlen(Data)) * sizeof(WCHAR));
                         RtlInitUnicodeString(&us, g_svcServiceDll);
                         Status = NtSetValueKey(hSubKey, &us, 0, REG_EXPAND_SZ, (PVOID)&Data, DataSize);
                         NtClose(hSubKey);

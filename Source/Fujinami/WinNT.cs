@@ -1,12 +1,12 @@
 ﻿/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018
+*  (C) COPYRIGHT AUTHORS, 2018 - 2019
 *
 *  TITLE:       WINNT.CS
 *
-*  VERSION:     1.0.1.1
+*  VERSION:     1.0.1.2
 *
-*  DATE:        13 Nov 2018
+*  DATE:        20 Mar 2019
 *
 *  Unmanaged API definitions and prototypes.
 *
@@ -43,13 +43,11 @@ namespace Fujinami
         WinWorldSid = 1
     }
 
-    public enum NtStatus : uint
+    public enum NtStatus : int
     {
-        Success = 0x00000000,
-        Informational = 0x40000000,
-        Warning = 0x80000000,
-        Error = 0xc0000000,
-        MaximumNtStatus = 0xffffffff
+        Success = 0,
+        Informational = 1073741824,
+        Error = -1073741824
     }
 
     [Flags]

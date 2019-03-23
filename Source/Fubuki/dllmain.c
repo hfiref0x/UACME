@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.15
+*  VERSION:     3.17
 *
-*  DATE:        15 Feb 2019
+*  DATE:        20 Mar 2019
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -68,7 +68,7 @@ VOID DefaultPayload(
         cbParameter = 0UL;
     }
 
-    ExitCode = (ucmLaunchPayload(lpParameter, cbParameter) == TRUE);
+    ExitCode = (ucmLaunchPayload(lpParameter, cbParameter) != FALSE);
 
     //
     // If this is default executable, show runtime info.
