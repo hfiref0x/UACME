@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.17
+*  VERSION:     3.18
 *
-*  DATE:        16 Mar 2019
+*  DATE:        29 Mar 2019
 *
 *  Global consts definition file.
 *
@@ -121,6 +121,7 @@
 #define SHELL32_DLL                 L"shell32.dll"
 #define SRRSTR_DLL                  L"srrstr.dll"
 #define SLC_DLL                     L"SLC.dll"
+#define UNATTEND_DLL                L"unattend.dll"
 #define UNBCL_DLL                   L"unbcl.dll"
 #define WBEMCOMN_DLL                L"wbemcomn.dll"
 #define WDSCORE_DLL                 L"wdscore.dll"
@@ -237,7 +238,7 @@
 
 #pragma region PYSH
 #define T_USAGE_HELP                L"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
-#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.7.1903"
+#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.8.1904"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"

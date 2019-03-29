@@ -522,7 +522,16 @@ Keys (watch debug output with dbgview or similar for more info):
      * Implementation: ucmShellDelegateExecuteCommandMethod
      * Works from: Windows 10 (17134)
      * Fixed in: unfixed :see_no_evil:
-        * How: -		
+        * How: -
+57. Author: Leo Davidson derivative by Win32/Gapz
+     * Type: Dll Hijack
+     * Method: IFileOperation
+     * Target(s): \system32\sysprep\sysprep.exe
+     * Component(s): unattend.dll
+     * Implementation: ucmStandardAutoElevation
+     * Works from: Windows 10 (7600)
+     * Fixed in: Windows 8.1 (9600)
+        * How: sysprep.exe hardened LoadFrom manifest elements			
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;
