@@ -529,7 +529,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Target(s): \system32\sysprep\sysprep.exe
      * Component(s): unattend.dll
      * Implementation: ucmStandardAutoElevation
-     * Works from: Windows 10 (7600)
+     * Works from: Windows 7 (7600)
      * Fixed in: Windows 8.1 (9600)
         * How: sysprep.exe hardened LoadFrom manifest elements			
 

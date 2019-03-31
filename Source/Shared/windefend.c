@@ -90,29 +90,8 @@ ucmLoadCallback, kernel32 base found
 
 DWORD wdxEmulatorAPIHashTable[] = {
     0x70CE7692,
-    //obsolete part start, do not use WD removed this from export.
-    0x3E3CBE69, //VFS_CopyFil
-    0x00633A7F, //VFS_DeleteFile
-    0x331245AB, //VFS_DeleteFileByHandle
-    0xE0A858CF, //VFS_FileExists
-    0xDC54FFE2, //VFS_FindClose
-    0x1C920626, //VFS_FindFirstFile
-    0xAA3ABE29, //VFS_FindNextFile
-    0xBAC05205, //VFS_FlushViewOfFile
-    0xDB9EFF5A, //VFS_GetAttrib
-    0xDBB23222, //VFS_GetHandle
-    0xDBA02E4A, //VFS_GetLength
-    0xEB0B0115, //VFS_MapViewOfFile
-    0x302ABE69, //VFS_MoveFile
-    0x5F831879, //VFS_Open
-    0x5F82E329, //VFS_Read
-    0x7B9EFF5A, //VFS_SetAttrib
-    0x5DC47852, //VFS_SetCurrentDir
-    0x7BA02E4A, //VFS_SetLength
-    0xBAC23515, //VFS_UnmapViewOfFile
-    0xFC14FE63, //VFS_Write
-    0xD4908D6E  //NtControlChannel
-    //obsolete part end
+    0xD4CE4554,
+    0x7A99CFAE
 };
 
 MP_API g_MpApiSet;
