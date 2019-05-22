@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.17
+*  VERSION:     3.19
 *
-*  DATE:        18 Mar 2019
+*  DATE:        22 May 2019
 *
 *  Common header file for the program support routines.
 *
@@ -328,6 +328,13 @@ VOID supDestroyUacmeContext(
 
 NTSTATUS supEnableDisableWow64Redirection(
     _In_ BOOL bDisable);
+
+BOOLEAN supIndirectRegAdd(
+    _In_ WCHAR* pszRootKey,
+    _In_ WCHAR* pszKey,
+    _In_opt_ WCHAR* pszValue,
+    _In_opt_ WCHAR* pszDataType,
+    _In_ WCHAR* pszData);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

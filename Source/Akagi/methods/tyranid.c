@@ -4,9 +4,9 @@
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.19
 *
-*  DATE:        20 Mar 2019
+*  DATE:        22 May 2019
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA

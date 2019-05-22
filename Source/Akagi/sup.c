@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.19
 *
-*  DATE:        20 Mar 2019
+*  DATE:        22 May 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -3154,4 +3154,78 @@ NTSTATUS supEnableDisableWow64Redirection(
         Value = IntToPtr(FALSE);
 
     return RtlWow64EnableFsRedirectionEx(Value, &OldValue);
+}
+
+/*
+* supIndirectRegAdd
+*
+* Purpose:
+*
+* REG "add" command.
+*
+*/
+BOOLEAN supIndirectRegAdd(
+    _In_ WCHAR* pszRootKey,
+    _In_ WCHAR* pszKey,
+    _In_opt_ WCHAR* pszValue,
+    _In_opt_ WCHAR* pszDataType,
+    _In_ WCHAR* pszData
+)
+{
+    BOOLEAN bResult = FALSE;
+    LPWSTR pszBuffer;
+    HANDLE hProcess;
+    SIZE_T sz;
+
+    sz = 1 + _strlen(pszRootKey) +
+        _strlen(pszKey) +
+        _strlen(pszData);
+
+    if (pszDataType) sz += _strlen(pszDataType);
+    if (pszValue) sz += _strlen(pszValue);
+
+    pszBuffer = (PWSTR)supHeapAlloc((MAX_PATH * 4) + (sz * sizeof(WCHAR)));
+    if (pszBuffer == NULL)
+        return FALSE;
+
+    _strcpy(pszBuffer, g_ctx->szSystemDirectory);
+    _strcat(pszBuffer, REG_EXE);
+    _strcat(pszBuffer, TEXT(" add "));
+    _strcat(pszBuffer, pszRootKey);
+    _strcat(pszBuffer, TEXT("\\"));
+    _strcat(pszBuffer, pszKey);
+
+    if (pszValue) {
+        _strcat(pszBuffer, TEXT(" /v \""));
+        _strcat(pszBuffer, pszValue);
+        _strcat(pszBuffer, TEXT("\""));
+    }
+
+    if (pszDataType) {
+        _strcat(pszBuffer, TEXT(" /t "));
+        _strcat(pszBuffer, pszDataType);
+    }
+
+    _strcat(pszBuffer, TEXT(" /d \""));
+    _strcat(pszBuffer, pszData);
+    _strcat(pszBuffer, TEXT("\" /f"));
+
+    hProcess = supRunProcessIndirect(
+        pszBuffer,
+        NULL,
+        NULL,
+        0,
+        SW_HIDE,
+        NULL);
+
+    if (hProcess) {
+        if (WaitForSingleObject(hProcess, 5000) == WAIT_TIMEOUT)
+            TerminateProcess(hProcess, 0);
+        CloseHandle(hProcess);
+        bResult = TRUE;
+    }
+
+    supHeapFree(pszBuffer);
+
+    return bResult;
 }

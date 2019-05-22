@@ -4,9 +4,9 @@
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.19
 *
-*  DATE:        19 Mar 2019
+*  DATE:        09 Apr 2019
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -597,6 +597,10 @@ BOOL ucmLaunchPayload(
     startupInfo.wShowWindow = SW_SHOW;
 
     RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
+
+#ifdef _TRACE_CALL
+    OutputDebugString(L"CreateProcessAsUser\r\n");
+#endif
 
     //
     // Launch payload.

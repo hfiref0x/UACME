@@ -4,9 +4,9 @@
 *
 *  TITLE:       UIHACKS.C
 *
-*  VERSION:     3.15
+*  VERSION:     3.19
 *
-*  DATE:        17 Feb 2019
+*  DATE:        22 May 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -16,6 +16,28 @@
 *******************************************************************************/
 
 #include "fubuki.h"
+
+//#define FUBUKI_TRACE_CALL
+
+#ifdef FUBUKI_TRACE_CALL
+VOID ucmxSendInput(
+    _In_ UINT cInputs,                  
+    _In_reads_(cInputs) LPINPUT pInputs,
+    _In_ int cbSize)
+{
+    WCHAR szOut[200];
+    UINT r = SendInput(cInputs, pInputs, cbSize);
+
+    _strcpy(szOut, L"SendInput = ");
+    ultostr(r, _strend(szOut));
+    _strcat(szOut, L" GetLastError = ");
+    ultostr(GetLastError(), _strend(szOut));
+    _strcat(szOut, L"\r\n");
+    OutputDebugString(szOut);
+}
+#else
+#define ucmxSendInput SendInput
+#endif
 
 /*
 * ucmxSendControlInput
@@ -39,19 +61,19 @@ VOID ucmxSendControlInput(
 
     if (UseShift) {
         ip.ki.wVk = VK_LSHIFT;
-        SendInput(1, &ip, sizeof(INPUT));
+        ucmxSendInput(1, &ip, sizeof(INPUT));
     }
 
     ip.ki.wVk = VkKey;
-    SendInput(1, &ip, sizeof(INPUT));
+    ucmxSendInput(1, &ip, sizeof(INPUT));
 
     ip.ki.dwFlags = KEYEVENTF_KEYUP;
-    SendInput(1, &ip, sizeof(INPUT));
+    ucmxSendInput(1, &ip, sizeof(INPUT));
 
     if (UseShift) {
         ip.ki.wVk = VK_LSHIFT;
         ip.ki.dwFlags = KEYEVENTF_KEYUP;
-        SendInput(1, &ip, sizeof(INPUT));
+        ucmxSendInput(1, &ip, sizeof(INPUT));
     }
 }
 
@@ -146,6 +168,9 @@ BOOL CALLBACK ucmxEnumChildCallback(
         }
 
         hwndButton = GetDlgItem(hwnd, 302);
+        if (hwndButton == NULL)
+            hwndButton = GetDlgItem(hwnd, 1117);
+
         if (hwndButton) {
 
             //
@@ -166,6 +191,11 @@ BOOL CALLBACK ucmxEnumChildCallback(
 
             return FALSE;
         }
+#ifdef FUBUKI_TRACE_CALL
+        else {
+            OutputDebugString(L"GetDlgItem(BUTTON) failed\r\n");
+        }
+#endif
     }
 
     return TRUE;

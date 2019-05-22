@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.18
+*  VERSION:     3.19
 *
-*  DATE:        29 Mar 2019
+*  DATE:        22 May 2019
 *
 *  Global consts definition file.
 *
@@ -23,6 +23,14 @@
 
 #define AKAGI_XOR_KEY               'naka'
 #define AKAGI_XOR_KEY2              ' pta'
+
+#pragma region PYSH
+#define T_USAGE_HELP                L"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
+#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.9.1905"
+#define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
+#define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
+#define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
+#pragma endregion
 
 #define T_MACHINE                   L"MACHINE\\"
 
@@ -212,6 +220,7 @@
 #define RUNDLL_EXE_CMD              L"rundll32.exe " //with space as part of command
 
 #define REG_HKCU                    L"HKEY_CURRENT_USER"
+#define T_REG_SZ                    L"REG_SZ"
 
 //
 // Units specific values
@@ -235,14 +244,6 @@
 #define INETMGR_SXS                 L"microsoft-windows-iis-managementconsole"
 #define COMCTL32_SXS                L"microsoft.windows.common-controls"
 #define GDIPLUS_SXS                 L"microsoft.windows.gdiplus"
-
-#pragma region PYSH
-#define T_USAGE_HELP                L"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
-#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.8.1904"
-#define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
-#define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
-#define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
-#pragma endregion
 
 #define T_VOLATILE_ENV              L"Volatile Environment"
 #define T_SYSTEMROOT_VAR            L"SYSTEMROOT"

