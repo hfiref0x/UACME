@@ -42,7 +42,7 @@ Keys (watch debug output with dbgview or similar for more info):
    * Implementation: ucmStandardAutoElevation
    * Works from: Windows 7 (7600)
    * Fixed in: Windows 10 TH2 (10558)
-      * How: side effect of OOBE redesign
+      * How: Side effect of OOBE redesign
 4. Author: Jon Ericson, WinNT/Gootkit, mzH
    * Type: AppCompat
    * Method: RedirectEXE Shim
@@ -378,7 +378,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Implementation: ucmCOMHandlersMethod
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 19H1 (18362)
-        * How: side effect of Windows changes
+        * How: Side effect of Windows changes
 41. Author: Oddvar Moe
      * Type: Elevated COM interface
      * Method: ICMLuaUtil
@@ -441,7 +441,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Implementation: ucmCOMHandlersMethod2
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 10 19H1 (18362)
-        * How: side effect of Windows changes
+        * How: Side effect of Windows changes
 48. Author: deroko
      * Type: Elevated COM interface
      * Method: ISPPLUAObject
