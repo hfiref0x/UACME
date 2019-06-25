@@ -551,15 +551,15 @@ Run examples:
 * akagi64 3 c:\windows\system32\charmap.exe
 
 # Warning
-* This tool shows ONLY popular UAC bypass method used by malware, and reimplement some of them in a different way improving original concepts. There are exists different, not yet known to general public methods, be aware of this;  
+* This tool shows ONLY popular UAC bypass method used by malware, and reimplement some of them in a different way improving original concepts. There are different, not yet known to the general public, methods. Be aware of this;  
 * Using (5) method will permanently turn off UAC (after reboot), make sure to do this in test environment or don't forget to re-enable UAC after tool usage;
-* Using (5), (9) methods will permanently compromise security of target keys (UAC Settings key for (5) and IFEO for (9)), if you do tests on your real machine - restore keys security manually after you complete this tool usage;
-* This tool is not intended for AV tests and not tested to work in aggressive AV environment, if you still plan to use it with installed bloatware AV soft - you use it at your own risk;
+* Using (5), (9) methods will permanently compromise security of target keys (UAC Settings key for (5) and IFEO for (9)). If you do tests on your real machine - restore keys security manually after you complete this tool usage;
+* This tool is not intended for AV tests and not tested to work in aggressive AV environment, if you still plan to use it with installed bloatware AV soft - use it at your own risk;
 * Some AV may flag this tool as HackTool, MSE/WinDefender constantly marks it as malware, nope;
 * If you run this program on real computer remember to remove all program leftovers after usage, for more info about files it drops to system folders see source code;
 * Most of methods created for x64, with no x86-32 support in mind. I don't see any sense in supporting 32 bit versions of Windows or wow64, however with small tweaks most of them will run under wow64 as well.
 
-If you wondering why this still exist and work here is the explanation, an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
+If you wondering why this still exists, the work here is the explanation - an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
 https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # Windows 10 support and testing policy
