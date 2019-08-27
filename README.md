@@ -559,7 +559,7 @@ Run examples:
 * If you run this program on real computer remember to remove all program leftovers after usage, for more info about files it drops to system folders see source code;
 * Most of methods created for x64, with no x86-32 support in mind. I don't see any sense in supporting 32 bit versions of Windows or wow64, however with small tweaks most of them will run under wow64 as well.
 
-If you wondering why this still exists, the work here is the explanation - an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
+If you wondering why this still exists and working - here is the explanation - an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
 https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # Windows 10 support and testing policy
