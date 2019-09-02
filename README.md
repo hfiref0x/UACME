@@ -503,8 +503,8 @@ Keys (watch debug output with dbgview or similar for more info):
      * Component(s): \AppData\Local\Microsoft\WindowsApps\srrstr.dll
      * Implementation: ucmEgre55Method
      * Works from: Windows 10 (14393)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 19H1 (18362)
+        * How: SysDm.cpl!_CreateSystemRestorePage has been updated for secured load library call
 55. Author: James Forshaw
      * Type: GUI Hack 
      * Method: UIPI bypass with token modification

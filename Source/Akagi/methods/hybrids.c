@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.19
 *
-*  DATE:        22 May 2019
+*  DATE:        01 Sep 2019
 *
 *  Hybrid UAC bypass methods.
 *
@@ -3462,6 +3462,8 @@ NTSTATUS ucmAcCplAdminMethod(
 *
 * This code expects to work under wow64 only because of uacme restrictions.
 * However you can extent it to force drop your *32* bit dll from your *64* bit application.
+*
+* Fixed in Windows 10 19H1
 *
 */
 NTSTATUS ucmEgre55Method(
