@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.40
+*  VERSION:     1.41
 *
-*  DATE:        19 Mar 2019
+*  DATE:        08 Sep 2019
 *
 *  Program entry point.
 *
@@ -411,7 +411,7 @@ VOID ListAppInfo(
     _strcpy(szFileName, USER_SHARED_DATA->NtSystemRoot);
     _strcat(szFileName, TEXT("\\system32\\appinfo.dll"));
 #else
-    _strcpy(szFileName, TEXT("C:\\appinfo\\18361.dll"));
+    _strcpy(szFileName, TEXT("C:\\appinfo\\18975.dll"));
 #endif
     ScanAppInfo(szFileName, (OUTPUTCALLBACK)AppInfoDataOutputCallback);
 
@@ -471,10 +471,10 @@ VOID main()
         cuiPrintText(szBuffer, TRUE);
     }
 
-//#ifndef _DEBUG
+#ifndef _DEBUG
     ListBasicSettings();
     ListCOMFromRegistry();
-//#endif
+#endif
     ListAppInfo();
     ListFusion();
 

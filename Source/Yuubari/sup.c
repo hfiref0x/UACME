@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.40
+*  VERSION:     1.41
 *
-*  DATE:        19 Mar 2019
+*  DATE:        08 Sep 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -108,7 +108,7 @@ PVOID supQueryKeyName(
         status = NtQueryObject(hKey, ObjectNameInformation, pObjName, ulen, NULL);
         if (NT_SUCCESS(status)) {
             if ((pObjName->Name.Buffer != NULL) && (pObjName->Name.Length > 0)) {
-                sz = pObjName->Name.MaximumLength + sizeof(UNICODE_NULL);
+                sz = pObjName->Name.Length + sizeof(UNICODE_NULL);
                 ReturnBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
                 if (ReturnBuffer) {
                     RtlCopyMemory(ReturnBuffer, pObjName->Name.Buffer, pObjName->Name.Length);

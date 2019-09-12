@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.40
+*  VERSION:     1.41
 *
-*  DATE:        19 Mar 2019
+*  DATE:        08 Sep 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -37,8 +37,7 @@ UAC_PATTERN g_MmcPatterns[] = {
     { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 4, 9600, 9600 },
     { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 4, 10240, 10240 },
     { ptMmcBlock_10586_16299, sizeof(ptMmcBlock_10586_16299), 4, 10586, 16299 },
-    { ptMmcBlock_16300_17763, sizeof(ptMmcBlock_16300_17763), 4, 16300, 17763 },
-    { ptMmcBlock_18300_18361, sizeof(ptMmcBlock_18300_18361), 4, 18300, 18361 }
+    { ptMmcBlock_16300_18975, sizeof(ptMmcBlock_16300_18975), 4, 16300, 18975 }
 };
 
 #define TestChar(x)  (((WCHAR)x >= L'A') && ((WCHAR)x <= L'z')) 
@@ -249,14 +248,19 @@ BOOL CALLBACK SymEnumSymbolsProc(
 * Return pointer to requested pattern if present.
 *
 */
+_Success_(return == TRUE)
 BOOL GetSupportedPattern(
     _In_ UAC_PATTERN *Patterns,
-    _In_ LPCVOID *OutputPattern,
-    _In_ ULONG *OutputPatternSize,
-    _In_ ULONG *SubtractBytes
+    _Out_ LPCVOID *OutputPattern,
+    _Out_ ULONG *OutputPatternSize,
+    _Out_ ULONG *SubtractBytes
 )
 {
     ULONG i;
+
+    *OutputPattern = NULL;
+    *OutputPatternSize = 0;
+    *SubtractBytes = 0;
 
     for (i = 0; i < RTL_NUMBER_OF(g_MmcPatterns); i++) {
         if ((g_AiData.AppInfoBuildNumber >= Patterns[i].AppInfoBuildMin) &&
@@ -293,13 +297,15 @@ BOOLEAN QueryAiMmcBlock(
 
     g_AiData.MmcBlock = NULL;
     if (GetSupportedPattern(g_MmcPatterns, &PatternData, &PatternSize, &SubtractBytes)) {
-        Pattern = (PVOID)supFindPattern(DllBase, DllVirtualSize, (PBYTE)PatternData, PatternSize);
-        if (Pattern != NULL) {
-            rel = *(DWORD*)((ULONG_PTR)Pattern - SubtractBytes);
-            TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)Pattern + rel);
-            if (IN_REGION(TestPtr, DllBase, DllVirtualSize)) {
-                g_AiData.MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
-                return TRUE;
+        if (PatternData) {
+            Pattern = (PVOID)supFindPattern(DllBase, DllVirtualSize, (PBYTE)PatternData, PatternSize);
+            if (Pattern != NULL) {
+                rel = *(DWORD*)((ULONG_PTR)Pattern - SubtractBytes);
+                TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)Pattern + rel);
+                if (IN_REGION(TestPtr, DllBase, DllVirtualSize)) {
+                    g_AiData.MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
+                    return TRUE;
+                }
             }
         }
     }
