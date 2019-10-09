@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMOBJ.C
 *
-*  VERSION:     1.40
+*  VERSION:     1.42
 *
-*  DATE:        19 Mar 2019
+*  DATE:        08 Oct 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -41,7 +41,6 @@ VOID CopQuerySubKey(
     _In_ OUTPUTCALLBACK OutputCallback
 )
 {
-    BOOL    bCond = FALSE;
     LRESULT lRet;
     HKEY    hSubKey = NULL, hAppIdKey = NULL;
     DWORD   dwDataSize, dwEnabled = 0;
@@ -153,7 +152,7 @@ VOID CopQuerySubKey(
                     HeapFree(GetProcessHeap(), 0, Data.Key);
                 }
 
-            } while (bCond);
+            } while (FALSE);
 
             if (lpAppIdName)
                 HeapFree(GetProcessHeap(), 0, lpAppIdName);
@@ -202,6 +201,7 @@ VOID CopEnumSubKey(
         if (lRet == ERROR_MORE_DATA) {
             dwcbName *= 2;
             HeapFree(GetProcessHeap(), 0, lpKeyName);
+            lpKeyName = NULL;
             continue;
         }
         if (lRet == ERROR_SUCCESS) {
@@ -235,7 +235,6 @@ VOID CopScanRegistry(
     _In_ OUTPUTCALLBACK OutputCallback
 )
 {
-    BOOL    bCond = FALSE;
     HKEY    hKey = NULL;
     LRESULT lRet;
     DWORD   dwcSubKeys = 0, i;
@@ -256,7 +255,7 @@ VOID CopScanRegistry(
         for (i = 0; i < dwcSubKeys; i++)
             CopEnumSubKey(hKey, i, OutputCallback);
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hKey != NULL)
         RegCloseKey(hKey);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.41
+*  VERSION:     1.42
 *
-*  DATE:        08 Sep 2019
+*  DATE:        08 Oct 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -37,7 +37,7 @@ UAC_PATTERN g_MmcPatterns[] = {
     { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 4, 9600, 9600 },
     { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 4, 10240, 10240 },
     { ptMmcBlock_10586_16299, sizeof(ptMmcBlock_10586_16299), 4, 10586, 16299 },
-    { ptMmcBlock_16300_18975, sizeof(ptMmcBlock_16300_18975), 4, 16300, 18975 }
+    { ptMmcBlock_16300_18995, sizeof(ptMmcBlock_16300_18995), 4, 16300, 18995 }
 };
 
 #define TestChar(x)  (((WCHAR)x >= L'A') && ((WCHAR)x <= L'z')) 
@@ -93,7 +93,7 @@ BOOL InitDbgHelp(
     VOID
 )
 {
-    BOOL bCond = FALSE, bResult = FALSE;
+    BOOL bResult = FALSE;
     HMODULE hDbgHelp = NULL;
     SIZE_T length;
     WCHAR szBuffer[MAX_PATH * 2];
@@ -147,7 +147,7 @@ BOOL InitDbgHelp(
             bResult = TRUE;
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     return bResult;
 }
@@ -324,7 +324,6 @@ VOID QueryAiGlobalData(
     VOID
 )
 {
-    BOOL    bCond = FALSE;
     HANDLE  hSym = GetCurrentProcess();
     WCHAR   szFullSymbolInfo[MAX_PATH * 2];
     WCHAR   szSymbolName[MAX_PATH];
@@ -362,7 +361,7 @@ VOID QueryAiGlobalData(
             }
             pSymCleanup(hSym);
         }
-    } while (bCond);
+    } while (FALSE);
 
 }
 
@@ -580,7 +579,6 @@ VOID ScanAppInfo(
     OUTPUTCALLBACK OutputCallback
 )
 {
-    BOOL                bCond = FALSE;
     NTSTATUS            status;
     HANDLE              hFile = NULL, hSection = NULL;
     PBYTE               DllBase = NULL;
@@ -639,7 +637,7 @@ VOID ScanAppInfo(
             ListStringDataUnsorted(AiExcludedWindowsDirs, g_AiData.lpExcludedWindowsDirs, OutputCallback);
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (usFileName.Buffer != NULL)
         RtlFreeUnicodeString(&usFileName);

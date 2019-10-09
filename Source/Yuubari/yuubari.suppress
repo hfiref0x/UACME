@@ -40,14 +40,6 @@
     <CurrentVersion>2</CurrentVersion>
   </SuppressVersion>
   <Yuubari>
-    <FileName>cui.c</FileName>
-    <ErrorCode>V119</ErrorCode>
-    <Message>More than one sizeof() operator is used in one expression.</Message>
-    <CodePrev>0</CodePrev>
-    <CodeCurrent>2701246913</CodeCurrent>
-    <CodeNext>1364055907</CodeNext>
-  </Yuubari>
-  <Yuubari>
     <FileName>rtltypes.h</FileName>
     <ErrorCode>V112</ErrorCode>
     <Message>Dangerous magic number _x_ used: return c + _x_;.</Message>

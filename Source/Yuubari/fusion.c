@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUSION.C
 *
-*  VERSION:     1.40
+*  VERSION:     1.42
 *
-*  DATE:        19 Mar 2019
+*  DATE:        08 Oct 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -32,7 +32,6 @@ NTSTATUS SxsGetTocHeaderFromActivationContext(
     _Out_opt_ PACTIVATION_CONTEXT_DATA *ActivationContextData
 )
 {
-    BOOL bCond = FALSE;
     NTSTATUS result = STATUS_UNSUCCESSFUL;
     ACTIVATION_CONTEXT_DATA *ContextData = NULL;
     ACTIVATION_CONTEXT_DATA_TOC_HEADER *Header;
@@ -97,7 +96,7 @@ NTSTATUS SxsGetTocHeaderFromActivationContext(
 
             result = STATUS_SUCCESS;
 
-        } while (bCond);
+        } while (FALSE);
 
         if (!NT_SUCCESS(result)) {
             OutputDebugString(szLog);
@@ -178,7 +177,6 @@ NTSTATUS SxsGetDllRedirectionFromActivationContext(
     _In_ PDLL_REDIRECTION_LIST DllList
 )
 {
-    BOOL bCond = FALSE;
     ULONG i, j;
     NTSTATUS result = STATUS_UNSUCCESSFUL, status;
     ACTIVATION_CONTEXT_DATA *ContextData = NULL;
@@ -244,7 +242,7 @@ NTSTATUS SxsGetDllRedirectionFromActivationContext(
             else
                 result = STATUS_SUCCESS;
 
-        } while (bCond);
+        } while (FALSE);
 
     }
     __except (EXCEPTION_EXECUTE_HANDLER) {
@@ -317,7 +315,6 @@ VOID FusionCheckFile(
     OUTPUTCALLBACK OutputCallback
 )
 {
-    BOOL                bCond = FALSE;
     DWORD               lastError;
     NTSTATUS            status;
     HANDLE              hFile = NULL, hSection = NULL, hActCtx = NULL;
@@ -569,7 +566,7 @@ VOID FusionCheckFile(
         FusionProbeForRedirectedDlls(FileName, (PACTIVATION_CONTEXT)hActCtx, OutputCallback);
 
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hActCtx != NULL)
         ReleaseActCtx(hActCtx);
