@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMOBJ.H
 *
-*  VERSION:     1.40
+*  VERSION:     1.43
 *
-*  DATE:        19 Mar 2019
+*  DATE:        16 Oct 2019
 *
 *  Header file for the COM registry objects scan.
 *
@@ -49,6 +49,13 @@ typedef struct _UAC_REGISTRY_DATA {
 VOID CoListInformation(
     _In_ OUTPUTCALLBACK OutputCallback);
 
-VOID CoScanAutoApprovalList(
-    _In_ OUTPUTCALLBACK OutputCallback);
+BOOL CoEnumInterfaces(
+    _Inout_ INTERFACE_INFO_LIST *InterfaceList);
 
+VOID CoScanAutoApprovalList(
+    _In_ OUTPUTCALLBACK OutputCallback,
+    _In_ INTERFACE_INFO_LIST *InterfaceList);
+
+VOID CoScanBrokerApprovalList(
+    _In_ OUTPUTCALLBACK OutputCallback,
+    _In_ INTERFACE_INFO_LIST *InterfaceList);

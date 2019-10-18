@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.42
+*  VERSION:     1.43
 *
-*  DATE:        08 Oct 2019
+*  DATE:        09 Oct 2019
 *
 *  Program entry point.
 *
@@ -22,6 +22,14 @@
 BOOL    g_VerboseOutput = FALSE;
 ULONG   g_NtBuildNumber = 0;
 HANDLE  g_LogFile = INVALID_HANDLE_VALUE;
+
+VOID LoggerWriteHeader(
+    _In_ LPWSTR lpHeaderData)
+{
+    LoggerWrite(g_LogFile, T_SPLIT, FALSE);
+    LoggerWrite(g_LogFile, lpHeaderData, FALSE);
+    LoggerWrite(g_LogFile, T_SPLIT, TRUE);
+}
 
 /*
 * AppInfoDataOutputCallback
@@ -304,9 +312,8 @@ VOID ListBasicSettings(
 )
 {
     cuiPrintText(T_BASIC_HEAD, TRUE);
-    LoggerWrite(g_LogFile, T_BASIC_HEAD, TRUE);
+    LoggerWriteHeader(T_BASIC_HEAD);
     ScanBasicUacData((OUTPUTCALLBACK)BasicDataOutputCallback);
-    LoggerWrite(g_LogFile, T_SPLIT, TRUE);
 }
 
 /*
@@ -321,20 +328,39 @@ VOID ListCOMFromRegistry(
     VOID
 )
 {
-    cuiPrintText(T_COM_HEAD, TRUE);
-    LoggerWrite(g_LogFile, T_COM_HEAD, TRUE);
-    CoListInformation((OUTPUTCALLBACK)RegistryOutputCallback);
-    LoggerWrite(g_LogFile, T_SPLIT, TRUE);
+    INTERFACE_INFO_LIST InterfaceList;
+
+    if (CoInitializeEx(NULL, COINIT_APARTMENTTHREADED) != S_OK)
+        return;
+
+    RtlSecureZeroMemory(&InterfaceList, sizeof(InterfaceList));
+
+    __try {
+
+        if (!CoEnumInterfaces(&InterfaceList))
+            __leave;
+
+        cuiPrintText(T_COM_HEAD, TRUE);
+        LoggerWriteHeader(T_COM_HEAD);
+        CoListInformation((OUTPUTCALLBACK)RegistryOutputCallback);
 
 
-    //
-    // AutoApproval COM list added since RS1.
-    //
-    if (g_NtBuildNumber >= 14393) {
-        cuiPrintText(T_COM_APPROVE_HEAD, TRUE);
-        LoggerWrite(g_LogFile, T_COM_APPROVE_HEAD, TRUE);
-        CoScanAutoApprovalList((OUTPUTCALLBACK)RegistryOutputCallback);
-        LoggerWrite(g_LogFile, T_SPLIT, TRUE);
+        //
+        // AutoApproval COM list added since RS1.
+        //
+        if (g_NtBuildNumber >= 14393) {
+            cuiPrintText(T_COM_APPROVE_HEAD, TRUE);
+            LoggerWriteHeader(T_COM_APPROVE_HEAD);
+            CoScanAutoApprovalList((OUTPUTCALLBACK)RegistryOutputCallback, &InterfaceList);
+        }
+        cuiPrintText(T_BROKER_APPROVE_HEAD, TRUE);
+        LoggerWriteHeader(T_BROKER_APPROVE_HEAD);
+        CoScanBrokerApprovalList((OUTPUTCALLBACK)RegistryOutputCallback, &InterfaceList);
+    }
+    __finally {
+        CoUninitialize();
+        if (InterfaceList.List)
+            HeapFree(GetProcessHeap(), 0, InterfaceList.List);
     }
 }
 
@@ -364,18 +390,17 @@ VOID ListFusion(
 
     //scan Windows first
     cuiPrintText(T_WINFILES_HEAD, TRUE);
-    LoggerWrite(g_LogFile, T_WINFILES_HEAD, TRUE);
+    LoggerWriteHeader(T_WINFILES_HEAD);
 
 #ifdef _DEBUG
     FusionScanDirectory(L"C:\\sxs", (OUTPUTCALLBACK)FusionOutputCallback);
     return;
 #else
     FusionScanDirectory(USER_SHARED_DATA->NtSystemRoot, (OUTPUTCALLBACK)FusionOutputCallback);
-    LoggerWrite(g_LogFile, T_SPLIT, TRUE);
 
     //scan program files next
     cuiPrintText(T_PFDIRFILES_HEAD, TRUE);
-    LoggerWrite(g_LogFile, T_PFDIRFILES_HEAD, TRUE);
+    LoggerWriteHeader(T_PFDIRFILES_HEAD);
 
     RtlSecureZeroMemory(szPath, sizeof(szPath));
     if (SUCCEEDED(SHGetFolderPath(NULL,
@@ -386,7 +411,6 @@ VOID ListFusion(
     {
         FusionScanDirectory(szPath, (OUTPUTCALLBACK)FusionOutputCallback);
     }
-    LoggerWrite(g_LogFile, T_SPLIT, TRUE);
 #endif
 }
 
@@ -405,7 +429,7 @@ VOID ListAppInfo(
     WCHAR szFileName[MAX_PATH * 2];
 
     cuiPrintText(T_APPINFO_HEAD, TRUE);
-    LoggerWrite(g_LogFile, T_APPINFO_HEAD, TRUE);
+    LoggerWriteHeader(T_APPINFO_HEAD);
 
 #ifndef _DEBUG
     _strcpy(szFileName, USER_SHARED_DATA->NtSystemRoot);
@@ -414,8 +438,6 @@ VOID ListAppInfo(
     _strcpy(szFileName, TEXT("C:\\appinfo\\18975.dll"));
 #endif
     ScanAppInfo(szFileName, (OUTPUTCALLBACK)AppInfoDataOutputCallback);
-
-    LoggerWrite(g_LogFile, T_SPLIT, TRUE);
 }
 
 /*
