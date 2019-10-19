@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.43
+*  VERSION:     1.44
 *
-*  DATE:        09 Oct 2019
+*  DATE:        19 Oct 2019
 *
 *  Program entry point.
 *
@@ -258,6 +258,9 @@ VOID WINAPI FusionOutputCallback(
                 case AutoElevateDisabled:
                     lpText = TEXT("autoElevate=FALSE");
                     break;
+                case AutoElevateExempted:
+                    lpText = TEXT("autoElevate=Exempted");
+                    break;
                 default:
                     break;
                 }
@@ -393,7 +396,7 @@ VOID ListFusion(
     LoggerWriteHeader(T_WINFILES_HEAD);
 
 #ifdef _DEBUG
-    FusionScanDirectory(L"C:\\sxs", (OUTPUTCALLBACK)FusionOutputCallback);
+    FusionScanDirectory(L"C:\\Windows\\WinSxS", (OUTPUTCALLBACK)FusionOutputCallback);
     return;
 #else
     FusionScanDirectory(USER_SHARED_DATA->NtSystemRoot, (OUTPUTCALLBACK)FusionOutputCallback);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.115
+*  VERSION:     1.121
 *
-*  DATE:        18 May 2019
+*  DATE:        18 Oct 2019
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -6242,13 +6242,6 @@ RtlDosPathNameToNtPathName_U(
     _Reserved_ PVOID Reserved);
 
 NTSYSAPI
-PWSTR
-NTAPI
-RtlIpv4AddressToStringW(
-    _In_ const struct in_addr *Addr,
-    _Out_ PWSTR S);
-
-NTSYSAPI
 LONG
 NTAPI
 RtlCompareUnicodeStrings(
@@ -6443,6 +6436,81 @@ RtlpEnsureBufferSize(
             (Buff)->Size = (Buff)->StaticSize;           \
         }                                                \
     } while (0)
+
+
+/************************************************************************************
+*
+* RTL Integer conversion API.
+*
+************************************************************************************/
+
+NTSYSAPI
+PWSTR
+NTAPI
+RtlIpv4AddressToStringW(
+    _In_ const struct in_addr *Addr,
+    _Out_ PWSTR S);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlIpv4StringToAddressW(
+    _In_ PCWSTR AddressString,
+    _In_ BOOLEAN Strict,
+    _Out_ LPCWSTR *Terminator,
+    _Out_ struct in_addr *Address);
+
+//taken from ph2
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlIntegerToChar(
+    _In_ ULONG Value,
+    _In_opt_ ULONG Base,
+    _In_ LONG OutputLength,
+    _Out_ PSTR String);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlCharToInteger(
+    _In_ PSTR String,
+    _In_opt_ ULONG Base,
+    _Out_ PULONG Value);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlLargeIntegerToChar(
+    _In_ PLARGE_INTEGER Value,
+    _In_opt_ ULONG Base,
+    _In_ LONG OutputLength,
+    _Out_ PSTR String);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlIntegerToUnicodeString(
+    _In_ ULONG Value,
+    _In_opt_ ULONG Base,
+    _Inout_ PUNICODE_STRING String);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlInt64ToUnicodeString(
+    _In_ ULONGLONG Value,
+    _In_opt_ ULONG Base,
+    _Inout_ PUNICODE_STRING String);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlUnicodeStringToInteger(
+    _In_ PUNICODE_STRING String,
+    _In_opt_ ULONG Base,
+    _Out_ PULONG Value);
 
 /************************************************************************************
 *
@@ -7543,6 +7611,21 @@ RtlImageRvaToVa(
     _In_ ULONG Rva,
     _Inout_opt_ PIMAGE_SECTION_HEADER *LastRvaSection);
 
+NTSYSAPI
+PVOID
+NTAPI
+RtlFindExportedRoutineByName(
+    _In_ PVOID BaseOfImage,
+    _In_ PSTR RoutineName);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlGuardCheckLongJumpTarget(
+    _In_ PVOID PcValue,
+    _In_ BOOL IsFastFail,
+    _Out_ PBOOL IsLongJumpTarget);
+
 /************************************************************************************
 *
 * RTL Time API.
@@ -7555,6 +7638,14 @@ NTAPI
 RtlSecondsSince1970ToTime(
     _In_ ULONG ElapsedSeconds,
     _Out_ PLARGE_INTEGER Time);
+
+NTSYSAPI
+BOOLEAN
+NTAPI
+RtlTimeToSecondsSince1970(
+    _In_ PLARGE_INTEGER Time,
+    _Out_ PULONG ElapsedSeconds);
+
 
 NTSYSAPI
 VOID
@@ -7583,6 +7674,20 @@ NTAPI
 RtlTimeFieldsToTime(
     _In_ PTIME_FIELDS TimeFields,
     _Out_ PLARGE_INTEGER Time);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlSystemTimeToLocalTime(
+    _In_ PLARGE_INTEGER SystemTime,
+    _Out_ PLARGE_INTEGER LocalTime);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlLocalTimeToSystemTime(
+    _In_ PLARGE_INTEGER LocalTime,
+    _Out_ PLARGE_INTEGER SystemTime);
 
 /************************************************************************************
 *
@@ -8007,6 +8112,18 @@ BOOLEAN
 NTAPI
 RtlDoesFileExists_U(
     _In_ PCWSTR FileName);
+
+NTSYSAPI
+ULONG
+NTAPI
+RtlGetLongestNtPathLength(
+    VOID);
+
+NTSYSAPI
+BOOLEAN
+NTAPI
+RtlAreLongPathsEnabled(
+    VOID);
 
 /************************************************************************************
 *

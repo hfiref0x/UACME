@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUSION.H
 *
-*  VERSION:     1.40
+*  VERSION:     1.44
 *
-*  DATE:        19 Mar 2019
+*  DATE:        19 Oct 2019
 *
 *  Header file for the autoelevated applications scan.
 *
@@ -24,7 +24,8 @@
 typedef enum {
     AutoElevateUnspecified = 0,
     AutoElevateDisabled = 1,
-    AutoElevateEnabled = 2
+    AutoElevateEnabled = 2,
+    AutoElevateExempted = 3
 } AUTOELEVATESTATE;
 
 typedef struct _UAC_FUSION_DATA {

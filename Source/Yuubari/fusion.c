@@ -4,9 +4,9 @@
 *
 *  TITLE:       FUSION.C
 *
-*  VERSION:     1.42
+*  VERSION:     1.44
 *
-*  DATE:        08 Oct 2019
+*  DATE:        19 Oct 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -17,6 +17,39 @@
 #include "global.h"
 
 ptrWTGetSignatureInfo WTGetSignatureInfo = NULL;
+
+/*
+* IsExemptedAutoApproveEXE
+*
+* Purpose:
+*
+* Check if the given file is Exempted AutoApprove EXE.
+*
+*/
+BOOLEAN IsExemptedAutoApproveEXE(
+    _In_ LPWSTR lpFileName,
+    _In_ HANDLE hFile)
+{
+    SIGNATURE_INFO sigData;
+    NTSTATUS status;
+
+    LPWSTR lpName = _filename(lpFileName);
+
+    if ((_strcmpi(lpName, L"sysprep.exe") == 0) ||
+        (_strcmpi(lpName, L"inetmgr.exe") == 0))
+    {
+        RtlSecureZeroMemory(&sigData, sizeof(sigData));
+        sigData.cbSize = sizeof(sigData);
+        status = WTGetSignatureInfo(lpFileName, hFile,
+            SIF_BASE_VERIFICATION | SIF_CHECK_OS_BINARY | SIF_CATALOG_SIGNED,
+            &sigData,
+            NULL, NULL);
+        if (NT_SUCCESS(status))
+            return ((sigData.SignatureState == SIGNATURE_STATE_VALID) && (sigData.fOSBinary != FALSE));
+    }
+
+    return FALSE;
+}
 
 /*
 * SxsGetTocHeaderFromActivationContext
@@ -537,6 +570,14 @@ VOID FusionCheckFile(
                     FusionCommonData.AutoElevateState = AutoElevateDisabled;
         }
         else {
+
+            //
+            // Check specific "exempted" autoelevated files, they may not have "autoelevate" in manifest.
+            //
+            if (IsExemptedAutoApproveEXE(FileName, hFile)) {
+                FusionCommonData.AutoElevateState = AutoElevateExempted;
+            }
+
             //
             // Query settings failed, check if it known error like sxs key not exist.         
             //
