@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.44
+*  VERSION:     1.45
 *
-*  DATE:        19 Oct 2019
+*  DATE:        22 Oct 2019
 *
 *  Program entry point.
 *
@@ -146,8 +146,12 @@ VOID WINAPI RegistryOutputCallback(
     if (Data == NULL)
         return;
 
-
-    if (Data->DataType == UacCOMDataCommonType) {
+    if (Data->DataType == UacCOMDataVirtualFactory) {
+        LoggerWrite(g_LogFile, TEXT("VirtualFactory"), TRUE);
+    }
+    if ((Data->DataType == UacCOMDataCommonType) ||
+        (Data->DataType == UacCOMDataVirtualFactory))
+    {
         //
         // Output current registry key to show that we are alive.
         //
@@ -159,8 +163,13 @@ VOID WINAPI RegistryOutputCallback(
         LoggerWrite(g_LogFile, TEXT("\r\n"), TRUE);
     }
 
-    if (Data->DataType == UacCOMDataInterfaceType) {
+    if (Data->DataType == UacCOMDataInterfaceTypeVF) {
+        LoggerWrite(g_LogFile, TEXT("VirtualFactory Item"), TRUE);
+    }
 
+    if ((Data->DataType == UacCOMDataInterfaceType) ||
+        (Data->DataType == UacCOMDataInterfaceTypeVF))
+    {
         InterfaceData = (UAC_INTERFACE_DATA*)(PVOID)Data;
 
         LoggerWrite(g_LogFile, InterfaceData->Name, TRUE);
@@ -345,7 +354,7 @@ VOID ListCOMFromRegistry(
 
         cuiPrintText(T_COM_HEAD, TRUE);
         LoggerWriteHeader(T_COM_HEAD);
-        CoListInformation((OUTPUTCALLBACK)RegistryOutputCallback);
+        CoListInformation((OUTPUTCALLBACK)RegistryOutputCallback, &InterfaceList);
 
 
         //
@@ -498,11 +507,12 @@ VOID main()
 
 #ifndef _DEBUG
     ListBasicSettings();
-    ListCOMFromRegistry();
 #endif
+    ListCOMFromRegistry();
     ListAppInfo();
+#ifndef _DEBUG
     ListFusion();
-
+#endif
     if (g_LogFile != INVALID_HANDLE_VALUE)
         CloseHandle(g_LogFile);
 

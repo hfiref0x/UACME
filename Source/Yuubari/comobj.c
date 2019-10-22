@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMOBJ.C
 *
-*  VERSION:     1.43
+*  VERSION:     1.45
 *
-*  DATE:        16 Oct 2019
+*  DATE:        22 Oct 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -23,8 +23,70 @@
 
 VOID CopScanRegistry(
     _In_ HKEY RootKey,
+    _In_ OUTPUTCALLBACK OutputCallback,
+    _In_ INTERFACE_INFO_LIST *InterfaceList);
+
+/*
+* CopRunOutputCallbackForInterface
+*
+* Purpose:
+*
+* Output interface information.
+*
+*/
+VOID CopRunOutputCallbackForInterface(
+    _In_ ULONG DataType,
+    _In_ INTERFACE_INFO *Interface,
+    _In_ CLSID clsid,
     _In_ OUTPUTCALLBACK OutputCallback
-);
+)
+{
+    UAC_INTERFACE_DATA Data;
+
+    RtlSecureZeroMemory(&Data, sizeof(Data));
+    Data.DataType = DataType;
+    Data.Name = Interface->szInterfaceName;
+    Data.Clsid = clsid;
+    Data.IID = Interface->iid;
+    OutputCallback((PVOID)&Data);
+}
+
+/*
+* CopLocateInterfaceByCLSID
+*
+* Purpose:
+*
+* Search for interface by CLSID.
+*
+*/
+INTERFACE_INFO* CopLocateInterfaceByCLSID(
+    _In_ INTERFACE_INFO_LIST *InterfaceList,
+    _In_ CLSID clsid
+)
+{
+    IUnknown *Interface = NULL;
+    IUnknown *TestObject = NULL;
+
+    ULONG i;
+
+    INTERFACE_INFO* Result = NULL;
+
+    if (SUCCEEDED(CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IUnknown, (LPVOID)&Interface)))
+    {
+        for (i = 0; i < InterfaceList->cEntries; i++) {
+            Interface->lpVtbl->QueryInterface(Interface, &InterfaceList->List[i].iid, &TestObject);
+            if (TestObject != NULL) {
+                TestObject->lpVtbl->Release(TestObject);
+                Result = &InterfaceList->List[i];
+                break;
+            }
+        }
+        Interface->lpVtbl->Release(Interface);
+    }
+
+    return Result;
+}
 
 /*
 * CopQuerySubKey
@@ -38,15 +100,23 @@ VOID CopQuerySubKey(
     _In_ HKEY RootKey,
     _In_ LPWSTR lpKeyName,
     _In_ BOOL ElevationKey,
-    _In_ OUTPUTCALLBACK OutputCallback
+    _In_ OUTPUTCALLBACK OutputCallback,
+    _In_ INTERFACE_INFO_LIST *InterfaceList
 )
 {
     LRESULT lRet;
-    HKEY    hSubKey = NULL, hAppIdKey = NULL;
+    HKEY    hSubKey = NULL, hAppIdKey = NULL, hServerObjectsKey = NULL;
     DWORD   dwDataSize, dwEnabled = 0;
-    LPWSTR  lpName = NULL, lpAppId = NULL, lpAppIdName = NULL, lpLocalizedString = NULL, t = NULL;
+    LPWSTR  lpName = NULL, lpAppId = NULL, lpAppIdName = NULL, lpLocalizedString = NULL, t = NULL, lpValue = NULL;
+
+    ULONG   i, cValues = 0, cMaxLength = 0, cchValue;
+
+    CLSID   clsid;
 
     UAC_REGISTRY_DATA Data;
+    INTERFACE_INFO *LookupInterface;
+
+    BOOLEAN VirtualFactory = FALSE;
 
     //open each sub key
     lRet = RegOpenKeyEx(RootKey, lpKeyName, 0, KEY_READ, &hSubKey);
@@ -70,6 +140,12 @@ VOID CopQuerySubKey(
 
                 if (dwEnabled != 1)
                     break;
+
+                //
+                // Check virtual factory.
+                //
+                lRet = RegOpenKeyEx(RootKey, TEXT("VirtualServerObjects"), 0, KEY_READ, &hServerObjectsKey);
+                VirtualFactory = ((lRet == ERROR_SUCCESS) && (hServerObjectsKey != NULL));
 
                 //query object name
                 lpName = supReadKeyString(RootKey, TEXT(""), &dwDataSize);
@@ -145,12 +221,57 @@ VOID CopQuerySubKey(
                 }
 
                 Data.Key = (LPWSTR)supQueryKeyName(RootKey, NULL);
-                Data.DataType = UacCOMDataCommonType;
+
+                if (VirtualFactory)
+                    Data.DataType = UacCOMDataVirtualFactory;
+                else
+                    Data.DataType = UacCOMDataCommonType;
+
                 OutputCallback((PVOID)&Data);
 
                 if (Data.Key) {
                     HeapFree(GetProcessHeap(), 0, Data.Key);
                 }
+
+                //
+                // Output virtual server objects.
+                //
+                if (VirtualFactory) {
+
+                    lRet = RegQueryInfoKey(hServerObjectsKey, NULL, NULL, NULL, NULL, NULL, NULL,
+                        &cValues, &cMaxLength, NULL, NULL, NULL);
+
+                    if (lRet == ERROR_SUCCESS) {
+
+                        cMaxLength = (DWORD)((cMaxLength + 1) * sizeof(WCHAR));
+                        lpValue = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
+                        if (lpValue) {
+
+                            for (i = 0; i < cValues; i++) {
+                                cchValue = (DWORD)(cMaxLength / sizeof(WCHAR));
+                                if (RegEnumValue(hServerObjectsKey, i, lpValue, &cchValue, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
+
+                                    if (CLSIDFromString(lpValue, &clsid) == S_OK) {
+                                        LookupInterface = CopLocateInterfaceByCLSID(InterfaceList, clsid);
+                                        if (LookupInterface) {
+
+                                            CopRunOutputCallbackForInterface(
+                                                UacCOMDataInterfaceTypeVF,
+                                                LookupInterface,
+                                                clsid,
+                                                OutputCallback);
+
+                                        }
+                                    }
+                                }
+                            }
+
+                            HeapFree(GetProcessHeap(), 0, lpValue);
+                        }
+                    }
+                    RegCloseKey(hServerObjectsKey);
+                }
+
 
             } while (FALSE);
 
@@ -164,7 +285,7 @@ VOID CopQuerySubKey(
                 HeapFree(GetProcessHeap(), 0, lpName);
         }
         else {
-            CopScanRegistry(hSubKey, OutputCallback);
+            CopScanRegistry(hSubKey, OutputCallback, InterfaceList);
         }
         RegCloseKey(hSubKey);
     }
@@ -181,7 +302,8 @@ VOID CopQuerySubKey(
 VOID CopEnumSubKey(
     _In_ HKEY hKey,
     _In_ DWORD dwKeyIndex,
-    _In_ OUTPUTCALLBACK OutputCallback
+    _In_ OUTPUTCALLBACK OutputCallback,
+    _In_ INTERFACE_INFO_LIST *InterfaceList
 )
 {
     BOOL    bElevation = FALSE;
@@ -212,7 +334,7 @@ VOID CopEnumSubKey(
             if (_strcmpi(lpKeyName, TEXT("Elevation")) == 0)
                 bElevation = TRUE;
 
-            CopQuerySubKey(hKey, lpKeyName, bElevation, OutputCallback);
+            CopQuerySubKey(hKey, lpKeyName, bElevation, OutputCallback, InterfaceList);
         }
 
     } while (lRet == ERROR_MORE_DATA);
@@ -232,7 +354,8 @@ VOID CopEnumSubKey(
 */
 VOID CopScanRegistry(
     _In_ HKEY RootKey,
-    _In_ OUTPUTCALLBACK OutputCallback
+    _In_ OUTPUTCALLBACK OutputCallback,
+    _In_ INTERFACE_INFO_LIST *InterfaceList
 )
 {
     HKEY    hKey = NULL;
@@ -253,7 +376,7 @@ VOID CopScanRegistry(
             break;
 
         for (i = 0; i < dwcSubKeys; i++)
-            CopEnumSubKey(hKey, i, OutputCallback);
+            CopEnumSubKey(hKey, i, OutputCallback, InterfaceList);
 
     } while (FALSE);
 
@@ -355,15 +478,12 @@ VOID CoScanBrokerApprovalList(
 {
     HKEY    hKey = NULL, hSubKey = NULL;
     LRESULT lRet;
-    SIZE_T  j;
     LPWSTR  lpSubKey = NULL;
     DWORD   i, cSubKeys = 0, cMaxLength = 0, cchSubKey, dwType, dwData, cbData;
 
-    UAC_INTERFACE_DATA Data;
     CLSID clsid;
 
-    IUnknown *Interface = NULL;
-    IUnknown *TestObject = NULL;
+    INTERFACE_INFO *LookupInterface;
 
     __try {
 
@@ -391,6 +511,8 @@ VOID CoScanBrokerApprovalList(
                 if (RegOpenKey(hKey, lpSubKey, &hSubKey) == ERROR_SUCCESS) {
 
                     dwType = REG_DWORD;
+                    cbData = sizeof(DWORD);
+                    dwData = 0;
 
                     if (RegQueryValueEx(hSubKey,
                         TEXT("AutoElevationAllowed"),
@@ -404,25 +526,17 @@ VOID CoScanBrokerApprovalList(
                             //
                             // Find interface and output to the callback.
                             //
-                            if (CLSIDFromString(lpSubKey, &clsid) == S_OK)
-                                if (SUCCEEDED(CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER,
-                                    &IID_IUnknown, (LPVOID)&Interface)))
-                                {
-                                    for (j = 0; j < InterfaceList->cEntries; j++) {
-                                        Interface->lpVtbl->QueryInterface(Interface, &InterfaceList->List[j].iid, &TestObject);
-                                        if (TestObject != NULL) {
-                                            TestObject->lpVtbl->Release(TestObject);
+                            if (CLSIDFromString(lpSubKey, &clsid) == S_OK) {
+                                LookupInterface = CopLocateInterfaceByCLSID(InterfaceList, clsid);
+                                if (LookupInterface) {
 
-                                            RtlSecureZeroMemory(&Data, sizeof(Data));
-                                            Data.DataType = UacCOMDataInterfaceType;
-                                            Data.Name = InterfaceList->List[j].szInterfaceName;
-                                            Data.Clsid = clsid;
-                                            Data.IID = InterfaceList->List[j].iid;
-                                            OutputCallback((PVOID)&Data);
-                                        }
-                                    }
-                                    Interface->lpVtbl->Release(Interface);
+                                    CopRunOutputCallbackForInterface(
+                                        UacCOMDataInterfaceType,
+                                        LookupInterface,
+                                        clsid,
+                                        OutputCallback);
                                 }
+                            }
                         }
                     }
 
@@ -460,15 +574,12 @@ VOID CoScanAutoApprovalList(
 {
     HKEY    hKey = NULL;
     LRESULT lRet;
-    SIZE_T  j;
     LPWSTR  lpValue = NULL;
     DWORD   i, cValues = 0, cMaxLength = 0, cchValue;
 
-    UAC_INTERFACE_DATA Data;
     CLSID clsid;
 
-    IUnknown *Interface = NULL;
-    IUnknown *TestObject = NULL;
+    INTERFACE_INFO *LookupInterface;
 
     __try {
 
@@ -489,25 +600,18 @@ VOID CoScanAutoApprovalList(
         for (i = 0; i < cValues; i++) {
             cchValue = (DWORD)(cMaxLength / sizeof(WCHAR));
             if (RegEnumValue(hKey, i, lpValue, &cchValue, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
-                if (CLSIDFromString(lpValue, &clsid) == S_OK)
-                    if (SUCCEEDED(CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER,
-                        &IID_IUnknown, (LPVOID)&Interface)))
-                    {
-                        for (j = 0; j < InterfaceList->cEntries; j++) {
-                            Interface->lpVtbl->QueryInterface(Interface, &InterfaceList->List[j].iid, &TestObject);
-                            if (TestObject != NULL) {
-                                TestObject->lpVtbl->Release(TestObject);
+                if (CLSIDFromString(lpValue, &clsid) == S_OK) {
+                    LookupInterface = CopLocateInterfaceByCLSID(InterfaceList, clsid);
+                    if (LookupInterface) {
 
-                                RtlSecureZeroMemory(&Data, sizeof(Data));
-                                Data.DataType = UacCOMDataInterfaceType;
-                                Data.Name = InterfaceList->List[j].szInterfaceName;
-                                Data.Clsid = clsid;
-                                Data.IID = InterfaceList->List[j].iid;
-                                OutputCallback((PVOID)&Data);
-                            }
-                        }
-                        Interface->lpVtbl->Release(Interface);
+                        CopRunOutputCallbackForInterface(
+                            UacCOMDataInterfaceType,
+                            LookupInterface,
+                            clsid,
+                            OutputCallback);
+
                     }
+                }
             }
         }
     }
@@ -531,10 +635,11 @@ VOID CoScanAutoApprovalList(
 *
 */
 VOID CoListInformation(
-    _In_ OUTPUTCALLBACK OutputCallback
+    _In_ OUTPUTCALLBACK OutputCallback,
+    _In_ INTERFACE_INFO_LIST *InterfaceList
 )
 {
     if (OutputCallback) {
-        CopScanRegistry(HKEY_CLASSES_ROOT, OutputCallback);
+        CopScanRegistry(HKEY_CLASSES_ROOT, OutputCallback, InterfaceList);
     }
 }

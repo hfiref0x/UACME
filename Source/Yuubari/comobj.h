@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMOBJ.H
 *
-*  VERSION:     1.43
+*  VERSION:     1.45
 *
-*  DATE:        16 Oct 2019
+*  DATE:        22 Oct 2019
 *
 *  Header file for the COM registry objects scan.
 *
@@ -20,6 +20,8 @@
 
 #define UacCOMDataCommonType         0
 #define UacCOMDataInterfaceType      1
+#define UacCOMDataInterfaceTypeVF    2
+#define UacCOMDataVirtualFactory     3
 
 typedef struct _INTERFACE_INFO {
     IID iid;
@@ -47,7 +49,8 @@ typedef struct _UAC_REGISTRY_DATA {
 } UAC_REGISTRY_DATA, *PUAC_REGISTRY_DATA;
 
 VOID CoListInformation(
-    _In_ OUTPUTCALLBACK OutputCallback);
+    _In_ OUTPUTCALLBACK OutputCallback,
+    _In_ INTERFACE_INFO_LIST *InterfaceList);
 
 BOOL CoEnumInterfaces(
     _Inout_ INTERFACE_INFO_LIST *InterfaceList);
