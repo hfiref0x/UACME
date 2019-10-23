@@ -185,7 +185,7 @@ DWORD ucmxInvokeWusaThread(
 
         CloseHandle(shinfo.hProcess);
     }
-    Sleep(1000);
+    Sleep(2000);
     InterlockedExchange((LONG*)&g_ThreadFinished, 1);
     return 0;
 }

@@ -338,7 +338,7 @@ Keys (watch debug output with dbgview or similar for more info):
      * Type: Race condition
      * Method: NTFS reparse point & Dll Hijack
      * Target(s): wusa.exe
-     * Component(s): dcomcnfg.exe, mmc.exe, ole32.dll, MsCoree.dll
+     * Component(s): Attacker defined
      * Implementation: ucmJunctionMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:

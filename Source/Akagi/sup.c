@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.19
+*  VERSION:     3.20
 *
-*  DATE:        22 May 2019
+*  DATE:        22 Oct 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -1995,43 +1995,6 @@ BOOL supDesktopToName(
 }
 
 /*
-* supQueryNtBuildNumber
-*
-* Purpose:
-*
-* Query NtBuildNumber value from ntoskrnl image.
-*
-*/
-BOOL supQueryNtBuildNumber(
-    _Inout_ PULONG BuildNumber
-)
-{
-    BOOL bResult = FALSE;
-    HMODULE hModule;
-    PVOID Ptr;
-    WCHAR szBuffer[MAX_PATH * 2];
-
-    RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-    _strcpy(szBuffer, USER_SHARED_DATA->NtSystemRoot);
-    _strcat(szBuffer, L"\\system32\\ntoskrnl.exe");
-
-    hModule = LoadLibraryEx(szBuffer, NULL, DONT_RESOLVE_DLL_REFERENCES);
-    if (hModule == NULL)
-        return bResult;
-
-#pragma warning(push)
-#pragma warning(disable: 4054)//code to data
-    Ptr = (PVOID)GetProcAddress(hModule, "NtBuildNumber");
-#pragma warning(pop)
-    if (Ptr) {
-        *BuildNumber = (*(PULONG)Ptr & 0xffff);
-        bResult = TRUE;
-    }
-    FreeLibrary(hModule);
-    return bResult;
-}
-
-/*
 * supReplaceDllEntryPoint
 *
 * Purpose:
@@ -2951,12 +2914,9 @@ PVOID supCreateUacmeContext(
         osv.dwOSVersionInfoSize = sizeof(osv);
         RtlGetVersion((PRTL_OSVERSIONINFOW)&osv);
         NtBuildNumber = osv.dwBuildNumber;
-
     }
     else {
-        if (!supQueryNtBuildNumber(&NtBuildNumber)) {
-            return NULL;
-        }
+        NtBuildNumber = USER_SHARED_DATA->NtBuildNumber;
     }
 
     if (NtBuildNumber < 7000) {
@@ -3228,4 +3188,28 @@ BOOLEAN supIndirectRegAdd(
     supHeapFree(pszBuffer);
 
     return bResult;
+}
+
+/*
+* supIsNetfx48PlusInstalled
+*
+* Purpose:
+*
+* Detect Netfx 4.8+
+*
+*/
+BOOLEAN supIsNetfx48PlusInstalled(
+    VOID)
+{
+    HKEY hKey = NULL;
+    DWORD Netfx48ReleaseVersion = 528040;
+    DWORD dwReleaseVersion = 0;
+    DWORD cbData = sizeof(DWORD), dwType = REG_DWORD;
+
+    if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_LOCAL_MACHINE, T_DOTNET_FULL, 0, KEY_READ, &hKey)) {
+        RegQueryValueEx(hKey, TEXT("Release"), NULL, &dwType, (LPBYTE)&dwReleaseVersion, &cbData);
+        RegCloseKey(hKey);
+    }
+
+    return (dwReleaseVersion >= Netfx48ReleaseVersion);
 }

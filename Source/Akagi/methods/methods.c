@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.19
+*  VERSION:     3.20
 *
-*  DATE:        01 Sep 2019
+*  DATE:        22 Oct 2019
 *
 *  UAC bypass dispatch.
 *

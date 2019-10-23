@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.19
+*  VERSION:     3.20
 *
-*  DATE:        22 May 2019
+*  DATE:        22 Oct 2019
 *
 *  Global consts definition file.
 *
@@ -26,7 +26,7 @@
 
 #pragma region PYSH
 #define T_USAGE_HELP                L"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
-#define PROGRAMTITLE_VERSION        L"UACMe v 3.1.9.1905"
+#define PROGRAMTITLE_VERSION        L"UACMe v 3.2.0.1910"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
@@ -43,6 +43,7 @@
 #define T_DISPLAY_CALIBRATION       L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ICM\\Calibration"
 #define T_DOTNET_CLIENT             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\KnownFunctionTableDlls"
 #define T_UNINSTALL                 L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\"
+#define T_DOTNET_FULL               L"Software\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full"
 
 #define T_MSC_SHELL                 L"Software\\Classes\\mscfile"
 #define T_EXEFILE_SHELL             L"Software\\Classes\\exefile"

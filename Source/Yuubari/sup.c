@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.41
+*  VERSION:     1.46
 *
-*  DATE:        08 Sep 2019
+*  DATE:        23 Oct 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -221,41 +221,4 @@ LRESULT supRegReadDword(
             *Value = dwValue;
     }
     return lResult;
-}
-
-/*
-* supQueryNtBuildNumber
-*
-* Purpose:
-*
-* Query NtBuildNumber value from ntoskrnl image.
-*
-*/
-BOOL supQueryNtBuildNumber(
-    _Inout_ PULONG BuildNumber
-)
-{
-    BOOL bResult = FALSE;
-    HMODULE hModule;
-    PVOID Ptr;
-    WCHAR szBuffer[MAX_PATH * 2];
-
-    RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-    _strcpy(szBuffer, USER_SHARED_DATA->NtSystemRoot);
-    _strcat(szBuffer, L"\\system32\\ntoskrnl.exe");
-
-    hModule = LoadLibraryEx(szBuffer, NULL, DONT_RESOLVE_DLL_REFERENCES);
-    if (hModule == NULL)
-        return bResult;
-
-#pragma warning(push)
-#pragma warning(disable: 4054)//code to data
-    Ptr = (PVOID)GetProcAddress(hModule, "NtBuildNumber");
-#pragma warning(pop)
-    if (Ptr) {
-        *BuildNumber = (*(PULONG)Ptr & 0xffff);
-        bResult = TRUE;
-    }
-    FreeLibrary(hModule);
-    return bResult;
 }

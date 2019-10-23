@@ -4,9 +4,9 @@
 *
 *  TITLE:       AIC.C
 *
-*  VERSION:     3.19
+*  VERSION:     3.20
 *
-*  DATE:        22 May 2019
+*  DATE:        22 Oct 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -15,6 +15,10 @@
 *
 *******************************************************************************/
 #include "global.h"
+
+//
+// AicLaunchAdminProcess prologue signature.
+//
 
 unsigned char LaunchAdminProcessSignature760x[] = {
     0xFF, 0xF3, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x81,
@@ -46,7 +50,7 @@ unsigned char LaunchAdminProcessSignature_15063_18362[] = {
     0xEC, 0x20, 0x04, 0x00, 0x00
 };
 
-unsigned char LaunchadminProcessSignature_18895_xxxxx[] = {
+unsigned char LaunchAdminProcessSignature_18363_xxxxx[] = {
     0x40, 0x53, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x81, 
     0xEC, 0x30, 0x04, 0x00, 0x00
 };
@@ -105,12 +109,13 @@ ULONG_PTR AicFindLaunchAdminProcess(
         Pattern = LaunchAdminProcessSignature_15063_18362;
         PatternSize = sizeof(LaunchAdminProcessSignature_15063_18362);
         break;
+    case 18363:
     default:
-        Pattern = LaunchadminProcessSignature_18895_xxxxx;
-        PatternSize = sizeof(LaunchadminProcessSignature_18895_xxxxx);
+        Pattern = LaunchAdminProcessSignature_18363_xxxxx;
+        PatternSize = sizeof(LaunchAdminProcessSignature_18363_xxxxx);
         break;
     }
-    
+
     ScanBase = (PBYTE)GetModuleHandle(ScanModule);
     if (ScanBase == NULL) {
         ScanBase = (PBYTE)LoadLibraryEx(ScanModule, NULL, 0); //is in \KnownDlls

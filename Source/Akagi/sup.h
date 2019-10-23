@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.19
+*  VERSION:     3.20
 *
-*  DATE:        22 May 2019
+*  DATE:        22 Oct 2019
 *
 *  Common header file for the program support routines.
 *
@@ -242,9 +242,6 @@ BOOL supDesktopToName(
     _In_ DWORD cbBuffer,
     _Out_ PDWORD BytesNeeded);
 
-BOOL supQueryNtBuildNumber(
-    _Inout_ PULONG BuildNumber);
-
 BOOL supReplaceDllEntryPoint(
     _In_ PVOID DllImage,
     _In_ ULONG SizeOfDllImage,
@@ -335,6 +332,9 @@ BOOLEAN supIndirectRegAdd(
     _In_opt_ WCHAR* pszValue,
     _In_opt_ WCHAR* pszDataType,
     _In_ WCHAR* pszData);
+
+BOOLEAN supIsNetfx48PlusInstalled(
+    VOID);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)
