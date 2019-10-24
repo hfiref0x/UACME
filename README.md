@@ -531,7 +531,16 @@ Keys (watch debug output with dbgview or similar for more info):
      * Implementation: ucmStandardAutoElevation
      * Works from: Windows 7 (7600)
      * Fixed in: Windows 8.1 (9600)
-        * How: sysprep.exe hardened LoadFrom manifest elements			
+        * How: sysprep.exe hardened LoadFrom manifest elements
+58. Author: RinN
+     * Type: Elevated COM interface
+     * Method: IEditionUpgradeManager
+     * Target(s): \system32\clipup.exe
+     * Component(s): Attacker defined
+     * Implementation: ucmEditionUpgradeManagerMethod
+     * Works from: Windows 10 (14393)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -		
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;

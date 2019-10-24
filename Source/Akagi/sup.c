@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.20
 *
-*  DATE:        22 Oct 2019
+*  DATE:        24 Oct 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -1758,8 +1758,10 @@ BOOL supSetEnvVariable(
 
     } while (bCond);
 
-    if (hKey != NULL)
+    if (hKey != NULL) {
+        RegFlushKey(hKey);
         RegCloseKey(hKey);
+    }
 
     return bResult;
 }
