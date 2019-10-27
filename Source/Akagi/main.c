@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.21
 *
-*  DATE:        18 Mar 2019
+*  DATE:        26 Oct 2019
 *
 *  Program entry point.
 *
@@ -277,6 +277,8 @@ NTSTATUS WINAPI ucmMain(
 {
     NTSTATUS    Status;
     UCM_METHOD  method = Method;
+    WCHAR szMessage[MAX_PATH + 1];
+    LPWSTR lpBufferPtr;
 
     wdCheckEmulatedVFS();
 
@@ -285,18 +287,30 @@ NTSTATUS WINAPI ucmMain(
         OptionalParameterLength,
         OutputToDebugger);
 
+    RtlSecureZeroMemory(&szMessage, sizeof(szMessage));
+    lpBufferPtr = (LPWSTR)&szMessage;
+
     switch (Status) {
 
     case STATUS_ELEVATION_REQUIRED:
-        ucmShowMessage(OutputToDebugger, TEXT("Please enable UAC for this account."));
+        if (DecodeStringById(IDSB_USAGE_UAC_REQUIRED, lpBufferPtr, MAX_PATH * sizeof(WCHAR))) {
+            ucmShowMessage(OutputToDebugger, lpBufferPtr);
+            RtlSecureZeroMemory(szMessage, sizeof(szMessage));
+        }
         break;
 
     case STATUS_NOT_SUPPORTED:
-        ucmShowMessage(OutputToDebugger, TEXT("Admin account with limited token required."));
+        if (DecodeStringById(IDSB_USAGE_ADMIN_REQUIRED, lpBufferPtr, MAX_PATH * sizeof(WCHAR))) {
+            ucmShowMessage(OutputToDebugger, lpBufferPtr);
+            RtlSecureZeroMemory(szMessage, sizeof(szMessage));
+        }
         break;
 
     case STATUS_INVALID_PARAMETER:
-        ucmShowMessage(OutputToDebugger, T_USAGE_HELP);
+        if (DecodeStringById(IDSB_USAGE_HELP, lpBufferPtr, MAX_PATH * sizeof(WCHAR))) {
+            ucmShowMessage(OutputToDebugger, lpBufferPtr);
+            RtlSecureZeroMemory(szMessage, sizeof(szMessage));
+        }
         break;
 
     case STATUS_FATAL_APP_EXIT:

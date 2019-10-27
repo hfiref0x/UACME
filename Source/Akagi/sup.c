@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.20
+*  VERSION:     3.21
 *
-*  DATE:        24 Oct 2019
+*  DATE:        26 Oct 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -1170,6 +1170,28 @@ BOOLEAN supSetCheckSumForMappedFile(
 }
 
 /*
+* ucmxBuildVersionString
+*
+* Purpose:
+*
+* Combine version numbers into string.
+*
+*/
+VOID ucmxBuildVersionString(
+    _In_ WCHAR *pszVersion)
+{
+    wsprintf(pszVersion, TEXT("%s v %lu.%lu.%lu.%lu"),
+        PROGRAM_SHORTNAME,
+        UCM_VERSION_MAJOR,
+        UCM_VERSION_MINOR,
+        UCM_VERSION_REVISION,
+        UCM_VERSION_BUILD);
+
+    if (UCM_IS_VNEXT)
+        _strcat(pszVersion, TEXT(" QW"));
+}
+
+/*
 * ucmShowMessage
 *
 * Purpose:
@@ -1182,14 +1204,18 @@ VOID ucmShowMessage(
     _In_ LPWSTR lpszMsg
 )
 {
+    WCHAR szVersion[100];
+
     if (OutputToDebugger) {
         OutputDebugString(lpszMsg);
         OutputDebugString(TEXT("\r\n"));
     }
     else {
+        szVersion[0] = 0;
+        ucmxBuildVersionString(szVersion);
         MessageBoxW(GetDesktopWindow(),
             lpszMsg,
-            PROGRAMTITLE_VERSION,
+            szVersion,
             MB_ICONINFORMATION);
     }
 }
@@ -1206,9 +1232,13 @@ INT ucmShowQuestion(
     _In_ LPWSTR lpszMsg
 )
 {
+    WCHAR szVersion[100];
+
+    szVersion[0] = 0;
+    ucmxBuildVersionString(szVersion);
     return MessageBoxW(GetDesktopWindow(), 
         lpszMsg, 
-        PROGRAMTITLE_VERSION, 
+        szVersion, 
         MB_YESNO);
 }
 

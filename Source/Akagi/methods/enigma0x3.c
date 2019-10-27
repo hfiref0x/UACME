@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     3.19
+*  VERSION:     3.21
 *
-*  DATE:        22 May 2019
+*  DATE:        26 Oct 2019
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -643,9 +643,7 @@ NTSTATUS ucmMsSettingsDelegateExecuteMethod(
 
             if (g_ctx->dwBuildNumber > 16299) {
 
-                if (IDYES == ucmShowQuestion(
-                    TEXT("Would you like to use this method with ComputerDefaults.exe (YES) or Fodhelper.exe (NO)?")))
-                {
+                if (IDYES == ucmShowQuestion(T_PICK_EXE_QUESTION)) {
                     lpTargetApp = COMPUTERDEFAULTS_EXE;
                 }
             }

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2018
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       COMPRESS.H
 *
-*  VERSION:     3.11
+*  VERSION:     3.21
 *
-*  DATE:        04 Dec 2018
+*  DATE:        26 Oct 2019
 *
 *  Prototypes and definitions for compression.
 *
@@ -121,3 +121,17 @@ VOID EncodeBuffer(
 
 BOOL InitCabinetDecompressionAPI(
     VOID);
+
+VOID EncryptBufferMB(
+    _In_ PBYTE Buffer,
+    _In_ SIZE_T	BufferSize);
+
+VOID DecryptBufferMB(
+    _In_ PBYTE Buffer,
+    _In_ SIZE_T	BufferSize);
+
+_Success_(return == TRUE)
+BOOLEAN DecodeStringById(
+    _In_ ULONG Id,
+    _Inout_ LPWSTR lpBuffer,
+    _In_ SIZE_T cbBuffer);

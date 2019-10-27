@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.20
+*  VERSION:     3.21
 *
-*  DATE:        24 Oct 2019
+*  DATE:        26 Oct 2019
 *
 *  UAC bypass dispatch.
 *
@@ -582,9 +582,7 @@ UCM_API(MethodSimda)
     //
     // Make sure user understand aftereffects.
     //
-    if (ucmShowQuestion(
-        TEXT("This method will permanently TURN UAC OFF, are you sure?")) == IDYES)
-    {
+    if (ucmShowQuestion(T_SIMDA_CONSENT_WARNING) == IDYES) {
         return ucmSimdaTurnOffUac();
     }
     return STATUS_CANCELLED;
@@ -747,9 +745,7 @@ UCM_API(MethodSXS)
             // Make sure user understand aftereffects.
             //
 #ifndef _DEBUG
-            if (ucmShowQuestion(
-                TEXT("WARNING: This method will affect UAC interface, are you sure?")) != IDYES)
-            {
+            if (ucmShowQuestion(T_SXS_CONSENT_WARNING) != IDYES) {
                 return STATUS_CANCELLED;
             }
 #endif //_DEBUG

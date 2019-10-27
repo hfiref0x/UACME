@@ -572,7 +572,7 @@ If you wondering why this still exists and working - here is the explanation - a
 https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # Windows 10 support and testing policy
-* EOL'ed versions of Windows 10 are not supported and therefore not tested (at moment of writing EOL'ed Windows 10 versions are: TH1 (10240), TH2 (10586));
+* EOL'ed versions of Windows 10 are not supported and therefore not tested (at moment of writing EOL'ed Windows 10 versions are: TH1 (10240), TH2 (10586)), RS2 (15063), RS3 (16299);
 * Insider builds are not supported as methods may be fixed there.
 
 # Protection
@@ -590,6 +590,14 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 * UACMe comes with full source code, written in C with some parts written in C#;
 * In order to build from source you need Microsoft Visual Studio 2013/2015 U2 and later versions.
+
+# Compiled Binaries
+
+* They are not provided since 2.8.9 and will never be provided in future. Coupe of reasons why not and why you should not provide them too to the general public:
+   * If you look at this project in a nutshell it is a HackTool, despite initial goal to be a demonstrator. Of course several AV's detects it as HackTool (MS WD for example), however most of VirusTotal patients detects it as generic "malware". Which is of course incorrect, however unfortunately some lazy malware writters blindly copy-paste code to their crapware (or even simple use this tool directly) thus some AV created signatures based on project code parts;
+   * By giving compiled binaries to everyone you make life of script-kiddies much easier because having need to compile from source works as perfect barrier for exceptionaliy dumb script-kiddies and "button-clickers";
+   * Having compiled binaries in the repository will ultimately lead to flagging this repository pages as malicious (due to above reasons) by various content filters (SmartScreen, Google Safe Browsing etc).
+* This decision is a final and won't be changed.
 
 ## Instructions
 

@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.20
+*  VERSION:     3.21
 *
-*  DATE:        24 Oct 2019
+*  DATE:        26 Oct 2019
 *
 *  Global consts definition file.
 *
@@ -24,12 +24,30 @@
 #define AKAGI_XOR_KEY               'naka'
 #define AKAGI_XOR_KEY2              ' pta'
 
+//"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
+#define IDSB_USAGE_HELP               0
+
+//"Admin account with limited token required."
+#define IDSB_USAGE_ADMIN_REQUIRED     1
+
+//"Please enable UAC for this account."
+#define IDSB_USAGE_UAC_REQUIRED       2
+
+#define UCM_VERSION_MAJOR       3
+#define UCM_VERSION_MINOR       2
+#define UCM_VERSION_REVISION    1
+#define UCM_VERSION_BUILD       1910
+#define UCM_IS_VNEXT            FALSE
+
 #pragma region PYSH
-#define T_USAGE_HELP                L"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
-#define PROGRAMTITLE_VERSION        L"UACMe v 3.2.0.1910"
+#define PROGRAM_SHORTNAME           L"UACMe"
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
+#define T_SIMDA_UAC                 L"UAC is now disabled.\nYou must reboot your computer for the changes to take effect."
+#define T_SIMDA_CONSENT_WARNING     L"This method will permanently TURN UAC OFF, are you sure?"
+#define T_SXS_CONSENT_WARNING       L"WARNING: This method will affect UAC interface, are you sure?"
+#define T_PICK_EXE_QUESTION         L"Would you like to use this method with ComputerDefaults.exe (YES) or Fodhelper.exe (NO)?"
 #pragma endregion
 
 #define T_MACHINE                   L"MACHINE\\"

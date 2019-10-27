@@ -1,14 +1,14 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2018
+*  (C) COPYRIGHT AUTHORS, 2014 - 2019
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     3.10
+*  VERSION:     3.21
 *
-*  DATE:        21 Nov 2018
+*  DATE:        26 Oct 2019
 *
-*  Compression support.
+*  Compression and encoding/decoding support.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -18,6 +18,7 @@
 *******************************************************************************/
 #include "global.h"
 #include "secrets.h"
+#include "encresource.h"
 
 #pragma comment(lib, "msdelta.lib")
 #pragma comment(lib, "Bcrypt.lib")
@@ -30,6 +31,88 @@ typedef struct _DCK_HEADER {
     DWORD Id;
     BYTE Data[UACME_KEY_SIZE];
 } DCK_HEADER, *PDCK_HEADER;
+
+typedef struct _UCM_STRING_TABLE_ENTRY {
+    WORD Id;
+    WORD DataLength;//in bytes
+    CONST UCHAR *Data;
+} UCM_STRING_TABLE_ENTRY, *PUCM_STRING_TABLE_ENTRY;
+
+UCM_STRING_TABLE_ENTRY ucmStringTable[] = {
+    { IDSB_USAGE_HELP, sizeof(B_USAGE_HELP), B_USAGE_HELP },
+    { IDSB_USAGE_UAC_REQUIRED, sizeof(B_USAGE_UAC_REQUIRED), B_USAGE_UAC_REQUIRED },
+    { IDSB_USAGE_ADMIN_REQUIRED, sizeof(B_USAGE_ADMIN_REQUIRED), B_USAGE_ADMIN_REQUIRED }
+};
+
+unsigned char MirrorBits(unsigned char x)
+{
+    return ((x >> 7) & 1) | ((x >> 5) & 2) | ((x >> 3) & 4) | ((x >> 1) & 8) |
+        ((x << 7) & 0x80) | ((x << 5) & 0x40) | ((x << 3) & 0x20) | ((x << 1) & 0x10);
+}
+
+VOID DecryptBufferMB(
+    _In_ PBYTE Buffer,
+    _In_ SIZE_T	BufferSize
+)
+{
+    SIZE_T          c;
+    unsigned char   r = 127, r0;
+
+    for (c = 0; c < BufferSize; c++) {
+        r0 = MirrorBits((BYTE)c) - Buffer[c];
+        Buffer[c] = (r^r0) - (BYTE)c;
+        r = r0;
+    }
+}
+
+VOID EncryptBufferMB(
+    _In_ PBYTE Buffer,
+    _In_ SIZE_T	BufferSize
+)
+{
+    SIZE_T			c;
+    unsigned char	r = 127;
+
+    for (c = 0; c < BufferSize; c++) {
+        r ^= Buffer[c] + c;
+        Buffer[c] = MirrorBits((unsigned char)c) - r;
+    }
+}
+
+/*
+* DecodeStringById
+*
+* Purpose:
+*
+* Return decrypted string by ID.
+*
+*/
+_Success_(return == TRUE)
+BOOLEAN DecodeStringById(
+    _In_ ULONG Id,
+    _Inout_ LPWSTR lpBuffer,
+    _In_ SIZE_T cbBuffer)
+{
+    ULONG i;
+
+    for (i = 0; i < RTL_NUMBER_OF(ucmStringTable); i++) {
+        if (ucmStringTable[i].Id == Id) {
+
+            if (cbBuffer < ucmStringTable[i].DataLength)
+                break;
+
+            supCopyMemory(
+                lpBuffer,
+                cbBuffer,
+                ucmStringTable[i].Data,
+                ucmStringTable[i].DataLength);
+
+            DecryptBufferMB((PBYTE)lpBuffer, ucmStringTable[i].DataLength);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
 
 /*
 * EncodeBuffer

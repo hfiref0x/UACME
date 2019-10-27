@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.21
 *
-*  DATE:        18 Mar 2019
+*  DATE:        26 Oct 2019
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -175,7 +175,7 @@ NTSTATUS ucmSimdaTurnOffUac(
     }
 
     if (NT_SUCCESS(MethodResult)) {
-        ucmShowMessage(g_ctx->OutputToDebugger, L"UAC is now disabled.\nYou must reboot your computer for the changes to take effect.");
+        ucmShowMessage(g_ctx->OutputToDebugger, T_SIMDA_UAC);
     }
 
     return MethodResult;
