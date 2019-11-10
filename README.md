@@ -550,7 +550,6 @@ Note:
 * Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone;
 * Method (30) require x64 because it abuses WOW64 subsystem feature;
 * Method (35) AlwaysNotify compatible as there always will be running autoelevated apps or user will have to launch them anyway;
-* Method (38) require internet connection as it executes remote script located at github.com/hfiref0x/Beacon/blob/master/uac/exec.html;
 * Method (55) is not really reliable (as any GUI hacks) and included just for fun.
 
 Run examples:
