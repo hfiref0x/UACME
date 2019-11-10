@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.21
+*  VERSION:     3.22
 *
-*  DATE:        26 Oct 2019
+*  DATE:        07 Nov 2019
 *
 *  Global consts definition file.
 *
@@ -35,8 +35,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       2
-#define UCM_VERSION_REVISION    1
-#define UCM_VERSION_BUILD       1910
+#define UCM_VERSION_REVISION    2
+#define UCM_VERSION_BUILD       1911
 #define UCM_IS_VNEXT            FALSE
 
 #pragma region PYSH
@@ -49,6 +49,8 @@
 #define T_SXS_CONSENT_WARNING       L"WARNING: This method will affect UAC interface, are you sure?"
 #define T_PICK_EXE_QUESTION         L"Would you like to use this method with ComputerDefaults.exe (YES) or Fodhelper.exe (NO)?"
 #pragma endregion
+
+#define KAMIKAZE_MARKER             "https"
 
 #define T_MACHINE                   L"MACHINE\\"
 
@@ -112,7 +114,8 @@
 #define FUJINAMI_DLL                    L"Fujinami.dll"
 #define HIBIKI_DLL                      L"Hibiki.dll"
 #define KUMA_DLL                        L"lzx32.dll"
-#define KAMIKAZE_MSC                    L"kmkze.msc" 
+#define KAMIKAZE_MSC                    L"kmkze.msc"
+#define KAMIKAZE_LAUNCHER               L"readme.html"
 #define FUBUKI_EXE                      L"Fubuki.exe"
 #define FUBUKI_EXT_ENTRYPOINT           "_FubukiProc1"
 #define FUBUKI_WND_HOOKPROC             "_FubukiProc2"

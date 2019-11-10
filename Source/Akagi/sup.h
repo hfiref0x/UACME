@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.20
+*  VERSION:     3.22
 *
-*  DATE:        22 Oct 2019
+*  DATE:        07 Nov 2019
 *
 *  Common header file for the program support routines.
 *
@@ -89,6 +89,12 @@ BOOL supWriteBufferToFile(
     _In_ LPWSTR lpFileName,
     _In_ PVOID Buffer,
     _In_ DWORD BufferSize);
+
+BOOL supWriteBufferToFile2(
+    _In_ LPWSTR lpFileName,
+    _In_ PVOID Buffer,
+    _In_ DWORD BufferSize,
+    _In_ BOOLEAN AppendFile);
 
 BOOL supDecodeAndWriteBufferToFile(
     _In_ LPWSTR lpFileName,

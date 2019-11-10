@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.21
+*  VERSION:     3.22
 *
-*  DATE:        26 Oct 2019
+*  DATE:        07 Nov 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -431,6 +431,57 @@ BOOL supWriteBufferToFile(
         GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
 
     if (hFile != INVALID_HANDLE_VALUE) {
+        WriteFile(hFile, Buffer, BufferSize, &bytesIO, NULL);
+        CloseHandle(hFile);
+    }
+    else {
+#ifdef _DEBUG
+        supDebugPrint(TEXT("CreateFile"), GetLastError());
+#endif
+        return FALSE;
+    }
+
+    return (bytesIO == BufferSize);
+}
+
+/*
+* supWriteBufferToFile2
+*
+* Purpose:
+*
+* Create new file or open existing and write/append buffer to it.
+*
+*/
+BOOL supWriteBufferToFile2(
+    _In_ LPWSTR lpFileName,
+    _In_ PVOID Buffer,
+    _In_ DWORD BufferSize,
+    _In_ BOOLEAN AppendFile
+)
+{
+    HANDLE hFile;
+    DWORD bytesIO = 0;
+    DWORD dwFlags;
+    LARGE_INTEGER ilMove;
+
+    if ((Buffer == NULL) || (BufferSize == 0))
+        return FALSE;
+
+    if (AppendFile)
+        dwFlags = OPEN_EXISTING;
+    else
+        dwFlags = CREATE_ALWAYS;
+
+    hFile = CreateFile(lpFileName,
+        GENERIC_WRITE, 0, NULL, dwFlags , 0, NULL);
+
+    if (hFile != INVALID_HANDLE_VALUE) {
+
+        if (AppendFile) {
+            ilMove.QuadPart = 0;
+            SetFilePointerEx(hFile, ilMove, NULL, FILE_END);
+        }
+
         WriteFile(hFile, Buffer, BufferSize, &bytesIO, NULL);
         CloseHandle(hFile);
     }
