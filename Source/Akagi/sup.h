@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2020
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.22
+*  VERSION:     3.23
 *
-*  DATE:        07 Nov 2019
+*  DATE:        17 Dec 2019
 *
 *  Common header file for the program support routines.
 *
@@ -17,6 +17,46 @@
 *
 *******************************************************************************/
 #pragma once
+
+typedef BOOL(WINAPI* pfnShellExecuteExW)(
+    SHELLEXECUTEINFOW* pExecInfo);
+
+typedef DWORD(WINAPI* pfnWaitForSingleObject)(
+    HANDLE hHandle,
+    DWORD dwMilliseconds);
+
+typedef BOOL(WINAPI* pfnCloseHandle)(
+    HANDLE hObject);
+
+typedef HRESULT(WINAPI* pfnCoInitialize)(
+    LPVOID pvReserved);
+
+typedef HRESULT(WINAPI* pfnCoGetObject)(
+    LPCWSTR pszName,
+    BIND_OPTS* pBindOptions,
+    REFIID riid,
+    void** ppv);
+
+typedef HRESULT(WINAPI* pfnSHCreateItemFromParsingName)(
+    PCWSTR pszPath,
+    IBindCtx* pbc,
+    REFIID riid,
+    void** ppv);
+
+typedef void(WINAPI* pfnCoUninitialize)(
+    VOID);
+
+typedef NTSTATUS(NTAPI* pfnRtlExitUserThread)(
+    _In_ NTSTATUS ExitStatus);
+
+typedef struct tagLOAD_PARAMETERS {
+    WCHAR                   szVerb[10];
+    WCHAR                   szTargetApp[MAX_PATH + 1];
+    pfnShellExecuteExW      ShellExecuteExW;
+    pfnWaitForSingleObject  WaitForSingleObject;
+    pfnCloseHandle          CloseHandle;
+    pfnRtlExitUserThread    RtlExitUserThread;
+} LOAD_PARAMETERS, * PLOAD_PARAMETERS;
 
 typedef struct tagUCM_PROCESS_MITIGATION_POLICIES {
     PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY ExtensionPointDisablePolicy;
@@ -284,9 +324,6 @@ BOOL supIsConsentApprovedInterface(
     _In_ LPWSTR InterfaceName,
     _Out_ PBOOL IsApproved);
 
-BOOL supIsDebugPortPresent(
-    VOID);
-
 BOOL supGetProcessMitigationPolicy(
     _In_ HANDLE hProcess,
     _In_ PROCESS_MITIGATION_POLICY Policy,
@@ -341,6 +378,10 @@ BOOLEAN supIndirectRegAdd(
 
 BOOLEAN supIsNetfx48PlusInstalled(
     VOID);
+
+NTSTATUS supGetProcessDebugObject(
+    _In_ HANDLE ProcessHandle,
+    _Out_ PHANDLE DebugObjectHandle);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2019
+*  (C) COPYRIGHT AUTHORS, 2015 - 2020
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.22
+*  VERSION:     3.23
 *
-*  DATE:        07 Nov 2019
+*  DATE:        17 Nov 2019
 *
 *  Global consts definition file.
 *
@@ -35,8 +35,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       2
-#define UCM_VERSION_REVISION    2
-#define UCM_VERSION_BUILD       1911
+#define UCM_VERSION_REVISION    3
+#define UCM_VERSION_BUILD       1912
 #define UCM_IS_VNEXT            FALSE
 
 #pragma region PYSH
@@ -51,6 +51,8 @@
 #pragma endregion
 
 #define KAMIKAZE_MARKER             "https"
+
+#define T_DEFAULT_DESKTOP           L"WinSta0\\Default"
 
 #define T_MACHINE                   L"MACHINE\\"
 
@@ -197,9 +199,11 @@
 #define SYSPREP_EXE                 L"sysprep.exe"
 #define SYSTEMROPERTIESADVANCED_EXE L"SystemPropertiesAdvanced.exe"
 #define TASKHOST_EXE                L"taskhost.exe"
+#define TASKMGR_EXE                 L"taskmgr.exe"
 #define TPMINIT_EXE                 L"tpminit.exe"
 #define TZSYNC_EXE                  L"tzsync.exe"
 #define WINSAT_EXE                  L"winsat.exe"
+#define WINVER_EXE                  L"winver.exe"
 #define WSRESET_EXE                 L"WSReset.exe"
 #define WUSA_EXE                    L"wusa.exe"
 

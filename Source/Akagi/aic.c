@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2019
+*  (C) COPYRIGHT AUTHORS, 2017 - 2020
 *
 *  TITLE:       AIC.C
 *
-*  VERSION:     3.20
+*  VERSION:     3.22
 *
-*  DATE:        22 Oct 2019
+*  DATE:        17 Dec 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -16,211 +16,266 @@
 *******************************************************************************/
 #include "global.h"
 
-//
-// AicLaunchAdminProcess prologue signature.
-//
+#pragma comment(lib, "rpcrt4.lib")
 
-unsigned char LaunchAdminProcessSignature760x[] = {
-    0xFF, 0xF3, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x81,
-    0xEC, 0x30, 0x04, 0x00, 0x00
-};
+#include "appinfo/x64/appinfo64.h"
 
-unsigned char LaunchAdminProcessSignature9200[] = {
-    0x44, 0x89, 0x44, 0x24, 0x18, 0x53, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56,
-    0x41, 0x57, 0x48, 0x81, 0xEC, 0xF0, 0x03, 0x00, 0x00
-};
 
-unsigned char LaunchAdminProcessSignature9600[] = {
-    0x44, 0x89, 0x4C, 0x24, 0x20, 0x44, 0x89, 0x44, 0x24, 0x18, 0x53, 0x56, 0x57, 0x41,
-    0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x81, 0xEC, 0x00, 0x04, 0x00, 0x00
-};
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
-unsigned char LaunchAdminProcessSignature10240_10586[] = {
-    0x40, 0x53, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x81,
-    0xEC, 0x30, 0x04, 0x00, 0x00
-};
+    _Must_inspect_result_
+        _Ret_maybenull_ _Post_writable_byte_size_(size)
+        void* __RPC_USER MIDL_user_allocate(_In_ size_t size)
+    {
+        return((void __RPC_FAR*) supHeapAlloc(size));
+    }
 
-unsigned char LaunchAdminProcessSignature14393[] = {
-    0x40, 0x53, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x81,
-    0xEC, 0x20, 0x04, 0x00, 0x00
-};
+#pragma warning(push)
+#pragma warning(disable: 6387)
+#pragma warning(disable: 6001)
+    void __RPC_USER MIDL_user_free(_Pre_maybenull_ _Post_invalid_ void* p)
+    {
+        supHeapFree(p);
+    }
+#pragma warning(pop)
 
-unsigned char LaunchAdminProcessSignature_15063_18362[] = {
-    0x40, 0x53, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x81,
-    0xEC, 0x20, 0x04, 0x00, 0x00
-};
+#if defined(__cplusplus)
+}
+#endif
 
-unsigned char LaunchAdminProcessSignature_18363_xxxxx[] = {
-    0x40, 0x53, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x81, 
-    0xEC, 0x30, 0x04, 0x00, 0x00
-};
+#define APPINFO_RPC TEXT("201ef99a-7fa0-444c-9399-19ba84f12a1a")
 
 /*
-* AicFindLaunchAdminProcess
+* AicpCreateBindingHandle
 *
 * Purpose:
 *
-* Locate unexported AppInfo routine in memory by signature.
+* Bind handle to the AppInfo RPC interface.
 *
 */
-ULONG_PTR AicFindLaunchAdminProcess(
-    _Out_ PNTSTATUS StatusCode)
+RPC_STATUS AicpCreateBindingHandle(
+    _Out_ RPC_BINDING_HANDLE* BindingHandle)
 {
-    ULONG_PTR Address = 0;
-    PBYTE Pattern = NULL, ScanBase = NULL;
-    DWORD PatternSize = 0, ScanSize = 0;
-    IMAGE_NT_HEADERS *NtHeaders;
-    LPWSTR ScanModule = NULL;
+    RPC_STATUS status = RPC_S_INTERNAL_ERROR;
+    RPC_SECURITY_QOS_V3 sqos;
+    RPC_WSTR StringBinding = NULL;
+    RPC_BINDING_HANDLE Binding = NULL;
+    PSID LocalSystemSid = NULL;
+    DWORD cbSid = SECURITY_MAX_SID_SIZE;
 
-    if (g_ctx->dwBuildNumber < 10240)
-        ScanModule = SHELL32_DLL;
-    else
-        ScanModule = WINDOWS_STORAGE_DLL;
 
-    switch (g_ctx->dwBuildNumber) {
+    if (BindingHandle)
+        *BindingHandle = NULL;
 
-    case 7600:
-    case 7601:
-        Pattern = LaunchAdminProcessSignature760x;
-        PatternSize = sizeof(LaunchAdminProcessSignature760x);
-        break;
-    case 9200:
-        Pattern = LaunchAdminProcessSignature9200;
-        PatternSize = sizeof(LaunchAdminProcessSignature9200);
-        break;
-    case 9600:
-        Pattern = LaunchAdminProcessSignature9600;
-        PatternSize = sizeof(LaunchAdminProcessSignature9600);
-        break;
-    case 10240:
-    case 10586:
-        Pattern = LaunchAdminProcessSignature10240_10586;
-        PatternSize = sizeof(LaunchAdminProcessSignature10240_10586);
-        break;
-    case 14393:
-        Pattern = LaunchAdminProcessSignature14393;
-        PatternSize = sizeof(LaunchAdminProcessSignature14393);
-        break;
-    case 15063:
-    case 16299:
-    case 17134:
-    case 17763:
-    case 18362:
-        Pattern = LaunchAdminProcessSignature_15063_18362;
-        PatternSize = sizeof(LaunchAdminProcessSignature_15063_18362);
-        break;
-    case 18363:
-    default:
-        Pattern = LaunchAdminProcessSignature_18363_xxxxx;
-        PatternSize = sizeof(LaunchAdminProcessSignature_18363_xxxxx);
-        break;
+    RtlSecureZeroMemory(&sqos, sizeof(sqos));
+
+    status = RpcStringBindingComposeW(APPINFO_RPC,
+        TEXT("ncalrpc"),
+        NULL,
+        NULL,
+        NULL,
+        &StringBinding);
+
+    if (status == RPC_S_OK) {
+
+        status = RpcBindingFromStringBindingW(StringBinding, &Binding);
+        RpcStringFreeW(&StringBinding);
+
+        if (status == RPC_S_OK) {
+
+            LocalSystemSid = LocalAlloc(LPTR, cbSid);
+            if (LocalSystemSid) {
+                if (CreateWellKnownSid(WinLocalSystemSid, NULL, LocalSystemSid, &cbSid)) {
+
+                    sqos.Version = 3;
+                    sqos.ImpersonationType = RPC_C_IMP_LEVEL_IMPERSONATE;
+                    sqos.Capabilities = RPC_C_QOS_CAPABILITIES_MUTUAL_AUTH;
+                    sqos.IdentityTracking = 0;
+                    sqos.Sid = LocalSystemSid;
+
+                    status = RpcBindingSetAuthInfoExW(Binding,
+                        NULL,
+                        RPC_C_AUTHN_LEVEL_PKT_PRIVACY,
+                        RPC_C_AUTHN_WINNT,
+                        0,
+                        0,
+                        (RPC_SECURITY_QOS*)&sqos);
+
+                    if (status == RPC_S_OK) {
+                        *BindingHandle = Binding;
+                        Binding = NULL;
+                    }
+
+                }
+                else {
+                    status = GetLastError();
+                }
+                LocalFree(LocalSystemSid);
+            }
+            else {
+                status = ERROR_NOT_ENOUGH_MEMORY;
+            }
+        }
     }
 
-    ScanBase = (PBYTE)GetModuleHandle(ScanModule);
-    if (ScanBase == NULL) {
-        ScanBase = (PBYTE)LoadLibraryEx(ScanModule, NULL, 0); //is in \KnownDlls
-    }
+    if (Binding)
+        RpcBindingFree(&Binding);
 
-    if (ScanBase == NULL) {
-        *StatusCode = STATUS_INTERNAL_ERROR;
-        return 0;
-    }
-
-    NtHeaders = RtlImageNtHeader(ScanBase);
-    if (NtHeaders->OptionalHeader.SizeOfImage <= PatternSize) {
-        *StatusCode = STATUS_INTERNAL_ERROR;
-        return 0;
-    }
-
-    ScanSize = NtHeaders->OptionalHeader.SizeOfImage - PatternSize;
-
-    Address = (ULONG_PTR)supFindPattern(ScanBase, (SIZE_T)ScanSize, Pattern, (SIZE_T)PatternSize);
-    if (Address == 0) {
-        *StatusCode = STATUS_PROCEDURE_NOT_FOUND;
-        return 0;
-    }
-
-    *StatusCode = STATUS_SUCCESS;
-
-    return Address;
+    return status;
 }
 
 /*
-* AipWriteVirtualMemory
+* AicpAsyncInitializeHandle
 *
 * Purpose:
 *
-* Change region protection, write memory and restore region protection.
+* Init RPC_ASYNC_STATE structure.
 *
 */
-BOOL AipWriteVirtualMemory(
-    _In_ PVOID ProcedureAddress,
-    _In_ LPCBYTE pbBuffer,
-    _In_ SIZE_T cbBuffer)
+RPC_STATUS AicpAsyncInitializeHandle(
+    _Inout_ RPC_ASYNC_STATE* AsyncState)
 {
-    ULONG oldProtect;
-    NTSTATUS status;
-    PVOID BaseAddress;
-    SIZE_T RegionSize;
+    RPC_STATUS status;
 
-    BaseAddress = ProcedureAddress;
+    status = RpcAsyncInitializeHandle(AsyncState, sizeof(RPC_ASYNC_STATE));
+    if (status == RPC_S_OK) {
+        AsyncState->NotificationType = RpcNotificationTypeEvent;
+        AsyncState->u.hEvent = CreateEventW(NULL, 0, 0, NULL);
+    }
+
+    return status;
+}
+
+#ifdef _WIN64
+
+/*
+* AicLaunchAdminProcess
+*
+* Purpose:
+*
+* Create process by talking to APPINFO via RPC.
+*
+*/
+BOOLEAN AicLaunchAdminProcess(
+    _In_opt_ LPWSTR ExecutablePath,
+    _In_opt_ LPWSTR CommandLine,
+    _In_ DWORD StartFlags,
+    _In_ DWORD CreationFlags,
+    _In_ LPWSTR CurrentDirectory,
+    _In_ LPWSTR WindowStation,
+    _In_opt_ HWND hWnd,
+    _In_ DWORD Timeout,
+    _In_ DWORD ShowFlags,
+    _Out_ PROCESS_INFORMATION* ProcessInformation
+)
+{
+    BOOLEAN bResult = FALSE;
+    RPC_BINDING_HANDLE rpcHandle;
+    RPC_ASYNC_STATE asyncState;
+    APP_PROCESS_INFORMATION procInfo;
+    APP_STARTUP_INFO appStartup;
+    RPC_STATUS status;
+    VOID* Reply = NULL;
+
+    LONG elevationType = 0;
+
+    if (ProcessInformation) {
+        ProcessInformation->hProcess = NULL;
+        ProcessInformation->hThread = NULL;
+        ProcessInformation->dwProcessId = 0;
+        ProcessInformation->dwThreadId = 0;
+    }
+
+    RtlSecureZeroMemory(&procInfo, sizeof(procInfo));
+    RtlSecureZeroMemory(&appStartup, sizeof(appStartup));
+
+    appStartup.dwFlags = STARTF_USESHOWWINDOW;
+    appStartup.wShowWindow = (SHORT)ShowFlags;
+
+    RtlSecureZeroMemory(&asyncState, sizeof(RPC_ASYNC_STATE));
+
+    if ((AicpCreateBindingHandle(&rpcHandle) == RPC_S_OK) &&
+        (AicpAsyncInitializeHandle(&asyncState) == RPC_S_OK))
+    {
+
+        __try {
+
+            RAiLaunchAdminProcess(&asyncState,
+                rpcHandle,
+                ExecutablePath,
+                CommandLine,
+                StartFlags,
+                CreationFlags,
+                CurrentDirectory,
+                WindowStation,
+                &appStartup,
+                (ULONG_PTR)hWnd,
+                Timeout,
+                &procInfo,
+                &elevationType);
+
+            if (WaitForSingleObject(asyncState.u.hEvent, INFINITE) == WAIT_FAILED)
+            {
+                RpcRaiseException(-1);
+            }
+
+            status = RpcAsyncCompleteCall(&asyncState, &Reply);
+            if (status == 0 && Reply == NULL) {
+
+                if (ProcessInformation) {
+                    ProcessInformation->hProcess = (HANDLE)procInfo.ProcessHandle;
+                    ProcessInformation->hThread = (HANDLE)procInfo.ThreadHandle;
+                    ProcessInformation->dwProcessId = (DWORD)procInfo.ProcessId;
+                    ProcessInformation->dwThreadId = (DWORD)procInfo.ThreadId;
+                }
+                bResult = TRUE;
+
+            }
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            MessageBox(GetDesktopWindow(), L"Exception RPC Call", NULL, MB_OK);
+            return FALSE;
+        }
+
+
+        RpcBindingFree(&rpcHandle);
+    }
+
+    return bResult;
+}
+#else 
+BOOLEAN AicLaunchAdminProcess(
+    _In_opt_ LPWSTR ExecutablePath,
+    _In_opt_ LPWSTR CommandLine,
+    _In_ DWORD StartFlags,
+    _In_ DWORD CreationFlags,
+    _In_ LPWSTR CurrentDirectory,
+    _In_ LPWSTR WindowStation,
+    _In_opt_ HWND hWnd,
+    _In_ DWORD Timeout,
+    _In_ DWORD ShowFlags,
+    _Out_ PROCESS_INFORMATION* ProcessInformation
+)
+{
+    UNREFERENCED_PARAMETER(ExecutablePath);
+    UNREFERENCED_PARAMETER(CommandLine);
+    UNREFERENCED_PARAMETER(StartFlags);
+    UNREFERENCED_PARAMETER(CreationFlags);
+    UNREFERENCED_PARAMETER(CurrentDirectory);
+    UNREFERENCED_PARAMETER(WindowStation);
+    UNREFERENCED_PARAMETER(hWnd);
+    UNREFERENCED_PARAMETER(Timeout);
+    UNREFERENCED_PARAMETER(ShowFlags);
     
-    RegionSize = ALIGN_UP_BY(cbBuffer, PAGE_SIZE);
-
-    status = NtProtectVirtualMemory(
-        NtCurrentProcess(),
-        &BaseAddress,
-        &RegionSize,
-        PAGE_EXECUTE_READWRITE,
-        &oldProtect);
-
-    if (NT_SUCCESS(status)) {
-        
-        RtlCopyMemory(ProcedureAddress, pbBuffer, cbBuffer);
-
-        status = NtProtectVirtualMemory(
-            NtCurrentProcess(),
-            &BaseAddress,
-            &RegionSize,
-            oldProtect,
-            &oldProtect);
+    if (ProcessInformation) {
+        ProcessInformation->hProcess = NULL;
+        ProcessInformation->hThread = NULL;
+        ProcessInformation->dwProcessId = 0;
+        ProcessInformation->dwThreadId = 0;
     }
-    return NT_SUCCESS(status);
+
+    return FALSE;
 }
-
-/*
-* AicSetRemoveFunctionBreakpoint
-*
-* Purpose:
-*
-* Install or remove Int3 breakpoint at function.
-* No sync.
-*
-*/
-_Success_(return != FALSE)
-BOOL AicSetRemoveFunctionBreakpoint(
-    _In_ PVOID pfnTargetRoutine,
-    _Inout_ BYTE *pbRestoreBuffer,
-    _In_ ULONG cbRestoreBuffer,
-    _In_ BOOL bSet,
-    _Out_opt_ PULONG pcbBytesWritten
-    )
-{
-    BYTE bByte;
-
-    if ((pbRestoreBuffer == NULL) || (cbRestoreBuffer != sizeof(BYTE))) 
-        return FALSE;
-
-    if (bSet) {
-        *pbRestoreBuffer = *(BYTE*)pfnTargetRoutine;
-    }
-    if (pcbBytesWritten)
-        *pcbBytesWritten = sizeof(BYTE);
-
-    if (bSet)
-        bByte = 0xCC;
-    else
-        bByte = *pbRestoreBuffer;
-
-    return AipWriteVirtualMemory(pfnTargetRoutine, &bByte, sizeof(BYTE));
-}
+#endif

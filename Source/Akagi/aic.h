@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2019
+*  (C) COPYRIGHT AUTHORS, 2017 - 2020
 *
 *  TITLE:       AIC.H
 *
-*  VERSION:     3.17
+*  VERSION:     3.23
 *
-*  DATE:        18 Mar 2019
+*  DATE:        17 Dec 2019
 *
 *  Common header file for the AppInfo routines.
 *
@@ -20,13 +20,14 @@
 
 typedef ULONG ELEVATION_REASON;
 
-ULONG_PTR AicFindLaunchAdminProcess(
-    _Out_ PNTSTATUS StatusCode);
-
-_Success_(return != FALSE)
-BOOL AicSetRemoveFunctionBreakpoint(
-    _In_ PVOID pfnTargetRoutine,
-    _Inout_ BYTE *pbRestoreBuffer,
-    _In_ ULONG cbRestoreBuffer,
-    _In_ BOOL bSet,
-    _Out_opt_ PULONG pcbBytesWritten);
+BOOLEAN AicLaunchAdminProcess(
+    _In_opt_ LPWSTR ExecutablePath,
+    _In_opt_ LPWSTR CommandLine,
+    _In_ DWORD StartFlags,
+    _In_ DWORD CreationFlags,
+    _In_ LPWSTR CurrentDirectory,
+    _In_ LPWSTR WindowStation,
+    _In_opt_ HWND hWnd,
+    _In_ DWORD Timeout,
+    _In_ DWORD ShowFlags,
+    _Out_ PROCESS_INFORMATION* ProcessInformation);

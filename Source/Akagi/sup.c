@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2019
+*  (C) COPYRIGHT AUTHORS, 2015 - 2020
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.22
+*  VERSION:     3.23
 *
-*  DATE:        07 Nov 2019
+*  DATE:        17 Dec 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -2567,34 +2567,6 @@ BOOL supIsConsentApprovedInterface(
 }
 
 /*
-* supIsDebugPortPresent
-*
-* Purpose:
-*
-* Return TRUE if current process has debug port FALSE otherwise.
-*
-*/
-BOOL supIsDebugPortPresent(
-    VOID
-)
-{
-    DWORD_PTR DebugPortPresent = 0, dwBuffer = 0;
-
-    if (NT_SUCCESS(NtQueryInformationProcess(
-        NtCurrentProcess(),
-        ProcessDebugPort,
-        &dwBuffer,
-        sizeof(dwBuffer),
-        NULL)))
-    {
-        DebugPortPresent = (dwBuffer != 0);
-    }
-
-    return (DebugPortPresent == 1);
-}
-
-
-/*
 * supGetProcessMitigationPolicy
 *
 * Purpose:
@@ -2992,15 +2964,10 @@ PVOID supCreateUacmeContext(
 
     IsWow64 = supIsProcess32bit(NtCurrentProcess());
 
-    if (IsWow64) {
-        RtlSecureZeroMemory(&osv, sizeof(osv));
-        osv.dwOSVersionInfoSize = sizeof(osv);
-        RtlGetVersion((PRTL_OSVERSIONINFOW)&osv);
-        NtBuildNumber = osv.dwBuildNumber;
-    }
-    else {
-        NtBuildNumber = USER_SHARED_DATA->NtBuildNumber;
-    }
+    RtlSecureZeroMemory(&osv, sizeof(osv));
+    osv.dwOSVersionInfoSize = sizeof(osv);
+    RtlGetVersion((PRTL_OSVERSIONINFOW)&osv);
+    NtBuildNumber = osv.dwBuildNumber;
 
     if (NtBuildNumber < 7000) {
         return NULL;
@@ -3295,4 +3262,25 @@ BOOLEAN supIsNetfx48PlusInstalled(
     }
 
     return (dwReleaseVersion >= Netfx48ReleaseVersion);
+}
+
+
+/*
+* supGetProcessDebugObject
+*
+* Purpose:
+*
+* Reference process debug object.
+*
+*/
+NTSTATUS supGetProcessDebugObject(
+    _In_ HANDLE ProcessHandle,
+    _Out_ PHANDLE DebugObjectHandle)
+{
+    return NtQueryInformationProcess(
+        ProcessHandle,
+        ProcessDebugObjectHandle,
+        DebugObjectHandle,
+        sizeof(HANDLE),
+        NULL);
 }

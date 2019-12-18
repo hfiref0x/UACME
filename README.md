@@ -540,12 +540,21 @@ Keys (watch debug output with dbgview or similar for more info):
      * Implementation: ucmEditionUpgradeManagerMethod
      * Works from: Windows 10 (14393)
      * Fixed in: unfixed :see_no_evil:
+        * How: -
+59. Author: James Forshaw
+     * Type: AppInfo ALPC
+     * Method: RAiLaunchAdminProcess and DebugObject
+     * Target(s): Attacker defined
+     * Component(s): Attacker defined
+     * Implementation: ucmDebugObjectMethod
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
         * How: -		
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;
 * Method (11) (54) implemented only in x86-32 version;
-* Method (13) (19) (30) (38) (50) implemented only in x64 version;
+* Method (13) (19) (30) (38) (50) (58) implemented only in x64 version;
 * Method (14) require process injection, wow64 unsupported, use x64 version of this tool;
 * Method (26) is still working, however it main advantage was UAC bypass on AlwaysNotify level. Since 15031 it is gone;
 * Method (30) require x64 because it abuses WOW64 subsystem feature;
@@ -603,13 +612,14 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * Select Platform ToolSet first for project in solution you want to build (Project->Properties->General): 
   * v120 for Visual Studio 2013;
   * v140 for Visual Studio 2015; 
-  * v141 for Visual Studio 2017.
+  * v141 for Visual Studio 2017;
+  * v142 for Visual Studio 2019.
 * For v140 and above set Target Platform Version (Project->Properties->General):
   * If v140 then select 8.1 (Note that Windows 8.1 SDK must be installed);
-  * If v141 then select 10.0.17134.0 (Note that Windows 10.0.17134 SDK must be installed). 
+  * If v141/v142 then select 10 (Note that Windows 10 SDK must be installed). 
   
 * Note that Fujinami module built with .NET Framework 3.0 (this is requirement for it work), so .NET Framework 3.0 must be installed if you want to build this module.
-* Can be built with SDK 8.1/10.17134/10.17763.
+* Can be built with SDK 8.1/10.17134/10.17763/10.18362.
 
 # References
 
@@ -638,9 +648,10 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * UAC Bypass via SystemPropertiesAdvanced.exe and DLL Hijacking, https://egre55.github.io/system-properties-uac-bypass/
 * Accessing Access Tokens for UIAccess, https://tyranidslair.blogspot.com/2019/02/accessing-access-tokens-for-uiaccess.html
 * Fileless UAC Bypass in Windows Store Binary, https://www.activecyber.us/1/post/2019/03/windows-uac-bypass.html
+* Calling Local Windows RPC Servers from .NET, https://googleprojectzero.blogspot.com/2019/12/calling-local-windows-rpc-servers-from.html
 
 # Authors
 
-(c) 2014 - 2019 UACMe Project
+(c) 2014 - 2020 UACMe Project
 
 [![HitCount](http://hits.dwyl.io/hfiref0x/uacme.svg)](http://hits.dwyl.io/hfiref0x/uacme)

@@ -1,12 +1,13 @@
 /************************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2019, translated from Microsoft sources/debugger
+*  (C) COPYRIGHT AUTHORS, 2015 - 2020 
+*  Translated from Microsoft sources/debugger or mentioned elsewhere.
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.121
+*  VERSION:     1.124
 *
-*  DATE:        18 Oct 2019
+*  DATE:        12 Dec 2019
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -1531,48 +1532,57 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
 
 //msdn.microsoft.com/en-us/library/windows/desktop/ms724509(v=vs.85).aspx
 typedef struct _SYSTEM_SPECULATION_CONTROL_INFORMATION {
-    struct {
-        ULONG BpbEnabled : 1;
-        ULONG BpbDisabledSystemPolicy : 1;
-        ULONG BpbDisabledNoHardwareSupport : 1;
-        ULONG SpecCtrlEnumerated : 1;
-        ULONG SpecCmdEnumerated : 1;
-        ULONG IbrsPresent : 1;
-        ULONG StibpPresent : 1;
-        ULONG SmepPresent : 1;
-        ULONG SpeculativeStoreBypassDisableAvailable : 1;
-        ULONG SpeculativeStoreBypassDisableSupported : 1;
-        ULONG SpeculativeStoreBypassDisabledSystemWide : 1;
-        ULONG SpeculativeStoreBypassDisabledKernel : 1;
-        ULONG SpeculativeStoreBypassDisableRequired : 1;
-        ULONG BpbDisabledKernelToUser : 1;
-        ULONG SpecCtrlRetpolineEnabled : 1;
-        ULONG SpecCtrlImportOptimizationEnabled : 1;
-        ULONG EnhancedIbrs : 1;
-        ULONG HvL1tfStatusAvailable : 1;
-        ULONG HvL1tfProcessorNotAffected : 1;
-        ULONG HvL1tfMigitationEnabled : 1;
-        ULONG HvL1tfMigitationNotEnabled_Hardware : 1;
-        ULONG HvL1tfMigitationNotEnabled_LoadOption : 1;
-        ULONG HvL1tfMigitationNotEnabled_CoreScheduler : 1;
-        ULONG EnhancedIbrsReported : 1;
-        ULONG Reserved : 8;
-    } SpeculationControlFlags;
+    union {
+        ULONG Flags;
+        struct {
+            ULONG BpbEnabled : 1;
+            ULONG BpbDisabledSystemPolicy : 1;
+            ULONG BpbDisabledNoHardwareSupport : 1;
+            ULONG SpecCtrlEnumerated : 1;
+            ULONG SpecCmdEnumerated : 1;
+            ULONG IbrsPresent : 1;
+            ULONG StibpPresent : 1;
+            ULONG SmepPresent : 1;
+            ULONG SpeculativeStoreBypassDisableAvailable : 1;
+            ULONG SpeculativeStoreBypassDisableSupported : 1;
+            ULONG SpeculativeStoreBypassDisabledSystemWide : 1;
+            ULONG SpeculativeStoreBypassDisabledKernel : 1;
+            ULONG SpeculativeStoreBypassDisableRequired : 1;
+            ULONG BpbDisabledKernelToUser : 1;
+            ULONG SpecCtrlRetpolineEnabled : 1;
+            ULONG SpecCtrlImportOptimizationEnabled : 1;
+            ULONG EnhancedIbrs : 1;
+            ULONG HvL1tfStatusAvailable : 1;
+            ULONG HvL1tfProcessorNotAffected : 1;
+            ULONG HvL1tfMigitationEnabled : 1;
+            ULONG HvL1tfMigitationNotEnabled_Hardware : 1;
+            ULONG HvL1tfMigitationNotEnabled_LoadOption : 1;
+            ULONG HvL1tfMigitationNotEnabled_CoreScheduler : 1;
+            ULONG EnhancedIbrsReported : 1;
+            ULONG MdsHardwareProtected : 1;
+            ULONG MbClearEnabled : 1;
+            ULONG MbClearReported : 1;
+            ULONG Reserved : 5;
+        } SpeculationControlFlags;
+    };
 } SYSTEM_SPECULATION_CONTROL_INFORMATION, *PSYSTEM_SPECULATION_CONTROL_INFORMATION;
 
 typedef struct _SYSTEM_KERNEL_VA_SHADOW_INFORMATION {
-    struct {
-        ULONG KvaShadowEnabled : 1;
-        ULONG KvaShadowUserGlobal : 1;
-        ULONG KvaShadowPcid : 1;
-        ULONG KvaShadowInvpcid : 1;
-        ULONG KvaShadowRequired : 1;
-        ULONG KvaShadowRequiredAvailable : 1;
-        ULONG InvalidPteBit : 6;
-        ULONG L1DataCacheFlushSupported : 1;
-        ULONG L1TerminalFaultMitigationPresent : 1;
-        ULONG Reserved : 18;
-    } KvaShadowFlags;
+    union {
+        ULONG Flags;
+        struct {
+            ULONG KvaShadowEnabled : 1;
+            ULONG KvaShadowUserGlobal : 1;
+            ULONG KvaShadowPcid : 1;
+            ULONG KvaShadowInvpcid : 1;
+            ULONG KvaShadowRequired : 1;
+            ULONG KvaShadowRequiredAvailable : 1;
+            ULONG InvalidPteBit : 6;
+            ULONG L1DataCacheFlushSupported : 1;
+            ULONG L1TerminalFaultMitigationPresent : 1;
+            ULONG Reserved : 18;
+        } KvaShadowFlags;
+    };
 } SYSTEM_KERNEL_VA_SHADOW_INFORMATION, *PSYSTEM_KERNEL_VA_SHADOW_INFORMATION;
 
 typedef struct _SYSTEM_CODEINTEGRITY_INFORMATION {
@@ -4761,12 +4771,25 @@ typedef struct _GDI_SHARED_MEMORY {
     GDI_HANDLE_ENTRY Handles[GDI_MAX_HANDLE_COUNT];
 } GDI_SHARED_MEMORY, *PGDI_SHARED_MEMORY;
 
+#ifndef FLS_MAXIMUM_AVAILABLE
 #define FLS_MAXIMUM_AVAILABLE 128
-#define TLS_MINIMUM_AVAILABLE 64
-#define TLS_EXPANSION_SLOTS 1024
+#endif
 
+#ifndef TLS_MINIMUM_AVAILABLE
+#define TLS_MINIMUM_AVAILABLE 64
+#endif
+
+#ifndef TLS_EXPANSION_SLOTS
+#define TLS_EXPANSION_SLOTS 1024
+#endif
+
+#ifndef DOS_MAX_COMPONENT_LENGTH
 #define DOS_MAX_COMPONENT_LENGTH 255
+#endif
+
+#ifndef DOS_MAX_PATH_LENGTH
 #define DOS_MAX_PATH_LENGTH (DOS_MAX_COMPONENT_LENGTH + 5)
+#endif
 
 typedef struct _CURDIR {
     UNICODE_STRING DosPath;
@@ -9127,6 +9150,21 @@ NtQueryDirectoryFile(
     _In_opt_ PUNICODE_STRING FileName,
     _In_ BOOLEAN RestartScan);
 
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtQueryDirectoryFileEx(
+    _In_ HANDLE FileHandle,
+    _In_opt_ HANDLE Event,
+    _In_opt_ PIO_APC_ROUTINE ApcRoutine,
+    _In_opt_ PVOID ApcContext,
+    _Out_ PIO_STATUS_BLOCK IoStatusBlock,
+    _Out_ PVOID FileInformation,
+    _In_ ULONG Length,
+    _In_ FILE_INFORMATION_CLASS FileInformationClass,
+    _In_ ULONG QueryFlags,
+    _In_opt_ PUNICODE_STRING FileName);
+
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -9484,6 +9522,87 @@ NtCreatePartition(
 * Token API.
 *
 ************************************************************************************/
+//
+// This part is taken from PH ntseapi.h.
+//
+
+// Types
+
+#define TOKEN_SECURITY_ATTRIBUTE_TYPE_INVALID 0x00
+#define TOKEN_SECURITY_ATTRIBUTE_TYPE_INT64 0x01
+#define TOKEN_SECURITY_ATTRIBUTE_TYPE_UINT64 0x02
+#define TOKEN_SECURITY_ATTRIBUTE_TYPE_STRING 0x03
+#define TOKEN_SECURITY_ATTRIBUTE_TYPE_FQBN 0x04
+#define TOKEN_SECURITY_ATTRIBUTE_TYPE_SID 0x05
+#define TOKEN_SECURITY_ATTRIBUTE_TYPE_BOOLEAN 0x06
+#define TOKEN_SECURITY_ATTRIBUTE_TYPE_OCTET_STRING 0x10
+
+// Flags
+
+#define TOKEN_SECURITY_ATTRIBUTE_NON_INHERITABLE 0x0001
+#define TOKEN_SECURITY_ATTRIBUTE_VALUE_CASE_SENSITIVE 0x0002
+#define TOKEN_SECURITY_ATTRIBUTE_USE_FOR_DENY_ONLY 0x0004
+#define TOKEN_SECURITY_ATTRIBUTE_DISABLED_BY_DEFAULT 0x0008
+#define TOKEN_SECURITY_ATTRIBUTE_DISABLED 0x0010
+#define TOKEN_SECURITY_ATTRIBUTE_MANDATORY 0x0020
+#define TOKEN_SECURITY_ATTRIBUTE_COMPARE_IGNORE 0x0040
+
+#define TOKEN_SECURITY_ATTRIBUTE_VALID_FLAGS ( \
+    TOKEN_SECURITY_ATTRIBUTE_NON_INHERITABLE | \
+    TOKEN_SECURITY_ATTRIBUTE_VALUE_CASE_SENSITIVE | \
+    TOKEN_SECURITY_ATTRIBUTE_USE_FOR_DENY_ONLY | \
+    TOKEN_SECURITY_ATTRIBUTE_DISABLED_BY_DEFAULT | \
+    TOKEN_SECURITY_ATTRIBUTE_DISABLED | \
+    TOKEN_SECURITY_ATTRIBUTE_MANDATORY)
+
+#define TOKEN_SECURITY_ATTRIBUTE_CUSTOM_FLAGS 0xffff0000
+
+typedef struct _TOKEN_SECURITY_ATTRIBUTE_FQBN_VALUE
+{
+    ULONG64 Version;
+    UNICODE_STRING Name;
+} TOKEN_SECURITY_ATTRIBUTE_FQBN_VALUE, *PTOKEN_SECURITY_ATTRIBUTE_FQBN_VALUE;
+
+typedef struct _TOKEN_SECURITY_ATTRIBUTE_OCTET_STRING_VALUE
+{
+    PVOID pValue;
+    ULONG ValueLength;
+} TOKEN_SECURITY_ATTRIBUTE_OCTET_STRING_VALUE, *PTOKEN_SECURITY_ATTRIBUTE_OCTET_STRING_VALUE;
+
+typedef struct _TOKEN_SECURITY_ATTRIBUTE_V1
+{
+    UNICODE_STRING Name;
+    USHORT ValueType;
+    USHORT Reserved;
+    ULONG Flags;
+    ULONG ValueCount;
+    union
+    {
+        PLONG64 pInt64;
+        PULONG64 pUint64;
+        PUNICODE_STRING pString;
+        PTOKEN_SECURITY_ATTRIBUTE_FQBN_VALUE pFqbn;
+        PTOKEN_SECURITY_ATTRIBUTE_OCTET_STRING_VALUE pOctetString;
+    } Values;
+} TOKEN_SECURITY_ATTRIBUTE_V1, *PTOKEN_SECURITY_ATTRIBUTE_V1;
+
+#define TOKEN_SECURITY_ATTRIBUTES_INFORMATION_VERSION_V1 1
+#define TOKEN_SECURITY_ATTRIBUTES_INFORMATION_VERSION TOKEN_SECURITY_ATTRIBUTES_INFORMATION_VERSION_V1
+
+typedef struct _TOKEN_SECURITY_ATTRIBUTES_INFORMATION
+{
+    USHORT Version;
+    USHORT Reserved;
+    ULONG AttributeCount;
+    union
+    {
+        PTOKEN_SECURITY_ATTRIBUTE_V1 pAttributeV1;
+    } Attribute;
+} TOKEN_SECURITY_ATTRIBUTES_INFORMATION, *PTOKEN_SECURITY_ATTRIBUTES_INFORMATION;
+
+//
+// endof ntseapi.h
+//
 
 NTSYSAPI
 NTSTATUS
@@ -9660,7 +9779,7 @@ NtAdjustPrivilegesToken(
     _In_opt_ PTOKEN_PRIVILEGES NewState,
     _In_ ULONG BufferLength,
     _Out_writes_bytes_to_opt_(BufferLength, *ReturnLength) PTOKEN_PRIVILEGES PreviousState,
-    _Out_ _When_(PreviousState == NULL, _Out_opt_) PULONG ReturnLength);
+    _Out_opt_ PULONG ReturnLength);
 
 NTSYSAPI
 NTSTATUS
@@ -9671,7 +9790,7 @@ NtAdjustGroupsToken(
     _In_opt_ PTOKEN_GROUPS NewState,
     _In_opt_ ULONG BufferLength,
     _Out_writes_bytes_to_opt_(BufferLength, *ReturnLength) PTOKEN_GROUPS PreviousState,
-    _Out_ PULONG ReturnLength);
+    _Out_opt_ PULONG ReturnLength);
 
 NTSYSAPI
 NTSTATUS
@@ -10500,6 +10619,13 @@ NTSTATUS
 NTAPI
 NtTestAlert(
     VOID);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtDelayExecution(
+    _In_ BOOLEAN Alertable,
+    _In_opt_ PLARGE_INTEGER DelayInterval);
 
 NTSYSAPI
 NTSTATUS

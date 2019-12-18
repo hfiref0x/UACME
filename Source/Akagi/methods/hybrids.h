@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2019
+*  (C) COPYRIGHT AUTHORS, 2015 - 2020
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     3.17
+*  VERSION:     3.23
 *
-*  DATE:        18 Mar 2019
+*  DATE:        17 Dec 2019
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -17,46 +17,6 @@
 *
 *******************************************************************************/
 #pragma once
-
-typedef BOOL(WINAPI *pfnShellExecuteExW)(
-    SHELLEXECUTEINFOW *pExecInfo);
-
-typedef DWORD(WINAPI *pfnWaitForSingleObject)(
-    HANDLE hHandle,
-    DWORD dwMilliseconds);
-
-typedef BOOL(WINAPI *pfnCloseHandle)(
-    HANDLE hObject);
-
-typedef HRESULT(WINAPI *pfnCoInitialize)(
-    LPVOID pvReserved);
-
-typedef HRESULT(WINAPI *pfnCoGetObject)(
-    LPCWSTR pszName,
-    BIND_OPTS *pBindOptions,
-    REFIID riid,
-    void **ppv);
-
-typedef HRESULT(WINAPI *pfnSHCreateItemFromParsingName)(
-    PCWSTR pszPath, 
-    IBindCtx *pbc, 
-    REFIID riid, 
-    void **ppv);
-
-typedef void(WINAPI *pfnCoUninitialize)(
-    VOID);
-
-typedef NTSTATUS (NTAPI *pfnRtlExitUserThread)(
-    _In_ NTSTATUS ExitStatus);
-
-typedef struct tagLOAD_PARAMETERS_SIREFEF {
-    WCHAR                   szVerb[10];
-    WCHAR                   szTargetApp[MAX_PATH + 1];
-    pfnShellExecuteExW      ShellExecuteExW;
-    pfnWaitForSingleObject  WaitForSingleObject;
-    pfnCloseHandle          CloseHandle;
-    pfnRtlExitUserThread    RtlExitUserThread;
-} LOAD_PARAMETERS_SIREFEF, *PLOAD_PARAMETERS_SIREFEF;
 
 NTSTATUS ucmAvrfMethod(
     _In_ PVOID AvrfDll,
