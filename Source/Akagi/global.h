@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.23
 *
-*  DATE:        17 Dec 2019
+*  DATE:        18 Dec 2019
 *
 *  Common header file for the program support routines.
 *
@@ -53,7 +53,7 @@
 #define HIBIKI_ID IDR_HIBIKI32
 #define IKAZUCHI_ID IDR_IKAZUCHI32
 #define AKATSUKI_ID PAYLOAD_ID_NONE //this module unavailable for 32 bit
-#define KAMIKAZE_ID PAYLOAD_ID_NONE //this module unavailable for 32 bit
+#define KAMIKAZE_ID IDR_KAMIKAZE
 #define FUJINAMI_ID IDR_FUJINAMI //this module is dotnet x86 for any supported platform
 #define CHIYODA_ID PAYLOAD_ID_NONE //this module unavailable for 32 bit
 #define KONGOU_ID KONGOU_IDR

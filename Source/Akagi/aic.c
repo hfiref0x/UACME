@@ -4,9 +4,9 @@
 *
 *  TITLE:       AIC.C
 *
-*  VERSION:     3.22
+*  VERSION:     3.23
 *
-*  DATE:        17 Dec 2019
+*  DATE:        18 Dec 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -18,8 +18,11 @@
 
 #pragma comment(lib, "rpcrt4.lib")
 
+#ifdef _WIN64
 #include "appinfo/x64/appinfo64.h"
-
+#else
+#include "appinfo/x86-32/appinfo32.h"
+#endif
 
 #if defined(__cplusplus)
 extern "C" {
@@ -148,8 +151,6 @@ RPC_STATUS AicpAsyncInitializeHandle(
     return status;
 }
 
-#ifdef _WIN64
-
 /*
 * AicLaunchAdminProcess
 *
@@ -235,47 +236,12 @@ BOOLEAN AicLaunchAdminProcess(
             }
         }
         __except (EXCEPTION_EXECUTE_HANDLER) {
-            MessageBox(GetDesktopWindow(), L"Exception RPC Call", NULL, MB_OK);
+            SetLastError(RpcExceptionCode());
             return FALSE;
         }
-
 
         RpcBindingFree(&rpcHandle);
     }
 
     return bResult;
 }
-#else 
-BOOLEAN AicLaunchAdminProcess(
-    _In_opt_ LPWSTR ExecutablePath,
-    _In_opt_ LPWSTR CommandLine,
-    _In_ DWORD StartFlags,
-    _In_ DWORD CreationFlags,
-    _In_ LPWSTR CurrentDirectory,
-    _In_ LPWSTR WindowStation,
-    _In_opt_ HWND hWnd,
-    _In_ DWORD Timeout,
-    _In_ DWORD ShowFlags,
-    _Out_ PROCESS_INFORMATION* ProcessInformation
-)
-{
-    UNREFERENCED_PARAMETER(ExecutablePath);
-    UNREFERENCED_PARAMETER(CommandLine);
-    UNREFERENCED_PARAMETER(StartFlags);
-    UNREFERENCED_PARAMETER(CreationFlags);
-    UNREFERENCED_PARAMETER(CurrentDirectory);
-    UNREFERENCED_PARAMETER(WindowStation);
-    UNREFERENCED_PARAMETER(hWnd);
-    UNREFERENCED_PARAMETER(Timeout);
-    UNREFERENCED_PARAMETER(ShowFlags);
-    
-    if (ProcessInformation) {
-        ProcessInformation->hProcess = NULL;
-        ProcessInformation->hThread = NULL;
-        ProcessInformation->dwProcessId = 0;
-        ProcessInformation->dwThreadId = 0;
-    }
-
-    return FALSE;
-}
-#endif

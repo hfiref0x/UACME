@@ -29,7 +29,7 @@
       <UniqueIdentifier>{629ff935-c53a-4df8-99ee-29698f72e6b8}</UniqueIdentifier>
     </Filter>
     <Filter Include="appinfo">
-      <UniqueIdentifier>{c30294f8-c293-4d12-b189-1896ebbd66a6}</UniqueIdentifier>
+      <UniqueIdentifier>{b3b23f8d-a79f-4195-85a2-ce0665938c27}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -171,6 +171,9 @@
     <ClCompile Include="appinfo\x64\appinfo64.c">
       <Filter>appinfo</Filter>
     </ClCompile>
+    <ClCompile Include="appinfo\x86-32\appinfo32.c">
+      <Filter>appinfo</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -283,9 +286,6 @@
     </ClInclude>
     <ClInclude Include="methods\wusa.h">
       <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="appinfo\x64\appinfo64.h">
-      <Filter>appinfo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

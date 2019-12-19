@@ -7,7 +7,7 @@
 /* at Mon Jan 18 19:14:07 2038
  */
 /* Compiler settings for appinfo.idl:
-    Oicf, W1, Zp8, env=Win64 (32b run), target_arch=AMD64 8.01.0622 
+    Oicf, W1, Zp8, env=Win32 (32b run), target_arch=X86 8.01.0622 
     protocol : dce , ms_ext, c_ext, robust
     error checks: allocation ref bounds_check enum stub_data 
     VC __declspec() decoration level: 
@@ -16,7 +16,7 @@
 */
 /* @@MIDL_FILE_HEADING(  ) */
 
-#if defined(_M_AMD64)
+#if !defined(_M_IA64) && !defined(_M_AMD64) && !defined(_ARM_)
 
 
 #pragma warning( disable: 4049 )  /* more than 64k source lines */
@@ -27,11 +27,14 @@
 #pragma warning( disable: 4211 )  /* redefine extern to static */
 #pragma warning( disable: 4232 )  /* dllimport identity*/
 #pragma warning( disable: 4024 )  /* array to pointer mapping*/
+#pragma warning( disable: 4100 ) /* unreferenced arguments in x86 call */
 
-#include "appinfo64.h"
+#pragma optimize("", off ) 
+
+#include "appinfo32.h"
 
 #define TYPE_FORMAT_STRING_SIZE   75                                
-#define PROC_FORMAT_STRING_SIZE   103                               
+#define PROC_FORMAT_STRING_SIZE   101                               
 #define EXPR_FORMAT_STRING_SIZE   1                                 
 #define TRANSMIT_AS_TABLE_SIZE    0            
 #define WIRE_MARSHAL_TABLE_SIZE   0            
@@ -109,26 +112,22 @@ static RPC_BINDING_HANDLE LaunchAdminProcess__MIDL_AutoBindHandle;
     NdrAsyncClientCall(
                       ( PMIDL_STUB_DESC  )&LaunchAdminProcess_StubDesc,
                       (PFORMAT_STRING) &appinfo__MIDL_ProcFormatString.Format[0],
-                      RAiLaunchAdminProcess_AsyncHandle,
-                      hBinding,
-                      ExecutablePath,
-                      CommandLine,
-                      StartFlags,
-                      CreationFlags,
-                      CurrentDirectory,
-                      WindowStation,
-                      StartupInfo,
-                      hWnd,
-                      Timeout,
-                      ProcessInformation,
-                      ElevationType);
+                      ( unsigned char * )&RAiLaunchAdminProcess_AsyncHandle);
     
 }
 
 
-#if !defined(__RPC_WIN64__)
+#if !defined(__RPC_WIN32__)
 #error  Invalid build platform for this stub.
 #endif
+
+#if !(TARGET_IS_NT50_OR_LATER)
+#error You need Windows 2000 or later to run this stub because it uses these features:
+#error   [async] attribute, /robust command line switch.
+#error However, your C/C++ compilation flags indicate you intend to run this app on earlier systems.
+#error This app will fail with the RPC_X_WRONG_STUB_VERSION error.
+#endif
+
 
 static const appinfo_MIDL_PROC_FORMAT_STRING appinfo__MIDL_ProcFormatString =
     {
@@ -141,97 +140,96 @@ static const appinfo_MIDL_PROC_FORMAT_STRING appinfo__MIDL_ProcFormatString =
 			0x48,		/* Old Flags:  */
 /*  2 */	NdrFcLong( 0x0 ),	/* 0 */
 /*  6 */	NdrFcShort( 0x0 ),	/* 0 */
-/*  8 */	NdrFcShort( 0x70 ),	/* X64 Stack size/offset = 112 */
+/*  8 */	NdrFcShort( 0x38 ),	/* x86 Stack size/offset = 56 */
 /* 10 */	0x32,		/* FC_BIND_PRIMITIVE */
 			0x0,		/* 0 */
-/* 12 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
-/* 14 */	NdrFcShort( 0x20 ),	/* 32 */
-/* 16 */	NdrFcShort( 0x24 ),	/* 36 */
-/* 18 */	0xc7,		/* Oi2 Flags:  srv must size, clt must size, has return, has ext, has async handle */
+/* 12 */	NdrFcShort( 0x4 ),	/* x86 Stack size/offset = 4 */
+/* 14 */	NdrFcShort( 0x9a ),	/* 154 */
+/* 16 */	NdrFcShort( 0x58 ),	/* 88 */
+/* 18 */	0xc6,		/* Oi2 Flags:  clt must size, has return, has ext, has async handle */
 			0xc,		/* 12 */
-/* 20 */	0xa,		/* 10 */
+/* 20 */	0x8,		/* 8 */
 			0x1,		/* Ext Flags:  new corr desc, */
 /* 22 */	NdrFcShort( 0x0 ),	/* 0 */
 /* 24 */	NdrFcShort( 0x0 ),	/* 0 */
 /* 26 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 28 */	NdrFcShort( 0x0 ),	/* 0 */
 
 	/* Parameter ExecutablePath */
 
-/* 30 */	NdrFcShort( 0xb ),	/* Flags:  must size, must free, in, */
-/* 32 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
-/* 34 */	NdrFcShort( 0x2 ),	/* Type Offset=2 */
+/* 28 */	NdrFcShort( 0xb ),	/* Flags:  must size, must free, in, */
+/* 30 */	NdrFcShort( 0x8 ),	/* x86 Stack size/offset = 8 */
+/* 32 */	NdrFcShort( 0x2 ),	/* Type Offset=2 */
 
 	/* Parameter CommandLine */
 
-/* 36 */	NdrFcShort( 0xb ),	/* Flags:  must size, must free, in, */
-/* 38 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
-/* 40 */	NdrFcShort( 0x2 ),	/* Type Offset=2 */
+/* 34 */	NdrFcShort( 0xb ),	/* Flags:  must size, must free, in, */
+/* 36 */	NdrFcShort( 0xc ),	/* x86 Stack size/offset = 12 */
+/* 38 */	NdrFcShort( 0x2 ),	/* Type Offset=2 */
 
 	/* Parameter StartFlags */
 
-/* 42 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 44 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
-/* 46 */	0x8,		/* FC_LONG */
+/* 40 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 42 */	NdrFcShort( 0x10 ),	/* x86 Stack size/offset = 16 */
+/* 44 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter CreationFlags */
 
-/* 48 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 50 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
-/* 52 */	0x8,		/* FC_LONG */
+/* 46 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 48 */	NdrFcShort( 0x14 ),	/* x86 Stack size/offset = 20 */
+/* 50 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter CurrentDirectory */
 
-/* 54 */	NdrFcShort( 0x10b ),	/* Flags:  must size, must free, in, simple ref, */
-/* 56 */	NdrFcShort( 0x30 ),	/* X64 Stack size/offset = 48 */
-/* 58 */	NdrFcShort( 0x8 ),	/* Type Offset=8 */
+/* 52 */	NdrFcShort( 0x10b ),	/* Flags:  must size, must free, in, simple ref, */
+/* 54 */	NdrFcShort( 0x18 ),	/* x86 Stack size/offset = 24 */
+/* 56 */	NdrFcShort( 0x8 ),	/* Type Offset=8 */
 
 	/* Parameter WindowStation */
 
-/* 60 */	NdrFcShort( 0x10b ),	/* Flags:  must size, must free, in, simple ref, */
-/* 62 */	NdrFcShort( 0x38 ),	/* X64 Stack size/offset = 56 */
-/* 64 */	NdrFcShort( 0x8 ),	/* Type Offset=8 */
+/* 58 */	NdrFcShort( 0x10b ),	/* Flags:  must size, must free, in, simple ref, */
+/* 60 */	NdrFcShort( 0x1c ),	/* x86 Stack size/offset = 28 */
+/* 62 */	NdrFcShort( 0x8 ),	/* Type Offset=8 */
 
 	/* Parameter StartupInfo */
 
-/* 66 */	NdrFcShort( 0x10b ),	/* Flags:  must size, must free, in, simple ref, */
-/* 68 */	NdrFcShort( 0x40 ),	/* X64 Stack size/offset = 64 */
-/* 70 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
+/* 64 */	NdrFcShort( 0x10a ),	/* Flags:  must free, in, simple ref, */
+/* 66 */	NdrFcShort( 0x20 ),	/* x86 Stack size/offset = 32 */
+/* 68 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
 
 	/* Parameter hWnd */
 
-/* 72 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 74 */	NdrFcShort( 0x48 ),	/* X64 Stack size/offset = 72 */
-/* 76 */	0xb9,		/* FC_UINT3264 */
+/* 70 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 72 */	NdrFcShort( 0x24 ),	/* x86 Stack size/offset = 36 */
+/* 74 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter Timeout */
 
-/* 78 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 80 */	NdrFcShort( 0x50 ),	/* X64 Stack size/offset = 80 */
-/* 82 */	0x8,		/* FC_LONG */
+/* 76 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 78 */	NdrFcShort( 0x28 ),	/* x86 Stack size/offset = 40 */
+/* 80 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter ProcessInformation */
 
-/* 84 */	NdrFcShort( 0x6113 ),	/* Flags:  must size, must free, out, simple ref, srv alloc size=24 */
-/* 86 */	NdrFcShort( 0x58 ),	/* X64 Stack size/offset = 88 */
-/* 88 */	NdrFcShort( 0x38 ),	/* Type Offset=56 */
+/* 82 */	NdrFcShort( 0x4112 ),	/* Flags:  must free, out, simple ref, srv alloc size=16 */
+/* 84 */	NdrFcShort( 0x2c ),	/* x86 Stack size/offset = 44 */
+/* 86 */	NdrFcShort( 0x3c ),	/* Type Offset=60 */
 
 	/* Parameter ElevationType */
 
-/* 90 */	NdrFcShort( 0x2150 ),	/* Flags:  out, base type, simple ref, srv alloc size=8 */
-/* 92 */	NdrFcShort( 0x60 ),	/* X64 Stack size/offset = 96 */
-/* 94 */	0x8,		/* FC_LONG */
+/* 88 */	NdrFcShort( 0x2150 ),	/* Flags:  out, base type, simple ref, srv alloc size=8 */
+/* 90 */	NdrFcShort( 0x30 ),	/* x86 Stack size/offset = 48 */
+/* 92 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Return value */
 
-/* 96 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
-/* 98 */	NdrFcShort( 0x68 ),	/* X64 Stack size/offset = 104 */
-/* 100 */	0x8,		/* FC_LONG */
+/* 94 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
+/* 96 */	NdrFcShort( 0x34 ),	/* x86 Stack size/offset = 52 */
+/* 98 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 			0x0
@@ -265,43 +263,48 @@ static const appinfo_MIDL_TYPE_FORMAT_STRING appinfo__MIDL_TypeFormatString =
 /* 20 */	0x5c,		/* FC_PAD */
 			0x5b,		/* FC_END */
 /* 22 */	
-			0x1a,		/* FC_BOGUS_STRUCT */
+			0x16,		/* FC_PSTRUCT */
 			0x3,		/* 3 */
-/* 24 */	NdrFcShort( 0x38 ),	/* 56 */
-/* 26 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 28 */	NdrFcShort( 0x14 ),	/* Offset= 20 (48) */
-/* 30 */	0x36,		/* FC_POINTER */
-			0x8,		/* FC_LONG */
-/* 32 */	0x8,		/* FC_LONG */
-			0x8,		/* FC_LONG */
-/* 34 */	0x8,		/* FC_LONG */
-			0x8,		/* FC_LONG */
-/* 36 */	0x8,		/* FC_LONG */
-			0x8,		/* FC_LONG */
-/* 38 */	0x8,		/* FC_LONG */
-			0x6,		/* FC_SHORT */
-/* 40 */	0x3e,		/* FC_STRUCTPAD2 */
-			0x4c,		/* FC_EMBEDDED_COMPLEX */
-/* 42 */	0x0,		/* 0 */
-			NdrFcShort( 0xffe3 ),	/* Offset= -29 (14) */
-			0x40,		/* FC_STRUCTPAD4 */
-/* 46 */	0x5c,		/* FC_PAD */
-			0x5b,		/* FC_END */
-/* 48 */	
-			0x12, 0x8,	/* FC_UP [simple_pointer] */
-/* 50 */	0x5,		/* FC_WCHAR */
+/* 24 */	NdrFcShort( 0x30 ),	/* 48 */
+/* 26 */	
+			0x4b,		/* FC_PP */
 			0x5c,		/* FC_PAD */
-/* 52 */	
-			0x11, 0x4,	/* FC_RP [alloced_on_stack] */
-/* 54 */	NdrFcShort( 0x2 ),	/* Offset= 2 (56) */
+/* 28 */	
+			0x46,		/* FC_NO_REPEAT */
+			0x5c,		/* FC_PAD */
+/* 30 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 32 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 34 */	0x12, 0x8,	/* FC_UP [simple_pointer] */
+/* 36 */	0x5,		/* FC_WCHAR */
+			0x5c,		/* FC_PAD */
+/* 38 */	
+			0x5b,		/* FC_END */
+
+			0x8,		/* FC_LONG */
+/* 40 */	0x8,		/* FC_LONG */
+			0x8,		/* FC_LONG */
+/* 42 */	0x8,		/* FC_LONG */
+			0x8,		/* FC_LONG */
+/* 44 */	0x8,		/* FC_LONG */
+			0x8,		/* FC_LONG */
+/* 46 */	0x8,		/* FC_LONG */
+			0x8,		/* FC_LONG */
+/* 48 */	0x6,		/* FC_SHORT */
+			0x3e,		/* FC_STRUCTPAD2 */
+/* 50 */	0x4c,		/* FC_EMBEDDED_COMPLEX */
+			0x0,		/* 0 */
+/* 52 */	NdrFcShort( 0xffda ),	/* Offset= -38 (14) */
+/* 54 */	0x5c,		/* FC_PAD */
+			0x5b,		/* FC_END */
 /* 56 */	
-			0x1a,		/* FC_BOGUS_STRUCT */
+			0x11, 0x4,	/* FC_RP [alloced_on_stack] */
+/* 58 */	NdrFcShort( 0x2 ),	/* Offset= 2 (60) */
+/* 60 */	
+			0x15,		/* FC_STRUCT */
 			0x3,		/* 3 */
-/* 58 */	NdrFcShort( 0x18 ),	/* 24 */
-/* 60 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 62 */	NdrFcShort( 0x0 ),	/* Offset= 0 (62) */
-/* 64 */	0xb9,		/* FC_UINT3264 */
-			0xb9,		/* FC_UINT3264 */
+/* 62 */	NdrFcShort( 0x10 ),	/* 16 */
+/* 64 */	0x8,		/* FC_LONG */
+			0x8,		/* FC_LONG */
 /* 66 */	0x8,		/* FC_LONG */
 			0x8,		/* FC_LONG */
 /* 68 */	0x5c,		/* FC_PAD */
@@ -347,6 +350,8 @@ static const MIDL_STUB_DESC LaunchAdminProcess_StubDesc =
 #if _MSC_VER >= 1200
 #pragma warning(pop)
 #endif
+
 #else
 #pragma warning(disable:4206)
-#endif /* defined(_M_AMD64)*/
+#endif /* !defined(_M_IA64) && !defined(_M_AMD64) && !defined(_ARM_) */
+

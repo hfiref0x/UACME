@@ -693,9 +693,8 @@ NTSTATUS ucmDebugObjectMethod(
         //
         while (1) {
 
-            if (!WaitForDebugEvent(&dbgEvent, INFINITE)) {
-                DbgPrint("GetLastError=%lx\r\n", GetLastError());
-            }
+            if (!WaitForDebugEvent(&dbgEvent, INFINITE))
+                break;
 
             switch (dbgEvent.dwDebugEventCode) {
 
@@ -737,7 +736,11 @@ NTSTATUS ucmDebugObjectMethod(
             NtClose(dupHandle);
         }
 
+#pragma warning(push)
+#pragma warning(disable: 6387)
         DbgUiSetThreadDebugObject(NULL);
+#pragma warning(pop)
+
         NtClose(dbgHandle);
         dbgHandle = NULL;
 

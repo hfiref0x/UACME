@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.23
 *
-*  DATE:        17 Dec 2019
+*  DATE:        18 Dec 2019
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -185,7 +185,7 @@ NTSTATUS ucmHakrilMethod(
             1, //elevate
             CREATE_UNICODE_ENVIRONMENT | CREATE_SUSPENDED,
             g_ctx->szSystemRoot,
-            L"WinSta0\\Default",
+            T_DEFAULT_DESKTOP,
             NULL,
             INFINITE,
             SW_HIDE,

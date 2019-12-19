@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2018
+*  (C) COPYRIGHT AUTHORS, 2016 - 2020
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.10
+*  VERSION:     3.23
 *
-*  DATE:        18 Nov 2018
+*  DATE:        18 Dec 2019
 *
 *  Naka, support payload compressor.
 *
@@ -1052,6 +1052,7 @@ VOID EncodeBuffer(
 #define IDR_FUBUKI32 200
 #define IDR_HIBIKI32 201
 #define IDR_IKAZUCHI32 202
+#define IDR_KAMIKAZE 203
 #define IDR_FUJINAMI32 204
 #define IDR_KONGOU32 0xFFFFFFFE
 
@@ -1182,6 +1183,11 @@ VOID CreateSecretTables(VOID)
     szFileName[l] = 0;
     _strcat(&szFileName[l], L"Ikazuchi32.key");
     if (ProcessUnit(szFileName, IDR_IKAZUCHI32, &S[c]))
+        c++;
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Kamikaze.key");
+    if (ProcessUnit(szFileName, IDR_KAMIKAZE, &S[c]))
         c++;
 
     szFileName[l] = 0;

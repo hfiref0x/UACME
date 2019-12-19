@@ -74,12 +74,11 @@ UCM_API(MethodDebugObject);
 
 UCM_EXTRA_CONTEXT WDCallbackType1;
 
-#define UCM_WIN32_NOT_IMPLEMENTED_COUNT 6
+#define UCM_WIN32_NOT_IMPLEMENTED_COUNT 5
 ULONG UCM_WIN32_NOT_IMPLEMENTED[UCM_WIN32_NOT_IMPLEMENTED_COUNT] = {
     UacMethodMMC1,
     UacMethodInetMgr,
     UacMethodWow64Logger,
-    UacMethodHakril,
     UacMethodDateTimeWriter,
     UacMethodEditionUpgradeMgr
 };
@@ -123,7 +122,7 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodTokenMod, NULL, { 7600, 17686 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodJunction, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSXSDccw, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodHakril, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodHakril, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, FALSE, TRUE },
     { MethodCorProfiler, NULL, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCOMHandlers, NULL, { 7600, 18362 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodCMLuaUtil, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
@@ -144,7 +143,7 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodShellWSReset, &WDCallbackType1, { 17134, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodSysprep, NULL, { 7600, 9600 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodEditionUpgradeManager, NULL, { 14393, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodDebugObject, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, TRUE }
+    { MethodDebugObject, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
 };
 
 #define WDCallbackTypeMagicVer1 282647531814912
@@ -981,14 +980,9 @@ UCM_API(MethodSXSDccw)
 
 UCM_API(MethodHakril)
 {
-#ifdef _WIN64
     return ucmHakrilMethod(
         Parameter->PayloadCode,
         Parameter->PayloadSize);
-#else
-    UNREFERENCED_PARAMETER(Parameter);
-    return STATUS_NOT_SUPPORTED;
-#endif
 }
 
 UCM_API(MethodCorProfiler)
@@ -1242,7 +1236,6 @@ UCM_API(MethodEditionUpgradeManager)
 
 UCM_API(MethodDebugObject)
 {
-#ifdef _WIN64
     LPWSTR lpszPayload = NULL;
     UNREFERENCED_PARAMETER(Parameter);
 
@@ -1255,9 +1248,4 @@ UCM_API(MethodDebugObject)
         lpszPayload = g_ctx->szOptionalParameter;
 
     return ucmDebugObjectMethod(lpszPayload);
-
-#else
-    UNREFERENCED_PARAMETER(Parameter);
-    return STATUS_NOT_SUPPORTED;
-#endif
 }
