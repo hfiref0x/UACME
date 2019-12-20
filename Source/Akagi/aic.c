@@ -145,10 +145,29 @@ RPC_STATUS AicpAsyncInitializeHandle(
     status = RpcAsyncInitializeHandle(AsyncState, sizeof(RPC_ASYNC_STATE));
     if (status == RPC_S_OK) {
         AsyncState->NotificationType = RpcNotificationTypeEvent;
-        AsyncState->u.hEvent = CreateEventW(NULL, 0, 0, NULL);
+        AsyncState->u.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+        if (AsyncState->u.hEvent == NULL)
+            status = GetLastError();
     }
 
     return status;
+}
+
+/*
+* AicpAsyncCloseHandle
+*
+* Purpose:
+*
+* Close RPC_ASYNC_STATE notification event.
+*
+*/
+VOID AicpAsyncCloseHandle(
+    _Inout_ RPC_ASYNC_STATE* AsyncState)
+{
+    if (AsyncState->u.hEvent) {
+        CloseHandle(AsyncState->u.hEvent);
+        AsyncState->u.hEvent = NULL;
+    }
 }
 
 /*
@@ -231,9 +250,13 @@ BOOLEAN AicLaunchAdminProcess(
                     ProcessInformation->dwProcessId = (DWORD)procInfo.ProcessId;
                     ProcessInformation->dwThreadId = (DWORD)procInfo.ThreadId;
                 }
+
                 bResult = TRUE;
 
             }
+
+            AicpAsyncCloseHandle(&asyncState);
+
         }
         __except (EXCEPTION_EXECUTE_HANDLER) {
             SetLastError(RpcExceptionCode());
