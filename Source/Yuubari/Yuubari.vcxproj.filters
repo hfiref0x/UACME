@@ -19,6 +19,9 @@
     <Filter Include="testunits">
       <UniqueIdentifier>{c345b77b-4418-4498-8377-bcbbbc11aa76}</UniqueIdentifier>
     </Filter>
+    <Filter Include="hde">
+      <UniqueIdentifier>{feac226e-813e-438e-a68d-49e68ad8f8bb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -81,6 +84,12 @@
     <ClCompile Include="..\Shared\cmdline.c">
       <Filter>minirtl</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\hde\hde64.c">
+      <Filter>hde</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\_strncmp.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -139,6 +148,15 @@
     </ClInclude>
     <ClInclude Include="..\Shared\cmdline.h">
       <Filter>minirtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\hde\hde64.h">
+      <Filter>hde</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\hde\pstdint.h">
+      <Filter>hde</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\hde\table64.h">
+      <Filter>hde</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,12 +1,12 @@
 #/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2020
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     1.46
+*  VERSION:     1.47
 *
-*  DATE:        23 Oct 2019
+*  DATE:        22 Mar 2020
 *
 *  Common header file for the program support routines.
 *
@@ -43,3 +43,9 @@ LRESULT supRegReadDword(
     _In_ HKEY hKey,
     _In_ LPWSTR lpValueName,
     _In_ LPDWORD Value);
+
+PVOID supLookupImageSectionByName(
+    _In_ CHAR* SectionName,
+    _In_ ULONG SectionNameLength,
+    _In_ PVOID DllBase,
+    _Out_ PULONG SectionSize);

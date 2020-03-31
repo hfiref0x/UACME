@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2020
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.46
+*  VERSION:     1.47
 *
-*  DATE:        23 Oct 2019
+*  DATE:        22 Mar 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -16,11 +16,15 @@
 *******************************************************************************/
 #include "global.h"
 #include "patterns.h"
+#include "Shared/hde/hde64.h"
 #pragma comment(lib, "dbghelp.lib")
 #pragma comment(lib, "version.lib")
 
 UAC_AI_GLOBALS g_AiData;
 SYMBOL_ENTRY g_SymbolsHead;
+
+#define TEXT_SECTION ".text"
+#define TEXT_SECTION_LEGNTH sizeof(TEXT_SECTION)
 
 pfnSymSetOptions        pSymSetOptions;
 pfnSymInitializeW       pSymInitializeW = NULL;
@@ -37,7 +41,7 @@ UAC_PATTERN g_MmcPatterns[] = {
     { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 4, 9600, 9600 },
     { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 4, 10240, 10240 },
     { ptMmcBlock_10586_16299, sizeof(ptMmcBlock_10586_16299), 4, 10586, 16299 },
-    { ptMmcBlock_16300_19008, sizeof(ptMmcBlock_16300_19008), 4, 16300, 19008 }
+    { ptMmcBlock_16300_17134, sizeof(ptMmcBlock_16300_17134), 4, 16300, 17134 }
 };
 
 #define TestChar(x)  (((WCHAR)x >= L'A') && ((WCHAR)x <= L'z')) 
@@ -280,34 +284,126 @@ BOOL GetSupportedPattern(
 *
 * Purpose:
 *
-* Locate mmc block.
+* Locate mmc block. No corresponding symbol, code very vary from compiler version.
 *
 */
 BOOLEAN QueryAiMmcBlock(
     _In_ PBYTE DllBase,
     _In_ SIZE_T DllVirtualSize
-)
+    )
 {
-    ULONG       PatternSize = 0, SubtractBytes = 0;
-    ULONG_PTR   rel = 0;
+    ULONG       PatternSize = 0, SubtractBytes = 0, instOffset, tempOffset;
+    LONG        rel = 0;
     PVOID       Pattern = NULL, PatternData = NULL, TestPtr = NULL;
+
+    hde64s      hs;
+    ULONG       sectionSize = 0;
+    PBYTE       ptrCode;
+    SIZE_T      matchBytes, reqMatchSize;
 
     if (DllBase == NULL)
         return FALSE;
 
     g_AiData.MmcBlock = NULL;
-    if (GetSupportedPattern(g_MmcPatterns, &PatternData, &PatternSize, &SubtractBytes)) {
-        if (PatternData) {
-            Pattern = (PVOID)supFindPattern(DllBase, DllVirtualSize, (PBYTE)PatternData, PatternSize);
-            if (Pattern != NULL) {
-                rel = *(DWORD*)((ULONG_PTR)Pattern - SubtractBytes);
-                TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)Pattern + rel);
-                if (IN_REGION(TestPtr, DllBase, DllVirtualSize)) {
-                    g_AiData.MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
-                    return TRUE;
+
+    //
+    // Locate .text image section.
+    //
+    ptrCode = (PBYTE)supLookupImageSectionByName(TEXT_SECTION,
+        TEXT_SECTION_LEGNTH,
+        (PVOID)DllBase,
+        &sectionSize);
+
+    if ((ptrCode == NULL) || (sectionSize < 1024))
+        return FALSE;
+
+    if (g_NtBuildNumber < 17763) {
+        if (GetSupportedPattern(g_MmcPatterns, &PatternData, &PatternSize, &SubtractBytes)) {
+            if (PatternData) {
+                Pattern = (PVOID)supFindPattern(ptrCode, sectionSize, (PBYTE)PatternData, PatternSize);
+                if (Pattern != NULL) {
+                    rel = *(DWORD*)((ULONG_PTR)Pattern - SubtractBytes);
+                    TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)Pattern + rel);
+                    if (IN_REGION(TestPtr, DllBase, DllVirtualSize)) {
+                        g_AiData.MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
+                        return TRUE;
+                    }
                 }
             }
         }
+    }
+    else {
+
+        instOffset = 0;
+
+        do {
+
+            hde64_disasm((void*)(ptrCode + instOffset), &hs);
+            if (hs.flags & F_ERROR)
+                break;
+
+            if (hs.len == 3) {
+
+                hde64_disasm((void*)(ptrCode + instOffset), &hs);
+                if (hs.flags & F_ERROR)
+                    break;
+
+                //
+                // xor     r15d, r15d
+                //
+
+                reqMatchSize = sizeof(ptMmcBlock_Start);
+
+                matchBytes = RtlCompareMemory(RtlOffsetToPointer(ptrCode, instOffset),
+                    ptMmcBlock_Start,
+                    reqMatchSize);
+
+                if (matchBytes == reqMatchSize) {
+
+                    //
+                    // Next instruction check.
+                    //
+                    tempOffset = (instOffset += hs.len);
+
+                    hde64_disasm((void*)(ptrCode + tempOffset), &hs);
+                    if (hs.flags & F_ERROR)
+                        break;
+
+                    if (hs.len == 7) {
+
+                        if ((ptrCode[tempOffset + 1] == 0x8D) &&
+                            (ptrCode[tempOffset + 2] == 0x35))
+                        {
+
+                            //
+                            // Next instruction check.
+                            //
+
+                            hde64_disasm((void*)(ptrCode + tempOffset + hs.len), &hs);
+                            if (hs.flags & F_ERROR)
+                                break;
+
+                            if (hs.len == 3) {
+
+                                rel = *(PLONG)(ptrCode + tempOffset + 3);
+                                TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)ptrCode + tempOffset + 7 + rel);
+                                if (IN_REGION(TestPtr, DllBase, DllVirtualSize)) {
+                                    g_AiData.MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
+                                    return TRUE;
+                                }
+
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            instOffset += hs.len;
+
+        } while (instOffset < (sectionSize - 16));
+
+
     }
     return FALSE;
 }

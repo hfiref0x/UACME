@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2020
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.46
+*  VERSION:     1.47
 *
-*  DATE:        23 Oct 2019
+*  DATE:        22 Mar 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -221,4 +221,71 @@ LRESULT supRegReadDword(
             *Value = dwValue;
     }
     return lResult;
+}
+
+/*
+* supLookupImageSectionByName
+*
+* Purpose:
+*
+* Lookup section pointer and size for section name.
+*
+*/
+PVOID supLookupImageSectionByName(
+    _In_ CHAR* SectionName,
+    _In_ ULONG SectionNameLength,
+    _In_ PVOID DllBase,
+    _Out_ PULONG SectionSize
+)
+{
+    BOOLEAN bFound = FALSE;
+    ULONG i;
+    PVOID Section;
+    IMAGE_NT_HEADERS* NtHeaders = RtlImageNtHeader(DllBase);
+    IMAGE_SECTION_HEADER* SectionTableEntry;
+
+    //
+    // Assume failure.
+    //
+    if (SectionSize)
+        *SectionSize = 0;
+
+    if (NtHeaders == NULL)
+        return NULL;
+
+    SectionTableEntry = (PIMAGE_SECTION_HEADER)((PCHAR)NtHeaders +
+        sizeof(ULONG) +
+        sizeof(IMAGE_FILE_HEADER) +
+        NtHeaders->FileHeader.SizeOfOptionalHeader);
+
+    //
+    // Locate section.
+    //
+    i = NtHeaders->FileHeader.NumberOfSections;
+    while (i > 0) {
+
+        if (_strncmp_a(
+        (CHAR*)SectionTableEntry->Name,
+            SectionName,
+            SectionNameLength) == 0)
+        {
+            bFound = TRUE;
+            break;
+        }
+
+        i -= 1;
+        SectionTableEntry += 1;
+    }
+
+    //
+    // Section not found, abort scan.
+    //
+    if (!bFound)
+        return NULL;
+
+    Section = (PVOID)((ULONG_PTR)DllBase + SectionTableEntry->VirtualAddress);
+    if (SectionSize)
+        *SectionSize = SectionTableEntry->Misc.VirtualSize;
+
+    return Section;
 }

@@ -163,6 +163,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Shared\cmdline.c" />
+    <ClCompile Include="..\Shared\hde\hde64.c" />
     <ClCompile Include="..\Shared\strtoi.c" />
     <ClCompile Include="..\Shared\ultostr.c" />
     <ClCompile Include="..\Shared\_filename.c" />
@@ -172,6 +173,7 @@
     <ClCompile Include="..\Shared\_strcpy.c" />
     <ClCompile Include="..\Shared\_strend.c" />
     <ClCompile Include="..\Shared\_strlen.c" />
+    <ClCompile Include="..\Shared\_strncmp.c" />
     <ClCompile Include="..\Shared\_strncpy.c" />
     <ClCompile Include="appinfo.c" />
     <ClCompile Include="basic.c" />
@@ -185,6 +187,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Shared\cmdline.h" />
+    <ClInclude Include="..\Shared\hde\hde64.h" />
+    <ClInclude Include="..\Shared\hde\pstdint.h" />
+    <ClInclude Include="..\Shared\hde\table64.h" />
     <ClInclude Include="..\Shared\minirtl.h" />
     <ClInclude Include="..\Shared\ntos.h" />
     <ClInclude Include="..\Shared\ntsxs.h" />

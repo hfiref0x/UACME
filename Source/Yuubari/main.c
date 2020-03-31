@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2020
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.46
+*  VERSION:     1.47
 *
-*  DATE:        23 Oct 2019
+*  DATE:        22 Mar 2020
 *
 *  Program entry point.
 *
@@ -443,12 +443,12 @@ VOID ListAppInfo(
     cuiPrintText(T_APPINFO_HEAD, TRUE);
     LoggerWriteHeader(T_APPINFO_HEAD);
 
-#ifndef _DEBUG
+//#ifndef _DEBUG
     _strcpy(szFileName, USER_SHARED_DATA->NtSystemRoot);
     _strcat(szFileName, TEXT("\\system32\\appinfo.dll"));
-#else
+/*#else
     _strcpy(szFileName, TEXT("C:\\appinfo\\18975.dll"));
-#endif
+#endif*/
     ScanAppInfo(szFileName, (OUTPUTCALLBACK)AppInfoDataOutputCallback);
 }
 
@@ -506,8 +506,8 @@ VOID main()
 
 #ifndef _DEBUG
     ListBasicSettings();
-#endif
     ListCOMFromRegistry();
+#endif
     ListAppInfo();
 #ifndef _DEBUG
     ListFusion();

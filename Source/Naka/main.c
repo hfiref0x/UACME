@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.23
 *
-*  DATE:        18 Dec 2019
+*  DATE:        22 Mar 2020
 *
 *  Naka, support payload compressor.
 *
@@ -36,7 +36,7 @@ BOOL CreateSha256HashForBuffer(
 )
 {
     BCRYPT_ALG_HANDLE   hAlgSha256 = NULL, hHashSha256 = NULL;
-    BOOL                bCond = FALSE, bResult = FALSE;
+    BOOL                bResult = FALSE;
 
     DWORD cbKeyObject = 0, cbResult = 0;
 
@@ -149,7 +149,7 @@ BOOL CreateSha256HashForBuffer(
 
         bResult = TRUE;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hHashSha256) BCryptDestroyHash(hHashSha256);
     if (hAlgSha256) BCryptCloseAlgorithmProvider(hAlgSha256, 0);
@@ -180,7 +180,7 @@ BOOL GenerateIV(
     _In_ DWORD cbIV
 )
 {
-    BOOL bResult = FALSE, bCond = FALSE;
+    BOOL bResult = FALSE;
     BCRYPT_ALG_HANDLE hAlgRng = NULL;
 
     do {
@@ -200,7 +200,7 @@ BOOL GenerateIV(
             cbIV,
             0)));
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hAlgRng)
         BCryptCloseAlgorithmProvider(hAlgRng, 0);
@@ -226,7 +226,7 @@ BOOL DecryptBuffer(
     _Out_   PDWORD pcbDecryptedBuffer
 )
 {
-    BOOL                bCond = FALSE, bResult = FALSE;
+    BOOL                bResult = FALSE;
     BCRYPT_ALG_HANDLE   hAlgAes = NULL;
     BCRYPT_KEY_HANDLE   hKey = NULL;
     HANDLE              heapCNG = NULL;
@@ -342,7 +342,7 @@ BOOL DecryptBuffer(
 
         bResult = TRUE;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hKey != NULL)
         BCryptDestroyKey(hKey);
@@ -381,7 +381,7 @@ BOOL EncryptBuffer(
     _Out_   PDWORD  pcbEncryptedBuffer
 )
 {
-    BOOL                bCond = FALSE, bResult = FALSE;
+    BOOL                bResult = FALSE;
     BCRYPT_ALG_HANDLE   hAlgAes = NULL;
     BCRYPT_KEY_HANDLE   hKey = NULL;
     HANDLE              heapCNG = NULL;
@@ -515,7 +515,7 @@ BOOL EncryptBuffer(
         *pcbEncryptedBuffer = cbCipherData;
         bResult = TRUE;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hKey != NULL)
         BCryptDestroyKey(hKey);
@@ -578,7 +578,7 @@ PVOID supReadBufferFromFile(
     _Out_ PLARGE_INTEGER FileSize
 )
 {
-    BOOL bCond = FALSE, bSuccess = FALSE;
+    BOOL bSuccess = FALSE;
     DWORD r;
     PVOID FileData = NULL;
     HANDLE hFile = INVALID_HANDLE_VALUE;
@@ -629,7 +629,7 @@ PVOID supReadBufferFromFile(
             bSuccess = TRUE;
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (!bSuccess) {
         if (FileSize) {
@@ -707,7 +707,6 @@ void DecompressContainerUnit(
     _In_ LPWSTR lpKeyFile
 )
 {
-    BOOL bCond = FALSE;
     PUCHAR FileData = NULL;
     LPWSTR NewName = NULL;
     SIZE_T sz = 0;
@@ -783,7 +782,7 @@ void DecompressContainerUnit(
             DeltaFree(doOutput.lpStart);
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (pbDecryptedBuffer != NULL)
         HeapFree(hHeap, 0, pbDecryptedBuffer);
@@ -808,7 +807,6 @@ void CreateContainerPackedUnit(
     _In_ LPWSTR lpInputFile
 )
 {
-    BOOL bCond = FALSE;
     PUCHAR FileData = NULL;
     HANDLE hHeap = GetProcessHeap();
     LPWSTR NewName = NULL;
@@ -967,7 +965,7 @@ void CreateContainerPackedUnit(
             HeapFree(GetProcessHeap(), 0, UnitHeader);
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (d_out.lpStart)
         DeltaFree(d_out.lpStart);

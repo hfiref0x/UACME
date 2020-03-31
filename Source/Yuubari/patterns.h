@@ -1,18 +1,18 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2020
 *
 *  TITLE:       PATTERNS.H
 *
-*  VERSION:     1.46
+*  VERSION:     1.47
 *
-*  DATE:        22 Oct 2019
+*  DATE:        22 Mar 2020
 *
 *  Patterns for supported AppInfo versions.
 *
 *  Minimum client: 7600
 *
-*  Maximum client: 19008
+*  Maximum client: 19041
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -44,6 +44,9 @@ const unsigned char ptMmcBlock_10240[] = {
 const unsigned char ptMmcBlock_10586_16299[] = {
     0x49, 0x8B, 0x16, 0x49, 0x8B, 0xCD, 0xFF, 0x15 
 };
-const unsigned char ptMmcBlock_16300_19008[] = {
+const unsigned char ptMmcBlock_16300_17134[] = {
     0x41, 0x8B, 0xF7, 0x49, 0x8B, 0x16, 0x48, 0x8B
+};
+const unsigned char ptMmcBlock_Start[] = {
+    0x45, 0x33, 0xFF
 };

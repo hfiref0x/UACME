@@ -5,9 +5,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.124
+*  VERSION:     1.132
 *
-*  DATE:        12 Dec 2019
+*  DATE:        24 Feb 2020
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -87,6 +87,8 @@ typedef short CSHORT;
 typedef ULONGLONG REGHANDLE, *PREGHANDLE;
 typedef PVOID *PDEVICE_MAP;
 typedef PVOID PHEAD;
+typedef struct _IO_TIMER* PIO_TIMER;
+typedef LARGE_INTEGER PHYSICAL_ADDRESS;
 
 #ifndef _WIN32_WINNT_WIN10
 #define _WIN32_WINNT_WIN10 0x0A00
@@ -492,6 +494,31 @@ typedef struct _IO_STATUS_BLOCK {
 
     ULONG_PTR Information;
 } IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
+
+#ifndef INTERFACE_TYPE
+typedef enum _INTERFACE_TYPE {
+    InterfaceTypeUndefined = -1,
+    Internal,
+    Isa,
+    Eisa,
+    MicroChannel,
+    TurboChannel,
+    PCIBus,
+    VMEBus,
+    NuBus,
+    PCMCIABus,
+    CBus,
+    MPIBus,
+    MPSABus,
+    ProcessorInternal,
+    InternalPowerBus,
+    PNPISABus,
+    PNPBus,
+    Vmcs,
+    ACPIBus,
+    MaximumInterfaceType
+} INTERFACE_TYPE, * PINTERFACE_TYPE;
+#endif
 
 /*
 ** FileCache and MemoryList START
@@ -3608,6 +3635,8 @@ enum _KOBJECTS {
 #define DO_POWER_NOOP                   0x00008000
 #define DO_LOW_PRIORITY_FILESYSTEM      0x00010000      // ntddk nthal ntifs
 #define DO_XIP                          0x00020000
+#define DO_DEVICE_TO_BE_RESET           0x04000000      
+#define DO_DAX_VOLUME                   0x10000000    
 
 #define FILE_REMOVABLE_MEDIA                        0x00000001
 #define FILE_READ_ONLY_DEVICE                       0x00000002
@@ -3701,6 +3730,15 @@ enum _KOBJECTS {
 #define FILE_DEVICE_SYSENV              0x00000052
 #define FILE_DEVICE_VIRTUAL_BLOCK       0x00000053
 #define FILE_DEVICE_POINT_OF_SERVICE    0x00000054
+#define FILE_DEVICE_STORAGE_REPLICATION 0x00000055
+#define FILE_DEVICE_TRUST_ENV           0x00000056
+#define FILE_DEVICE_UCM                 0x00000057
+#define FILE_DEVICE_UCMTCPCI            0x00000058
+#define FILE_DEVICE_PERSISTENT_MEMORY   0x00000059
+#define FILE_DEVICE_NVDIMM              0x0000005a
+#define FILE_DEVICE_HOLOGRAPHIC         0x0000005b
+#define FILE_DEVICE_SDFXHCI             0x0000005c
+#define FILE_DEVICE_UCMUCSI             0x0000005d
 
 #define FILE_BYTE_ALIGNMENT             0x00000000
 #define FILE_WORD_ALIGNMENT             0x00000001
@@ -3716,36 +3754,56 @@ enum _KOBJECTS {
 #define DPC_NORMAL 0
 #define DPC_THREADED 1
 
-typedef struct _DEVICE_OBJECT {
-    CSHORT                      Type;
-    USHORT                      Size;
-    LONG                        ReferenceCount;
-    struct _DRIVER_OBJECT  *DriverObject;
-    struct _DEVICE_OBJECT  *NextDevice;
-    struct _DEVICE_OBJECT  *AttachedDevice;
-    struct _IRP            *CurrentIrp;
-    PVOID		                Timer;
-    ULONG                       Flags;
-    ULONG                       Characteristics;
-    __volatile PVPB             Vpb;
-    PVOID                       DeviceExtension;
-    DEVICE_TYPE                 DeviceType;
-    CCHAR                       StackSize;
+#if _MSC_VER >= 1200
+#pragma warning(push)
+#pragma warning(disable:4324) // structure was padded due to __declspec(align())
+#endif
+
+typedef struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) _DEVICE_OBJECT {
+    CSHORT Type;
+    USHORT Size;
+    LONG ReferenceCount;
+    struct _DRIVER_OBJECT* DriverObject;
+    struct _DEVICE_OBJECT* NextDevice;
+    struct _DEVICE_OBJECT* AttachedDevice;
+    struct _IRP* CurrentIrp;
+    PIO_TIMER Timer;
+    ULONG Flags;                                // See above:  DO_...
+    ULONG Characteristics;                      // See ntioapi:  FILE_...
+    __volatile PVPB Vpb;
+    PVOID DeviceExtension;
+    DEVICE_TYPE DeviceType;
+    CCHAR StackSize;
     union {
-        LIST_ENTRY         ListEntry;
+        LIST_ENTRY ListEntry;
         WAIT_CONTEXT_BLOCK Wcb;
     } Queue;
-    ULONG                       AlignmentRequirement;
-    KDEVICE_QUEUE               DeviceQueue;
-    KDPC                        Dpc;
-    ULONG                       ActiveThreadCount;
-    PSECURITY_DESCRIPTOR        SecurityDescriptor;
-    KEVENT                      DeviceLock;
-    USHORT                      SectorSize;
-    USHORT                      Spare1;
-    struct _DEVOBJ_EXTENSION  *  DeviceObjectExtension;
-    PVOID                       Reserved;
-} DEVICE_OBJECT, *PDEVICE_OBJECT;
+    ULONG AlignmentRequirement;
+    KDEVICE_QUEUE DeviceQueue;
+    KDPC Dpc;
+
+    //
+    //  The following field is for exclusive use by the filesystem to keep
+    //  track of the number of Fsp threads currently using the device
+    //
+
+    ULONG ActiveThreadCount;
+    PSECURITY_DESCRIPTOR SecurityDescriptor;
+    KEVENT DeviceLock;
+
+    USHORT SectorSize;
+    USHORT Spare1;
+
+    struct _DEVOBJ_EXTENSION* DeviceObjectExtension;
+    PVOID  Reserved;
+
+} DEVICE_OBJECT;
+
+typedef struct _DEVICE_OBJECT* PDEVICE_OBJECT;
+
+#if _MSC_VER >= 1200
+#pragma warning(pop)
+#endif
 
 typedef struct _DEVOBJ_EXTENSION {
 
@@ -3999,6 +4057,61 @@ typedef struct _DRIVER_OBJECT {
 
 } DRIVER_OBJECT;
 typedef struct _DRIVER_OBJECT *PDRIVER_OBJECT;
+
+//
+// The following structure is pointed to by the SectionObject pointer field
+// of a file object, and is allocated by the various NT file systems.
+//
+
+typedef struct _SECTION_OBJECT_POINTERS {
+    PVOID DataSectionObject;
+    PVOID SharedCacheMap;
+    PVOID ImageSectionObject;
+} SECTION_OBJECT_POINTERS;
+typedef SECTION_OBJECT_POINTERS* PSECTION_OBJECT_POINTERS;
+
+//
+// Define the format of a completion message.
+//
+
+typedef struct _IO_COMPLETION_CONTEXT {
+    PVOID Port;
+    PVOID Key;
+} IO_COMPLETION_CONTEXT, * PIO_COMPLETION_CONTEXT;
+
+typedef struct _FILE_OBJECT {
+    CSHORT Type;
+    CSHORT Size;
+    PDEVICE_OBJECT DeviceObject;
+    PVPB Vpb;
+    PVOID FsContext;
+    PVOID FsContext2;
+    PSECTION_OBJECT_POINTERS SectionObjectPointer;
+    PVOID PrivateCacheMap;
+    NTSTATUS FinalStatus;
+    struct _FILE_OBJECT* RelatedFileObject;
+    BOOLEAN LockOperation;
+    BOOLEAN DeletePending;
+    BOOLEAN ReadAccess;
+    BOOLEAN WriteAccess;
+    BOOLEAN DeleteAccess;
+    BOOLEAN SharedRead;
+    BOOLEAN SharedWrite;
+    BOOLEAN SharedDelete;
+    ULONG Flags;
+    UNICODE_STRING FileName;
+    LARGE_INTEGER CurrentByteOffset;
+    __volatile ULONG Waiters;
+    __volatile ULONG Busy;
+    PVOID LastLock;
+    KEVENT Lock;
+    KEVENT Event;
+    __volatile PIO_COMPLETION_CONTEXT CompletionContext;
+    KSPIN_LOCK IrpListLock;
+    LIST_ENTRY IrpList;
+    __volatile PVOID FileObjectExtension;
+} FILE_OBJECT;
+typedef struct _FILE_OBJECT* PFILE_OBJECT;
 
 #define RESOURCE_TYPE_LEVEL     0
 #define RESOURCE_NAME_LEVEL     1
@@ -6105,8 +6218,8 @@ NTSYSAPI
 VOID
 NTAPI
 RtlInitString(
-    _Inout_ PSTRING DestinationString,
-    _In_ PCSZ SourceString);
+    _Out_ PSTRING DestinationString,
+    _In_opt_ PCSZ SourceString);
 
 NTSYSAPI
 VOID
@@ -6180,26 +6293,6 @@ RtlPrefixUnicodeString(
     _In_ PCUNICODE_STRING String1,
     _In_ PCUNICODE_STRING String2,
     _In_ BOOLEAN CaseInSensitive);
-
-NTSYSAPI
-NTSTATUS
-NTAPI
-RtlExpandEnvironmentStrings(
-    _In_opt_ PVOID Environment,
-    _In_reads_(SrcLength) PWSTR Src,
-    _In_ SIZE_T SrcLength,
-    _Out_writes_opt_(DstLength) PWSTR Dst,
-    _In_ SIZE_T DstLength,
-    _Out_opt_ PSIZE_T ReturnLength);
-
-NTSYSAPI
-NTSTATUS
-NTAPI
-RtlExpandEnvironmentStrings_U(
-    _In_opt_ PVOID Environment,
-    _In_ PCUNICODE_STRING Source,
-    _Out_ PUNICODE_STRING Destination,
-    _Out_opt_ PULONG ReturnedLength);
 
 NTSYSAPI
 NTSTATUS
@@ -6603,6 +6696,26 @@ RtlCreateEnvironmentEx(
 NTSYSAPI
 NTSTATUS
 NTAPI
+RtlExpandEnvironmentStrings(
+    _In_opt_ PVOID Environment,
+    _In_reads_(SrcLength) PWSTR Src,
+    _In_ SIZE_T SrcLength,
+    _Out_writes_opt_(DstLength) PWSTR Dst,
+    _In_ SIZE_T DstLength,
+    _Out_opt_ PSIZE_T ReturnLength);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlExpandEnvironmentStrings_U(
+    _In_opt_ PVOID Environment,
+    _In_ PCUNICODE_STRING Source,
+    _Out_ PUNICODE_STRING Destination,
+    _Out_opt_ PULONG ReturnedLength);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
 RtlSetCurrentEnvironment(
     _In_ PVOID Environment,
     _Out_opt_ PVOID *PreviousEnvironment);
@@ -6614,6 +6727,14 @@ RtlQueryEnvironmentVariable_U(
     _In_opt_ PVOID Environment,
     _In_ PUNICODE_STRING Name,
     _Out_ PUNICODE_STRING Value);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlSetEnvironmentVariable(
+    _Inout_opt_ PVOID* Environment,
+    _In_ PUNICODE_STRING Name,
+    _In_opt_ PUNICODE_STRING Value);
 
 NTSYSAPI
 NTSTATUS
@@ -6901,6 +7022,118 @@ RtlGetSaclSecurityDescriptor(
 NTSYSAPI
 NTSTATUS
 NTAPI
+RtlCreateSecurityDescriptor(
+    _In_ PSECURITY_DESCRIPTOR SecurityDescriptor,
+    _In_ ULONG Revision);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlSetOwnerSecurityDescriptor(
+    _In_ PSECURITY_DESCRIPTOR SecurityDescriptor,
+    _In_ PSID Owner,
+    _In_ BOOLEAN OwnerDefaulted);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlCopySecurityDescriptor(
+    _In_ PSECURITY_DESCRIPTOR InputSecurityDescriptor,
+    _Out_ PSECURITY_DESCRIPTOR* OutputSecurityDescriptor);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlMakeSelfRelativeSD(
+    _In_ PSECURITY_DESCRIPTOR AbsoluteSecurityDescriptor,
+    _Out_writes_bytes_(*BufferLength) PSECURITY_DESCRIPTOR SelfRelativeSecurityDescriptor,
+    _Inout_ PULONG BufferLength);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlAbsoluteToSelfRelativeSD(
+    _In_ PSECURITY_DESCRIPTOR AbsoluteSecurityDescriptor,
+    _Out_writes_bytes_to_opt_(*BufferLength, *BufferLength) PSECURITY_DESCRIPTOR SelfRelativeSecurityDescriptor,
+    _Inout_ PULONG BufferLength);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlSelfRelativeToAbsoluteSD(
+    _In_ PSECURITY_DESCRIPTOR SelfRelativeSecurityDescriptor,
+    _Out_writes_bytes_to_opt_(*AbsoluteSecurityDescriptorSize, *AbsoluteSecurityDescriptorSize) PSECURITY_DESCRIPTOR AbsoluteSecurityDescriptor,
+    _Inout_ PULONG AbsoluteSecurityDescriptorSize,
+    _Out_writes_bytes_to_opt_(*DaclSize, *DaclSize) PACL Dacl,
+    _Inout_ PULONG DaclSize,
+    _Out_writes_bytes_to_opt_(*SaclSize, *SaclSize) PACL Sacl,
+    _Inout_ PULONG SaclSize,
+    _Out_writes_bytes_to_opt_(*OwnerSize, *OwnerSize) PSID Owner,
+    _Inout_ PULONG OwnerSize,
+    _Out_writes_bytes_to_opt_(*PrimaryGroupSize, *PrimaryGroupSize) PSID PrimaryGroup,
+    _Inout_ PULONG PrimaryGroupSize);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlSetDaclSecurityDescriptor(
+    _Inout_ PSECURITY_DESCRIPTOR SecurityDescriptor,
+    _In_ BOOLEAN DaclPresent,
+    _In_opt_ PACL Dacl,
+    _In_opt_ BOOLEAN DaclDefaulted);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlGetDaclSecurityDescriptor(
+    _In_ PSECURITY_DESCRIPTOR SecurityDescriptor,
+    _Out_ PBOOLEAN DaclPresent,
+    _Out_ PACL* Dacl,
+    _Out_ PBOOLEAN DaclDefaulted);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlSetSaclSecurityDescriptor(
+    _Inout_ PSECURITY_DESCRIPTOR SecurityDescriptor,
+    _In_ BOOLEAN SaclPresent,
+    _In_opt_ PACL Sacl,
+    _In_opt_ BOOLEAN SaclDefaulted);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlGetSaclSecurityDescriptor(
+    _In_ PSECURITY_DESCRIPTOR SecurityDescriptor,
+    _Out_ PBOOLEAN SaclPresent,
+    _Out_ PACL* Sacl,
+    _Out_ PBOOLEAN SaclDefaulted);
+
+NTSYSAPI
+ULONG
+NTAPI
+RtlLengthSecurityDescriptor(
+    _In_ PSECURITY_DESCRIPTOR SecurityDescriptor);
+
+_Check_return_
+NTSYSAPI
+BOOLEAN
+NTAPI
+RtlValidSecurityDescriptor(
+    _In_ PSECURITY_DESCRIPTOR SecurityDescriptor);
+
+_Check_return_
+NTSYSAPI
+BOOLEAN
+NTAPI
+RtlValidRelativeSecurityDescriptor(
+    _In_reads_bytes_(SecurityDescriptorLength) PSECURITY_DESCRIPTOR SecurityDescriptorInput,
+    _In_ ULONG SecurityDescriptorLength,
+    _In_ SECURITY_INFORMATION RequiredInformation);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
 RtlCreateAcl(
     _Out_writes_bytes_(AclLength) PACL Acl,
     _In_ ULONG AclLength,
@@ -7090,23 +7323,24 @@ RtlAddMandatoryAce(
     _In_ ACCESS_MASK AccessMask);
 
 NTSYSAPI
+PVOID
+NTAPI
+RtlFindAceByType(
+    _In_ PACL pAcl,
+    _In_ UCHAR AceType,
+    _Out_opt_ PULONG pIndex);
+
+NTSYSAPI
+BOOLEAN
+NTAPI
+RtlOwnerAcesPresent(
+    _In_ PACL pAcl);
+
+NTSYSAPI
 NTSTATUS
 NTAPI
 RtlDefaultNpAcl(
     _Out_ PACL *Acl);
-
-NTSYSAPI
-ULONG
-NTAPI
-RtlLengthSecurityDescriptor(
-    _In_ PSECURITY_DESCRIPTOR SecurityDescriptor);
-
-NTSYSAPI
-VOID
-NTAPI
-RtlMapGenericMask(
-    _In_ PACCESS_MASK AccessMask,
-    _In_ PGENERIC_MAPPING GenericMapping);
 
 NTSYSAPI
 BOOLEAN
@@ -7232,29 +7466,10 @@ RtlCreateServiceSid(
     _Out_writes_bytes_opt_(*ServiceSidLength) PSID ServiceSid,
     _Inout_ PULONG ServiceSidLength);
 
-NTSYSAPI
-NTSTATUS
-NTAPI
-RtlCreateSecurityDescriptor(
-    _In_ PSECURITY_DESCRIPTOR SecurityDescriptor,
-    _In_ ULONG Revision);
-
-NTSYSAPI
-NTSTATUS
-NTAPI
-RtlSetOwnerSecurityDescriptor(
-    _In_ PSECURITY_DESCRIPTOR SecurityDescriptor,
-    _In_ PSID Owner,
-    _In_ BOOLEAN OwnerDefaulted);
-
-NTSYSAPI
-NTSTATUS
-NTAPI
-RtlCopySecurityDescriptor(
-    _In_ PSECURITY_DESCRIPTOR InputSecurityDescriptor,
-    _Out_ PSECURITY_DESCRIPTOR *OutputSecurityDescriptor);
-
-FORCEINLINE LUID NTAPI RtlConvertLongToLuid(
+FORCEINLINE 
+LUID 
+NTAPI 
+RtlConvertLongToLuid(
     _In_ LONG Long
 )
 {
@@ -7265,6 +7480,20 @@ FORCEINLINE LUID NTAPI RtlConvertLongToLuid(
     TempLuid.LowPart = TempLi.LowPart;
     TempLuid.HighPart = TempLi.HighPart;
     return(TempLuid);
+}
+
+FORCEINLINE 
+LUID 
+RtlConvertUlongToLuid(
+    _In_ ULONG Ulong
+)
+{
+    LUID tempLuid;
+
+    tempLuid.LowPart = Ulong;
+    tempLuid.HighPart = 0;
+
+    return tempLuid;
 }
 
 NTSYSAPI
@@ -7295,6 +7524,33 @@ RtlAdjustPrivilege(
     _In_ BOOLEAN Enable,
     _In_ BOOLEAN Client,
     _Out_ PBOOLEAN WasEnabled);
+
+NTSYSAPI
+BOOLEAN
+NTAPI
+RtlAreAllAccessesGranted(
+    _In_ ACCESS_MASK GrantedAccess,
+    _In_ ACCESS_MASK DesiredAccess);
+
+NTSYSAPI
+BOOLEAN
+NTAPI
+RtlAreAnyAccessesGranted(
+    _In_ ACCESS_MASK GrantedAccess,
+    _In_ ACCESS_MASK DesiredAccess);
+
+NTSYSAPI
+VOID
+NTAPI
+RtlMapGenericMask(
+    _In_ PACCESS_MASK AccessMask,
+    _In_ PGENERIC_MAPPING GenericMapping);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlImpersonateSelf(
+    _In_ SECURITY_IMPERSONATION_LEVEL ImpersonationLevel);
 
 /************************************************************************************
 *
@@ -10118,6 +10374,38 @@ NTSTATUS
 NTAPI
 NtLockRegistryKey(
     _In_ HANDLE KeyHandle);
+
+NTSYSAPI
+NTSTATUS
+NTAPI 
+NtCreateRegistryTransaction(
+    _Out_ PHANDLE Handle,
+    _In_ ACCESS_MASK DesiredAccess, //generic + TRANSACTION_*
+    _In_ POBJECT_ATTRIBUTES ObjectAttributes,
+    _In_ DWORD Flags);
+
+NTSYSAPI
+NTSTATUS
+NTAPI 
+NtCommitRegistryTransaction(
+    _In_ HANDLE RegistryHandle,
+    _In_ BOOL Wait);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtOpenRegistryTransaction(
+    _Out_ PHANDLE RegistryHandle,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_ POBJECT_ATTRIBUTES ObjectAttributes);
+
+NTSYSAPI
+NTSTATUS
+NTAPI 
+NtRollbackRegistryTransaction(
+    _In_ HANDLE RegistryHandle,
+    _In_ BOOL Wait);
+
 
 /************************************************************************************
 *
