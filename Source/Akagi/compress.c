@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2020
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     3.21
+*  VERSION:     3.24
 *
-*  DATE:        26 Oct 2019
+*  DATE:        20 Apr 2020
 *
 *  Compression and encoding/decoding support.
 *
@@ -264,7 +264,7 @@ BOOL DecryptBuffer(
     _Out_   PDWORD pcbDecryptedBuffer
 )
 {
-    BOOL                bCond = FALSE, bResult = FALSE;
+    BOOL                bResult = FALSE;
     BCRYPT_ALG_HANDLE   hAlgAes = NULL;
     BCRYPT_KEY_HANDLE   hKey = NULL;
     HANDLE              heapCNG = NULL;
@@ -384,7 +384,7 @@ BOOL DecryptBuffer(
 
         bResult = TRUE;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hKey != NULL)
         BCryptDestroyKey(hKey);
@@ -421,8 +421,6 @@ PVOID DecompressContainerUnit(
     _Out_ PULONG pcbDecompressed
 )
 {
-    BOOL            bCond = FALSE;
-
     PDCU_HEADER     UnitHeader;
 
     PBYTE           pbDecryptedBuffer = NULL;
@@ -492,7 +490,7 @@ PVOID DecompressContainerUnit(
             DeltaFree(doOutput.lpStart);
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (pbDecryptedBuffer != NULL) {
         supVirtualFree(pbDecryptedBuffer, NULL);
@@ -516,7 +514,7 @@ PVOID DecompressPayload(
     _Out_ PULONG pcbDecompressed
 )
 {
-    BOOL        cond = FALSE, bResult = FALSE;
+    BOOL        bResult = FALSE;
     ULONG       FinalDecompressedSize = 0;
     SIZE_T      memIO;
     PUCHAR      UncompressedData = NULL;
@@ -585,7 +583,7 @@ PVOID DecompressPayload(
 
             bResult = TRUE;
 
-        } while (cond);
+        } while (FALSE);
 
     }
     __except (EXCEPTION_EXECUTE_HANDLER) {
@@ -646,7 +644,6 @@ CFILE_TYPE GetTargetFileType(
             break;
 
         default:
-            Result = ftUnknown;
             break;
 
         }
@@ -721,7 +718,7 @@ BOOL ProcessFileDCN(
     PSIZE_T OutputFileBufferSize
 )
 {
-    BOOL bResult = FALSE, bCond = FALSE;
+    BOOL bResult = FALSE;
 
     DELTA_HEADER_INFO   dhi;
     DELTA_INPUT         Source, Delta;
@@ -772,7 +769,7 @@ BOOL ProcessFileDCN(
         *OutputFileBuffer = Data;
         *OutputFileBufferSize = DataSize;
 
-    } while (bCond);
+    } while (FALSE);
 
     return bResult;
 }
@@ -792,7 +789,7 @@ BOOL ProcessFileDCS(
     PSIZE_T OutputFileBufferSize
 )
 {
-    BOOL bResult = FALSE, bCond = FALSE;
+    BOOL bResult = FALSE;
     COMPRESSOR_HANDLE hDecompressor = 0;
     BYTE *DataBufferPtr = NULL, *DataBuffer = NULL;
 
@@ -869,7 +866,7 @@ BOOL ProcessFileDCS(
         *OutputFileBuffer = DataBuffer;
         *OutputFileBufferSize = FileHeader->UncompressedFileSize;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hDecompressor != NULL)
         pCloseDecompressor(hDecompressor);

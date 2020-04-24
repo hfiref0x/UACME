@@ -549,7 +549,16 @@ Keys (watch debug output with dbgview or similar for more info):
      * Implementation: ucmDebugObjectMethod
      * Works from: Windows 7 (7600)
      * Fixed in: unfixed :see_no_evil:
-        * How: -		
+        * How: -
+60. Author: Enigma0x3 derivative by WinNT/Glupteba
+     * Type: Shell API
+     * Method: Registry key manipulation
+     * Target(s): \system32\CompMgmtLauncher.exe
+     * Component(s): Attacker defined
+     * Implementation: ucmGluptebaMethod
+     * Works from: Windows 7 (7600)
+     * Fixed in: Windows 10 RS2 (15063)
+        * How: CompMgmtLauncher.exe autoelevation removed		
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;

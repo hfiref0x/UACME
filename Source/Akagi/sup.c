@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.23
+*  VERSION:     3.24
 *
-*  DATE:        17 Dec 2019
+*  DATE:        20 Apr 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -228,7 +228,7 @@ BOOL supQueryProcessTokenIL(
     _In_ HANDLE hProcess,
     _Out_ PULONG IntegrityLevel)
 {
-    BOOL                            bCond = FALSE, bResult = FALSE;
+    BOOL                            bResult = FALSE;
     HANDLE                          hToken = NULL;
     PTOKEN_MANDATORY_LABEL          pTIL = NULL;
     ULONG                           Length = 0;
@@ -272,7 +272,7 @@ BOOL supQueryProcessTokenIL(
 
         bResult = TRUE;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hToken) NtClose(hToken);
 
@@ -291,7 +291,6 @@ HANDLE supGetProcessWithILAsCaller(
     _In_ ACCESS_MASK UseDesiredAccess
 )
 {
-    BOOL                            bCond = FALSE;
     HANDLE                          hProcess = NULL;
     HANDLE                          CurrentProcessId = NtCurrentTeb()->ClientId.UniqueProcess;
     PSYSTEM_PROCESSES_INFORMATION   ProcessList = NULL, pList;
@@ -337,7 +336,7 @@ HANDLE supGetProcessWithILAsCaller(
 
         } //if
 
-    } while (bCond);
+    } while (FALSE);
 
     if (ProcessList) supHeapFree(ProcessList);
 
@@ -654,7 +653,6 @@ PBYTE supReadFileToBuffer(
     _Inout_opt_ LPDWORD lpBufferSize
 )
 {
-    BOOL        bCond = FALSE;
     NTSTATUS    status;
     HANDLE      hFile = NULL, hRoot = NULL;
     PBYTE       Buffer = NULL;
@@ -762,7 +760,7 @@ PBYTE supReadFileToBuffer(
             }
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hRoot != NULL) {
         NtClose(hRoot);
@@ -1807,7 +1805,7 @@ BOOL supSetEnvVariable(
     _In_opt_ LPWSTR lpVariableData
 )
 {
-    BOOL    bResult = FALSE, bCond = FALSE;
+    BOOL    bResult = FALSE;
     HKEY    hKey = NULL;
     DWORD   cbData;
 
@@ -1837,7 +1835,7 @@ BOOL supSetEnvVariable(
                 (BYTE*)lpVariableData, cbData) == ERROR_SUCCESS);
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hKey != NULL) {
         RegFlushKey(hKey);
@@ -2139,7 +2137,7 @@ BOOL supReplaceDllEntryPoint(
 BOOL supQuerySystemRoot(
     _Inout_ PVOID Context)
 {
-    BOOL                bCond = FALSE, bResult = FALSE, needBackslash = FALSE;
+    BOOL                bResult = FALSE, needBackslash = FALSE;
     NTSTATUS            Status;
     UNICODE_STRING      UString;
     OBJECT_ATTRIBUTES   ObjectAttributes;
@@ -2196,7 +2194,7 @@ BOOL supQuerySystemRoot(
 
         bResult = TRUE;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hKey) NtClose(hKey);
     if (lpData) RtlFreeHeap(context->ucmHeap, 0, lpData);
@@ -2297,7 +2295,6 @@ NTSTATUS supRegSetValueIndirectHKCU(
     _In_ ULONG cbData
 )
 {
-    BOOL bCond = FALSE;
     HANDLE hKey = NULL;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     UNICODE_STRING usCurrentUser, usLinkPath;
@@ -2399,7 +2396,7 @@ NTSTATUS supRegSetValueIndirectHKCU(
             hKey = NULL;
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (lpLinkKeyBuffer) RtlFreeHeap(hHeap, 0, lpLinkKeyBuffer);
     if (lpBuffer) RtlFreeHeap(hHeap, 0, lpBuffer);
@@ -2421,7 +2418,6 @@ NTSTATUS supRemoveRegLinkHKCU(
     VOID
 )
 {
-    BOOL bCond = FALSE;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
 
     ULONG cbKureND = sizeof(T_SYMLINK) - sizeof(WCHAR);
@@ -2477,7 +2473,7 @@ NTSTATUS supRemoveRegLinkHKCU(
             NtClose(hKey);
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (lpLinkKeyBuffer) RtlFreeHeap(hHeap, 0, lpLinkKeyBuffer);
     RtlFreeUnicodeString(&usCurrentUser);
@@ -2720,7 +2716,7 @@ PSID supxCreateBoundaryDescriptorSID(
     ULONG *SubAuthorities
 )
 {
-    BOOL    bCond = FALSE, bResult = FALSE;
+    BOOL    bResult = FALSE;
     ULONG   i;
     PSID    pSid = NULL;
 
@@ -2738,7 +2734,7 @@ PSID supxCreateBoundaryDescriptorSID(
 
         bResult = TRUE;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (bResult == FALSE) {
         if (pSid) supHeapFree(pSid);
@@ -2759,7 +2755,7 @@ PSID supxCreateBoundaryDescriptorSID(
 BOOL supCreateSharedParametersBlock(
     _In_ PVOID ucmContext)
 {
-    BOOL    bCond = FALSE, bResult = FALSE;
+    BOOL    bResult = FALSE;
     ULONG   r;
     HANDLE  hBoundary = NULL;
     PVOID   SharedBuffer = NULL;
@@ -2887,7 +2883,7 @@ BOOL supCreateSharedParametersBlock(
         }
 
 
-    } while (bCond);
+    } while (FALSE);
 
     //
     // Cleanup.

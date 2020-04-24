@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2019
+*  (C) COPYRIGHT AUTHORS, 2016 - 2020
 *
 *  TITLE:       COMET.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.24
 *
-*  DATE:        18 Mar 2019
+*  DATE:        20 Apr 2020
 *
 *  Comet method (c) BreakingMalware
 *  For description please visit original URL 
@@ -50,7 +50,6 @@ NTSTATUS ucmCometMethod(
     NTSTATUS Status;
 #endif
 
-    BOOL    bCond = FALSE;
     WCHAR   szCombinedPath[MAX_PATH * 2], szLinkFile[MAX_PATH * 3];
 
     IPersistFile    *persistFile = NULL;
@@ -152,7 +151,7 @@ NTSTATUS ucmCometMethod(
         if (hr_init == S_OK)
             CoUninitialize();
 
-    } while (bCond);
+    } while (FALSE);
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {

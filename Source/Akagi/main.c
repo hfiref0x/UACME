@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.23
+*  VERSION:     3.24
 *
-*  DATE:        17 Dec 2019
+*  DATE:        20 Apr 2020
 *
 *  Program entry point.
 *
@@ -74,7 +74,6 @@ NTSTATUS ucmInit(
     _In_ BOOL OutputToDebugger
 )
 {
-    BOOL        cond = FALSE;
     UCM_METHOD  Method;
     NTSTATUS    Result = STATUS_SUCCESS;
     PVOID       Ptr;
@@ -251,7 +250,7 @@ NTSTATUS ucmInit(
             OutputToDebugger);
 
 
-    } while (cond);
+    } while (FALSE);
 
     if (g_ctx == NULL) {
         Result = STATUS_FATAL_APP_EXIT;

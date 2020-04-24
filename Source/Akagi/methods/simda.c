@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2019
+*  (C) COPYRIGHT AUTHORS, 2015 - 2020
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     3.21
+*  VERSION:     3.24
 *
-*  DATE:        26 Oct 2019
+*  DATE:        20 Apr 2020
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -35,7 +35,6 @@ DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
 )
 {
     HRESULT          r = E_FAIL, hr_init;
-    BOOL             cond = FALSE;
     ISecurityEditor *SecurityEditor = NULL;
 #ifdef _DEBUG
     CLSID            xCLSID;
@@ -114,7 +113,7 @@ DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
         }
 #endif
 
-    } while (cond);
+    } while (FALSE);
 
     if (SecurityEditor != NULL) {
         SecurityEditor->lpVtbl->Release(SecurityEditor);

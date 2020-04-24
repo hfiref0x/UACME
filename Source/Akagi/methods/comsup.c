@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2019
+*  (C) COPYRIGHT AUTHORS, 2017 - 2020
 *
 *  TITLE:       COMSUP.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.24
 *
-*  DATE:        16 Mar 2019
+*  DATE:        20 Apr 2020
 *
 *  IFileOperation based routines.
 *
@@ -33,7 +33,6 @@ HRESULT ucmAllocateElevatedObject(
     _Outptr_ void **ppv
 )
 {
-    BOOL        bCond = FALSE;
     DWORD       classContext;
     HRESULT     hr = E_FAIL;
     PVOID       ElevatedObject = NULL;
@@ -83,7 +82,7 @@ HRESULT ucmAllocateElevatedObject(
 
         hr = CoGetObject(szMoniker, (BIND_OPTS *)&bop, riid, &ElevatedObject);
 
-    } while (bCond);
+    } while (FALSE);
 
     *ppv = ElevatedObject;
 
@@ -131,7 +130,7 @@ BOOL ucmMasqueradedRenameElementCOM(
     _In_ LPWSTR NewName
 )
 {
-    BOOL                bCond = FALSE, bResult = FALSE;
+    BOOL                bResult = FALSE;
     IFileOperation     *FileOperation = NULL;
     IShellItem         *psiDestDir = NULL;
     HRESULT             hr_init;
@@ -191,7 +190,7 @@ BOOL ucmMasqueradedRenameElementCOM(
 
         bResult = TRUE;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (FileOperation != NULL) {
         FileOperation->lpVtbl->Release(FileOperation);
@@ -221,7 +220,7 @@ BOOL ucmMasqueradedCreateSubDirectoryCOM(
     _In_ LPWSTR SubDirectory
 )
 {
-    BOOL                bCond = FALSE, bResult = FALSE;
+    BOOL                bResult = FALSE;
     IFileOperation     *FileOperation = NULL;
     IShellItem         *psiDestDir = NULL;
     HRESULT             hr_init;
@@ -283,7 +282,7 @@ BOOL ucmMasqueradedCreateSubDirectoryCOM(
 
         bResult = TRUE;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (FileOperation != NULL) {
         FileOperation->lpVtbl->Release(FileOperation);
@@ -314,7 +313,7 @@ BOOL ucmMasqueradedMoveCopyFileCOM(
     _In_ BOOL fMove
 )
 {
-    BOOL                cond = FALSE, bResult = FALSE;
+    BOOL                bResult = FALSE;
     IFileOperation     *FileOperation = NULL;
     IShellItem         *isrc = NULL, *idst = NULL;
     HRESULT             r = E_FAIL, hr_init;
@@ -396,7 +395,7 @@ BOOL ucmMasqueradedMoveCopyFileCOM(
 
         bResult = TRUE;
 
-    } while (cond);
+    } while (FALSE);
 
     if (FileOperation != NULL)
         FileOperation->lpVtbl->Release(FileOperation);
@@ -426,7 +425,7 @@ BOOL ucmMasqueradedDeleteDirectoryFileCOM(
     _In_ LPWSTR FileName
 )
 {
-    BOOL                cond = FALSE, bResult = FALSE;
+    BOOL                bResult = FALSE;
     IFileOperation     *FileOperation = NULL;
     IShellItem         *isrc = NULL;
     HRESULT             r = E_FAIL, hr_init;
@@ -485,7 +484,7 @@ BOOL ucmMasqueradedDeleteDirectoryFileCOM(
 
         bResult = TRUE;
 
-    } while (cond);
+    } while (FALSE);
 
     if (FileOperation != NULL)
         FileOperation->lpVtbl->Release(FileOperation);

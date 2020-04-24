@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.23
+*  VERSION:     3.24
 *
-*  DATE:        17 Nov 2019
+*  DATE:        20 Apr 2020
 *
 *  Global consts definition file.
 *
@@ -35,8 +35,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       2
-#define UCM_VERSION_REVISION    3
-#define UCM_VERSION_BUILD       1912
+#define UCM_VERSION_REVISION    4
+#define UCM_VERSION_BUILD       2004
 #define UCM_IS_VNEXT            FALSE
 
 #pragma region PYSH
@@ -107,6 +107,8 @@
 #define AKAGI_COMPLETION_EVENT      L"AkagiCompletionEvent" //PYSH
 
 #define SIGNAL_OBJECT               L"\\BaseNamedObjects\\CZ2128" //PYSH
+
+#define RUN_CMD_COMMAND             L" /c start " //PYSH
 
 //
 // Unit names and entrypoints.

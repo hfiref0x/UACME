@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2017
+*  (C) COPYRIGHT AUTHORS, 2015 - 2020
 *
 *  TITLE:       MAKECAB.C
 *
-*  VERSION:     2.70
+*  VERSION:     3.24
 *
-*  DATE:        25 Mar 2017
+*  DATE:        20 Apr 2020
 *
 *  Simplified Cabinet file support for makecab utility replacement.
 *
@@ -383,7 +383,7 @@ BOOL cabAddFile(
     _In_ LPWSTR lpszInternalName
 )
 {
-    BOOL bResult = FALSE, cond = FALSE;
+    BOOL bResult = FALSE;
     CHAR szFileName[CB_MAX_FILENAME];
     CHAR szInternalName[CB_MAX_FILENAME];
 
@@ -407,7 +407,7 @@ BOOL cabAddFile(
         bResult = FCIAddFile(Cabinet->hfci, (char*)szFileName, (char*)szInternalName, FALSE,
             fnFCIGETNEXTCABINET, fnFCISTATUS, fnFCIGETOPENINFO, tcompTYPE_NONE /*tcompTYPE_MSZIP*/);
 
-    } while (cond);
+    } while (FALSE);
 
     return bResult;
 }

