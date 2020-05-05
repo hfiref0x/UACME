@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2019
+*  (C) COPYRIGHT AUTHORS, 2017 - 2020
 *
 *  TITLE:       BYTECODE77.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.25
 *
-*  DATE:        18 Mar 2019
+*  DATE:        05 May 2020
 *
 *  bytecode77 autoelevation methods.
 *

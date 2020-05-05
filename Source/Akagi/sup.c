@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.24
+*  VERSION:     3.25
 *
-*  DATE:        20 Apr 2020
+*  DATE:        05 May 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -2551,8 +2551,6 @@ BOOL supIsConsentApprovedInterface(
                 }
                 Index++;
             }
-            else
-                break;
 
         } while (status != STATUS_NO_MORE_ENTRIES);
 

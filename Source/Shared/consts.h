@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.24
+*  VERSION:     3.25
 *
-*  DATE:        20 Apr 2020
+*  DATE:        05 May 2020
 *
 *  Global consts definition file.
 *
@@ -35,8 +35,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       2
-#define UCM_VERSION_REVISION    4
-#define UCM_VERSION_BUILD       2004
+#define UCM_VERSION_REVISION    5
+#define UCM_VERSION_BUILD       2005
 #define UCM_IS_VNEXT            FALSE
 
 #pragma region PYSH
@@ -72,6 +72,7 @@
 #define T_MSSETTINGS                L"Software\\Classes\\ms-settings"
 #define T_CLASSESFOLDER             L"Software\\Classes\\Folder"
 #define T_APPXPACKAGE               L"Software\\Classes\\AppX82a6gwre4fdg3bt635tn5ctqjf8msdd2"
+#define T_LAUNCHERSYSTEMSETTINGS    L"Software\\Classes\\Launcher.SystemSettings"
 #define T_SHELL_OPEN_COMMAND        L"\\shell\\open\\command"
 #define T_SHELL_RUNAS_COMMAND       L"\\shell\\runas\\command"
 
