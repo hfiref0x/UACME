@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.23
+*  VERSION:     3.26
 *
-*  DATE:        18 Dec 2019
+*  DATE:        23 May 2020
 *
 *  Common header file for the program support routines.
 *
@@ -36,6 +36,8 @@
 
 #define PAYLOAD_ID_NONE MAXDWORD
 #define KONGOU_IDR 0xFFFFFFFE
+
+#define USER_REQUESTS_AUTOAPPROVED FALSE
 
 #ifdef _WIN64
 #include "bin64res.h"
@@ -94,7 +96,8 @@ typedef struct _UACME_SHARED_CONTEXT {
 } UACME_SHARED_CONTEXT, *PUACME_SHARED_CONTEXT;
 
 typedef struct _UACME_CONTEXT {
-    BOOL                    IsWow64;
+    BOOLEAN                 IsWow64;
+    BOOLEAN                 UserRequestsAutoApprove;
     BOOL                    OutputToDebugger;
     ULONG                   Cookie;
     PVOID                   ucmHeap;

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2019
+*  (C) COPYRIGHT AUTHORS, 2015 - 2020
 *
 *  TITLE:       WINDEFEND.H
 *
-*  VERSION:     3.18
+*  VERSION:     3.26
 *
-*  DATE:        29 Mar 2019
+*  DATE:        23 May 2020
 *
 *  MSE / Windows Defender anti-emulation part header file.
 *
@@ -54,5 +54,5 @@ BOOL wdGetAVSignatureVersion(
 
 _Success_(return != NULL)
 PVOID wdLoadClient(
-    _In_ BOOL IsWow64,
+    _In_ BOOLEAN IsWow64,
     _Out_opt_ PNTSTATUS Status);

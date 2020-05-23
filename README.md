@@ -308,7 +308,7 @@ Keys (watch debug output with dbgview or similar for more info):
 33. Author: winscripting.blog
      * Type: Shell API 
      * Method: Registry key manipulation
-     * Target(s): \system32\fodhelper.exe, \system32\computerdefaults.exe
+     * Target(s): \system32\fodhelper.exe
      * Component(s): Attacker defined
      * Implementation: ucmMsSettingsDelegateExecuteMethod
      * Works from: Windows 10 TH1 (10240)
@@ -568,6 +568,15 @@ Keys (watch debug output with dbgview or similar for more info):
      * Works from: Windows 10 (14393)
      * Fixed in: unfixed :see_no_evil:
         * How: -		
+62. Author: winscripting.blog
+     * Type: Shell API 
+     * Method: Registry key manipulation
+     * Target(s): \system32\computerdefaults.exe
+     * Component(s): Attacker defined
+     * Implementation: ucmMsSettingsDelegateExecuteMethod
+     * Works from: Windows 10 RS4 (17134)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
 
 Note:
 * Method (6) unavailable in wow64 environment starting from Windows 8;

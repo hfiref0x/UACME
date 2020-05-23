@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.25
+*  VERSION:     3.26
 *
-*  DATE:        05 May 2020
+*  DATE:        23 May 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -1262,7 +1262,7 @@ VOID ucmShowMessage(
     else {
         szVersion[0] = 0;
         ucmxBuildVersionString(szVersion);
-        MessageBoxW(GetDesktopWindow(),
+        MessageBox(GetDesktopWindow(),
             lpszMsg,
             szVersion,
             MB_ICONINFORMATION);
@@ -1283,9 +1283,12 @@ INT ucmShowQuestion(
 {
     WCHAR szVersion[100];
 
+    if (g_ctx->UserRequestsAutoApprove == TRUE)
+        return IDYES;
+
     szVersion[0] = 0;
     ucmxBuildVersionString(szVersion);
-    return MessageBoxW(GetDesktopWindow(), 
+    return MessageBox(GetDesktopWindow(), 
         lpszMsg, 
         szVersion, 
         MB_YESNO);
@@ -2943,7 +2946,7 @@ PVOID supCreateUacmeContext(
     _In_ BOOL OutputToDebugger
 )
 {
-    BOOL IsWow64;
+    BOOLEAN IsWow64;
 #ifdef _DEBUG
     NTSTATUS Status = STATUS_UNSUCCESSFUL;
 #endif
@@ -2998,6 +3001,11 @@ PVOID supCreateUacmeContext(
     // Remember flag for ucmShow* routines.
     //
     Context->OutputToDebugger = OutputToDebugger;
+
+    //
+    // Changes behavior of ucmShowQuestion routine to autoapprove.
+    //
+    Context->UserRequestsAutoApprove = USER_REQUESTS_AUTOAPPROVED;
 
     //
     // Remember NtBuildNumber.

