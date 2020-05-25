@@ -5,9 +5,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.135
+*  VERSION:     1.136
 *
-*  DATE:        17 May 2020
+*  DATE:        23 May 2020
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -9295,6 +9295,9 @@ NtWaitForMultipleObjects(
 *
 ************************************************************************************/
 
+#define OBJDIR_FLAG_SHADOW_PRESENT 0x4
+#define OBJDIR_FLAG_SANDBOX 0x10
+
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -10532,6 +10535,32 @@ NtLoadKey2(
     _In_ POBJECT_ATTRIBUTES TargetKey,
     _In_ POBJECT_ATTRIBUTES SourceFile,
     _In_ ULONG Flags);
+
+//https://gist.github.com/tyranid/1db47869da253a912242c694e921009d#file-ntloadkeyex3-h
+
+typedef enum _KEY_LOAD_HANDLE_TYPE {
+    KeyLoadTrustKey = 1,
+    KeyLoadEvent,
+    KeyLoadToken
+} KEY_LOAD_HANDLE_TYPE;
+
+typedef struct _KEY_LOAD_HANDLE {
+    KEY_LOAD_HANDLE_TYPE Type;
+    HANDLE Handle;
+} KEY_LOAD_HANDLE, *PKEY_LOAD_HANDLE;
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtLoadKey3(
+    _In_ POBJECT_ATTRIBUTES TargetKey,
+    _In_ POBJECT_ATTRIBUTES SourceFile,
+    _In_ ULONG Flags,
+    _In_ PKEY_LOAD_HANDLE LoadEntries,
+    _In_ ULONG LoadEntryCount,
+    _In_opt_ ACCESS_MASK DesiredAccess,
+    _Out_opt_ PHANDLE RootHandle,
+    _In_ PVOID Unused);
 
 NTSYSAPI
 NTSTATUS

