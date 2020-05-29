@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.25
+*  VERSION:     3.26
 *
-*  DATE:        05 May 2020
+*  DATE:        26 May 2020
 *
 *  Global consts definition file.
 *
@@ -35,7 +35,7 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       2
-#define UCM_VERSION_REVISION    5
+#define UCM_VERSION_REVISION    6
 #define UCM_VERSION_BUILD       2005
 #define UCM_IS_VNEXT            FALSE
 
@@ -47,7 +47,6 @@
 #define T_SIMDA_UAC                 L"UAC is now disabled.\nYou must reboot your computer for the changes to take effect."
 #define T_SIMDA_CONSENT_WARNING     L"This method will permanently TURN UAC OFF, are you sure?"
 #define T_SXS_CONSENT_WARNING       L"WARNING: This method will affect UAC interface, are you sure?"
-#define T_PICK_EXE_QUESTION         L"Would you like to use this method with ComputerDefaults.exe (YES) or Fodhelper.exe (NO)?"
 #pragma endregion
 
 #define KAMIKAZE_MARKER             "https"

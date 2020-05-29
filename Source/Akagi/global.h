@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.26
 *
-*  DATE:        23 May 2020
+*  DATE:        26 May 2020
 *
 *  Common header file for the program support routines.
 *
@@ -37,7 +37,7 @@
 #define PAYLOAD_ID_NONE MAXDWORD
 #define KONGOU_IDR 0xFFFFFFFE
 
-#define USER_REQUESTS_AUTOAPPROVED FALSE
+#define USER_REQUESTS_AUTOAPPROVED TRUE //auto approve any asking dialogs
 
 #ifdef _WIN64
 #include "bin64res.h"

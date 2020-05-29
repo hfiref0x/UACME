@@ -5,9 +5,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.136
+*  VERSION:     1.137
 *
-*  DATE:        23 May 2020
+*  DATE:        26 May 2020
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -87,6 +87,7 @@ typedef short CSHORT;
 typedef ULONGLONG REGHANDLE, *PREGHANDLE;
 typedef PVOID *PDEVICE_MAP;
 typedef PVOID PHEAD;
+typedef PVOID PEJOB;
 typedef struct _IO_TIMER* PIO_TIMER;
 typedef LARGE_INTEGER PHYSICAL_ADDRESS;
 
@@ -3327,6 +3328,37 @@ typedef struct _OBJECT_HEADER {
 
 #define OBJECT_TO_OBJECT_HEADER(obj) \
     CONTAINING_RECORD( (obj), OBJECT_HEADER, Body )
+
+#define DOSDEVICE_DRIVE_UNKNOWN     0
+#define DOSDEVICE_DRIVE_CALCULATE   1 //e.g. symlink
+#define DOSDEVICE_DRIVE_REMOVABLE   2
+#define DOSDEVICE_DRIVE_FIXED       3
+#define DOSDEVICE_DRIVE_REMOTE      4
+#define DOSDEVICE_DRIVE_CDROM       5
+#define DOSDEVICE_DRIVE_RAMDISK     6
+
+typedef struct _DEVICE_MAP_V1 {
+    OBJECT_DIRECTORY* DosDevicesDirectory;
+    OBJECT_DIRECTORY* GlobalDosDevicesDirectory;
+    PVOID DosDevicesDirectoryHandle;
+    ULONG ReferenceCount;
+    ULONG DriveMap;
+    UCHAR DriveType[32];
+} DEVICE_MAP_V1, * PDEVICE_MAP_V1;
+
+typedef struct DEVICE_MAP_V1 DEVICE_MAP_COMPATIBLE;
+typedef struct PDEVICE_MAP_V1 PDEVICE_MAP_COMPATIBLE;
+
+//Since REDSTONE1 (14393)
+typedef struct _DEVICE_MAP_V2 {
+    OBJECT_DIRECTORY* DosDevicesDirectory;
+    OBJECT_DIRECTORY* GlobalDosDevicesDirectory;
+    PVOID DosDevicesDirectoryHandle;
+    volatile LONG ReferenceCount;
+    ULONG DriveMap;
+    UCHAR DriveType[32];
+    PEJOB ServerSilo;
+} DEVICE_MAP_V2, * PDEVICE_MAP_V2;
 
 /*
 ** OBJECT MANAGER END

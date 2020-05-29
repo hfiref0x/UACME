@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.26
 *
-*  DATE:        23 May 2020
+*  DATE:        26 May 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -223,7 +223,6 @@ BOOL FORCEINLINE supHeapFree(
 * Return integrity level for given process.
 *
 */
-_Success_(return == TRUE)
 BOOL supQueryProcessTokenIL(
     _In_ HANDLE hProcess,
     _Out_ PULONG IntegrityLevel)
@@ -232,6 +231,11 @@ BOOL supQueryProcessTokenIL(
     HANDLE                          hToken = NULL;
     PTOKEN_MANDATORY_LABEL          pTIL = NULL;
     ULONG                           Length = 0;
+
+    if (IntegrityLevel)
+        *IntegrityLevel = 0;
+    else
+        return FALSE;
 
     do {
 
@@ -265,10 +269,9 @@ BOOL supQueryProcessTokenIL(
             break;
         }
 
-        if (IntegrityLevel)
-            *IntegrityLevel = *RtlSubAuthoritySid(
-                pTIL->Label.Sid,
-                (DWORD)(UCHAR)(*RtlSubAuthorityCountSid(pTIL->Label.Sid) - 1));
+        *IntegrityLevel = *RtlSubAuthoritySid(
+            pTIL->Label.Sid,
+            (DWORD)(UCHAR)(*RtlSubAuthorityCountSid(pTIL->Label.Sid) - 1));
 
         bResult = TRUE;
 
@@ -430,57 +433,6 @@ BOOL supWriteBufferToFile(
         GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
 
     if (hFile != INVALID_HANDLE_VALUE) {
-        WriteFile(hFile, Buffer, BufferSize, &bytesIO, NULL);
-        CloseHandle(hFile);
-    }
-    else {
-#ifdef _DEBUG
-        supDebugPrint(TEXT("CreateFile"), GetLastError());
-#endif
-        return FALSE;
-    }
-
-    return (bytesIO == BufferSize);
-}
-
-/*
-* supWriteBufferToFile2
-*
-* Purpose:
-*
-* Create new file or open existing and write/append buffer to it.
-*
-*/
-BOOL supWriteBufferToFile2(
-    _In_ LPWSTR lpFileName,
-    _In_ PVOID Buffer,
-    _In_ DWORD BufferSize,
-    _In_ BOOLEAN AppendFile
-)
-{
-    HANDLE hFile;
-    DWORD bytesIO = 0;
-    DWORD dwFlags;
-    LARGE_INTEGER ilMove;
-
-    if ((Buffer == NULL) || (BufferSize == 0))
-        return FALSE;
-
-    if (AppendFile)
-        dwFlags = OPEN_EXISTING;
-    else
-        dwFlags = CREATE_ALWAYS;
-
-    hFile = CreateFile(lpFileName,
-        GENERIC_WRITE, 0, NULL, dwFlags , 0, NULL);
-
-    if (hFile != INVALID_HANDLE_VALUE) {
-
-        if (AppendFile) {
-            ilMove.QuadPart = 0;
-            SetFilePointerEx(hFile, ilMove, NULL, FILE_END);
-        }
-
         WriteFile(hFile, Buffer, BufferSize, &bytesIO, NULL);
         CloseHandle(hFile);
     }
@@ -1620,72 +1572,6 @@ BOOL sxsFindLoaderEntry(
 }
 
 /*
-* supFindPattern
-*
-* Purpose:
-*
-* Lookup pattern in buffer.
-*
-*/
-PVOID supFindPattern(
-    _In_ CONST PBYTE Buffer,
-    _In_ SIZE_T BufferSize,
-    _In_ CONST PBYTE Pattern,
-    _In_ SIZE_T PatternSize
-)
-{
-    PBYTE	p = Buffer;
-
-    if (PatternSize == 0)
-        return NULL;
-    if (BufferSize < PatternSize)
-        return NULL;
-    BufferSize -= PatternSize;
-
-    do {
-        p = (PBYTE)memchr(p, Pattern[0], BufferSize - (p - Buffer));
-        if (p == NULL)
-            break;
-
-        if (memcmp(p, Pattern, PatternSize) == 0)
-            return p;
-
-        p++;
-    } while (BufferSize - (p - Buffer) > 0); //-V555
-
-    return NULL;
-}
-
-/*
-* supNativeGetProcAddress
-*
-* Purpose:
-*
-* Simplified native GetProcAddress.
-*
-*/
-PVOID supNativeGetProcAddress(
-    _In_ WCHAR *Module,
-    _In_ CHAR *Routine
-)
-{
-    PVOID            DllImageBase = NULL, ProcedureAddress = NULL;
-    UNICODE_STRING   DllName;
-    ANSI_STRING      str;
-
-    RtlInitUnicodeString(&DllName, Module);
-    if (!NT_SUCCESS(LdrGetDllHandle(NULL, NULL, &DllName, &DllImageBase)))
-        return NULL;
-
-    RtlSecureZeroMemory(&str, sizeof(str));
-    RtlInitString(&str, Routine);
-    if (!NT_SUCCESS(LdrGetProcedureAddress(DllImageBase, &str, 0, &ProcedureAddress)))
-        return NULL;
-
-    return ProcedureAddress;
-}
-
-/*
 * supxDeleteKeyRecursive
 *
 * Purpose:
@@ -2517,6 +2403,8 @@ BOOL supIsConsentApprovedInterface(
 
     if (IsApproved)
         *IsApproved = FALSE;
+    else
+        return FALSE;
 
     InitializeObjectAttributes(&obja, &usKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
@@ -2561,104 +2449,6 @@ BOOL supIsConsentApprovedInterface(
     }
 
     return bResult;
-}
-
-/*
-* supGetProcessMitigationPolicy
-*
-* Purpose:
-*
-* Request process mitigation policy values.
-*
-*/
-BOOL supGetProcessMitigationPolicy(
-    _In_ HANDLE hProcess,
-    _In_ PROCESS_MITIGATION_POLICY Policy,
-    _In_ SIZE_T Size,
-    _Out_writes_bytes_(Size) PVOID Buffer
-)
-{
-    ULONG Length = 0;
-
-    PROCESS_MITIGATION_POLICY_INFORMATION MitigationPolicy;
-
-    MitigationPolicy.Policy = (PROCESS_MITIGATION_POLICY)Policy;
-
-    if (!NT_SUCCESS(NtQueryInformationProcess(
-        hProcess,
-        ProcessMitigationPolicy,
-        &MitigationPolicy,
-        sizeof(PROCESS_MITIGATION_POLICY_INFORMATION),
-        &Length)))
-    {
-        return FALSE;
-    }
-
-    RtlCopyMemory(Buffer, &MitigationPolicy, Size);
-
-    return TRUE;
-}
-
-/*
-* supGetRemoteCodeExecPolicies
-*
-* Purpose:
-*
-* Request specific process mitigation policy values all at once.
-* Use RtlFreeHeap to release returned buffer.
-*
-*/
-UCM_PROCESS_MITIGATION_POLICIES *supGetRemoteCodeExecPolicies(
-    _In_ HANDLE hProcess
-)
-{
-    UCM_PROCESS_MITIGATION_POLICIES *Policies = NULL;
-
-    Policies = (UCM_PROCESS_MITIGATION_POLICIES*)RtlAllocateHeap(
-        NtCurrentPeb()->ProcessHeap,
-        HEAP_ZERO_MEMORY,
-        sizeof(UCM_PROCESS_MITIGATION_POLICIES));
-
-    if (Policies == NULL)
-        return NULL;
-
-    supGetProcessMitigationPolicy(
-        hProcess,
-        (PROCESS_MITIGATION_POLICY)ProcessExtensionPointDisablePolicy,
-        sizeof(PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY),
-        &Policies->ExtensionPointDisablePolicy);
-
-    supGetProcessMitigationPolicy(
-        hProcess,
-        (PROCESS_MITIGATION_POLICY)ProcessSignaturePolicy,
-        sizeof(PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY_W10),
-        &Policies->SignaturePolicy);
-
-    supGetProcessMitigationPolicy(
-        hProcess,
-        (PROCESS_MITIGATION_POLICY)ProcessDynamicCodePolicy,
-        sizeof(PROCESS_MITIGATION_DYNAMIC_CODE_POLICY_W10),
-        &Policies->DynamicCodePolicy);
-
-    supGetProcessMitigationPolicy(
-        hProcess,
-        (PROCESS_MITIGATION_POLICY)ProcessImageLoadPolicy,
-        sizeof(PROCESS_MITIGATION_IMAGE_LOAD_POLICY_W10),
-        &Policies->ImageLoadPolicy);
-
-    supGetProcessMitigationPolicy(
-        hProcess,
-        (PROCESS_MITIGATION_POLICY)ProcessSystemCallFilterPolicy,
-        sizeof(PROCESS_MITIGATION_SYSTEM_CALL_FILTER_POLICY_W10),
-        &Policies->SystemCallFilterPolicy);
-
-    supGetProcessMitigationPolicy(
-        hProcess,
-        (PROCESS_MITIGATION_POLICY)ProcessPayloadRestrictionPolicy,
-        sizeof(PROCESS_MITIGATION_PAYLOAD_RESTRICTION_POLICY_W10),
-        &Policies->PayloadRestrictionPolicy);
-
-    return Policies;
 }
 
 /*
