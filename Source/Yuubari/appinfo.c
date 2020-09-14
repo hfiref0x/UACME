@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.47
+*  VERSION:     1.48
 *
-*  DATE:        22 Mar 2020
+*  DATE:        10 Sep 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -56,14 +56,14 @@ UAC_PATTERN g_MmcPatterns[] = {
 */
 BOOL GetAppInfoBuildVersion(
     _In_ LPWSTR lpFileName,
-    _Out_ ULONG *BuildNumber
+    _Out_ ULONG* BuildNumber
 )
 {
     BOOL bResult = FALSE;
     DWORD dwHandle, dwSize;
     PVOID vinfo = NULL;
     UINT Length;
-    VS_FIXEDFILEINFO *pFileInfo;
+    VS_FIXEDFILEINFO* pFileInfo;
 
     *BuildNumber = 0;
 
@@ -73,7 +73,7 @@ BOOL GetAppInfoBuildVersion(
         vinfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwSize);
         if (vinfo) {
             if (GetFileVersionInfo(lpFileName, 0, dwSize, vinfo)) {
-                bResult = VerQueryValue(vinfo, TEXT("\\"), (LPVOID *)&pFileInfo, (PUINT)&Length);
+                bResult = VerQueryValue(vinfo, TEXT("\\"), (LPVOID*)&pFileInfo, (PUINT)&Length);
                 if (bResult) {
                     *BuildNumber = HIWORD(pFileInfo->dwFileVersionLS);
                 }
@@ -254,10 +254,10 @@ BOOL CALLBACK SymEnumSymbolsProc(
 */
 _Success_(return == TRUE)
 BOOL GetSupportedPattern(
-    _In_ UAC_PATTERN *Patterns,
-    _Out_ LPCVOID *OutputPattern,
-    _Out_ ULONG *OutputPatternSize,
-    _Out_ ULONG *SubtractBytes
+    _In_ UAC_PATTERN * Patterns,
+    _Out_ LPCVOID * OutputPattern,
+    _Out_ ULONG * OutputPatternSize,
+    _Out_ ULONG * SubtractBytes
 )
 {
     ULONG i;
@@ -279,6 +279,142 @@ BOOL GetSupportedPattern(
     return FALSE;
 }
 
+BOOLEAN QueryAiMmcBlock21H1(
+    _In_ PBYTE DllBase,
+    _In_ SIZE_T DllVirtualSize,
+    _In_ PBYTE PtrCode,
+    _In_ ULONG SectionSize
+)
+{
+    ULONG       instOffset, patternOffset;
+    LONG        rel = 0;
+    PVOID       TestPtr = NULL;
+
+    hde64s      hs;
+    PBYTE       ptrCode;
+
+    ptrCode = supFindPattern(PtrCode,
+        SectionSize,
+        (CONST PBYTE)ptMmcBlock_Start21H1,
+        sizeof(ptMmcBlock_Start21H1));
+
+    if (ptrCode) {
+
+        patternOffset = RtlPointerToOffset(PtrCode, ptrCode);
+        instOffset = 0;
+
+        do {
+
+            hde64_disasm((void*)RtlOffsetToPointer(ptrCode, instOffset), &hs);
+            if (hs.flags & F_ERROR)
+                break;
+
+            if (hs.len == 7) {
+                if ((ptrCode[instOffset] == 0x48) &&
+                    (ptrCode[instOffset + 2] == 0x15))
+                {
+                    rel = *(PLONG)(ptrCode + instOffset + 3);
+                    TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)ptrCode + instOffset + 7 + rel);
+                    if (IN_REGION(TestPtr, DllBase, DllVirtualSize)) {
+                        g_AiData.MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
+                        return TRUE;
+                    }
+                }
+            }
+
+            instOffset += hs.len;
+
+        } while (instOffset < ((SectionSize - patternOffset) - 16));
+
+    }
+
+    return FALSE;
+}
+
+BOOLEAN QueryAiMmcBlockPre21H1(
+    _In_ PBYTE DllBase,
+    _In_ SIZE_T DllVirtualSize,
+    _In_ PBYTE PtrCode,
+    _In_ ULONG SectionSize
+)
+{
+    ULONG       instOffset, tempOffset;
+    LONG        rel = 0;
+    PVOID       TestPtr = NULL;
+
+    hde64s      hs;
+    ULONG       sectionSize = SectionSize;
+    PBYTE       ptrCode = PtrCode;
+    SIZE_T      matchBytes, reqMatchSize;
+
+    instOffset = 0;
+
+    do {
+
+        hde64_disasm((void*)(ptrCode + instOffset), &hs);
+        if (hs.flags & F_ERROR)
+            break;
+
+        if (hs.len == 3) {
+
+            hde64_disasm((void*)(void*)RtlOffsetToPointer(ptrCode, instOffset), &hs);
+            if (hs.flags & F_ERROR)
+                break;
+
+            reqMatchSize = sizeof(ptMmcBlock_Start);
+
+            matchBytes = RtlCompareMemory(
+                (CONST VOID*)RtlOffsetToPointer(ptrCode, instOffset),
+                (CONST VOID*)ptMmcBlock_Start,
+                reqMatchSize);
+
+            if (matchBytes == reqMatchSize) {
+
+                //
+                // Next instruction check.
+                //
+                tempOffset = (instOffset += hs.len);
+
+                hde64_disasm((void*)(void*)RtlOffsetToPointer(ptrCode, instOffset), &hs);
+                if (hs.flags & F_ERROR)
+                    break;
+
+                if (hs.len == 7) {
+
+                    if ((ptrCode[tempOffset + 1] == 0x8D) &&
+                        (ptrCode[tempOffset + 2] == 0x35))
+                    {
+
+                        //
+                        // Next instruction check.
+                        //                        
+                        hde64_disasm((void*)(ptrCode + tempOffset + hs.len), &hs);
+                        if (hs.flags & F_ERROR)
+                            break;
+
+                        if (hs.len == 3) {
+
+                            rel = *(PLONG)(ptrCode + tempOffset + 3);
+                            TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)ptrCode + tempOffset + 7 + rel);
+                            if (IN_REGION(TestPtr, DllBase, DllVirtualSize)) {
+                                g_AiData.MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
+                                return TRUE;
+                            }
+
+                        }
+
+                    }
+                }
+            }
+        }
+
+        instOffset += hs.len;
+
+    } while (instOffset < (sectionSize - 16));
+
+    return FALSE;
+}
+
 /*
 * QueryAiMmcBlock
 *
@@ -290,16 +426,14 @@ BOOL GetSupportedPattern(
 BOOLEAN QueryAiMmcBlock(
     _In_ PBYTE DllBase,
     _In_ SIZE_T DllVirtualSize
-    )
+)
 {
-    ULONG       PatternSize = 0, SubtractBytes = 0, instOffset, tempOffset;
+    ULONG       PatternSize = 0, SubtractBytes = 0;
     LONG        rel = 0;
     PVOID       Pattern = NULL, PatternData = NULL, TestPtr = NULL;
 
-    hde64s      hs;
     ULONG       sectionSize = 0;
     PBYTE       ptrCode;
-    SIZE_T      matchBytes, reqMatchSize;
 
     if (DllBase == NULL)
         return FALSE;
@@ -334,75 +468,12 @@ BOOLEAN QueryAiMmcBlock(
     }
     else {
 
-        instOffset = 0;
-
-        do {
-
-            hde64_disasm((void*)(ptrCode + instOffset), &hs);
-            if (hs.flags & F_ERROR)
-                break;
-
-            if (hs.len == 3) {
-
-                hde64_disasm((void*)(ptrCode + instOffset), &hs);
-                if (hs.flags & F_ERROR)
-                    break;
-
-                //
-                // xor     r15d, r15d
-                //
-
-                reqMatchSize = sizeof(ptMmcBlock_Start);
-
-                matchBytes = RtlCompareMemory(RtlOffsetToPointer(ptrCode, instOffset),
-                    ptMmcBlock_Start,
-                    reqMatchSize);
-
-                if (matchBytes == reqMatchSize) {
-
-                    //
-                    // Next instruction check.
-                    //
-                    tempOffset = (instOffset += hs.len);
-
-                    hde64_disasm((void*)(ptrCode + tempOffset), &hs);
-                    if (hs.flags & F_ERROR)
-                        break;
-
-                    if (hs.len == 7) {
-
-                        if ((ptrCode[tempOffset + 1] == 0x8D) &&
-                            (ptrCode[tempOffset + 2] == 0x35))
-                        {
-
-                            //
-                            // Next instruction check.
-                            //
-
-                            hde64_disasm((void*)(ptrCode + tempOffset + hs.len), &hs);
-                            if (hs.flags & F_ERROR)
-                                break;
-
-                            if (hs.len == 3) {
-
-                                rel = *(PLONG)(ptrCode + tempOffset + 3);
-                                TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)ptrCode + tempOffset + 7 + rel);
-                                if (IN_REGION(TestPtr, DllBase, DllVirtualSize)) {
-                                    g_AiData.MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
-                                    return TRUE;
-                                }
-
-                            }
-
-                        }
-                    }
-                }
-            }
-
-            instOffset += hs.len;
-
-        } while (instOffset < (sectionSize - 16));
-
+        if (g_NtBuildNumber < 19043) {
+            return QueryAiMmcBlockPre21H1(DllBase, DllVirtualSize, ptrCode, sectionSize);
+        }
+        else {
+            return QueryAiMmcBlock21H1(DllBase, DllVirtualSize, ptrCode, sectionSize);
+        }
 
     }
     return FALSE;
@@ -517,14 +588,14 @@ VOID ListMMCFiles(
 {
     SIZE_T          i, Length;
     LPWSTR          TestString = NULL;
-    PVOID          *MscArray = NULL;
+    PVOID* MscArray = NULL;
     UAC_AI_DATA     CallbackData;
 
     if (!QueryAiMmcBlock((PBYTE)g_AiData.DllBase, g_AiData.DllVirtualSize))
         return;
 
     __try {
-        if (g_AiData.MmcBlock->ControlFilesCount > 256) {
+        if (g_AiData.MmcBlock->NumOfElements > 256) {
             OutputDebugString(TEXT("Invalid block data"));
         }
         else {
@@ -538,8 +609,8 @@ VOID ListMMCFiles(
                 }
             }
             CallbackData.Type = AiSnapinFile;
-            MscArray = (PVOID*)g_AiData.MmcBlock->ControlFiles;
-            for (i = 0; i < g_AiData.MmcBlock->ControlFilesCount; i++) {
+            MscArray = (PVOID*)g_AiData.MmcBlock->Base;
+            for (i = 0; i < g_AiData.MmcBlock->NumOfElements; i++) {
                 TestString = (LPWSTR)MscArray[i];
                 if (TestString != NULL) {
                     if (IN_REGION(TestString, g_AiData.DllBase, g_AiData.DllVirtualSize)) {
@@ -622,7 +693,7 @@ VOID ListAutoApproveEXE(
 */
 VOID ListStringDataUnsorted(
     AI_DATA_TYPE AiDataType,
-    PVOID *Data,
+    PVOID * Data,
     OUTPUTCALLBACK OutputCallback
 )
 {

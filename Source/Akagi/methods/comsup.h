@@ -1,15 +1,14 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2019
+*  (C) COPYRIGHT AUTHORS, 2017 - 2020
 *
 *  TITLE:       COMSUP.H
 *
-*  VERSION:     3.20
+*  VERSION:     3.27
 *
-*  DATE:        24 Oct 2019
+*  DATE:        10 Sep 2020
 *
-*  Prototypes and definitions for COM interfaces support and
-*  IFileOperation based routines.
+*  Prototypes and definitions for COM interfaces and routines.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -61,3 +60,15 @@ BOOL ucmMasqueradedDeleteDirectoryFileCOM(
 BOOL ucmMasqueradedRenameElementCOM(
     _In_ LPWSTR OldName,
     _In_ LPWSTR NewName);
+
+BOOL ucmMasqueradedGetObjectSecurityCOM(
+    _In_ LPWSTR lpTargetObject,
+    _In_ SECURITY_INFORMATION SecurityInformation,
+    _In_ SE_OBJECT_TYPE ObjectType,
+    _Inout_ LPOLESTR *Sddl);
+
+BOOL ucmMasqueradedSetObjectSecurityCOM(
+    _In_ LPWSTR lpTargetObject,
+    _In_ SECURITY_INFORMATION SecurityInformation,
+    _In_ SE_OBJECT_TYPE ObjectType,
+    _In_ LPWSTR NewSddl);

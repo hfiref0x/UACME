@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2019
+*  (C) COPYRIGHT AUTHORS, 2017 - 2020
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     3.19
+*  VERSION:     3.27
 *
-*  DATE:        09 Apr 2019
+*  DATE:        10 Sep 2020
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -35,7 +35,7 @@ PSID ucmxCreateBoundaryDescriptorSID(
     ULONG *SubAuthorities
 )
 {
-    BOOL    bCond = FALSE, bResult = FALSE;
+    BOOL    bResult = FALSE;
     ULONG   i;
     PSID    pSid = NULL;
 
@@ -57,7 +57,7 @@ PSID ucmxCreateBoundaryDescriptorSID(
 
         bResult = TRUE;
 
-    } while (bCond);
+    } while (FALSE);
 
     if (bResult == FALSE) {
         if (pSid) RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, pSid);
@@ -82,7 +82,7 @@ BOOL ucmReadSharedParameters(
     _Out_ UACME_PARAM_BLOCK *SharedParameters
 )
 {
-    BOOL bCond = FALSE, bResult = FALSE;
+    BOOL bResult = FALSE;
     ULONG Crc32;
     HANDLE hNamespace = NULL, hSection = NULL;
     PVOID SectionBuffer = NULL;
@@ -131,7 +131,7 @@ BOOL ucmReadSharedParameters(
         }
         NtClose(hNamespace);
 
-    } while (bCond);
+    } while (FALSE);
 
     return bResult;
 }
@@ -150,7 +150,6 @@ HANDLE ucmOpenAkagiNamespace(
     VOID
 )
 {
-    BOOL bCond = FALSE;
     HANDLE hNamespace = NULL;
     HANDLE  hBoundary = NULL;
     PSID pWorldSid;
@@ -190,7 +189,7 @@ HANDLE ucmOpenAkagiNamespace(
             break;
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (hBoundary) RtlDeleteBoundaryDescriptor(hBoundary);
 
@@ -769,7 +768,7 @@ BOOL ucmLaunchPayload2(
     _In_opt_ LPWSTR pszPayload,
     _In_opt_ DWORD cbPayload)
 {
-    BOOL                        bResult = FALSE, bCommandLineAllocated = FALSE, bSrvExec = FALSE, bCond = FALSE;
+    BOOL                        bResult = FALSE, bCommandLineAllocated = FALSE, bSrvExec = FALSE;
     WCHAR                       cmdbuf[MAX_PATH * 2]; //complete process command line
     WCHAR                       sysdir[MAX_PATH + 1]; //process working directory
     STARTUPINFO                 startupInfo;
@@ -1001,7 +1000,7 @@ BOOL ucmLaunchPayload2(
         }
 
 #endif //_TRACE_CALL
-    } while (bCond);
+    } while (FALSE);
 
     //
     // Post execution cleanup if required.
@@ -1436,7 +1435,7 @@ NTSTATUS ucmIsUserHasInteractiveSid(
     _In_ HANDLE hToken,
     _Out_ PBOOL pbInteractiveSid)
 {
-    BOOL bCond = FALSE, IsInteractiveSid = FALSE;
+    BOOL IsInteractiveSid = FALSE;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     HANDLE hHeap = NtCurrentPeb()->ProcessHeap;
     ULONG LengthNeeded = 0;
@@ -1498,7 +1497,7 @@ NTSTATUS ucmIsUserHasInteractiveSid(
             }
         }
 
-    } while (bCond);
+    } while (FALSE);
 
     if (groupInfo != NULL)
         RtlFreeHeap(hHeap, 0, groupInfo);

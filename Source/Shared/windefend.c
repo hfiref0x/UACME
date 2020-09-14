@@ -4,9 +4,9 @@
 *
 *  TITLE:       WINDEFEND.C
 *
-*  VERSION:     3.26
+*  VERSION:     3.27
 *
-*  DATE:        23 May 2020
+*  DATE:        10 Sep 2020
 *
 *  MSE / Windows Defender anti-emulation part.
 *
@@ -457,6 +457,23 @@ BOOLEAN wdIsEmulatorPresent2(
     VOID)
 {   
     return NtIsProcessInJob(NtCurrentProcess(), UlongToHandle(10)) == 0x125;
+}
+
+/*
+* wdIsEmulatorPresent3
+*
+* Purpose:
+*
+* Same as previous.
+*
+*/
+BOOLEAN wdIsEmulatorPresent3(
+    VOID)
+{
+    if (NT_SUCCESS(NtCompressKey(UlongToHandle(0xFFFF1234))))
+        return TRUE;
+
+    return FALSE;
 }
 
 #pragma warning(pop)

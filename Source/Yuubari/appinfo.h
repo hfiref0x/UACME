@@ -1,12 +1,12 @@
 #/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2020
 *
 *  TITLE:       APPINFO.H
 *
-*  VERSION:     1.40
+*  VERSION:     1.48
 *
-*  DATE:        19 Mar 2019
+*  DATE:        10 Sep 2020
 *
 *  Header file for the AppInfo scan.
 *
@@ -45,8 +45,8 @@ typedef struct _UAC_AI_DATA {
 
 typedef struct _UAC_MMC_BLOCK {
     LPWSTR lpManagementApplication;
-    PVOID ControlFiles;
-    ULONG ControlFilesCount;
+    PVOID Base;
+    ULONG NumOfElements;
     ULONG Reserved;
 } UAC_MMC_BLOCK, *PUAC_MMC_BLOCK;
 

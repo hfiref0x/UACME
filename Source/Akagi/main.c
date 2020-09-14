@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.24
+*  VERSION:     3.27
 *
-*  DATE:        20 Apr 2020
+*  DATE:        10 Sep 2020
 *
 *  Program entry point.
 *
@@ -276,8 +276,6 @@ NTSTATUS WINAPI ucmMain(
 {
     NTSTATUS    Status;
     UCM_METHOD  method = Method;
-    WCHAR szMessage[MAX_PATH + 1];
-    LPWSTR lpBufferPtr;
 
     wdCheckEmulatedVFS();
 
@@ -286,30 +284,18 @@ NTSTATUS WINAPI ucmMain(
         OptionalParameterLength,
         OutputToDebugger);
 
-    RtlSecureZeroMemory(&szMessage, sizeof(szMessage));
-    lpBufferPtr = (LPWSTR)&szMessage;
-
     switch (Status) {
 
     case STATUS_ELEVATION_REQUIRED:
-        if (DecodeStringById(IDSB_USAGE_UAC_REQUIRED, lpBufferPtr, MAX_PATH * sizeof(WCHAR))) {
-            ucmShowMessage(OutputToDebugger, lpBufferPtr);
-            RtlSecureZeroMemory(szMessage, sizeof(szMessage));
-        }
+        ucmShowMessageById(FALSE, IDSB_USAGE_UAC_REQUIRED);
         break;
 
     case STATUS_NOT_SUPPORTED:
-        if (DecodeStringById(IDSB_USAGE_ADMIN_REQUIRED, lpBufferPtr, MAX_PATH * sizeof(WCHAR))) {
-            ucmShowMessage(OutputToDebugger, lpBufferPtr);
-            RtlSecureZeroMemory(szMessage, sizeof(szMessage));
-        }
+        ucmShowMessageById(FALSE, IDSB_USAGE_ADMIN_REQUIRED);
         break;
 
     case STATUS_INVALID_PARAMETER:
-        if (DecodeStringById(IDSB_USAGE_HELP, lpBufferPtr, MAX_PATH * sizeof(WCHAR))) {
-            ucmShowMessage(OutputToDebugger, lpBufferPtr);
-            RtlSecureZeroMemory(szMessage, sizeof(szMessage));
-        }
+        ucmShowMessageById(FALSE, IDSB_USAGE_HELP);
         break;
 
     case STATUS_FATAL_APP_EXIT:

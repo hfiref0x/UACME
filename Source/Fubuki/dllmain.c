@@ -185,7 +185,6 @@ VOID UiAccessMethodPayload(
     }
 }
 
-
 /*
 * UiAccessMethodDllMain
 *

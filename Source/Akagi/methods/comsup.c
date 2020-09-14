@@ -4,11 +4,11 @@
 *
 *  TITLE:       COMSUP.C
 *
-*  VERSION:     3.24
+*  VERSION:     3.27
 *
-*  DATE:        20 Apr 2020
+*  DATE:        10 Sep 2020
 *
-*  IFileOperation based routines.
+*  COM interfaces based routines.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -526,4 +526,119 @@ BOOL ucmMasqueradedMoveFileCOM(
         SourceFileName,
         DestinationDir,
         TRUE);
+}
+
+/*
+* ucmMasqueradedGetObjectSecurityCOM
+*
+* Purpose:
+*
+* Get object security through ISecurityEditor(GetNamedInfo).
+* This function expects that supMasqueradeProcess was called on process initialization.
+* 
+* Note:
+* Use CoTaskMemFree to release Sddl allocated memory as SecurityEditor->GetSecurity uses SHStrDupW to store result SSDL.
+*
+*/
+BOOL ucmMasqueradedGetObjectSecurityCOM(
+    _In_ LPWSTR lpTargetObject,
+    _In_ SECURITY_INFORMATION SecurityInformation,
+    _In_ SE_OBJECT_TYPE ObjectType,
+    _Inout_ LPOLESTR *Sddl
+)
+{
+    HRESULT          r = E_FAIL, hr_init;
+    ISecurityEditor* SecurityEditor = NULL;
+
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    do {
+
+        r = ucmAllocateElevatedObject(
+            T_CLSID_ShellSecurityEditor,
+            &IID_ISecurityEditor,
+            CLSCTX_LOCAL_SERVER,
+            &SecurityEditor);
+
+        if (r != S_OK)
+            break;
+
+        if (SecurityEditor == NULL) {
+            r = E_OUTOFMEMORY;
+            break;
+        }
+
+        r = SecurityEditor->lpVtbl->GetSecurity(
+            SecurityEditor,
+            lpTargetObject,
+            ObjectType,
+            SecurityInformation,
+            Sddl);
+
+    } while (FALSE);
+
+    if (SecurityEditor != NULL) {
+        SecurityEditor->lpVtbl->Release(SecurityEditor);
+    }
+
+    if (hr_init == S_OK)
+        CoUninitialize();
+
+    return SUCCEEDED(r);
+}
+
+/*
+* ucmMasqueradedSetObjectSecurityCOM
+*
+* Purpose:
+*
+* Change object security through ISecurityEditor(SetNamedInfo).
+* This function expects that supMasqueradeProcess was called on process initialization.
+*
+*/
+BOOL ucmMasqueradedSetObjectSecurityCOM(
+    _In_ LPWSTR lpTargetObject,
+    _In_ SECURITY_INFORMATION SecurityInformation,
+    _In_ SE_OBJECT_TYPE ObjectType,
+    _In_ LPWSTR NewSddl
+)
+{
+    HRESULT          r = E_FAIL, hr_init;
+    ISecurityEditor* SecurityEditor = NULL;
+
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    do {
+
+        r = ucmAllocateElevatedObject(
+            T_CLSID_ShellSecurityEditor,
+            &IID_ISecurityEditor,
+            CLSCTX_LOCAL_SERVER,
+            &SecurityEditor);
+
+        if (r != S_OK)
+            break;
+
+        if (SecurityEditor == NULL) {
+            r = E_OUTOFMEMORY;
+            break;
+        }
+
+        r = SecurityEditor->lpVtbl->SetSecurity(
+            SecurityEditor,
+            lpTargetObject,
+            ObjectType,
+            SecurityInformation,
+            NewSddl);
+
+    } while (FALSE);
+
+    if (SecurityEditor != NULL) {
+        SecurityEditor->lpVtbl->Release(SecurityEditor);
+    }
+
+    if (hr_init == S_OK)
+        CoUninitialize();
+
+    return SUCCEEDED(r);
 }

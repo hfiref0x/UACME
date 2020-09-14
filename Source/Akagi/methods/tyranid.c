@@ -4,9 +4,9 @@
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     3.24
+*  VERSION:     3.27
 *
-*  DATE:        20 Apr 2020
+*  DATE:        10 Sep 2020
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -667,7 +667,7 @@ NTSTATUS ucmDebugObjectMethod(
         // Spawn elevated victim under debug.
         //
         _strcpy(szProcess, g_ctx->szSystemDirectory);
-        _strcat(szProcess, TASKMGR_EXE);
+        _strcat(szProcess, COMPUTERDEFAULTS_EXE);
         RtlSecureZeroMemory(&procInfo, sizeof(procInfo));
         RtlSecureZeroMemory(&dbgEvent, sizeof(dbgEvent));
 

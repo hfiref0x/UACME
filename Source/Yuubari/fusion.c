@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2020
 *
 *  TITLE:       FUSION.C
 *
-*  VERSION:     1.44
+*  VERSION:     1.48
 *
-*  DATE:        19 Oct 2019
+*  DATE:        10 Sep 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -703,7 +703,6 @@ VOID FusionScanDirectory(
     _strcpy(textbuf, dirbuf);
     textbuf[l] = L'*';
     textbuf[l + 1] = 0;
-    l++;
 
     RtlSecureZeroMemory(&fdata, sizeof(fdata));
     hDirectory = FindFirstFile(textbuf, &fdata);

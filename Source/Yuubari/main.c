@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.47
+*  VERSION:     1.48
 *
-*  DATE:        22 Mar 2020
+*  DATE:        10 Sep 2020
 *
 *  Program entry point.
 *
@@ -442,12 +442,12 @@ VOID ListAppInfo(
 
     cuiPrintText(T_APPINFO_HEAD, TRUE);
     LoggerWriteHeader(T_APPINFO_HEAD);
-
-//#ifndef _DEBUG
+    
+/*#ifndef _DEBUG*/
     _strcpy(szFileName, USER_SHARED_DATA->NtSystemRoot);
     _strcat(szFileName, TEXT("\\system32\\appinfo.dll"));
 /*#else
-    _strcpy(szFileName, TEXT("C:\\appinfo\\18975.dll"));
+    _strcpy(szFileName, TEXT("C:\\install\\appinfo20206.dll"));
 #endif*/
     ScanAppInfo(szFileName, (OUTPUTCALLBACK)AppInfoDataOutputCallback);
 }

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2019
+*  (C) COPYRIGHT AUTHORS, 2015 - 2020
 *
 *  TITLE:       SIMDA.H
 *
-*  VERSION:     3.17
+*  VERSION:     3.27
 *
-*  DATE:        18 Mar 2019
+*  DATE:        10 Sep 2020
 *
 *  Prototypes and definitions for Simda method.
 *
@@ -17,12 +17,6 @@
 *
 *******************************************************************************/
 #pragma once
-
-DWORD WINAPI ucmMasqueradedAlterObjectSecurityCOM(
-    _In_ LPWSTR lpTargetObject,
-    _In_ SECURITY_INFORMATION SecurityInformation,
-    _In_ SE_OBJECT_TYPE ObjectType,
-    _In_ LPWSTR NewSddl);
 
 NTSTATUS ucmSimdaTurnOffUac(
     VOID);

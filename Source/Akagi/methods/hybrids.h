@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     3.23
+*  VERSION:     3.27
 *
-*  DATE:        17 Dec 2019
+*  DATE:        12 Sep 2020
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -109,6 +109,10 @@ NTSTATUS ucmAcCplAdminMethod(
     _In_ LPWSTR lpszPayload);
 
 NTSTATUS ucmEgre55Method(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
+
+NTSTATUS ucmNICPoisonMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 

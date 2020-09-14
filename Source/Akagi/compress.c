@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     3.24
+*  VERSION:     3.27
 *
-*  DATE:        20 Apr 2020
+*  DATE:        10 Sep 2020
 *
 *  Compression and encoding/decoding support.
 *
@@ -30,52 +30,95 @@ pfnDecompress pDecompress = NULL;
 typedef struct _DCK_HEADER {
     DWORD Id;
     BYTE Data[UACME_KEY_SIZE];
-} DCK_HEADER, *PDCK_HEADER;
+} DCK_HEADER, * PDCK_HEADER;
 
 typedef struct _UCM_STRING_TABLE_ENTRY {
     WORD Id;
     WORD DataLength;//in bytes
-    CONST UCHAR *Data;
-} UCM_STRING_TABLE_ENTRY, *PUCM_STRING_TABLE_ENTRY;
+    CONST UCHAR* Data;
+} UCM_STRING_TABLE_ENTRY, * PUCM_STRING_TABLE_ENTRY;
 
 UCM_STRING_TABLE_ENTRY ucmStringTable[] = {
     { IDSB_USAGE_HELP, sizeof(B_USAGE_HELP), B_USAGE_HELP },
     { IDSB_USAGE_UAC_REQUIRED, sizeof(B_USAGE_UAC_REQUIRED), B_USAGE_UAC_REQUIRED },
-    { IDSB_USAGE_ADMIN_REQUIRED, sizeof(B_USAGE_ADMIN_REQUIRED), B_USAGE_ADMIN_REQUIRED }
+    { IDSB_USAGE_ADMIN_REQUIRED, sizeof(B_USAGE_ADMIN_REQUIRED), B_USAGE_ADMIN_REQUIRED },
+    { IDSB_SIMDA_UAC, sizeof(B_SIMDA_UAC), B_SIMDA_UAC },
+    { IDSB_SIMDA_CONSENT_WARNING, sizeof(B_SIMDA_CONSENT_WARNING), B_SIMDA_CONSENT_WARNING }
 };
 
-unsigned char MirrorBits(unsigned char x)
-{
-    return ((x >> 7) & 1) | ((x >> 5) & 2) | ((x >> 3) & 4) | ((x >> 1) & 8) |
-        ((x << 7) & 0x80) | ((x << 5) & 0x40) | ((x << 3) & 0x20) | ((x << 1) & 0x10);
-}
 
-VOID DecryptBufferMB(
-    _In_ PBYTE Buffer,
-    _In_ SIZE_T	BufferSize
+UINT64 StringCryptGenKey(
+    _In_ PWCHAR Key
 )
 {
-    SIZE_T          c;
-    unsigned char   r = 127, r0;
+    UINT64    k = 0;
+    WCHAR     c;
 
-    for (c = 0; c < BufferSize; c++) {
-        r0 = MirrorBits((BYTE)c) - Buffer[c];
-        Buffer[c] = (r^r0) - (BYTE)c;
-        r = r0;
+    while (*Key)
+    {
+        k ^= *Key;
+
+        for (c = 0; c < 8; ++c)
+        {
+            k = (k << 8) | (k >> 56);
+            k += (UINT64)c * 7 + *Key;
+        }
+
+        ++Key;
     }
+
+    return k;
 }
 
-VOID EncryptBufferMB(
-    _In_ PBYTE Buffer,
-    _In_ SIZE_T	BufferSize
+SIZE_T StringCryptEncrypt(
+    _In_ PWCHAR Src,
+    _In_ PWCHAR Dst,
+    _In_ PWCHAR Key
 )
 {
-    SIZE_T			c;
-    unsigned char	r = 127;
+    UINT64    k;
+    WCHAR     c;
+    SIZE_T    len = 0;
 
-    for (c = 0; c < BufferSize; c++) {
-        r ^= Buffer[c] + c;
-        Buffer[c] = MirrorBits((unsigned char)c) - r;
+    k = StringCryptGenKey(Key);
+
+    c = 0;
+    while (*Src)
+    {
+        c ^= *Src + (wchar_t)k;
+        *Dst = c;
+
+        k = (k << 8) | (k >> 56);
+        ++Src;
+        ++Dst;
+        ++len;
+    }
+
+    return len;
+}
+
+VOID StringCryptDecrypt(
+    _In_ PWCHAR Src,
+    _In_ PWCHAR Dst,
+    _In_ SIZE_T Len,
+    _In_ PWCHAR Key)
+{
+    UINT64    k;
+    WCHAR     c, c0;
+
+    k = StringCryptGenKey(Key);
+
+    c = 0;
+    while (Len > 0)
+    {
+        c0 = *Src;
+        *Dst = (c0 ^ c) - (wchar_t)k;
+        c = c0;
+
+        k = (k << 8) | (k >> 56);
+        ++Src;
+        ++Dst;
+        --Len;
     }
 }
 
@@ -101,13 +144,11 @@ BOOLEAN DecodeStringById(
             if (cbBuffer < ucmStringTable[i].DataLength)
                 break;
 
-            supCopyMemory(
-                lpBuffer,
-                cbBuffer,
-                ucmStringTable[i].Data,
-                ucmStringTable[i].DataLength);
+            StringCryptDecrypt((PWCHAR)ucmStringTable[i].Data,
+                (PWCHAR)lpBuffer,
+                (SIZE_T)ucmStringTable[i].DataLength / sizeof(WCHAR),
+                (PWCHAR)NTDLL_DLL);
 
-            DecryptBufferMB((PBYTE)lpBuffer, ucmStringTable[i].DataLength);
             return TRUE;
         }
     }
@@ -619,7 +660,7 @@ PVOID DecompressPayload(
 *
 */
 CFILE_TYPE GetTargetFileType(
-    VOID *FileBuffer
+    VOID * FileBuffer
 )
 {
     CFILE_TYPE Result = ftUnknown;
@@ -628,12 +669,12 @@ CFILE_TYPE GetTargetFileType(
         return Result;
 
     //check if file is in compressed format 
-    if (*((BYTE *)FileBuffer) == 'D' &&
-        *((BYTE *)FileBuffer + 1) == 'C' &&
-        *((BYTE *)FileBuffer + 3) == 1
+    if (*((BYTE*)FileBuffer) == 'D' &&
+        *((BYTE*)FileBuffer + 1) == 'C' &&
+        *((BYTE*)FileBuffer + 3) == 1
         )
     {
-        switch (*((BYTE *)FileBuffer + 2)) {
+        switch (*((BYTE*)FileBuffer + 2)) {
 
         case 'N':
             Result = ftDCN;
@@ -650,8 +691,8 @@ CFILE_TYPE GetTargetFileType(
     }
     else {
         //not compressed, check mz header
-        if (*((BYTE *)FileBuffer) == 'M' &&
-            *((BYTE *)FileBuffer + 1) == 'Z'
+        if (*((BYTE*)FileBuffer) == 'M' &&
+            *((BYTE*)FileBuffer + 1) == 'Z'
             )
         {
             Result = ftMZ;
@@ -671,7 +712,7 @@ CFILE_TYPE GetTargetFileType(
 BOOL ProcessFileMZ(
     PVOID SourceFile,
     SIZE_T SourceFileSize,
-    PVOID *OutputFileBuffer,
+    PVOID * OutputFileBuffer,
     PSIZE_T OutputFileBufferSize
 )
 {
@@ -714,7 +755,7 @@ BOOL ProcessFileMZ(
 BOOL ProcessFileDCN(
     PVOID SourceFile,
     SIZE_T SourceFileSize,
-    PVOID *OutputFileBuffer,
+    PVOID * OutputFileBuffer,
     PSIZE_T OutputFileBufferSize
 )
 {
@@ -785,13 +826,13 @@ BOOL ProcessFileDCN(
 BOOL ProcessFileDCS(
     PVOID SourceFile,
     SIZE_T SourceFileSize,
-    PVOID *OutputFileBuffer,
+    PVOID * OutputFileBuffer,
     PSIZE_T OutputFileBufferSize
 )
 {
     BOOL bResult = FALSE;
     COMPRESSOR_HANDLE hDecompressor = 0;
-    BYTE *DataBufferPtr = NULL, *DataBuffer = NULL;
+    BYTE* DataBufferPtr = NULL, * DataBuffer = NULL;
 
     PDCS_HEADER FileHeader = (PDCS_HEADER)SourceFile;
     PDCS_BLOCK Block;
@@ -846,8 +887,10 @@ BOOL ProcessFileDCS(
             BytesDecompressed += Block->DecompressedBlockSize;
 
             bResult = pDecompress(hDecompressor,
-                Block->CompressedData, Block->CompressedBlockSize - 4,
-                (BYTE *)DataBufferPtr, Block->DecompressedBlockSize,
+                Block->CompressedData, 
+                Block->CompressedBlockSize - 4,
+                (BYTE*)DataBufferPtr, 
+                Block->DecompressedBlockSize,
                 NULL);
 
             if (!bResult)
@@ -859,7 +902,7 @@ BOOL ProcessFileDCS(
 
             DataBufferPtr = (BYTE*)DataBufferPtr + Block->DecompressedBlockSize;
             NextOffset = Block->CompressedBlockSize + 4;
-            Block = (DCS_BLOCK*)((BYTE *)Block + NextOffset);
+            Block = (DCS_BLOCK*)((BYTE*)Block + NextOffset);
             BytesRead += NextOffset;
         }
 

@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.26
+*  VERSION:     3.27
 *
-*  DATE:        26 May 2020
+*  DATE:        11 Sep 2020
 *
 *  Global consts definition file.
 *
@@ -25,18 +25,24 @@
 #define AKAGI_XOR_KEY2              ' pta'
 
 //"Usage: Akagi.exe [Method] [OptionalParamToExecute]"
-#define IDSB_USAGE_HELP               0
+#define IDSB_USAGE_HELP                 0
 
 //"Admin account with limited token required."
-#define IDSB_USAGE_ADMIN_REQUIRED     1
+#define IDSB_USAGE_ADMIN_REQUIRED       1
 
 //"Please enable UAC for this account."
-#define IDSB_USAGE_UAC_REQUIRED       2
+#define IDSB_USAGE_UAC_REQUIRED         2
+
+//"UAC is now disabled.\nYou must reboot your computer for the changes to take effect."
+#define IDSB_SIMDA_UAC                  3
+
+//"This method will permanently TURN UAC OFF, are you sure?"
+#define IDSB_SIMDA_CONSENT_WARNING      4
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       2
-#define UCM_VERSION_REVISION    6
-#define UCM_VERSION_BUILD       2005
+#define UCM_VERSION_REVISION    7
+#define UCM_VERSION_BUILD       2009
 #define UCM_IS_VNEXT            FALSE
 
 #pragma region PYSH
@@ -44,8 +50,6 @@
 #define WOW64STRING                 L"Wow64 detected, use x64 version of this tool."
 #define WOW64WIN32ONLY              L"This method only works with x86-32 Windows or from Wow64"
 #define UACFIX                      L"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
-#define T_SIMDA_UAC                 L"UAC is now disabled.\nYou must reboot your computer for the changes to take effect."
-#define T_SIMDA_CONSENT_WARNING     L"This method will permanently TURN UAC OFF, are you sure?"
 #define T_SXS_CONSENT_WARNING       L"WARNING: This method will affect UAC interface, are you sure?"
 #pragma endregion
 
@@ -117,21 +121,21 @@
 #define FUBUKI_DLL                      L"Fubuki.dll"
 #define FUJINAMI_DLL                    L"Fujinami.dll"
 #define HIBIKI_DLL                      L"Hibiki.dll"
-#define KUMA_DLL                        L"lzx32.dll"
 #define KAMIKAZE_MSC                    L"kmkze.msc"
 #define KAMIKAZE_LAUNCHER               L"readme.html"
 #define FUBUKI_EXE                      L"Fubuki.exe"
-#define FUBUKI_EXT_ENTRYPOINT           "_FubukiProc1"
-#define FUBUKI_WND_HOOKPROC             "_FubukiProc2"
-#define FUBUKI_DEFAULT_ENTRYPOINT       "_FubukiProc3"
-#define FUBUKI_ENTRYPOINT_UIACCESS2     "_FubukiProc4"
-#define FUBUKI_DEFAULT_ENTRYPOINTW      L"_FubukiProc3"
+#define FUBUKI_EXT_ENTRYPOINT           "MpManagerOpen"
+#define FUBUKI_WND_HOOKPROC             "MpHandleClose"
+#define FUBUKI_DEFAULT_ENTRYPOINT       "MpScanStart"
+#define FUBUKI_DEFAULT_ENTRYPOINTW      L"MpScanStart"
+#define FUBUKI_ENTRYPOINT_UIACCESS2     "MpScanControl"
 #define CHIYODA_EXT_ENTRYPOINT          "ChiyodaMain"
 #pragma endregion
 
 //
 // Windows dll names.
 //
+#define ACCESSIBILITY_NI_DLL        L"Accessibility.ni.dll"
 #define ACTIONQUEUE_DLL             L"ActionQueue.dll"
 #define COMCTL32_DLL                L"comctl32.dll"
 #define CRYPTBASE_DLL               L"cryptbase.dll"
@@ -187,6 +191,7 @@
 #define MIGWIZ_EXE                  L"migwiz.exe"
 #define MMC_EXE                     L"mmc.exe"
 #define MSCONFIG_EXE                L"msconfig.exe"
+#define MSCHEDEXE_EXE               L"mschedexe.exe"
 #define OOBE_EXE                    L"oobe.exe"
 #define SETUPSQM_EXE                L"oobe\\setupsqm.exe" 
 #define OSK_EXE                     L"osk.exe"
@@ -201,7 +206,6 @@
 #define SYSPREP_EXE                 L"sysprep.exe"
 #define SYSTEMROPERTIESADVANCED_EXE L"SystemPropertiesAdvanced.exe"
 #define TASKHOST_EXE                L"taskhost.exe"
-#define TASKMGR_EXE                 L"taskmgr.exe"
 #define TPMINIT_EXE                 L"tpminit.exe"
 #define TZSYNC_EXE                  L"tzsync.exe"
 #define WINSAT_EXE                  L"winsat.exe"
@@ -218,6 +222,10 @@
 #define SYSTEM32_DIR                L"\\system32\\"
 #define SYSWOW64_DIR                L"\\syswow64\\"
 #define WBEM_DIR                    L"wbem\\"
+
+#define NET2_DIR                    L"v2.0.50727"
+#define NET4_DIR                    L"v4.0.30319"
+#define MSNETFRAMEWORK_DIR          L"Microsoft.NET\\Framework"
 
 //
 // Chiyoda part

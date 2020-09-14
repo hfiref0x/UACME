@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.26
+*  VERSION:     3.27
 *
-*  DATE:        26 May 2020
+*  DATE:        14 Sep 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -328,6 +328,7 @@ HANDLE supGetProcessWithILAsCaller(
                                 break;
                         }
                         NtClose(hProcess);
+                        hProcess = NULL;
                     }
                 }
 
@@ -606,6 +607,111 @@ PBYTE supReadFileToBuffer(
 )
 {
     NTSTATUS    status;
+    HANDLE      hFile = NULL;
+    PBYTE       Buffer = NULL;
+    SIZE_T      sz = 0;
+
+    UNICODE_STRING              usName;
+    OBJECT_ATTRIBUTES           attr;
+    IO_STATUS_BLOCK             iost;
+    FILE_STANDARD_INFORMATION   fi;
+
+    do {
+
+        if (lpFileName == NULL)
+            return NULL;
+
+        if (!RtlDosPathNameToNtPathName_U(lpFileName, &usName, NULL, NULL))
+            break;
+
+        InitializeObjectAttributes(&attr, &usName, OBJ_CASE_INSENSITIVE, 0, NULL);
+
+        status = NtCreateFile(
+            &hFile,
+            FILE_READ_DATA | SYNCHRONIZE,
+            &attr,
+            &iost,
+            NULL,
+            FILE_ATTRIBUTE_NORMAL,
+            FILE_SHARE_READ,
+            FILE_OPEN,
+            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
+            NULL,
+            0);
+
+        RtlFreeUnicodeString(&usName);
+
+        if (!NT_SUCCESS(status)) {
+            break;
+        }
+
+        RtlSecureZeroMemory(&fi, sizeof(fi));
+
+        status = NtQueryInformationFile(
+            hFile,
+            &iost,
+            &fi,
+            sizeof(FILE_STANDARD_INFORMATION),
+            FileStandardInformation);
+
+        if (!NT_SUCCESS(status))
+            break;
+
+        sz = (SIZE_T)fi.EndOfFile.LowPart;
+
+        Buffer = (PBYTE)supVirtualAlloc(
+            &sz,
+            DEFAULT_ALLOCATION_TYPE,
+            DEFAULT_PROTECT_TYPE,
+            &status);
+
+        if (NT_SUCCESS(status)) {
+
+            status = NtReadFile(
+                hFile,
+                NULL,
+                NULL,
+                NULL,
+                &iost,
+                Buffer,
+                fi.EndOfFile.LowPart,
+                NULL,
+                NULL);
+
+            if (NT_SUCCESS(status)) {
+                if (lpBufferSize)
+                    *lpBufferSize = fi.EndOfFile.LowPart;
+            }
+            else {
+                supVirtualFree(Buffer, NULL);
+                Buffer = NULL;
+            }
+        }
+
+    } while (FALSE);
+
+    if (hFile != NULL) {
+        NtClose(hFile);
+    }
+
+    return Buffer;
+}
+
+
+/*
+* supReadFileToBuffer_Cur
+*
+* Purpose:
+*
+* Read file to buffer. Release memory when it no longer needed.
+*
+*/
+PBYTE supReadFileToBuffer_Cur(
+    _In_ LPWSTR lpFileName,
+    _Inout_opt_ LPDWORD lpBufferSize
+)
+{
+    NTSTATUS    status;
     HANDLE      hFile = NULL, hRoot = NULL;
     PBYTE       Buffer = NULL;
     SIZE_T      sz = 0;
@@ -639,8 +745,7 @@ PBYTE supReadFileToBuffer(
             FILE_OPEN,
             FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
             NULL,
-            0
-        );
+            0);
 
         RtlFreeUnicodeString(&usName);
 
@@ -1197,6 +1302,34 @@ VOID ucmxBuildVersionString(
 *
 * Purpose:
 *
+* Output message to user by message id.
+*
+*/
+VOID ucmShowMessageById(
+    _In_ BOOL OutputToDebugger,
+    _In_ ULONG MessageId
+)
+{
+    PWCHAR pszMessage;
+    SIZE_T allocSize = PAGE_SIZE;
+
+    pszMessage = supVirtualAlloc(&allocSize,
+        DEFAULT_ALLOCATION_TYPE, 
+        DEFAULT_PROTECT_TYPE, NULL);
+    if (pszMessage) {
+
+        if (DecodeStringById(MessageId, pszMessage, PAGE_SIZE/sizeof(WCHAR))) {
+            ucmShowMessage(OutputToDebugger, pszMessage);
+        }
+        supSecureVirtualFree(pszMessage, PAGE_SIZE, NULL);
+    }
+}
+
+/*
+* ucmShowMessage
+*
+* Purpose:
+*
 * Output message to user.
 *
 */
@@ -1219,6 +1352,50 @@ VOID ucmShowMessage(
             szVersion,
             MB_ICONINFORMATION);
     }
+}
+
+/*
+* ucmShowQuestionById
+*
+* Purpose:
+*
+* Output message with question to user with given question id.
+*
+*/
+INT ucmShowQuestionById(
+    _In_ ULONG MessageId
+)
+{
+    INT iResult = IDNO;
+    WCHAR szVersion[100];
+
+    if (g_ctx->UserRequestsAutoApprove == TRUE)
+        return IDYES;
+
+    szVersion[0] = 0;
+    ucmxBuildVersionString(szVersion);
+
+
+    PWCHAR pszMessage;
+    SIZE_T allocSize = PAGE_SIZE;
+
+    pszMessage = supVirtualAlloc(&allocSize,
+        DEFAULT_ALLOCATION_TYPE,
+        DEFAULT_PROTECT_TYPE, NULL);
+    if (pszMessage) {
+
+        if (DecodeStringById(MessageId, pszMessage, PAGE_SIZE / sizeof(WCHAR))) {
+            
+            iResult = MessageBox(GetDesktopWindow(),
+                pszMessage,
+                szVersion,
+                MB_YESNO);
+
+        }
+        supSecureVirtualFree(pszMessage, PAGE_SIZE, NULL);
+    }
+
+    return iResult;
 }
 
 /*
@@ -3056,7 +3233,6 @@ BOOLEAN supIsNetfx48PlusInstalled(
     return (dwReleaseVersion >= Netfx48ReleaseVersion);
 }
 
-
 /*
 * supGetProcessDebugObject
 *
@@ -3075,4 +3251,511 @@ NTSTATUS supGetProcessDebugObject(
         DebugObjectHandle,
         sizeof(HANDLE),
         NULL);
+}
+
+/*
+* supInitFusion
+*
+* Purpose:
+*
+* Load .NET Assembly Manager dll and remember function pointers.
+*
+*/
+BOOLEAN supInitFusion(
+    _In_ DWORD dwVersion
+)
+{
+    HMODULE hFusion;
+    pfnCreateAssemblyCache CreateAssemblyCache;
+
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    if (g_ctx->FusionContext.Initialized)
+        return TRUE;
+
+    if (dwVersion != 2 && dwVersion != 4)
+        return FALSE;
+
+    //
+    // Build path to assembly manager dll
+    //
+    _strcpy(szBuffer, g_ctx->szSystemRoot);
+    _strcat(szBuffer, MSNETFRAMEWORK_DIR);
+
+#ifdef _WIN64
+    _strcat(szBuffer, TEXT("64"));
+#endif
+
+    if (dwVersion == 2) {
+        _strcat(szBuffer, TEXT("\\"));
+        _strcat(szBuffer, NET2_DIR);
+        _strcat(szBuffer, TEXT("\\"));
+    }
+    else
+    {
+        _strcat(szBuffer, TEXT("\\"));
+        _strcat(szBuffer, NET4_DIR);
+        _strcat(szBuffer, TEXT("\\"));
+    }
+
+    _strcat(szBuffer, TEXT("fusion.dll"));
+
+    hFusion = LoadLibraryEx(szBuffer, NULL, 0);
+    if (hFusion == NULL)
+        return FALSE;
+
+    CreateAssemblyCache = (pfnCreateAssemblyCache)GetProcAddress(hFusion, "CreateAssemblyCache");
+
+    if (CreateAssemblyCache == NULL) {
+        FreeLibrary(hFusion);
+        return FALSE;
+    }
+
+    g_ctx->FusionContext.hFusion = hFusion;
+    g_ctx->FusionContext.CreateAssemblyCache = CreateAssemblyCache;
+    g_ctx->FusionContext.Initialized = TRUE;
+
+    return TRUE;
+}
+
+/*
+* supFusionGetAssemblyName
+*
+* Purpose:
+*
+* Return assembly name.
+*
+* Note: Use supHeapFree to release lpAssemblyName allocated memory.
+*
+*/
+HRESULT supFusionGetAssemblyName(
+    _In_ IAssemblyName* pInterface,
+    _Inout_ LPWSTR* lpAssemblyName
+)
+{
+    HRESULT hr = E_FAIL;
+    DWORD bufferSize = 0;
+    LPWSTR pwzName;
+
+    *lpAssemblyName = NULL;
+
+    pInterface->lpVtbl->GetName(pInterface, &bufferSize, 0);
+    if (bufferSize == 0)
+        return E_FAIL;
+
+    pwzName = (LPWSTR)supHeapAlloc(bufferSize * sizeof(WCHAR));
+    if (pwzName) {
+
+        hr = pInterface->lpVtbl->GetName(pInterface, &bufferSize, pwzName);
+        if (!SUCCEEDED(hr)) {
+            supHeapFree(pwzName);
+        }
+        else {
+            *lpAssemblyName = pwzName;
+        }
+
+    }
+
+    return hr;
+}
+
+/*
+* supFusionGetAssemblyPath
+*
+* Purpose:
+*
+* Return given assembly file path.
+*
+* Note: Use supHeapFree to release lpAssemblyPath allocated memory.
+*
+*/
+HRESULT supFusionGetAssemblyPath(
+    _In_ IAssemblyCache* pInterface,
+    _In_ LPWSTR lpAssemblyName,
+    _Inout_ LPWSTR* lpAssemblyPath
+)
+{
+    HRESULT hr = E_FAIL;
+    ASSEMBLY_INFO asmInfo;
+    LPWSTR assemblyPath;
+
+    *lpAssemblyPath = NULL;
+
+    RtlSecureZeroMemory(&asmInfo, sizeof(asmInfo));
+
+    pInterface->lpVtbl->QueryAssemblyInfo(pInterface,
+        QUERYASMINFO_FLAG_GETSIZE,
+        lpAssemblyName,
+        &asmInfo);
+
+    if (asmInfo.cchBuf == 0) //empty pszCurrentAssemblyPathBuf
+        return E_FAIL;
+
+    assemblyPath = (LPWSTR)supHeapAlloc(asmInfo.cchBuf * sizeof(WCHAR));
+    if (assemblyPath == NULL)
+        return E_FAIL;
+
+    asmInfo.pszCurrentAssemblyPathBuf = assemblyPath;
+
+    hr = pInterface->lpVtbl->QueryAssemblyInfo(pInterface,
+        QUERYASMINFO_FLAG_VALIDATE,
+        lpAssemblyName,
+        &asmInfo);
+
+    if (!SUCCEEDED(hr)) {
+        supHeapFree(asmInfo.pszCurrentAssemblyPathBuf);
+    }
+    else {
+        *lpAssemblyPath = assemblyPath;
+    }
+
+    return hr;
+}
+
+/*
+* supFusionGetAssemblyPathByName
+*
+* Purpose:
+*
+* Return given assembly file path.
+*
+* Note: Use supHeapFree to release lpAssemblyPath allocated memory.
+*
+*/
+BOOLEAN supFusionGetAssemblyPathByName(
+    _In_ LPWSTR lpAssemblyName,
+    _Inout_ LPWSTR* lpAssemblyPath
+)
+{
+    HRESULT hr;
+    IAssemblyCache* asmCache = NULL;
+
+    do {
+
+        hr = g_ctx->FusionContext.CreateAssemblyCache(&asmCache, 0);
+        if ((FAILED(hr)) || (asmCache == NULL))
+            break;
+
+        hr = supFusionGetAssemblyPath(asmCache,
+            lpAssemblyName,
+            lpAssemblyPath);
+
+        asmCache->lpVtbl->Release(asmCache);
+
+    } while (FALSE);
+
+    return SUCCEEDED(hr);
+}
+
+/*
+* supIsProcessRunning
+*
+* Purpose:
+*
+* Return TRUE if the given process is running in current session.
+*
+*/
+BOOL supIsProcessRunning(
+    _In_ LPWSTR ProcessName
+)
+{
+    BOOL bResult = FALSE;
+    ULONG nextEntryDelta = 0;
+    PVOID processList;
+
+    UNICODE_STRING lookupPsName;
+
+    union {
+        PSYSTEM_PROCESSES_INFORMATION Processes;
+        PBYTE ListRef;
+    } List;
+
+    processList = supGetSystemInfo(SystemProcessInformation);
+    if (processList == NULL)
+        return bResult;
+
+    List.ListRef = (PBYTE)processList;
+
+    RtlInitUnicodeString(&lookupPsName, ProcessName);
+
+    do {
+
+        List.ListRef += nextEntryDelta;
+
+        if (List.Processes->SessionId == NtCurrentPeb()->SessionId) {
+
+            if (RtlEqualUnicodeString(&lookupPsName,
+                &List.Processes->ImageName,
+                TRUE))
+            {
+                bResult = TRUE;
+                break;
+            }
+
+        }
+
+        nextEntryDelta = List.Processes->NextEntryDelta;
+
+    } while (nextEntryDelta);
+
+    supHeapFree(processList);
+
+    return bResult;
+}
+
+/*
+* supFusionGetImageMVID
+*
+* Purpose:
+*
+* Query MVID value from image metadata.
+*
+*/
+BOOL supFusionGetImageMVID(
+    _In_ LPWSTR lpImageName,
+    _Out_ GUID* ModuleVersionId
+)
+{
+    BOOL bResult = FALSE;
+    HMODULE hModule;
+    PVOID baseAddress;
+    IMAGE_COR20_HEADER* cliHeader;
+    ULONG sz, offset;
+
+    PBYTE streamData, streamPtr;
+
+    CLIMETAHDR* metaHeader;
+    CLISTREAMROOT* streamRoot;
+    CLIMETASTREAM* streamHeader;
+
+    SIZE_T nameLen;
+    WORD i = 0;
+    RPC_STATUS st;
+
+    st = UuidCreateNil(ModuleVersionId);
+    if (st != S_OK)
+        return FALSE;
+
+    hModule = LoadLibraryEx(lpImageName, NULL, LOAD_LIBRARY_AS_IMAGE_RESOURCE);
+    if (hModule) {
+
+        baseAddress = (PBYTE)(((ULONG_PTR)hModule) & ~3);
+
+        cliHeader = (IMAGE_COR20_HEADER*)RtlImageDirectoryEntryToData(baseAddress, TRUE,
+            IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &sz);
+
+        metaHeader = (CLIMETAHDR*)RtlOffsetToPointer(baseAddress, cliHeader->MetaData.VirtualAddress);
+        if (metaHeader->Signature == 'BJSB') {
+
+            offset = FIELD_OFFSET(CLIMETAHDR, Version) + metaHeader->VersionLength;
+            streamRoot = (CLISTREAMROOT*)RtlOffsetToPointer(metaHeader, offset);
+
+            streamPtr = (PBYTE)RtlOffsetToPointer(streamRoot, sizeof(CLISTREAMROOT));
+
+            do {
+                streamHeader = (CLIMETASTREAM*)streamPtr;
+                if (_strcmpi_a(streamHeader->Name, "#GUID") == 0) {
+                    if (streamHeader->Size == sizeof(GUID)) {
+                        streamData = (PBYTE)RtlOffsetToPointer(metaHeader, streamHeader->Offset);
+                        RtlCopyMemory(ModuleVersionId, streamData, sizeof(GUID));
+                        bResult = TRUE;
+                    }
+                    break;
+                }
+
+                nameLen = _strlen_a(streamHeader->Name) + 1;
+                offset = ALIGN_UP(FIELD_OFFSET(CLIMETASTREAM, Name) + nameLen, ULONG);
+                streamPtr = (PBYTE)RtlOffsetToPointer(streamPtr, offset);
+                i++;
+
+            } while (i < streamRoot->Streams);
+        }
+
+        FreeLibrary(hModule);
+    }
+
+    return bResult;
+}
+
+/*
+* supxFusionScanFiles
+*
+* Purpose:
+*
+* Scan directory for files of given type.
+*
+* Note:
+* Return TRUE to abort further scan, FALSE otherwise.
+*
+*/
+BOOL supxFusionScanFiles(
+    _In_ LPWSTR lpDirectory,
+    _In_ LPWSTR lpExtension,
+    _In_ pfnFusionScanFilesCallback pfnCallback,
+    _In_opt_ PVOID pvUserContext
+)
+{
+    BOOL bResult = FALSE;
+    HANDLE hFile;
+    LPWSTR lpLookupDirectory = NULL;
+    SIZE_T sz, dirLen;
+    WIN32_FIND_DATA fdata;
+
+    dirLen = _strlen(lpDirectory);
+
+    sz = (1 + dirLen + _strlen(lpExtension)) * sizeof(WCHAR);
+    lpLookupDirectory = (LPWSTR)supHeapAlloc(sz);
+    if (lpLookupDirectory) {
+
+        _strcpy(lpLookupDirectory, lpDirectory);
+
+        if (lpLookupDirectory[dirLen - 1] != L'\\') {
+            lpLookupDirectory[dirLen] = L'\\';
+            lpLookupDirectory[dirLen + 1] = 0;
+        }
+
+        _strcat(lpLookupDirectory, lpExtension);
+
+        RtlSecureZeroMemory(&fdata, sizeof(fdata));
+        hFile = FindFirstFile(lpLookupDirectory, &fdata);
+        if (hFile != INVALID_HANDLE_VALUE) {
+            do {
+
+                if (pfnCallback(lpDirectory, &fdata, pvUserContext)) {
+                    bResult = TRUE;
+                    break;
+                }
+
+            } while (FindNextFile(hFile, &fdata));
+            FindClose(hFile);
+        }
+        supHeapFree(lpLookupDirectory);
+    }
+
+    return bResult;
+}
+
+/*
+* supFusionScanDirectory
+*
+* Purpose:
+*
+* Recursively scan directories looking for files with given extension.
+*
+*/
+BOOL supFusionScanDirectory(
+    _In_ LPWSTR lpDirectory,
+    _In_ LPWSTR lpExtension,
+    _In_ pfnFusionScanFilesCallback pfnCallback,
+    _In_opt_ PVOID pvUserContext
+)
+{
+    BOOL                bResult = FALSE;
+    SIZE_T              dirLen;
+    HANDLE              hDirectory;
+    LPWSTR              lpFilePath;
+    WIN32_FIND_DATA     fdata;
+
+    if (lpDirectory == NULL || lpExtension == NULL)
+        return FALSE;
+    if (_strlen(lpExtension) > 16)
+        return FALSE;
+
+    if (supxFusionScanFiles(lpDirectory, lpExtension, pfnCallback, pvUserContext))
+        return TRUE;
+
+    dirLen = _strlen(lpDirectory);
+    lpFilePath = (LPWSTR)supHeapAlloc((2 * MAX_PATH + dirLen) * sizeof(WCHAR));
+    if (lpFilePath == NULL)
+        return FALSE;
+
+    _strcpy(lpFilePath, lpDirectory);
+
+    if (lpFilePath[dirLen - 1] != L'\\') {
+        lpFilePath[dirLen] = L'\\';
+        lpFilePath[dirLen + 1] = 0;
+        dirLen++;
+    }
+
+    lpFilePath[dirLen] = L'*';
+    lpFilePath[dirLen + 1] = 0;
+
+    RtlSecureZeroMemory(&fdata, sizeof(fdata));
+    hDirectory = FindFirstFile(lpFilePath, &fdata);
+    if (hDirectory != INVALID_HANDLE_VALUE) {
+        do {
+            if ((fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+                (fdata.cFileName[0] != L'.')
+                )
+            {
+                _strcpy(lpFilePath, lpDirectory);
+                _strcat(lpFilePath, fdata.cFileName);
+
+                bResult = supFusionScanDirectory(lpFilePath,
+                    lpExtension,
+                    pfnCallback,
+                    pvUserContext);
+
+                if (bResult)
+                    break;
+
+            }
+        } while (FindNextFile(hDirectory, &fdata));
+        FindClose(hDirectory);
+    }
+
+    supHeapFree(lpFilePath);
+
+    return bResult;
+}
+
+/*
+* supFusionFindFileByMVIDCallback
+*
+* Purpose:
+*
+* supFusionScanDirectory callback for MVID comparison.
+*
+*/
+BOOL supFusionFindFileByMVIDCallback(
+    _In_ LPWSTR CurrentDirectory,
+    _In_ WIN32_FIND_DATA* FindData,
+    _In_ PVOID UserContext
+)
+{
+    FUSION_SCAN_PARAM* ScanParam = (FUSION_SCAN_PARAM*)UserContext;
+    LPWSTR lpFileName;
+    SIZE_T nLen, dirLen;
+    GUID mVid;
+    RPC_STATUS rpcStatus;
+
+    dirLen = _strlen(CurrentDirectory);
+    nLen = 2 + MAX_PATH + dirLen;
+    lpFileName = (LPWSTR)supHeapAlloc(nLen * sizeof(WCHAR));
+    if (lpFileName) {
+
+        _strcpy(lpFileName, CurrentDirectory);
+
+        if (lpFileName[dirLen - 1] != L'\\') {
+            lpFileName[dirLen] = L'\\';
+            lpFileName[dirLen + 1] = 0;
+            dirLen++;
+        }
+
+        _strcat(lpFileName, FindData->cFileName);
+
+        if (supFusionGetImageMVID(lpFileName, &mVid)) {
+
+            if (0 == UuidCompare(ScanParam->ReferenceMVID,
+                &mVid,
+                &rpcStatus))
+            {
+                ScanParam->lpFileName = lpFileName;
+                return TRUE;
+            }
+        }
+
+        supHeapFree(lpFileName);
+    }
+    return FALSE;
 }

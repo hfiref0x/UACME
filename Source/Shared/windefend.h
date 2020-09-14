@@ -4,9 +4,9 @@
 *
 *  TITLE:       WINDEFEND.H
 *
-*  VERSION:     3.26
+*  VERSION:     3.27
 *
-*  DATE:        23 May 2020
+*  DATE:        10 Sep 2020
 *
 *  MSE / Windows Defender anti-emulation part header file.
 *
@@ -43,6 +43,9 @@ NTSTATUS wdIsEmulatorPresent(
     VOID);
 
 BOOLEAN wdIsEmulatorPresent2(
+    VOID);
+
+BOOLEAN wdIsEmulatorPresent3(
     VOID);
 
 NTSTATUS wdIsEnabled(
