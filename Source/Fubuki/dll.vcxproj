@@ -364,8 +364,6 @@
     <ClInclude Include="fubuki.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="uihacks.h" />
-    <ClInclude Include="unbcl.h" />
-    <ClInclude Include="wbemcomn.h" />
     <ClInclude Include="winmm.h" />
   </ItemGroup>
   <ItemGroup>

@@ -1,14 +1,14 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2019
+*  (C) COPYRIGHT AUTHORS, 2018 - 2020
 *
-*  TITLE:       B33F.H
+*  TITLE:       STUB.H
 *
-*  VERSION:     3.17
+*  VERSION:     3.50
 *
-*  DATE:        18 Mar 2019
-*
-*  Prototypes and definitions for b33f method.
+*  DATE:        14 Sep 2020
+* 
+*  Kuma stub header file
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -18,6 +18,8 @@
 *******************************************************************************/
 #pragma once
 
-NTSTATUS ucmCOMHandlersMethod(
-    _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize);
+VOID __cdecl Stub_main();
+BOOL WINAPI Stub_DllMain(
+    _In_ HINSTANCE hinstDLL,
+    _In_ DWORD fdwReason,
+    _In_ LPVOID lpvReserved);

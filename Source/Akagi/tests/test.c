@@ -4,9 +4,9 @@
 *
 *  TITLE:       TEST.C
 *
-*  VERSION:     3.27
+*  VERSION:     3.50
 *
-*  DATE:        10 Sep 2020
+*  DATE:        14 Sep 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -29,8 +29,8 @@ BOOL ucmTestRoutine(
     _In_opt_ ULONG PayloadSize)
 {
     UNREFERENCED_PARAMETER(PayloadCode);
-    UNREFERENCED_PARAMETER(PayloadSize); 
+    UNREFERENCED_PARAMETER(PayloadSize);
 
-    SetEvent(g_ctx->SharedContext.hCompletionEvent);
+    supSetGlobalCompletionEvent();
     return TRUE;
 }

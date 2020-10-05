@@ -1,14 +1,14 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2019
+*  (C) COPYRIGHT AUTHORS, 2016 - 2020
 *
-*  TITLE:       CARBERP.H
+*  TITLE:       SHELLSUP.H
 *
-*  VERSION:     3.17
+*  VERSION:     3.50
 *
-*  DATE:        18 Mar 2019
+*  DATE:        14 Sep 2020
 *
-*  Prototypes and definitions for Carberp method.
+*  Prototypes and definitions for shell registry hijack autoelevation method.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -18,7 +18,14 @@
 *******************************************************************************/
 #pragma once
 
-NTSTATUS ucmWusaMethod(
+NTSTATUS ucmShellRegModMethod(
     _In_ UCM_METHOD Method,
-    _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize);
+    LPWSTR lpTargetKey,
+    LPWSTR lpszTargetApp,
+    LPWSTR lpszPayload);
+
+NTSTATUS ucmShellRegModMethod2(
+    _In_ UCM_METHOD Method,
+    LPWSTR lpTargetKey,
+    LPWSTR lpszTargetApp,
+    LPWSTR lpszPayload);

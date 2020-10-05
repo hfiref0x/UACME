@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2019
+*  (C) COPYRIGHT AUTHORS, 2018 - 2020
 *
 *  TITLE:       FUBUKI.H
 *
-*  VERSION:     3.15
+*  VERSION:     3.50
 *
-*  DATE:        15 Feb 2019
+*  DATE:        14 Sep 2020
 *
 *  Fubuki global include header file.
 *
@@ -31,8 +31,6 @@
 //
 // Forwards
 //
-#include "unbcl.h"
-#include "wbemcomn.h"
 #include "winmm.h"
 
 #define LoadedMsg      TEXT("Fubuki lock and loaded")

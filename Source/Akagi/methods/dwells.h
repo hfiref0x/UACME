@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2019
+*  (C) COPYRIGHT AUTHORS, 2018 - 2020
 *
 *  TITLE:       DWELLS.H
 *
-*  VERSION:     3.17
+*  VERSION:     3.50
 *
-*  DATE:        18 Mar 2019
+*  DATE:        14 Sep 2020
 *
 *  Prototypes and definitions for David Wells method.
 *

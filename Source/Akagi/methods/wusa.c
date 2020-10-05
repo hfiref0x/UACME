@@ -20,51 +20,6 @@
 #include "makecab.h"
 
 /*
-* ucmWusaExtractPackage
-*
-* Purpose:
-*
-* Extract cab to protected directory using wusa.
-* This routine expect source as ellocnak.msu cab file in the %temp% folder.
-*
-*/
-BOOL ucmWusaExtractPackage(
-    _In_ LPWSTR lpTargetDirectory
-)
-{
-    BOOL bResult = FALSE;
-    SIZE_T Size;
-    LPWSTR lpCommandLine = NULL;
-    WCHAR szMsuFileName[MAX_PATH * 2];
-
-    if (lpTargetDirectory == NULL)
-        return FALSE;
-
-    RtlSecureZeroMemory(szMsuFileName, sizeof(szMsuFileName));
-    _strcpy(szMsuFileName, g_ctx->szTempDirectory);
-    _strcat(szMsuFileName, ELLOCNAK_MSU);
-
-    Size = ((1 + _strlen(lpTargetDirectory) +
-        _strlen(szMsuFileName) +
-        MAX_PATH) * sizeof(WCHAR));
-
-    lpCommandLine = (LPWSTR)supHeapAlloc(Size);
-    if (lpCommandLine) {
-
-        _strcpy(lpCommandLine, L"/c wusa ");
-        _strcat(lpCommandLine, szMsuFileName);
-        _strcat(lpCommandLine, L" /extract:");
-        _strcat(lpCommandLine, lpTargetDirectory);
-
-        bResult = supRunProcess(CMD_EXE, lpCommandLine);
-
-        supHeapFree(lpCommandLine);
-    }
-    DeleteFile(szMsuFileName);
-    return bResult;
-}
-
-/*
 * ucmCreateCabinetForSingleFile
 *
 * Purpose:

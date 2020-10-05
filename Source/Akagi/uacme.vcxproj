@@ -9,6 +9,14 @@
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseInternalDll|Win32">
+      <Configuration>ReleaseInternalDll</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseInternalDll|x64">
+      <Configuration>ReleaseInternalDll</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="ReleaseInternal|Win32">
       <Configuration>ReleaseInternal</Configuration>
       <Platform>Win32</Platform>
@@ -58,6 +66,13 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternalDll|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
@@ -71,6 +86,14 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternalDll|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <SpectreMitigation>false</SpectreMitigation>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -87,10 +110,16 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternal|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternalDll|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternal|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternalDll|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -124,6 +153,14 @@
     <TargetName>$(ProjectName)32</TargetName>
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternalDll|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>.\output\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>.\output\$(Platform)\$(Configuration)\</IntDir>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetName>$(ProjectName)32</TargetName>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>.\output\$(Platform)\$(Configuration)\</OutDir>
@@ -133,6 +170,15 @@
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternal|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>.\output\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>.\output\$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)64</TargetName>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternalDll|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>.\output\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>.\output\$(Platform)\$(Configuration)\</IntDir>
@@ -160,7 +206,8 @@
       </EntryPointSymbol>
       <Version>6.1</Version>
       <MinimumRequiredVersion>6.1</MinimumRequiredVersion>
-      <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
     </Link>
     <ResourceCompile />
     <ResourceCompile>
@@ -190,7 +237,8 @@
       </EntryPointSymbol>
       <Version>6.1</Version>
       <MinimumRequiredVersion>6.1</MinimumRequiredVersion>
-      <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
     </Link>
     <ResourceCompile />
     <ResourceCompile />
@@ -230,7 +278,8 @@
       <SetChecksum>true</SetChecksum>
       <MinimumRequiredVersion>6.1</MinimumRequiredVersion>
       <Version>6.1</Version>
-      <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
     </Link>
     <ResourceCompile />
     <ResourceCompile>
@@ -253,6 +302,51 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <CompileAs>CompileAsC</CompileAs>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnablePREfast>true</EnablePREfast>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <StringPooling>true</StringPooling>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)</AdditionalIncludeDirectories>
+      <CallingConvention>StdCall</CallingConvention>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>No</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
+      <SetChecksum>true</SetChecksum>
+      <MinimumRequiredVersion>6.1</MinimumRequiredVersion>
+      <Version>6.1</Version>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
+    </Link>
+    <ResourceCompile />
+    <ResourceCompile>
+      <ShowProgress>true</ShowProgress>
+      <PreprocessorDefinitions>useRc32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles>akagi.manifest</AdditionalManifestFiles>
+    </Manifest>
+    <PostBuildEvent>
+      <Command>\Utils\StripDebug.exe .\output\$(Platform)\$(Configuration)\Akagi32.exe</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternalDll|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;COMPILE_AS_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -317,7 +411,8 @@
       <SetChecksum>true</SetChecksum>
       <MinimumRequiredVersion>6.1</MinimumRequiredVersion>
       <Version>6.1</Version>
-      <ModuleDefinitionFile>export.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
     </Link>
     <ResourceCompile />
     <ResourceCompile />
@@ -340,6 +435,49 @@
       <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <CompileAs>CompileAsC</CompileAs>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnablePREfast>true</EnablePREfast>
+      <StringPooling>true</StringPooling>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
+      <SetChecksum>true</SetChecksum>
+      <MinimumRequiredVersion>6.1</MinimumRequiredVersion>
+      <Version>6.1</Version>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
+    </Link>
+    <ResourceCompile />
+    <ResourceCompile />
+    <ResourceCompile>
+      <ShowProgress>true</ShowProgress>
+    </ResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles>akagi.manifest</AdditionalManifestFiles>
+    </Manifest>
+    <PostBuildEvent>
+      <Command>\Utils\StripDebug.exe .\output\$(Platform)\$(Configuration)\Akagi64.exe</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternalDll|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MinSpace</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;COMPILE_AS_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -401,25 +539,16 @@
     <ClCompile Include="makecab.c" />
     <ClCompile Include="compress.c" />
     <ClCompile Include="methods\api0cradle.c" />
-    <ClCompile Include="methods\b33f.c" />
-    <ClCompile Include="methods\bytecode77.c" />
-    <ClCompile Include="methods\carberp.c" />
-    <ClCompile Include="methods\comet.c" />
-    <ClCompile Include="methods\deroko.c" />
     <ClCompile Include="methods\dwells.c" />
-    <ClCompile Include="methods\enigma0x3.c" />
-    <ClCompile Include="methods\explife.c" />
-    <ClCompile Include="methods\gootkit.c" />
+    <ClCompile Include="methods\shellsup.c" />
     <ClCompile Include="methods\hakril.c" />
     <ClCompile Include="methods\hybrids.c" />
     <ClCompile Include="methods\comsup.c" />
     <ClCompile Include="methods\methods.c" />
-    <ClCompile Include="methods\pitou.c" />
     <ClCompile Include="methods\rinn.c" />
-    <ClCompile Include="methods\sandworm.c" />
-    <ClCompile Include="methods\simda.c" />
     <ClCompile Include="methods\tyranid.c" />
     <ClCompile Include="methods\wusa.c" />
+    <ClCompile Include="stub.c" />
     <ClCompile Include="sup.c" />
     <ClCompile Include="tests\test.c" />
   </ItemGroup>
@@ -436,29 +565,18 @@
     <ClInclude Include="methods\dwells.h" />
     <ClInclude Include="methods\elvint.h" />
     <ClInclude Include="methods\rinn.h" />
-    <ClInclude Include="secrets.h" />
     <ClInclude Include="makecab.h" />
     <ClInclude Include="encresource.h" />
     <ClInclude Include="methods\api0cradle.h" />
-    <ClInclude Include="methods\apphelp.h" />
-    <ClInclude Include="methods\b33f.h" />
-    <ClInclude Include="methods\bytecode77.h" />
-    <ClInclude Include="methods\carberp.h" />
-    <ClInclude Include="methods\comet.h" />
     <ClInclude Include="methods\comsup.h" />
-    <ClInclude Include="methods\deroko.h" />
-    <ClInclude Include="methods\enigma0x3.h" />
-    <ClInclude Include="methods\explife.h" />
-    <ClInclude Include="methods\gootkit.h" />
+    <ClInclude Include="methods\shellsup.h" />
     <ClInclude Include="methods\hakril.h" />
     <ClInclude Include="methods\hybrids.h" />
     <ClInclude Include="methods\methods.h" />
-    <ClInclude Include="methods\pitou.h" />
-    <ClInclude Include="methods\sandworm.h" />
-    <ClInclude Include="methods\simda.h" />
     <ClInclude Include="methods\tyranid.h" />
     <ClInclude Include="methods\wusa.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="stub.h" />
     <ClInclude Include="sup.h" />
     <ClInclude Include="tests\test.h" />
   </ItemGroup>
@@ -467,17 +585,21 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseInternal|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseInternalDll|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseInternal|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseInternalDll|x64'">true</ExcludedFromBuild>
     </ResourceCompile>
     <ResourceCompile Include="bin64res.rc">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseInternal|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseInternalDll|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseInternal|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseInternalDll|x64'">true</ExcludedFromBuild>
     </ResourceCompile>
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>

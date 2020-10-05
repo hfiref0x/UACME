@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.H
 *
-*  VERSION:     3.27
+*  VERSION:     3.50
 *
-*  DATE:        10 Sep 2020
+*  DATE:        14 Sep 2020
 *
 *  Prototypes and definitions for compression.
 *
@@ -39,48 +39,6 @@ typedef struct _DCU_HEADER {
     //PBYTE pbData[1];     /* not a member of the structure */
 } DCU_HEADER, *PDCU_HEADER;
 
-typedef BOOL(WINAPI *pfnCreateDecompressor)(
-    _In_ DWORD Algorithm,
-    _In_opt_ PCOMPRESS_ALLOCATION_ROUTINES AllocationRoutines,
-    _Out_ PDECOMPRESSOR_HANDLE DecompressorHandle);
-
-typedef BOOL(WINAPI *pfnDecompress)(
-    _In_ DECOMPRESSOR_HANDLE DecompressorHandle,
-    _In_reads_bytes_opt_(CompressedDataSize) PVOID CompressedData,
-    _In_ SIZE_T CompressedDataSize,
-    _Out_writes_bytes_opt_(UncompressedBufferSize) PVOID UncompressedBuffer,
-    _In_ SIZE_T UncompressedBufferSize,
-    _Out_opt_ PSIZE_T UncompressedDataSize);
-
-typedef BOOL(WINAPI *pfnCloseDecompressor)(
-    _In_ DECOMPRESSOR_HANDLE DecompressorHandle);
-
-typedef enum _CFILE_TYPE {
-    ftDCN,
-    ftDCS,
-    ftMZ,
-    ftUnknown,
-    ftMax
-} CFILE_TYPE;
-
-typedef struct _DCN_HEADER {
-    DWORD Signature; //DCN v1
-    BYTE Data[1]; //Intra Package Delta 
-} DCN_HEADER, *PDCN_HEADER;
-
-typedef struct _DCS_HEADER {
-    DWORD Signature; //DCS v1
-    DWORD NumberOfBlocks;
-    DWORD UncompressedFileSize;
-    BYTE FirstBlock[1];
-} DCS_HEADER, *PDCS_HEADER;
-
-typedef struct _DCS_BLOCK {
-    DWORD CompressedBlockSize;
-    DWORD DecompressedBlockSize;
-    BYTE CompressedData[1];
-} DCS_BLOCK, *PDCS_BLOCK;
-
 typedef PVOID(*pfnDecompressPayload)(
     _In_ ULONG PayloadId,
     _In_ PVOID pbBuffer,
@@ -93,34 +51,10 @@ PVOID DecompressPayload(
     _In_ ULONG cbBuffer,
     _Out_ PULONG pcbDecompressed);
 
-CFILE_TYPE GetTargetFileType(
-    VOID *FileBuffer);
-
-BOOL ProcessFileDCN(
-    PVOID SourceFile,
-    SIZE_T SourceFileSize,
-    PVOID *OutputFileBuffer,
-    PSIZE_T OutputFileBufferSize);
-
-BOOL ProcessFileDCS(
-    PVOID SourceFile,
-    SIZE_T SourceFileSize,
-    PVOID *OutputFileBuffer,
-    PSIZE_T OutputFileBufferSize);
-
-BOOL ProcessFileMZ(
-    PVOID SourceFile,
-    SIZE_T SourceFileSize,
-    PVOID *OutputFileBuffer,
-    PSIZE_T OutputFileBufferSize);
-
 VOID EncodeBuffer(
     _In_ PVOID Buffer,
     _In_ ULONG BufferSize,
     _In_ ULONG Key);
-
-BOOL InitCabinetDecompressionAPI(
-    VOID);
 
 SIZE_T StringCryptEncrypt(
     _In_ PWCHAR Src,
