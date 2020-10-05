@@ -154,6 +154,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Shared\u64tohex.c" />
     <ClCompile Include="..\Shared\u64tostr.c" />
     <ClCompile Include="..\Shared\ultohex.c" />
     <ClCompile Include="..\Shared\ultostr.c" />
@@ -171,7 +172,6 @@
     <ClCompile Include="dllmain.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Shared\ntos.h" />
     <ClInclude Include="..\Shared\rtltypes.h" />
     <ClInclude Include="..\Shared\shared.h" />
     <ClInclude Include="..\Shared\util.h" />

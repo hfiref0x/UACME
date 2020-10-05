@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.27
+*  VERSION:     3.50
 *
-*  DATE:        13 Sep 2020
+*  DATE:        14 Sep 2020
 *
 *  Common header file for the program support routines.
 *
@@ -22,6 +22,8 @@
 #error ANSI build is not supported
 #endif
 
+#define KUMA_STUB
+
 #include "shared\libinc.h"
 
 //disable nonmeaningful warnings.
@@ -35,30 +37,21 @@
 #pragma warning(disable: 6255 6263)  // alloca
 
 #define PAYLOAD_ID_NONE MAXDWORD
-#define KONGOU_IDR 0xFFFFFFFE
 
 #define USER_REQUESTS_AUTOAPPROVED TRUE //auto approve any asking dialogs
+
+#define SECRETS_ID IDR_SECRETS
 
 #ifdef _WIN64
 #include "bin64res.h"
 #define FUBUKI_ID IDR_FUBUKI64
-#define HIBIKI_ID IDR_HIBIKI64
-#define IKAZUCHI_ID IDR_IKAZUCHI64
 #define AKATSUKI_ID IDR_AKATSUKI64
 #define KAMIKAZE_ID IDR_KAMIKAZE
-#define FUJINAMI_ID IDR_FUJINAMI
-#define CHIYODA_ID IDR_CHIYODA
-#define KONGOU_ID KONGOU_IDR
 #else
 #include "bin32res.h"
 #define FUBUKI_ID IDR_FUBUKI32
-#define HIBIKI_ID IDR_HIBIKI32
-#define IKAZUCHI_ID IDR_IKAZUCHI32
 #define AKATSUKI_ID PAYLOAD_ID_NONE //this module unavailable for 32 bit
 #define KAMIKAZE_ID IDR_KAMIKAZE
-#define FUJINAMI_ID IDR_FUJINAMI //this module is dotnet x86 for any supported platform
-#define CHIYODA_ID PAYLOAD_ID_NONE //this module unavailable for 32 bit
-#define KONGOU_ID KONGOU_IDR
 #endif
 
 #include <Windows.h>
@@ -82,13 +75,9 @@
 #include "sup.h"
 #include "compress.h"
 #include "aic.h"
+#include "stub.h"
 #include "methods\methods.h"
 
-//
-// enable for test
-//#pragma comment(lib, "libucrt.lib")
-//#include <strsafe.h>
-//
 //default execution flow
 #define AKAGI_FLAG_KILO  1
 
@@ -118,13 +107,8 @@ typedef struct _UACME_CONTEXT {
     ULONG                   OptionalParameterLength; //count of characters
     PVOID                   ucmHeap;
     pfnDecompressPayload    DecompressRoutine;
-    HINSTANCE               hNtdll;
-    HINSTANCE               hKernel32;
-    HINSTANCE               hShell32;
-    HINSTANCE               hMpClient;
     UACME_FUSION_CONTEXT    FusionContext;
     UACME_SHARED_CONTEXT    SharedContext;
-    UCM_METHOD_EXECUTE_TYPE MethodExecuteType;
     WCHAR                   szSystemRoot[MAX_PATH + 1]; //with end slash
     WCHAR                   szSystemDirectory[MAX_PATH + 1];//with end slash
     WCHAR                   szTempDirectory[MAX_PATH + 1]; //with end slash

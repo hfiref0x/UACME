@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.23
+*  VERSION:     3.50
 *
-*  DATE:        22 Mar 2020
+*  DATE:        14 Sep 2020
 *
 *  Naka, support payload compressor.
 *
@@ -1039,20 +1039,13 @@ VOID EncodeBuffer(
 // Keep in sync with Akagi
 //
 #define IDR_FUBUKI64 100
-#define IDR_HIBIKI64 101
 #define IDR_IKAZUCHI64 102
 #define IDR_AKATSUKI64 103
 #define IDR_KAMIKAZE64 104
-#define IDR_FUJINAMI64 105
-#define IDR_CHIYODA64 106  
-#define IDR_KONGOU64 0xFFFFFFFE
 
 #define IDR_FUBUKI32 200
-#define IDR_HIBIKI32 201
 #define IDR_IKAZUCHI32 202
 #define IDR_KAMIKAZE 203
-#define IDR_FUJINAMI32 204
-#define IDR_KONGOU32 0xFFFFFFFE
 
 BOOL ProcessUnit(
     _In_ PWSTR UnitKeyName,
@@ -1129,33 +1122,8 @@ VOID CreateSecretTables(VOID)
         c++;
 
     szFileName[l] = 0;
-    _strcat(&szFileName[l], L"Hibiki64.key");
-    if (ProcessUnit(szFileName, IDR_HIBIKI64, &S[c]))
-        c++;
-
-    szFileName[l] = 0;
-    _strcat(&szFileName[l], L"Ikazuchi64.key");
-    if (ProcessUnit(szFileName, IDR_IKAZUCHI64, &S[c]))
-        c++;
-
-    szFileName[l] = 0;
     _strcat(&szFileName[l], L"Kamikaze.key");
     if (ProcessUnit(szFileName, IDR_KAMIKAZE64, &S[c]))
-        c++;
-
-    szFileName[l] = 0;
-    _strcat(&szFileName[l], L"Fujinami.key");
-    if (ProcessUnit(szFileName, IDR_FUJINAMI64, &S[c]))
-        c++;
-
-    szFileName[l] = 0;
-    _strcat(&szFileName[l], L"Chiyoda64.key");
-    if (ProcessUnit(szFileName, IDR_CHIYODA64, &S[c]))
-        c++;
-
-    szFileName[l] = 0;
-    _strcat(&szFileName[l], L"Kongou64.key");
-    if (ProcessUnit(szFileName, IDR_KONGOU64, &S[c]))
         c++;
 
     EncodeBuffer(S, c * sizeof(DCK_HEADER));
@@ -1174,28 +1142,8 @@ VOID CreateSecretTables(VOID)
         c++;
 
     szFileName[l] = 0;
-    _strcat(&szFileName[l], L"Hibiki32.key");
-    if (ProcessUnit(szFileName, IDR_HIBIKI32, &S[c]))
-        c++;
-
-    szFileName[l] = 0;
-    _strcat(&szFileName[l], L"Ikazuchi32.key");
-    if (ProcessUnit(szFileName, IDR_IKAZUCHI32, &S[c]))
-        c++;
-
-    szFileName[l] = 0;
     _strcat(&szFileName[l], L"Kamikaze.key");
     if (ProcessUnit(szFileName, IDR_KAMIKAZE, &S[c]))
-        c++;
-
-    szFileName[l] = 0;
-    _strcat(&szFileName[l], L"Fujinami.key");
-    if (ProcessUnit(szFileName, IDR_FUJINAMI32, &S[c]))
-        c++;
-
-    szFileName[l] = 0;
-    _strcat(&szFileName[l], L"Kongou32.key");
-    if (ProcessUnit(szFileName, IDR_KONGOU32, &S[c]))
         c++;
 
     EncodeBuffer(S, c * sizeof(DCK_HEADER));

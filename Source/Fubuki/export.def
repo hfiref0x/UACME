@@ -1,67 +1,35 @@
 EXPORTS
 DllRegisterServer           = DummyFunc PRIVATE
+
+; WOW64LOG
+Wow64LogSystemService		= DummyFunc
+Wow64LogInitialize			= DummyFunc
+Wow64LogTerminate			= DummyFunc
+Wow64LogMessageArgList		= DummyFunc
+
+; COMMCTL
+TaskDialogIndirect          = DummyFunc @345
+
+; Main routines
 MpManagerOpen               = UiAccessMethodDllMain
 MpHandleClose               = UiAccessMethodHookProc
-MpScanStart                 = EntryPoint
+MpScanStart                 = EntryPointExeMode
 MpScanControl               = EntryPointUIAccessLoader
-MpThreatOpen                = DummyFunc
-ConstructPartialMsgVW       = DummyFunc
-CurrentIP                   = DummyFunc
-WdsAbortBlackboard          = DummyFunc
-WdsTerminate                = DummyFunc
-WdsCreateBlackboard         = DummyFunc
-WdsDestroyBlackboard        = DummyFunc
-WdsEnumFirstBlackboardItem  = DummyFunc
-WdsEnumNextBlackboardItem   = DummyFunc
-WdsFreeData                 = DummyFunc
-WdsGetBlackboardValue       = DummyFunc
-WdsInitialize               = DummyFunc
-WdsAbortBlackboardItemEnum  = DummyFunc
-WdsSetupLogMessageW         = DummyFunc
-WdsIsDiagnosticModeEnabled  = DummyFunc
-WdsSetAssertFlags           = DummyFunc
-GenerateActionQueue         = DummyFunc
-ProcessActionQueue          = DummyFunc
-DevObjEnumDeviceInterfaces  = DummyFunc
-DevObjGetClassDevs          = DummyFunc
-DevObjCreateDeviceInfoList  = DummyFunc
-DevObjDestroyDeviceInfoList = DummyFunc
-DevObjOpenDeviceInfo        = DummyFunc
-CallNtPowerInformation      = DummyFunc
-PowerGetActiveScheme        = DummyFunc
-CreateUri                   = DummyFunc
-PrivateCoInternetCombineUri = DummyFunc
-SLGetWindowsInformation     = DummyFunc
-NetApiBufferAllocate        = DummyFunc
-NetApiBufferFree            = DummyFunc
-NetApiBufferReallocate      = DummyFunc
-NetApiBufferSize            = DummyFunc
-NetRemoteComputerSupports   = DummyFunc
-NetapipBufferAllocate       = DummyFunc
-NetpIsComputerNameValid     = DummyFunc
-NetpIsDomainNameValid       = DummyFunc
-NetpIsGroupNameValid        = DummyFunc
-NetpIsRemote                = DummyFunc
-NetpIsRemoteNameValid       = DummyFunc
-NetpIsShareNameValid        = DummyFunc
-NetpIsUncComputerNameValid  = DummyFunc
-NetpIsUserNameValid         = DummyFunc
-NetpwListCanonicalize       = DummyFunc
-NetpwListTraverse           = DummyFunc
-NetpwNameCanonicalize       = DummyFunc
-NetpwNameCompare            = DummyFunc
-NetpwNameValidate           = DummyFunc
-NetpwPathCanonicalize       = DummyFunc
-NetpwPathCompare            = DummyFunc
-NetpwPathType               = DummyFunc
+MpThreatOpen                = EntryPointSxsConsent
+
+; MSCOREE.DLL
 ClrCreateManagedInstance    = DummyFunc
 CorBindToRuntimeEx          = DummyFunc
 LoadLibraryShim             = DummyFunc
-DpxNewJob                   = DummyFunc
-InitCommonControlsEx        = DummyFunc
+
+; OSKSUPPORT.DLL
 InitializeOSKSupport        = DummyFunc
 UninitializeOSKSupport      = DummyFunc
+
+; DUSER.DLL
 InvalidateGadget            = DummyFunc
+
+; GDIPLUS
 GdipAlloc                   = DummyFunc
 GdipCloneImage              = DummyFunc
 GdipCreateBitmapFromStream  = DummyFunc
@@ -77,17 +45,10 @@ GdipFree                    = DummyFunc
 GdiplusShutdown             = DummyFunc
 GdiplusStartup              = DummyFunc
 
-UnattendAddResults                      = DummyFunc
-UnattendCtxBeginModify                  = DummyFunc
-UnattendCtxCancelModify                 = DummyFunc
-UnattendCtxCleanup                      = DummyFunc
-UnattendCtxCommitModify                 = DummyFunc
-UnattendCtxDeserializeWithResults       = DummyFunc
-UnattendCtxOpenNode                     = DummyFunc
-UnattendCtxReplaceMatchedNodesWithText  = DummyFunc
-UnattendCtxSerialize                    = DummyFunc
-UnattendCtxSerializeSettingsStream      = DummyFunc
-UnattendFindAnswerFileWithResults       = DummyFunc
-UnattendFreeNode                        = DummyFunc
-UnattendFreeResults                     = DummyFunc
-UnattendMarkPassUsedInCtx               = DummyFunc
+; Rest of exports
+MpManagerDisable            = DummyFunc
+MpManagerEnable             = DummyFunc
+MpManagerStatusQuery        = DummyFunc
+MpManagerStatusQueryEx      = DummyFunc
+MpManagerVersionQuery       = DummyFunc 
+MpMemoryScanStart           = DummyFunc

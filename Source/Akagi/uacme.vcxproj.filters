@@ -25,9 +25,6 @@
     <Filter Include="ldr">
       <UniqueIdentifier>{751f7002-5a6c-4d2e-9296-3b8132e640f8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="shared">
-      <UniqueIdentifier>{629ff935-c53a-4df8-99ee-29698f72e6b8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="appinfo">
       <UniqueIdentifier>{b3b23f8d-a79f-4195-85a2-ce0665938c27}</UniqueIdentifier>
     </Filter>
@@ -96,31 +93,7 @@
     <ClCompile Include="methods\methods.c">
       <Filter>Source Files\methods</Filter>
     </ClCompile>
-    <ClCompile Include="methods\carberp.c">
-      <Filter>Source Files\methods</Filter>
-    </ClCompile>
-    <ClCompile Include="methods\comet.c">
-      <Filter>Source Files\methods</Filter>
-    </ClCompile>
-    <ClCompile Include="methods\enigma0x3.c">
-      <Filter>Source Files\methods</Filter>
-    </ClCompile>
-    <ClCompile Include="methods\explife.c">
-      <Filter>Source Files\methods</Filter>
-    </ClCompile>
-    <ClCompile Include="methods\gootkit.c">
-      <Filter>Source Files\methods</Filter>
-    </ClCompile>
     <ClCompile Include="methods\hybrids.c">
-      <Filter>Source Files\methods</Filter>
-    </ClCompile>
-    <ClCompile Include="methods\pitou.c">
-      <Filter>Source Files\methods</Filter>
-    </ClCompile>
-    <ClCompile Include="methods\sandworm.c">
-      <Filter>Source Files\methods</Filter>
-    </ClCompile>
-    <ClCompile Include="methods\simda.c">
       <Filter>Source Files\methods</Filter>
     </ClCompile>
     <ClCompile Include="..\Shared\ldr.c">
@@ -141,20 +114,8 @@
     <ClCompile Include="..\Shared\u64tohex.c">
       <Filter>minirtl</Filter>
     </ClCompile>
-    <ClCompile Include="methods\b33f.c">
-      <Filter>Source Files\methods</Filter>
-    </ClCompile>
     <ClCompile Include="methods\api0cradle.c">
       <Filter>Source Files\methods</Filter>
-    </ClCompile>
-    <ClCompile Include="methods\bytecode77.c">
-      <Filter>Source Files\methods</Filter>
-    </ClCompile>
-    <ClCompile Include="methods\deroko.c">
-      <Filter>Source Files\methods</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Shared\windefend.c">
-      <Filter>shared</Filter>
     </ClCompile>
     <ClCompile Include="..\Shared\u64tostr.c">
       <Filter>minirtl</Filter>
@@ -173,6 +134,15 @@
     </ClCompile>
     <ClCompile Include="appinfo\x86-32\appinfo32.c">
       <Filter>appinfo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\windefend.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stub.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="methods\shellsup.c">
+      <Filter>Source Files\methods</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -209,55 +179,19 @@
     <ClInclude Include="aic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shared\shared.h">
-      <Filter>shared</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Shared\windefend.h">
-      <Filter>shared</Filter>
-    </ClInclude>
-    <ClInclude Include="secrets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="encresource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="methods\api0cradle.h">
       <Filter>Source Files\methods</Filter>
     </ClInclude>
-    <ClInclude Include="methods\apphelp.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\b33f.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\bytecode77.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\carberp.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\comet.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
     <ClInclude Include="methods\comsup.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\deroko.h">
       <Filter>Source Files\methods</Filter>
     </ClInclude>
     <ClInclude Include="methods\dwells.h">
       <Filter>Source Files\methods</Filter>
     </ClInclude>
     <ClInclude Include="methods\elvint.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\enigma0x3.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\explife.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\gootkit.h">
       <Filter>Source Files\methods</Filter>
     </ClInclude>
     <ClInclude Include="methods\hakril.h">
@@ -269,22 +203,25 @@
     <ClInclude Include="methods\methods.h">
       <Filter>Source Files\methods</Filter>
     </ClInclude>
-    <ClInclude Include="methods\pitou.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
     <ClInclude Include="methods\rinn.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\sandworm.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\simda.h">
       <Filter>Source Files\methods</Filter>
     </ClInclude>
     <ClInclude Include="methods\tyranid.h">
       <Filter>Source Files\methods</Filter>
     </ClInclude>
     <ClInclude Include="methods\wusa.h">
+      <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\windefend.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\shared.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stub.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\shellsup.h">
       <Filter>Source Files\methods</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2019
+*  (C) COPYRIGHT AUTHORS, 2018 - 2020
 *
 *  TITLE:       RINN.H
 *
-*  VERSION:     3.20
+*  VERSION:     3.50
 *
-*  DATE:        24 Oct 2019
+*  DATE:        14 Sep 2020
 *
 *  Prototypes and definitions for RinN method.
 *
@@ -18,16 +18,6 @@
 *******************************************************************************/
 #pragma once
 
-NTSTATUS ucmCreateNewLinkMethod(
-    _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize);
-
 NTSTATUS ucmEditionUpgradeManagerMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
-
-BOOL ucmCreateNewLinkMethodCleanup(
-    VOID);
-
-BOOL ucmEditionUpgradeManagerMethodCleanup(
-    VOID);

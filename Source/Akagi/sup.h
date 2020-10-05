@@ -4,7 +4,7 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.27
+*  VERSION:     3.50
 *
 *  DATE:        14 Sep 2020
 *
@@ -17,50 +17,6 @@
 *
 *******************************************************************************/
 #pragma once
-
-typedef BOOL(WINAPI* pfnShellExecuteExW)(
-    SHELLEXECUTEINFOW* pExecInfo);
-
-typedef DWORD(WINAPI* pfnWaitForSingleObject)(
-    HANDLE hHandle,
-    DWORD dwMilliseconds);
-
-typedef BOOL(WINAPI* pfnCloseHandle)(
-    HANDLE hObject);
-
-typedef HRESULT(WINAPI* pfnCoInitialize)(
-    LPVOID pvReserved);
-
-typedef HRESULT(WINAPI* pfnCoGetObject)(
-    LPCWSTR pszName,
-    BIND_OPTS* pBindOptions,
-    REFIID riid,
-    void** ppv);
-
-typedef HRESULT(WINAPI* pfnSHCreateItemFromParsingName)(
-    PCWSTR pszPath,
-    IBindCtx* pbc,
-    REFIID riid,
-    void** ppv);
-
-typedef void(WINAPI* pfnCoUninitialize)(
-    VOID);
-
-typedef NTSTATUS(NTAPI* pfnRtlExitUserThread)(
-    _In_ NTSTATUS ExitStatus);
-
-typedef struct tagLOAD_PARAMETERS {
-    WCHAR                   szVerb[10];
-    WCHAR                   szTargetApp[MAX_PATH + 1];
-    pfnShellExecuteExW      ShellExecuteExW;
-    pfnWaitForSingleObject  WaitForSingleObject;
-    pfnCloseHandle          CloseHandle;
-    pfnRtlExitUserThread    RtlExitUserThread;
-} LOAD_PARAMETERS, * PLOAD_PARAMETERS;
-
-typedef BOOL(CALLBACK *UCM_FIND_FILE_CALLBACK)(
-    WIN32_FIND_DATA *fdata,
-    LPWSTR lpDirectory);
 
 typedef struct _SXS_SEARCH_CONTEXT {
     LPWSTR DllName;
@@ -142,13 +98,6 @@ typedef BOOL(CALLBACK* pfnFusionScanFilesCallback)(
 VOID supSetLastErrorFromNtStatus(
     _In_ NTSTATUS LastNtStatus);
 
-BOOL supQueryProcessTokenIL(
-    _In_ HANDLE hProcess,
-    _Out_ PULONG IntegrityLevel);
-
-HANDLE supGetProcessWithILAsCaller(
-    _In_ ACCESS_MASK UseDesiredAccess);
-
 BOOLEAN supIsProcess32bit(
     _In_ HANDLE hProcess);
 
@@ -157,7 +106,7 @@ BOOL supGetElevationType(
 
 BOOL supWriteBufferToFile(
     _In_ LPWSTR lpFileName,
-    _In_ PVOID Buffer,
+    _In_opt_ PVOID Buffer,
     _In_ DWORD BufferSize);
 
 BOOL supDecodeAndWriteBufferToFile(
@@ -170,45 +119,22 @@ PBYTE supReadFileToBuffer(
     _In_ LPWSTR lpFileName,
     _Inout_opt_ LPDWORD lpBufferSize);
 
-PBYTE supReadFileToBuffer_Cur(
-    _In_ LPWSTR lpFileName,
-    _Inout_opt_ LPDWORD lpBufferSize);
-
 BOOL supRunProcess2(
     _In_ LPWSTR lpszProcessName,
     _In_opt_ LPWSTR lpszParameters,
     _In_opt_ LPWSTR lpVerb,
     _In_ INT nShow,
-    _In_ BOOL fWait);
+    _In_ ULONG mTimeOut);
 
 BOOL supRunProcess(
     _In_ LPWSTR lpszProcessName,
     _In_opt_ LPWSTR lpszParameters);
-
-_Success_(return != NULL)
-HANDLE NTAPI supRunProcessEx(
-    _In_ LPWSTR lpszParameters,
-    _In_opt_ LPWSTR lpCurrentDirectory,
-    _In_opt_ LPWSTR lpApplicationName,
-    _Out_opt_ HANDLE *PrimaryThread);
-
-_Success_(return != NULL)
-HANDLE NTAPI supRunProcessIndirect(
-    _In_ LPWSTR lpszParameters,
-    _In_opt_ LPWSTR lpCurrentDirectory,
-    _Inout_opt_ LPWSTR lpApplicationName,
-    _In_ ULONG CreationFlags,
-    _In_ WORD ShowWindowFlags,
-    _Out_opt_ HANDLE *PrimaryThread);
 
 void supCopyMemory(
     _Inout_ void *dest,
     _In_ size_t cbdest,
     _In_ const void *src,
     _In_ size_t cbsrc);
-
-DWORD supQueryEntryPointRVA(
-    _In_ LPWSTR lpImageFile);
 
 LPWSTR supQueryEnvironmentVariableOffset(
     _In_ PUNICODE_STRING Value);
@@ -235,9 +161,6 @@ VOID ucmShowMessage(
 
 INT ucmShowQuestionById(
     _In_ ULONG MessageId);
-
-INT ucmShowQuestion(
-    _In_ LPWSTR lpszMsg);
 
 PBYTE supLdrQueryResourceData(
     _In_ ULONG_PTR ResourceId,
@@ -284,6 +207,12 @@ BOOL supRegDeleteKeyRecursive(
     _In_ HKEY hKeyRoot,
     _In_ LPWSTR lpSubKey);
 
+BOOL supSetEnvVariableEx(
+    _In_ BOOL fRemove,
+    _In_opt_ LPWSTR lpKeyName,
+    _In_ LPWSTR lpVariableName,
+    _In_opt_ LPWSTR lpVariableData);
+
 BOOL supSetEnvVariable(
     _In_ BOOL fRemove,
     _In_opt_ LPWSTR lpKeyName,
@@ -319,6 +248,13 @@ BOOL supReplaceDllEntryPoint(
     _In_ LPCSTR lpEntryPointName,
     _In_ BOOL fConvertToExe);
 
+NTSTATUS supRegWriteValue(
+    _In_ HANDLE hKey,
+    _In_opt_ LPWSTR ValueName,
+    _In_ DWORD ValueType,
+    _In_ PVOID ValueData,
+    _In_ ULONG ValueDataSize);
+
 NTSTATUS supRegReadValue(
     _In_ HANDLE hKey,
     _In_ LPWSTR ValueName,
@@ -331,28 +267,14 @@ BOOL supQuerySystemRoot(
     _Inout_ PVOID Context);
 
 PVOID supGetSystemInfo(
-    _In_ SYSTEM_INFORMATION_CLASS InfoClass);
+    _In_ SYSTEM_INFORMATION_CLASS SystemInformationClass);
 
 BOOL supIsCorImageFile(
     PVOID ImageBase);
 
-NTSTATUS supRegSetValueIndirectHKCU(
-    _In_ LPWSTR TargetKey,
-    _In_opt_ LPWSTR ValueName,
-    _In_ LPWSTR lpData,
-    _In_ ULONG cbData);
-
-NTSTATUS supRemoveRegLinkHKCU(
-    VOID);
-
 BOOL supIsConsentApprovedInterface(
     _In_ LPWSTR InterfaceName,
     _Out_ PBOOL IsApproved);
-
-BOOL supDeleteKeyValueAndFlushKey(
-    _In_ HKEY hRootKey,
-    _In_ LPWSTR lpKeyName,
-    _In_ LPWSTR lpValueName);
 
 PVOID supEncodePointer(
     _In_ PVOID Pointer);
@@ -385,13 +307,6 @@ VOID supDestroyUacmeContext(
 NTSTATUS supEnableDisableWow64Redirection(
     _In_ BOOL bDisable);
 
-BOOLEAN supIndirectRegAdd(
-    _In_ WCHAR* pszRootKey,
-    _In_ WCHAR* pszKey,
-    _In_opt_ WCHAR* pszValue,
-    _In_opt_ WCHAR* pszDataType,
-    _In_ WCHAR* pszData);
-
 BOOLEAN supIsNetfx48PlusInstalled(
     VOID);
 
@@ -401,10 +316,6 @@ NTSTATUS supGetProcessDebugObject(
 
 BOOLEAN supInitFusion(
     _In_ DWORD dwVersion);
-
-HRESULT supFusionGetAssemblyName(
-    _In_ IAssemblyName* pInterface,
-    _Inout_ LPWSTR* lpAssemblyName);
 
 HRESULT supFusionGetAssemblyPath(
     _In_ IAssemblyCache* pInterface,
@@ -432,6 +343,27 @@ BOOL supFusionFindFileByMVIDCallback(
     _In_ LPWSTR CurrentDirectory,
     _In_ WIN32_FIND_DATA* FindData,
     _In_ PVOID UserContext);
+
+void supBinTextEncode(
+    _In_ unsigned __int64 x,
+    _Inout_ wchar_t* s);
+
+VOID supGenerateSharedObjectName(
+    _In_ WORD ObjectId,
+    _Inout_ LPWSTR lpBuffer);
+
+VOID supSetGlobalCompletionEvent(
+    VOID);
+
+VOID supWaitForGlobalCompletionEvent(
+    VOID);
+
+NTSTATUS supOpenClassesKey(
+    _In_opt_ PUNICODE_STRING UserRegEntry,
+    _Out_ PHANDLE KeyHandle);
+
+NTSTATUS supRemoveRegLinkHKCU(
+    _In_ LPWSTR lpszRegLink);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

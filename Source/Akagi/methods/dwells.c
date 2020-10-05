@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2019
+*  (C) COPYRIGHT AUTHORS, 2018 - 2020
 *
 *  TITLE:       DWELLS.C
 *
-*  VERSION:     3.17
+*  VERSION:     3.50
 *
-*  DATE:        18 Mar 2019
+*  DATE:        14 Sep 2020
 *
 *  David Wells based method.
 *

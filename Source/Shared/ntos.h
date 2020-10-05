@@ -5,9 +5,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.152
+*  VERSION:     1.155
 *
-*  DATE:        12 July 2020
+*  DATE:        14 Sep 2020
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -30,6 +30,10 @@
 #pragma once
 #endif
 
+#pragma warning(push)
+#pragma warning(disable: 4201) // nonstandard extension used : nameless struct/union
+#pragma warning(disable: 4214) // nonstandard extension used : bit field types other than int
+
 #ifndef NTOS_RTL
 #define NTOS_RTL
 
@@ -48,10 +52,6 @@ extern "C" {
 #endif
 
 #pragma comment(lib, "ntdll.lib")
-
-#pragma warning(push)
-#pragma warning(disable: 4201) // nonstandard extension used : nameless struct/union
-#pragma warning(disable: 4214) // nonstandard extension used : bit field types other than int
 
 #ifndef PAGE_SIZE
 #define PAGE_SIZE 0x1000ull
@@ -175,7 +175,7 @@ typedef PVOID PMEM_EXTENDED_PARAMETER;
 //Valid Only for Windows 8+
 #define NtCurrentProcessToken() ((HANDLE)(LONG_PTR)-4) 
 #define NtCurrentThreadToken() ((HANDLE)(LONG_PTR)-5)
-#define NtCurrentEffectiveToken() ((HANDLE)(LONG_PTR)-6)
+#define NtCurrentThreadEffectiveToken() ((HANDLE)(LONG_PTR)-6) //GetCurrentThreadEffectiveToken
 
 //
 // ntdef.h begin
@@ -270,9 +270,17 @@ char _RTL_CONSTANT_STRING_type_check(const void *s);
 //
 // Event Object Access Rights
 //
+#ifndef EVENT_QUERY_STATE
 #define EVENT_QUERY_STATE       0x0001
+#endif
+
+#ifndef EVENT_MODIFY_STATE      //SDK compatibility
 #define EVENT_MODIFY_STATE      0x0002  
-#define EVENT_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3) 
+#endif
+
+#ifndef EVENT_ALL_ACCESS        //SDK compatibility
+#define EVENT_ALL_ACCESS(EVENT_QUERY_STATE | EVENT_MODIFY_STATE | STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE)
+#endif
 
 //
 // EventPair Object Access Rights
@@ -296,7 +304,10 @@ char _RTL_CONSTANT_STRING_type_check(const void *s);
 //
 // Mutant Object Access Rights
 //
+#ifndef MUTANT_QUERY_STATE      //SDK compatibility
 #define MUTANT_QUERY_STATE      0x0001
+#endif
+
 #ifndef MUTANT_ALL_ACCESS //SDK compatibility
 #define MUTANT_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|MUTANT_QUERY_STATE)
 #endif
@@ -308,6 +319,12 @@ char _RTL_CONSTANT_STRING_type_check(const void *s);
 #define PORT_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | PORT_CONNECT)
 
 //
+// Filter Port Access Rights
+//
+#define FLT_PORT_CONNECT 0x0001
+#define FLT_PORT_ALL_ACCESS (FLT_PORT_CONNECT|STANDARD_RIGHTS_ALL)
+
+//
 // Profile Object Access Rights
 //
 #define PROFILE_CONTROL (0x0001)
@@ -317,8 +334,14 @@ char _RTL_CONSTANT_STRING_type_check(const void *s);
 // Semaphore Object Access Rights
 //
 #define SEMAPHORE_QUERY_STATE       0x0001
+
+#ifndef SEMAPHORE_MODIFY_STATE      //SDK compatibility
 #define SEMAPHORE_MODIFY_STATE      0x0002 
+#endif
+
+#ifndef SEMAPHORE_ALL_ACCESS //SDK compatibility
 #define SEMAPHORE_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3)
+#endif
 
 //
 // SymbolicLink Object Access Rights
@@ -415,6 +438,10 @@ char _RTL_CONSTANT_STRING_type_check(const void *s);
 #endif
 #ifndef FILE_USE_FILE_POINTER_POSITION
 #define FILE_USE_FILE_POINTER_POSITION  0xfffffffe
+#endif
+
+#ifndef FILE_SHARE_VALID_FLAGS
+#define FILE_SHARE_VALID_FLAGS FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE
 #endif
 
 //
@@ -847,6 +874,11 @@ typedef struct _SYSTEM_ISOLATED_USER_MODE_INFORMATION {
     BOOLEAN Spare0[6];
     ULONGLONG Spare1;
 } SYSTEM_ISOLATED_USER_MODE_INFORMATION, *PSYSTEM_ISOLATED_USER_MODE_INFORMATION;
+
+typedef struct _SYSTEM_PROCESSOR_FEATURES_INFORMATION { //chappell
+    ULONGLONG ProcessorFeatureBits;
+    ULONGLONG Reserved[3];
+} SYSTEM_PROCESSOR_FEATURES_INFORMATION, * PSYSTEM_PROCESSOR_FEATURES_INFORMATION;
 
 typedef enum _PROCESSINFOCLASS {
     ProcessBasicInformation = 0,
@@ -4569,6 +4601,12 @@ typedef struct _MEMORY_IMAGE_INFORMATION {
         };
     };
 } MEMORY_IMAGE_INFORMATION, * PMEMORY_IMAGE_INFORMATION;
+
+typedef struct _MEMORY_ENCLAVE_IMAGE_INFORMATION {
+    MEMORY_IMAGE_INFORMATION ImageInfo;
+    UCHAR UniqueID[32];
+    UCHAR AuthorID[32];
+} MEMORY_ENCLAVE_IMAGE_INFORMATION, * PMEMORY_ENCLAVE_IMAGE_INFORMATION;
 
 /*
 ** Virtual Memory END
@@ -9190,6 +9228,24 @@ RtlAddIntegrityLabelToBoundaryDescriptor(
 
 /************************************************************************************
 *
+* RTL data exports.
+*
+************************************************************************************/
+
+#ifndef _M_X64
+#define RtlNtdllName L"ntdll.dll"
+#define RtlDosPathSeperatorsString ((UNICODE_STRING)RTL_CONSTANT_STRING(L"\\/"))
+#define RtlAlternateDosPathSeperatorString ((UNICODE_STRING)RTL_CONSTANT_STRING(L"/"))
+#define RtlNtPathSeperatorString ((UNICODE_STRING)RTL_CONSTANT_STRING(L"\\"))
+#else
+NTSYSAPI PWSTR RtlNtdllName;
+NTSYSAPI UNICODE_STRING RtlDosPathSeperatorsString;
+NTSYSAPI UNICODE_STRING RtlAlternateDosPathSeperatorString;
+NTSYSAPI UNICODE_STRING RtlNtPathSeperatorString;
+#endif
+
+/************************************************************************************
+*
 * ETW API.
 *
 ************************************************************************************/
@@ -11694,7 +11750,7 @@ NTSTATUS
 NTAPI
 NtQueueApcThreadEx(
     _In_ HANDLE ThreadHandle,
-    _In_opt_ HANDLE UserApcReserveHandle,
+    _In_opt_ HANDLE ReserveHandle,
     _In_ PPS_APC_ROUTINE ApcRoutine,
     _In_opt_ PVOID ApcArgument1,
     _In_opt_ PVOID ApcArgument2,
@@ -12357,6 +12413,50 @@ NtReleaseWorkerFactoryWorker(
 *
 ************************************************************************************/
 
+typedef enum _TRACE_CONTROL_INFORMATION_CLASS {
+    TraceControlStartLogger = 1,
+    TraceControlStopLogger = 2,
+    TraceControlQueryLogger = 3,
+    TraceControlUpdateLogger = 4,
+    TraceControlFlushLogger = 5,
+    TraceControlIncrementLoggerFile = 6,
+    TraceControlInvalidClass1 = 7,
+    TraceControlInvalidCalss2 = 8,
+    TraceControlInvalidClass3 = 9,
+    TraceControlInvalidClass4 = 10,
+    TraceControlRealtimeConnect = 11,
+    TraceControlWdiDispatchControl = 13,
+    TraceControlRealtimeDisconnectConsumerByHandle = 14,
+    TraceControlReceiveNotification = 16,
+    TraceControlEnableGuid = 17,
+    TraceControlSendReplyDataBlock = 18,
+    TraceControlReceiveReplyDataBlock = 19,
+    TraceControlWdiUpdateSem = 20,
+    TraceControlGetTraceGuidList = 21,
+    TraceControlGetTraceGuidInfo = 22,
+    TraceControlEnumerateTraceGuids = 23,
+    TraceControlInvalidClass5 = 24,
+    TraceControlQueryReferenceTime = 25,
+    TraceControlTrackProviderBinary = 26,
+    TraceControlAddNotificationEvent = 27,
+    TraceControlUpdateDisallowList = 28,
+    TraceControlInvalidClass6 = 29,
+    TraceControlInvalidClass7 = 30,
+    TraceControlUseDescriptorTypeUm = 31,
+    TraceControlGetTraceGroupList = 32,
+    TraceControlGetTraceGroupInfo = 33,
+    TraceControlTraceSetDisallowList = 34,
+    TraceControlSetCompressionSettings = 35,
+    TraceControlGetCompressionSettings = 36,
+    TraceControlUpdatePeriodicCaptureState = 37,
+    TraceControlGetPrivateSessionTraceHandle = 38,
+    TraceControlRegisterPrivateSession = 39,
+    TraceControlQuerySessionDemuxObject = 40,
+    TraceControlSetProviderBinaryTracking = 41,
+    TraceControlMaxLoggers = 42,
+    TraceControlMaxPmcCounter = 43
+} TRACE_CONTROL_INFORMATION_CLASS;
+
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -12370,11 +12470,11 @@ NTSYSAPI
 NTSTATUS
 NTAPI
 NtTraceControl(
-    _In_ ULONG FunctionCode,
-    _In_reads_bytes_opt_(InBufferLen) PVOID InBuffer,
-    _In_ ULONG InBufferLen,
-    _Out_writes_bytes_opt_(OutBufferLen) PVOID OutBuffer,
-    _In_ ULONG OutBufferLen,
+    _In_ TRACE_CONTROL_INFORMATION_CLASS TraceInformationClass,
+    _In_reads_bytes_opt_(InputBufferLength) PVOID InputBuffer,
+    _In_ ULONG InputBufferLength,
+    _Out_writes_bytes_opt_(TraceInformationLength) PVOID TraceInformation,
+    _In_ ULONG TraceInformationLength,
     _Out_ PULONG ReturnLength);
 
 /************************************************************************************
@@ -12628,11 +12728,10 @@ RtlApplicationVerifierStop(
 // NTOS_RTL HEADER END
 //
 
-#pragma warning(pop)
-
-
 #ifdef __cplusplus
 }
 #endif
+
+#pragma warning(pop)
 
 #endif NTOS_RTL

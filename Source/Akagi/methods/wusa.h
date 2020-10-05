@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2019
+*  (C) COPYRIGHT AUTHORS, 2017 - 2020
 *
 *  TITLE:       WUSA.H
 *
-*  VERSION:     3.17
+*  VERSION:     3.50
 *
-*  DATE:        18 Mar 2019
+*  DATE:        14 Sep 2020
 *
 *  Prototypes and definitions for Windows Update Standalone Installer (WUSA) based methods.
 *
@@ -17,9 +17,6 @@
 *
 *******************************************************************************/
 #pragma once
-
-BOOL ucmWusaExtractPackage(
-    _In_ LPWSTR lpTargetDirectory);
 
 BOOL ucmCreateCabinetForSingleFile(
     _In_ LPWSTR lpSourceDll,
