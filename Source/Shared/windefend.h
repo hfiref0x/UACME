@@ -4,9 +4,9 @@
 *
 *  TITLE:       WINDEFEND.H
 *
-*  VERSION:     3.27
+*  VERSION:     3.50
 *
-*  DATE:        10 Sep 2020
+*  DATE:        05 Oct 2020
 *
 *  MSE / Windows Defender anti-emulation part header file.
 *
@@ -17,8 +17,6 @@
 *
 *******************************************************************************/
 #pragma once
-
-#include "mpclient.h"
 
 VOID wdCheckEmulatedVFS(
     VOID);

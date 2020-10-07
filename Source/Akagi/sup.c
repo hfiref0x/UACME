@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.50
 *
-*  DATE:        14 Sep 2020
+*  DATE:        25 Sep 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -2805,9 +2805,9 @@ BOOL supFusionGetImageMVID(
 
     PBYTE streamData, streamPtr;
 
-    CLIMETAHDR* metaHeader;
-    CLISTREAMROOT* streamRoot;
-    CLIMETASTREAM* streamHeader;
+    STORAGESIGNATURE* pStorSign;
+    STORAGEHEADER* pStorHeader;
+    STORAGESTREAM* pStorStream;
 
     SIZE_T nameLen;
     WORD i = 0;
@@ -2825,31 +2825,31 @@ BOOL supFusionGetImageMVID(
         cliHeader = (IMAGE_COR20_HEADER*)RtlImageDirectoryEntryToData(baseAddress, TRUE,
             IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &sz);
 
-        metaHeader = (CLIMETAHDR*)RtlOffsetToPointer(baseAddress, cliHeader->MetaData.VirtualAddress);
-        if (metaHeader->Signature == 'BJSB') {
+        pStorSign = (STORAGESIGNATURE*)RtlOffsetToPointer(baseAddress, cliHeader->MetaData.VirtualAddress);
+        if (pStorSign->lSignature == 'BJSB') {
 
-            offset = FIELD_OFFSET(CLIMETAHDR, Version) + metaHeader->VersionLength;
-            streamRoot = (CLISTREAMROOT*)RtlOffsetToPointer(metaHeader, offset);
+            offset = FIELD_OFFSET(STORAGESIGNATURE, pVersion) + pStorSign->iVersionString;
+            pStorHeader = (STORAGEHEADER*)RtlOffsetToPointer(pStorSign, offset);
 
-            streamPtr = (PBYTE)RtlOffsetToPointer(streamRoot, sizeof(CLISTREAMROOT));
+            streamPtr = (PBYTE)RtlOffsetToPointer(pStorHeader, sizeof(STORAGEHEADER));
 
             do {
-                streamHeader = (CLIMETASTREAM*)streamPtr;
-                if (_strcmpi_a(streamHeader->Name, "#GUID") == 0) {
-                    if (streamHeader->Size == sizeof(GUID)) {
-                        streamData = (PBYTE)RtlOffsetToPointer(metaHeader, streamHeader->Offset);
+                pStorStream = (STORAGESTREAM*)streamPtr;
+                if (_strcmpi_a(pStorStream->rcName, "#GUID") == 0) {
+                    if (pStorStream->iSize == sizeof(GUID)) {
+                        streamData = (PBYTE)RtlOffsetToPointer(pStorSign, pStorStream->iOffset);
                         RtlCopyMemory(ModuleVersionId, streamData, sizeof(GUID));
                         bResult = TRUE;
                     }
                     break;
                 }
 
-                nameLen = _strlen_a(streamHeader->Name) + 1;
-                offset = ALIGN_UP(FIELD_OFFSET(CLIMETASTREAM, Name) + nameLen, ULONG);
+                nameLen = _strlen_a(pStorStream->rcName) + 1;
+                offset = ALIGN_UP(FIELD_OFFSET(STORAGESTREAM, rcName) + nameLen, ULONG);
                 streamPtr = (PBYTE)RtlOffsetToPointer(streamPtr, offset);
                 i++;
 
-            } while (i < streamRoot->Streams);
+            } while (i < pStorHeader->iStreams);
         }
 
         FreeLibrary(hModule);

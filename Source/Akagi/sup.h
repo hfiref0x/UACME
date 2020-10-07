@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.50
 *
-*  DATE:        14 Sep 2020
+*  DATE:        25 Sep 2020
 *
 *  Common header file for the program support routines.
 *
@@ -54,30 +54,38 @@ typedef struct _REPARSE_DATA_BUFFER {
 #define REPARSE_DATA_BUFFER_HEADER_LENGTH FIELD_OFFSET(REPARSE_DATA_BUFFER, GenericReparseBuffer.DataBuffer)
 
 //
-// Fusion
+// Fusion CLI metadata structures
+//
+typedef struct _STORAGESIGNATURE {
+    ULONG lSignature;               // "Magic" signature.
+    USHORT iMajorVer;               // Major file version.
+    USHORT iMinorVer;               // Minor file version.
+    ULONG iExtraData;               // Offset to next structure of information 
+    ULONG iVersionString;           // Length of version string
+    BYTE pVersion[ANYSIZE_ARRAY];   // Version string
+} STORAGESIGNATURE, *PSTORAGESIGNATURE;
+
+typedef struct _STORAGEHEADER {
+    BYTE fFlags; // STGHDR_xxx flags.
+    BYTE pad;
+    USHORT iStreams; // How many streams are there.
+} STORAGEHEADER, *PSTORAGEHEADER;
+
+#define MAXSTREAMNAME 32
+
+typedef struct _STORAGESTREAM {
+    ULONG iOffset;                // Offset in file for this stream.
+    ULONG iSize;                  // Size of the file.
+    CHAR  rcName[MAXSTREAMNAME];
+} STORAGESTREAM, * PSTORAGESTREAM;
+
+//
+// Fusion metadata end
 //
 
-typedef struct _CLIMETAHDR {
-    ULONG Signature;
-    USHORT MajorVersion;
-    USHORT MinorVersion;
-    ULONG Reserved;
-    ULONG VersionLength;
-    CHAR Version[ANYSIZE_ARRAY];
-} CLIMETAHDR, * PCLIMETAHDR;
-
-typedef struct _CLISTREAMROOT {
-    BYTE Flags;
-    BYTE Align0;
-    WORD Streams;
-} CLISTREAMROOT, * PCLISTREAMROOT;
-
-typedef struct _CLIMETASTREAM {
-    DWORD Offset;
-    DWORD Size;
-    CHAR Name[ANYSIZE_ARRAY];
-} CLIMETASTREAM, * PCLIMETASTREAM;
-
+//
+// Assembly cache scan routine and definitions.
+//
 typedef HRESULT(WINAPI* pfnCreateAssemblyCache)(
     _Out_ IAssemblyCache** ppAsmCache,
     _In_  DWORD            dwReserved);
@@ -92,8 +100,15 @@ typedef BOOL(CALLBACK* pfnFusionScanFilesCallback)(
     WIN32_FIND_DATA* FindData,
     PVOID UserContext);
 
+//
+// Memory allocator flags.
+//
 #define DEFAULT_ALLOCATION_TYPE MEM_COMMIT | MEM_RESERVE
 #define DEFAULT_PROTECT_TYPE PAGE_READWRITE
+
+//
+// sup* prototypes
+//
 
 VOID supSetLastErrorFromNtStatus(
     _In_ NTSTATUS LastNtStatus);

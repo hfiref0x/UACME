@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.50
 *
-*  DATE:        14 Sep 2020
+*  DATE:        25 Sep 2020
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1528,6 +1528,8 @@ NTSTATUS ucmNICPoisonMethod(
             SetEndOfFile(hFile);
             CloseHandle(hFile);
         }
+        else
+            break;
 
         //
         // Run target.
