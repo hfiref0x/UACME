@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.50
 *
-*  DATE:        25 Sep 2020
+*  DATE:        11 Oct 2020
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1199,7 +1199,7 @@ NTSTATUS ucmDccwCOMMethod(
         if (supIsConsentApprovedInterface(T_CLSID_ColorDataProxy, &bIntApproved1)) {
             if (supIsConsentApprovedInterface(T_CLSID_CMSTPLUA, &bIntApproved2))
                 if ((bIntApproved1 == FALSE) || (bIntApproved2 == FALSE)) {
-                    MethodResult = STATUS_UNSATISFIED_DEPENDENCIES;
+                    MethodResult = STATUS_NOINTERFACE;
                     break;
                 }
         }

@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.50
 *
-*  DATE:        14 Sep 2020
+*  DATE:        11 Oct 2020
 *
 *  UAC bypass method from Oddvar Moe aka api0cradle.
 *
@@ -45,7 +45,7 @@ NTSTATUS ucmCMLuaUtilShellExecMethod(
         //
         if (supIsConsentApprovedInterface(T_CLSID_CMSTPLUA, &bApprove)) {
             if (bApprove == FALSE) {
-                MethodResult = STATUS_UNSATISFIED_DEPENDENCIES;
+                MethodResult = STATUS_NOINTERFACE;
                 break;
             }
         }

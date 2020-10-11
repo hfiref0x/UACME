@@ -715,7 +715,7 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
   * If v140 then select 8.1 (Note that Windows 8.1 SDK must be installed);
   * If v141/v142 then select 10 (Note that Windows 10 SDK must be installed). 
   
-* Can be built with SDK 8.1/10.17134/10.17763/10.18362/10.18363.
+* Can be built with SDK 8.1/10.17134/10.17763/10.18362/10.18363/10.19041.
 
 # References
 
