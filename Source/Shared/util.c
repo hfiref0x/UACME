@@ -4,9 +4,9 @@
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.51
 *
-*  DATE:        14 Sep 2020
+*  DATE:        16 Oct 2020
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -178,7 +178,6 @@ VOID ucmxGenerateSharedObjectName(
 
     ucmxBinTextEncode(value.QuadPart, lpBuffer);
 }
-
 
 /*
 * ucmxCreateBoundaryDescriptorSID

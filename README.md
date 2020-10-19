@@ -12,7 +12,7 @@
 
 Run executable from command line: akagi32 [Key] [Param] or akagi64 [Key] [Param]. See "Run examples" below for more info.
 
-First param is number of method to use, second is optional command (executable file name including full path) to run. Second param can be empty - in this case program will execute elevated cmd.exe from system32 folder.
+First parameter is number of method to use, second is optional command (executable file name including full path) to run. Second parameter can be empty - in this case program will execute elevated cmd.exe from system32 folder.
 
 **Note**: Since 3.5.0 version all "fixed" methods are considered obsolete and removed altogether with all supporting code/units. If you still need them - use [v3.2.x branch](https://github.com/hfiref0x/UACME/tree/v3.2.x)
 
@@ -652,11 +652,21 @@ First param is number of method to use, second is optional command (executable f
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.2.7
+64. Author: Arush Agarampur
+     * Type: Elevated COM interface 
+     * Method: IIEAxiAdminInstaller, IIEAxiInstaller2, IFileOperation
+     * Target(s): IE add-on install cache
+     * Component(s): Attacker defined
+     * Implementation: ucmIeAddOnInstallMethod
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.5.1
 
 </details>
 
 Note:
-* Method (30) (63) implemented only in x64 version;
+* Method (30) (63) (64) implemented only in x64 version;
 * Method (30) require x64 because it abuses WOW64 subsystem feature;
 * Method (55) is not really reliable (as any GUI hacks) and included just for fun.
 
@@ -667,7 +677,7 @@ Run examples:
 * akagi64 61 c:\windows\system32\charmap.exe
 
 # Warning
-* This tool shows ONLY popular UAC bypass method used by malware, and reimplement some of them in a different way improving original concepts. There are different, not yet known to the general public, methods. Be aware of this;  
+* This tool shows ONLY popular UAC bypass method used by malware, and re-implement some of them in a different way improving original concepts. There are different, not yet known to the general public, methods. Be aware of this;  
 * This tool is not intended for AV tests and not tested to work in aggressive AV environment, if you still plan to use it with installed bloatware AV soft - use it at your own risk;
 * Some AV may flag this tool as HackTool, MSE/WinDefender constantly marks it as malware, nope;
 * If you run this program on real computer remember to remove all program leftovers after usage, for more info about files it drops to system folders see source code;
@@ -698,9 +708,9 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # Compiled Binaries
 
-* They are not provided since 2.8.9 and will never be provided in future. Coupe of reasons why not and why you should not provide them too to the general public:
-   * If you look at this project in a nutshell it is a HackTool, despite initial goal to be a demonstrator. Of course several AV's detects it as HackTool (MS WD for example), however most of VirusTotal patients detects it as generic "malware". Which is of course incorrect, however unfortunately some lazy malware writters blindly copy-paste code to their crapware (or even simple use this tool directly) thus some AV created signatures based on project code parts;
-   * By giving compiled binaries to everyone you make life of script-kiddies much easier because having need to compile from source works as perfect barrier for exceptionaliy dumb script-kiddies and "button-clickers";
+* They are not provided since 2.8.9 and will never be provided in future. The reasons (and why you too should not provide them to the general public):
+   * If you look at this project in a nutshell it is a HackTool, despite initial goal to be a demonstrator. Of course several AV's detects it as HackTool (MS WD for example), however most of VirusTotal patients detects it as generic "malware". Which is of course incorrect, however unfortunately some lazy malware writers blindly copy-paste code to their crapware (or even simple use this tool directly) thus some AV created signatures based on project code parts;
+   * By giving compiled binaries to everyone you make life of script-kiddies much easier because having need to compile from source works as perfect barrier for exceptionally dumb script-kiddies and "button-clickers";
    * Having compiled binaries in the repository will ultimately lead to flagging this repository pages as malicious (due to above reasons) by various content filters (SmartScreen, Google Safe Browsing etc).
 * This decision is a final and won't be changed.
 
@@ -714,8 +724,17 @@ https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
 * For v140 and above set Target Platform Version (Project->Properties->General):
   * If v140 then select 8.1 (Note that Windows 8.1 SDK must be installed);
   * If v141/v142 then select 10 (Note that Windows 10 SDK must be installed). 
+
+* To build working binary:
+  * Undefine KUMA_STUB
+  * Compile payload units
+  * Compile Naka module
+  * Encrypt all payload units using Naka module
+  * Generate secret blobs for these units using Naka module
+  * Move compiled units and secret blobs to the Akagi\Bin directory
+  * Rebuild Akagi
   
-* Can be built with SDK 8.1/10.17134/10.17763/10.18362/10.18363/10.19041.
+* Can be built with SDK 8.1 and later versions.
 
 # References
 

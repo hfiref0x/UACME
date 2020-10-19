@@ -4,9 +4,9 @@
 *
 *  TITLE:       ELVINT.H
 *
-*  VERSION:     3.50
+*  VERSION:     3.51
 *
-*  DATE:        14 Sep 2020
+*  DATE:        16 Oct 2020
 *
 *  Prototypes and definitions for elevated interface methods.
 *
@@ -22,6 +22,8 @@ typedef interface IColorDataProxy IColorDataProxy;
 typedef interface ICMLuaUtil ICMLuaUtil;
 typedef interface IEditionUpgradeManager IEditionUpgradeManager;
 typedef interface ISecurityEditor ISecurityEditor;
+typedef interface IIEAdminBrokerObject IIEAdminBrokerObject;
+typedef interface IActiveXInstallBroker IActiveXInstallBroker;
 
 //VTBL DEF
 
@@ -268,9 +270,84 @@ typedef struct ISecurityEditorVtbl {
 
 } *PISecurityEditorVtbl;
 
+typedef struct IIEAdminBrokerObjectVtbl {
+
+    BEGIN_INTERFACE
+
+        HRESULT(STDMETHODCALLTYPE* QueryInterface)(
+            __RPC__in IIEAdminBrokerObject* This,
+            __RPC__in REFIID riid,
+            _COM_Outptr_  void** ppvObject);
+
+        ULONG(STDMETHODCALLTYPE* AddRef)(
+            __RPC__in IIEAdminBrokerObject* This);
+
+        ULONG(STDMETHODCALLTYPE* Release)(
+            __RPC__in IIEAdminBrokerObject* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* InitializeAdminInstaller)(
+            __RPC__in IIEAdminBrokerObject* This,
+            _In_opt_ LPCOLESTR ProviderName,
+            _In_ DWORD Unknown0,
+            _COM_Outptr_ void** InstanceGuid);
+
+    END_INTERFACE
+
+} *PIIEAdminBrokerObjectVtbl;
+
+typedef struct IActiveXInstallBrokerVtbl {
+
+    BEGIN_INTERFACE
+
+        HRESULT(STDMETHODCALLTYPE* QueryInterface)(
+            __RPC__in IActiveXInstallBroker* This,
+            __RPC__in REFIID riid,
+            _COM_Outptr_  void** ppvObject);
+
+        ULONG(STDMETHODCALLTYPE* AddRef)(
+            __RPC__in IActiveXInstallBroker* This);
+
+        ULONG(STDMETHODCALLTYPE* Release)(
+            __RPC__in IActiveXInstallBroker* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* VerifyFile)(
+            __RPC__in IActiveXInstallBroker* This,
+            _In_ BSTR InstanceGuid,
+            _In_ HWND ParentWindow,
+            _In_ BSTR Unknown0,
+            _In_ BSTR pcwszFilePath,
+            _In_ BSTR Unknown1,
+            _In_ ULONG dwUIChoice,
+            _In_ ULONG dwUIContext,
+            _In_ REFGUID GuidKey,
+            _Out_ BSTR* VerifiedFileName,
+            _Out_ PULONG CertDetailsSize,
+            _Out_ void** CertDetails);
+
+        HRESULT(STDMETHODCALLTYPE* RunSetupCommand)(
+            __RPC__in IActiveXInstallBroker* This,
+            _In_ BSTR InstanceGuid,
+            _In_ HWND ParentWindow,
+            _In_ BSTR szCmdName,
+            _In_ BSTR szInfSection,
+            _In_ BSTR szDir,
+            _In_ BSTR szTitle,
+            _In_ ULONG dwFlags,
+            _Out_ PHANDLE lpTargetHandle);
+
+        //incomplete definition
+
+    END_INTERFACE
+
+} *PIActiveXInstallBrokerVtbl;
+
 // INTERFACE DEF
 
 interface IColorDataProxy { CONST_VTBL struct IColorDataProxyVtbl *lpVtbl; };
 interface ICMLuaUtil { CONST_VTBL struct ICMLuaUtilVtbl *lpVtbl; };
 interface IEditionUpgradeManager { CONST_VTBL struct IEditionUpgradeManagerVtbl *lpVtbl; };
 interface ISecurityEditor { CONST_VTBL struct ISecurityEditorVtbl *lpVtbl; };
+interface IIEAdminBrokerObject { CONST_VTBL struct IIEAdminBrokerObjectVtbl* lpVtbl; };
+interface IActiveXInstallBroker { CONST_VTBL struct IActiveXInstallBrokerVtbl* lpVtbl; };

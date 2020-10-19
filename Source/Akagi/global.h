@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.50
+*  VERSION:     3.51
 *
-*  DATE:        14 Sep 2020
+*  DATE:        16 Oct 2020
 *
 *  Common header file for the program support routines.
 *
@@ -59,6 +59,7 @@
 #include <CommCtrl.h>
 #include <shlobj.h>
 #include <AccCtrl.h>
+#include <wintrust.h>
 
 #pragma warning(push)
 #pragma warning(disable: 4115) //named type definition in parentheses

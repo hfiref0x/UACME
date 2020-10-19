@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.50
+*  VERSION:     3.51
 *
-*  DATE:        14 Sep 2020
+*  DATE:        16 Oct 2020
 *
 *  Global consts definition file.
 *
@@ -50,8 +50,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       5
-#define UCM_VERSION_REVISION    0
-#define UCM_VERSION_BUILD       2009
+#define UCM_VERSION_REVISION    1
+#define UCM_VERSION_BUILD       2010
 #define UCM_IS_VNEXT            TRUE
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
@@ -225,16 +225,8 @@
 #define T_CLSID_FileOperation                L"{3AD05575-8857-4850-9277-11B85BDB8E09}"
 #define T_CLSID_ShellSecurityEditor          L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}"
 #define T_CLSID_EditionUpgradeManager        L"{17CCA47D-DAE5-4E4A-AC42-CC54E28F334A}"
+#define T_CLSID_IEAAddonInstaller            L"{BDB57FF2-79B9-4205-9447-F5FE85F37312}"
 #pragma endregion
-
-#ifdef _KUMA_CONTAINER_MODE
-
-#define T_IID_IColorDataProxy                L"{0A16D195-6F47-4964-9287-9F4BAB6D9827}"
-#define T_IID_ICMLuaUtil                     L"{6EDD6D74-C007-4E75-B76A-E5740995E24C}"
-#define T_IID_ISecurityEditor                L"{14B2C619-D07A-46EF-8B62-31B64F3B845C}"
-#define T_IID_IEditionUpgradeManager         L"{F2DCB80D-0670-44BC-9002-CD18688730AF}"
-
-#endif //_KUMA_CONTAINER_MODE
 
 //
 // Moniker(s)
