@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.27
+*  VERSION:     3.52
 *
-*  DATE:        10 Sep 2020
+*  DATE:        28 Oct 2020
 *
 *  Program entry point.
 *
@@ -120,7 +120,7 @@ NTSTATUS ucmInit(
             if (bytesIO == 0)
                 return STATUS_INVALID_PARAMETER;
 
-            Method = (UCM_METHOD)strtoul(szBuffer);
+            Method = (UCM_METHOD)_strtoul(szBuffer);
             *RunMethod = Method;
 
         }

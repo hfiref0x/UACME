@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.51
+*  VERSION:     3.52
 *
-*  DATE:        16 Oct 2020
+*  DATE:        28 Oct 2020
 *
 *  Common header file for the program support routines.
 *
@@ -66,6 +66,7 @@
 #include <fusion.h>
 #pragma warning(pop)
 
+#include "hde\hde64.h"
 #include "shared\ntos.h"
 #include "shared\minirtl.h"
 #include "shared\cmdline.h"
@@ -105,14 +106,14 @@ typedef struct _UACME_CONTEXT {
     ULONG                   dwBuildNumber;
     ULONG                   AkagiFlag;
     ULONG                   IFileOperationFlags;
-    ULONG                   OptionalParameterLength; //count of characters
+    ULONG                   OptionalParameterLength; // Count of characters
     PVOID                   ucmHeap;
     pfnDecompressPayload    DecompressRoutine;
     UACME_FUSION_CONTEXT    FusionContext;
     UACME_SHARED_CONTEXT    SharedContext;
-    WCHAR                   szSystemRoot[MAX_PATH + 1]; //with end slash
-    WCHAR                   szSystemDirectory[MAX_PATH + 1];//with end slash
-    WCHAR                   szTempDirectory[MAX_PATH + 1]; //with end slash
+    WCHAR                   szSystemRoot[MAX_PATH + 1]; // Windows directory with end slash
+    WCHAR                   szSystemDirectory[MAX_PATH + 1];// Windows\System32 directory with end slash
+    WCHAR                   szTempDirectory[MAX_PATH + 1]; // Current user temp directory with end slash
     WCHAR                   szOptionalParameter[MAX_PATH + 1]; //limited to MAX_PATH
     WCHAR                   szDefaultPayload[MAX_PATH + 1]; //limited to MAX_PATH
 } UACMECONTEXT, *PUACMECONTEXT;

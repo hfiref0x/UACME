@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.50
+*  VERSION:     3.52
 *
-*  DATE:        25 Sep 2020
+*  DATE:        28 Oct 2020
 *
 *  Common header file for the program support routines.
 *
@@ -379,6 +379,18 @@ NTSTATUS supOpenClassesKey(
 
 NTSTATUS supRemoveRegLinkHKCU(
     _In_ LPWSTR lpszRegLink);
+
+PVOID supFindPattern(
+    _In_ CONST PBYTE Buffer,
+    _In_ SIZE_T BufferSize,
+    _In_ CONST PBYTE Pattern,
+    _In_ SIZE_T PatternSize);
+
+PVOID supLookupImageSectionByName(
+    _In_ CHAR* SectionName,
+    _In_ ULONG SectionNameLength,
+    _In_ PVOID DllBase,
+    _Out_ PULONG SectionSize);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

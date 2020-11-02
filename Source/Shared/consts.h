@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.51
+*  VERSION:     3.52
 *
-*  DATE:        16 Oct 2020
+*  DATE:        28 Oct 2020
 *
 *  Global consts definition file.
 *
@@ -50,8 +50,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       5
-#define UCM_VERSION_REVISION    1
-#define UCM_VERSION_BUILD       2010
+#define UCM_VERSION_REVISION    2
+#define UCM_VERSION_BUILD       2011
 #define UCM_IS_VNEXT            TRUE
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
@@ -96,6 +96,8 @@
 
 #define T_DELEGATEEXECUTE           L"DelegateExecute"
 
+#define T_PROTO_HTTP                L"http"
+
 #define ELLOCNAK_MSU                L"update.msu" //PYSH
 
 #define RUN_CMD_COMMAND             L" /c start " //PYSH
@@ -127,6 +129,7 @@
 #define MSCOREE_DLL                 L"MSCOREE.DLL"
 #define OLE32_DLL                   L"ole32.dll"
 #define OSKSUPPORT_DLL              L"OskSupport.dll"
+#define SHELL32_DLL                 L"shell32.dll"
 #define WINMM_DLL                   L"winmm.dll"
 #define WOW64LOG_DLL                L"wow64log.dll"
 
@@ -226,6 +229,7 @@
 #define T_CLSID_ShellSecurityEditor          L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}"
 #define T_CLSID_EditionUpgradeManager        L"{17CCA47D-DAE5-4E4A-AC42-CC54E28F334A}"
 #define T_CLSID_IEAAddonInstaller            L"{BDB57FF2-79B9-4205-9447-F5FE85F37312}"
+#define T_CLSID_SecurityCenter               L"{E9495B87-D950-4AB5-87A5-FF6D70BF3E90}"
 #pragma endregion
 
 //

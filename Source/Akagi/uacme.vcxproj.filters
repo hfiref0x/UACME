@@ -28,6 +28,9 @@
     <Filter Include="appinfo">
       <UniqueIdentifier>{b3b23f8d-a79f-4195-85a2-ce0665938c27}</UniqueIdentifier>
     </Filter>
+    <Filter Include="hde">
+      <UniqueIdentifier>{1df8392c-a609-47c6-b987-44e7268833eb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -144,6 +147,9 @@
     <ClCompile Include="methods\shellsup.c">
       <Filter>Source Files\methods</Filter>
     </ClCompile>
+    <ClCompile Include="hde\hde64.c">
+      <Filter>hde</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -223,6 +229,15 @@
     </ClInclude>
     <ClInclude Include="methods\shellsup.h">
       <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="hde\hde64.h">
+      <Filter>hde</Filter>
+    </ClInclude>
+    <ClInclude Include="hde\pstdint.h">
+      <Filter>hde</Filter>
+    </ClInclude>
+    <ClInclude Include="hde\table64.h">
+      <Filter>hde</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

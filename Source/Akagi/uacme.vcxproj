@@ -535,6 +535,7 @@
     <ClCompile Include="aic.c" />
     <ClCompile Include="appinfo\x64\appinfo64.c" />
     <ClCompile Include="appinfo\x86-32\appinfo32.c" />
+    <ClCompile Include="hde\hde64.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="makecab.c" />
     <ClCompile Include="compress.c" />
@@ -562,6 +563,9 @@
     <ClInclude Include="aic.h" />
     <ClInclude Include="compress.h" />
     <ClInclude Include="global.h" />
+    <ClInclude Include="hde\hde64.h" />
+    <ClInclude Include="hde\pstdint.h" />
+    <ClInclude Include="hde\table64.h" />
     <ClInclude Include="methods\dwells.h" />
     <ClInclude Include="methods\elvint.h" />
     <ClInclude Include="methods\rinn.h" />

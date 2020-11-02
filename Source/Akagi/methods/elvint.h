@@ -4,9 +4,9 @@
 *
 *  TITLE:       ELVINT.H
 *
-*  VERSION:     3.51
+*  VERSION:     3.52
 *
-*  DATE:        16 Oct 2020
+*  DATE:        28 Oct 2020
 *
 *  Prototypes and definitions for elevated interface methods.
 *
@@ -24,6 +24,7 @@ typedef interface IEditionUpgradeManager IEditionUpgradeManager;
 typedef interface ISecurityEditor ISecurityEditor;
 typedef interface IIEAdminBrokerObject IIEAdminBrokerObject;
 typedef interface IActiveXInstallBroker IActiveXInstallBroker;
+typedef interface IWscAdmin IWscAdmin;
 
 //VTBL DEF
 
@@ -343,11 +344,40 @@ typedef struct IActiveXInstallBrokerVtbl {
 
 } *PIActiveXInstallBrokerVtbl;
 
+typedef struct IWscAdminVtbl {
+
+    BEGIN_INTERFACE
+
+        HRESULT(STDMETHODCALLTYPE* QueryInterface)(
+            __RPC__in IWscAdmin* This,
+            __RPC__in REFIID riid,
+            _COM_Outptr_  void** ppvObject);
+
+        ULONG(STDMETHODCALLTYPE* AddRef)(
+            __RPC__in IWscAdmin* This);
+
+        ULONG(STDMETHODCALLTYPE* Release)(
+            __RPC__in IWscAdmin* This);
+
+        HRESULT(STDMETHODCALLTYPE* Initialize)(
+            __RPC__in IWscAdmin* This);
+
+        HRESULT(STDMETHODCALLTYPE* DoModalSecurityAction)(
+            __RPC__in IWscAdmin* This,
+            __RPC__in HWND ParentWindow,
+            __RPC__in UINT Action,
+            _Reserved_ PVOID Reserved);
+
+    END_INTERFACE
+
+} *PIWscAdminVtbl;
+
 // INTERFACE DEF
 
-interface IColorDataProxy { CONST_VTBL struct IColorDataProxyVtbl *lpVtbl; };
-interface ICMLuaUtil { CONST_VTBL struct ICMLuaUtilVtbl *lpVtbl; };
-interface IEditionUpgradeManager { CONST_VTBL struct IEditionUpgradeManagerVtbl *lpVtbl; };
-interface ISecurityEditor { CONST_VTBL struct ISecurityEditorVtbl *lpVtbl; };
+interface IColorDataProxy { CONST_VTBL struct IColorDataProxyVtbl* lpVtbl; };
+interface ICMLuaUtil { CONST_VTBL struct ICMLuaUtilVtbl* lpVtbl; };
+interface IEditionUpgradeManager { CONST_VTBL struct IEditionUpgradeManagerVtbl* lpVtbl; };
+interface ISecurityEditor { CONST_VTBL struct ISecurityEditorVtbl* lpVtbl; };
 interface IIEAdminBrokerObject { CONST_VTBL struct IIEAdminBrokerObjectVtbl* lpVtbl; };
 interface IActiveXInstallBroker { CONST_VTBL struct IActiveXInstallBrokerVtbl* lpVtbl; };
+interface IWscAdmin { CONST_VTBL struct IWscAdminVtbl* lpVtbl; };
