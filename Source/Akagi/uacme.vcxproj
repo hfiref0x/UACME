@@ -514,6 +514,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Shared\cmdline.c" />
+    <ClCompile Include="..\Shared\hde\hde64.c" />
     <ClCompile Include="..\Shared\ldr.c" />
     <ClCompile Include="..\Shared\strtoul.c" />
     <ClCompile Include="..\Shared\u64tohex.c" />
@@ -535,7 +536,6 @@
     <ClCompile Include="aic.c" />
     <ClCompile Include="appinfo\x64\appinfo64.c" />
     <ClCompile Include="appinfo\x86-32\appinfo32.c" />
-    <ClCompile Include="hde\hde64.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="makecab.c" />
     <ClCompile Include="compress.c" />
@@ -554,6 +554,9 @@
     <ClCompile Include="tests\test.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Shared\hde\hde64.h" />
+    <ClInclude Include="..\Shared\hde\pstdint.h" />
+    <ClInclude Include="..\Shared\hde\table64.h" />
     <ClInclude Include="..\Shared\ldr.h" />
     <ClInclude Include="..\shared\minirtl.h" />
     <ClInclude Include="..\shared\rtltypes.h" />
@@ -563,9 +566,6 @@
     <ClInclude Include="aic.h" />
     <ClInclude Include="compress.h" />
     <ClInclude Include="global.h" />
-    <ClInclude Include="hde\hde64.h" />
-    <ClInclude Include="hde\pstdint.h" />
-    <ClInclude Include="hde\table64.h" />
     <ClInclude Include="methods\dwells.h" />
     <ClInclude Include="methods\elvint.h" />
     <ClInclude Include="methods\rinn.h" />

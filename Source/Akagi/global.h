@@ -22,7 +22,7 @@
 #error ANSI build is not supported
 #endif
 
-//#define KUMA_STUB
+#define KUMA_STUB
 
 #include "shared\libinc.h"
 
