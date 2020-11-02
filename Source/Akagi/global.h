@@ -22,7 +22,7 @@
 #error ANSI build is not supported
 #endif
 
-#define KUMA_STUB
+//#define KUMA_STUB
 
 #include "shared\libinc.h"
 
@@ -66,7 +66,7 @@
 #include <fusion.h>
 #pragma warning(pop)
 
-#include "hde\hde64.h"
+#include "shared\hde\hde64.h"
 #include "shared\ntos.h"
 #include "shared\minirtl.h"
 #include "shared\cmdline.h"
