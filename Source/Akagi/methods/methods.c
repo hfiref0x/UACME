@@ -50,7 +50,7 @@ ULONG UCM_WIN32_NOT_IMPLEMENTED[] = {
     UacMethodNICPoison,
     UacMethodIeAddOnInstall,
     UacMethodWscActionProtocol,
-    MethodFwCplLua2
+    UacMethodFwCplLua2
 };
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
