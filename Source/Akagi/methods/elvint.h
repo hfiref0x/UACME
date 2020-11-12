@@ -4,9 +4,9 @@
 *
 *  TITLE:       ELVINT.H
 *
-*  VERSION:     3.52
+*  VERSION:     3.53
 *
-*  DATE:        28 Oct 2020
+*  DATE:        07 Nov 2020
 *
 *  Prototypes and definitions for elevated interface methods.
 *
@@ -20,6 +20,7 @@
  
 typedef interface IColorDataProxy IColorDataProxy;
 typedef interface ICMLuaUtil ICMLuaUtil;
+typedef interface IFwCplLua IFwCplLua;
 typedef interface IEditionUpgradeManager IEditionUpgradeManager;
 typedef interface ISecurityEditor ISecurityEditor;
 typedef interface IIEAdminBrokerObject IIEAdminBrokerObject;
@@ -192,6 +193,88 @@ typedef struct ICMLuaUtilVtbl {
     END_INTERFACE
 
 } *PICMLuaUtilVtbl;
+
+typedef struct IFwCplLuaInterfaceVtbl {
+
+    BEGIN_INTERFACE
+
+        HRESULT(STDMETHODCALLTYPE* QueryInterface)(
+            __RPC__in IFwCplLua* This,
+            __RPC__in REFIID riid,
+            _COM_Outptr_  void** ppvObject);
+
+        ULONG(STDMETHODCALLTYPE* AddRef)(
+            __RPC__in IFwCplLua* This);
+
+        ULONG(STDMETHODCALLTYPE* Release)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* GetTypeInfoCount)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* GetTypeInfo)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* GetIDsOfNames)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* Invoke)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* AddGlobalPort)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* AddProgram)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* DeleteGlobalPort)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* DeleteApplication)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* EnablePort)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* EnableProgram)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* EnableRuleGroup)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* EnableCustomRule)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* EditGlobalPort)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* EditProgram)(
+            __RPC__in IFwCplLua* This);
+
+        //incomplete definition
+        HRESULT(STDMETHODCALLTYPE* Activate)(
+            __RPC__in IFwCplLua* This);
+
+        HRESULT(STDMETHODCALLTYPE* LaunchAdvancedUI)(
+            __RPC__in IFwCplLua* This);
+
+    END_INTERFACE
+
+} *PIFwCplLuaInterfaceVtbl;
 
 typedef struct IEditionUpgradeManagerVtbl {
 
@@ -376,6 +459,7 @@ typedef struct IWscAdminVtbl {
 
 interface IColorDataProxy { CONST_VTBL struct IColorDataProxyVtbl* lpVtbl; };
 interface ICMLuaUtil { CONST_VTBL struct ICMLuaUtilVtbl* lpVtbl; };
+interface IFwCplLua { CONST_VTBL struct IFwCplLuaInterfaceVtbl* lpVtbl; };
 interface IEditionUpgradeManager { CONST_VTBL struct IEditionUpgradeManagerVtbl* lpVtbl; };
 interface ISecurityEditor { CONST_VTBL struct ISecurityEditorVtbl* lpVtbl; };
 interface IIEAdminBrokerObject { CONST_VTBL struct IIEAdminBrokerObjectVtbl* lpVtbl; };

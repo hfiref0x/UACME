@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.52
+*  VERSION:     3.53
 *
-*  DATE:        28 Oct 2020
+*  DATE:        07 Nov 2020
 *
 *  Global consts definition file.
 *
@@ -50,7 +50,7 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       5
-#define UCM_VERSION_REVISION    2
+#define UCM_VERSION_REVISION    3
 #define UCM_VERSION_BUILD       2011
 #define UCM_IS_VNEXT            TRUE
 
@@ -67,6 +67,7 @@
 #define FUBUKI_SYNC_MUTEX_ID        'a1'
 
 #define KAMIKAZE_MARKER             "https"
+#define WF_MSC                      L"wf.msc"
 
 #define T_DEFAULT_DESKTOP           L"WinSta0\\Default"
 
@@ -160,7 +161,14 @@
 //
 // Windows subdirectories
 //
+
+// system32 only name
+#define SYSTEM32_DIR_NAME           L"system32"
+
+// system32 with both sides slash
 #define SYSTEM32_DIR                L"\\system32\\"
+
+// syswow64 with both sides slash
 #define SYSWOW64_DIR                L"\\syswow64\\"
 
 #define NET2_DIR                    L"v2.0.50727"
@@ -225,6 +233,7 @@
 #pragma region PYSH
 #define T_CLSID_ColorDataProxy               L"{D2E7041B-2927-42fb-8E9F-7CE93B6DC937}"
 #define T_CLSID_CMSTPLUA                     L"{3E5FC7F9-9A51-4367-9063-A120244FBEC7}"
+#define T_CLSID_FwCplLua                     L"{752438CB-E941-433F-BCB4-8B7D2329F0C8}"
 #define T_CLSID_FileOperation                L"{3AD05575-8857-4850-9277-11B85BDB8E09}"
 #define T_CLSID_ShellSecurityEditor          L"{4D111E08-CBF7-4f12-A926-2C7920AF52FC}"
 #define T_CLSID_EditionUpgradeManager        L"{17CCA47D-DAE5-4E4A-AC42-CC54E28F334A}"

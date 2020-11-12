@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.52
+*  VERSION:     3.53
 *
-*  DATE:        28 Oct 2020
+*  DATE:        11 Nov 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -1353,7 +1353,7 @@ BOOL supxDeleteKeyRecursive(
 */
 BOOL supRegDeleteKeyRecursive(
     _In_ HKEY hKeyRoot,
-    _In_ LPWSTR lpSubKey)
+    _In_ LPCWSTR lpSubKey)
 {
     WCHAR szKeyName[MAX_PATH * 2];
     RtlSecureZeroMemory(szKeyName, sizeof(szKeyName));
@@ -1439,6 +1439,18 @@ BOOL supSetEnvVariableEx(
                 (BYTE*)lpVariableData,
                 cbData);
 
+            if (NT_SUCCESS(ntStatus)) {
+
+                SendMessageTimeout(HWND_BROADCAST,
+                    WM_SETTINGCHANGE,
+                    0,
+                    (LPARAM)lpVariableName,
+                    SMTO_BLOCK,
+                    1000,
+                    NULL);
+
+            }
+
         }
 
 
@@ -1495,6 +1507,16 @@ BOOL supSetEnvVariable(
             cbData = (DWORD)((1 + _strlen(lpVariableData)) * sizeof(WCHAR));
             bResult = (RegSetValueEx(hKey, lpVariableName, 0, REG_SZ,
                 (BYTE*)lpVariableData, cbData) == ERROR_SUCCESS);
+
+            if (bResult) {
+                SendMessageTimeout(HWND_BROADCAST,
+                    WM_SETTINGCHANGE,
+                    0,
+                    (LPARAM)lpVariableName,
+                    SMTO_BLOCK,
+                    1000,
+                    NULL);
+            }
         }
 
     } while (FALSE);
@@ -3383,4 +3405,318 @@ PVOID supLookupImageSectionByName(
         *SectionSize = SectionTableEntry->Misc.VirtualSize;
 
     return Section;
+}
+
+/*
+* supFindUserAssocSet
+*
+* Purpose:
+*
+* Locate internal shell routine.
+*
+*/
+NTSTATUS supFindUserAssocSet(
+    _Out_ USER_ASSOC_PTR* Function
+)
+{
+    HANDLE  hModule;
+
+    PBYTE  ptrCode;
+    PVOID  sectionBase, patternPtr, funcPtr;
+    ULONG  sectionSize = 0, patternSize;
+    LONG   rel = 0;
+    hde64s hs;
+    WCHAR  szBuffer[MAX_PATH * 2];
+
+    Function->UserAssocSet = NULL;
+    Function->Valid = FALSE;
+
+    switch (g_ctx->dwBuildNumber) {
+    case 7601:
+        patternPtr = UserAssocSet_7601;
+        patternSize = sizeof(UserAssocSet_7601);
+        break;
+    case 9600:
+        patternPtr = UserAssocSet_9600;
+        patternSize = sizeof(UserAssocSet_9600);
+        break;
+    case 14393:
+        patternPtr = UserAssocSet_14393;
+        patternSize = sizeof(UserAssocSet_14393);
+        break;
+    case 17763:
+        patternPtr = UserAssocSet_17763;
+        patternSize = sizeof(UserAssocSet_17763);
+        break;
+    case 18362:
+        patternPtr = UserAssocSet_18362;
+        patternSize = sizeof(UserAssocSet_18362);
+        break;
+    case 18363:
+        patternPtr = UserAssocSet_18363;
+        patternSize = sizeof(UserAssocSet_18363);
+        break;
+    case 19041:
+        patternPtr = UserAssocSet_19041;
+        patternSize = sizeof(UserAssocSet_19041);
+        break;
+    case 19042:
+        patternPtr = UserAssocSet_19042;
+        patternSize = sizeof(UserAssocSet_19042);
+        break;
+    default:
+        if (g_ctx->dwBuildNumber > 19042) {
+            patternPtr = UserAssocSet_vNext;
+            patternSize = sizeof(UserAssocSet_vNext);
+            break;
+        }
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    hModule = (HMODULE)GetModuleHandle(SHELL32_DLL);
+    if (hModule == NULL) {
+        _strcpy(szBuffer, g_ctx->szSystemDirectory);
+        _strcat(szBuffer, SHELL32_DLL);
+        hModule = (HANDLE)LoadLibraryEx(szBuffer, NULL, 0);
+    }
+    if (hModule == NULL)
+        return STATUS_DLL_NOT_FOUND;
+
+    sectionBase = supLookupImageSectionByName(TEXT_SECTION,
+        TEXT_SECTION_LEGNTH,
+        (PVOID)hModule,
+        &sectionSize);
+
+    if (sectionBase == NULL || sectionSize == 0)
+        return STATUS_INVALID_ADDRESS;
+
+    ptrCode = (PBYTE)supFindPattern(sectionBase, sectionSize, patternPtr, patternSize);
+    if (ptrCode == NULL)
+        return STATUS_NOT_FOUND;
+
+    ptrCode = (PBYTE)RtlOffsetToPointer(ptrCode, patternSize);
+
+    hde64_disasm(ptrCode, &hs);
+    if (hs.flags & F_ERROR)
+        return STATUS_INTERNAL_ERROR;
+
+    if ((hs.len != 5) || (ptrCode[0] != 0xE8)) //call sus
+        return STATUS_BAD_DATA;
+
+    rel = *(PLONG)(ptrCode + 1);
+
+    funcPtr = ptrCode + hs.len + rel;
+
+    if (IN_REGION(funcPtr, sectionBase, sectionSize)) {
+        Function->UserAssocSet = (pfnUserAssocSet)funcPtr;
+        Function->Valid = TRUE;
+        return STATUS_SUCCESS;
+    }
+    else {
+        return STATUS_CONFLICTING_ADDRESSES;
+    }
+}
+
+/*
+* supRegisterShellAssoc
+*
+* Purpose:
+*
+* Set and register shell protocol.
+*
+*/
+NTSTATUS supRegisterShellAssoc(
+    _In_ LPCWSTR pszExt,
+    _In_ LPCWSTR pszProgId,
+    _In_ USER_ASSOC_PTR* UserAssocFunc,
+    _In_ LPWSTR lpszPayload,
+    _In_ BOOL fCustomURIScheme
+)
+{
+    HANDLE classesKey = NULL, protoKey = NULL, assocKey = NULL;
+    NTSTATUS ntStatus;
+    SIZE_T sz;
+
+    HRESULT hr = E_FAIL;
+
+    WCHAR szBuffer[MAX_PATH];
+
+    if (UserAssocFunc == NULL)
+        return STATUS_INVALID_PARAMETER_3;
+
+    if (UserAssocFunc->Valid == FALSE)
+        return STATUS_INVALID_PARAMETER_3;
+
+    if (lpszPayload == NULL)
+        return STATUS_INVALID_PARAMETER_4;
+
+    ntStatus = supOpenClassesKey(NULL, &classesKey);
+    if (!NT_SUCCESS(ntStatus))
+        return ntStatus;
+
+    //
+    // Set mode: write custom pluggable protocol handler mark.
+    //
+
+    if (fCustomURIScheme) {
+
+        if (ERROR_SUCCESS == RegCreateKeyEx(classesKey,
+            pszExt,
+            0,
+            NULL,
+            REG_OPTION_NON_VOLATILE,
+            KEY_SET_VALUE,
+            NULL,
+            (HKEY*)&protoKey,
+            NULL))
+        {
+            RegSetValueEx(protoKey, TEXT("URL Protocol"), 0, REG_SZ, NULL, 0);
+            RegCloseKey(protoKey);
+        }
+    }
+
+    //
+    // Set mode: create protocol registry entry.
+    //
+    _strcpy(szBuffer, pszProgId);
+    _strcat(szBuffer, T_SHELL_OPEN);
+    _strcat(szBuffer, TEXT("\\"));
+    _strcat(szBuffer, T_SHELL_COMMAND);
+
+    if (ERROR_SUCCESS == RegCreateKeyEx(classesKey,
+        szBuffer,
+        0,
+        NULL,
+        REG_OPTION_NON_VOLATILE,
+        MAXIMUM_ALLOWED,
+        NULL,
+        (HKEY*)&assocKey,
+        NULL))
+    {
+
+        sz = (_strlen(lpszPayload) + 1) * sizeof(WCHAR);
+
+        if (ERROR_SUCCESS == RegSetValueEx(assocKey,
+            TEXT(""),
+            0,
+            REG_SZ,
+            (BYTE*)lpszPayload,
+            (DWORD)sz))
+        {
+            ntStatus = STATUS_SUCCESS;
+        }
+        else {
+            ntStatus = STATUS_REGISTRY_IO_FAILED;
+        }
+
+        RegCloseKey(assocKey);
+    }
+    else {
+        ntStatus = STATUS_REGISTRY_IO_FAILED;
+    }
+
+    NtClose(classesKey);
+
+    if (!NT_SUCCESS(ntStatus))
+        return ntStatus;
+
+    ntStatus = STATUS_UNSUCCESSFUL;
+
+    //
+    // Set mode: register protocol within the shell.
+    //
+    if (g_ctx->dwBuildNumber > 19042) {
+
+        hr = UserAssocFunc->UserAssocSet2(UASET_PROGID,
+            pszExt,
+            pszProgId,
+            2);
+
+    }
+    else {
+
+        switch (g_ctx->dwBuildNumber) {
+        case 18362:
+        case 18363:
+        case 17763:
+
+            hr = UserAssocFunc->UserAssocSet2(UASET_PROGID,
+                pszExt,
+                pszProgId,
+                2);
+
+            break;
+
+        default:
+
+            hr = UserAssocFunc->UserAssocSet(UASET_PROGID,
+                pszExt,
+                pszProgId);
+
+            break;
+        }
+
+    }
+
+    if (SUCCEEDED(hr))
+        ntStatus = STATUS_SUCCESS;
+
+    return ntStatus;
+}
+
+/*
+* supUnregisterShellAssoc
+*
+* Purpose:
+*
+* Unregister and remove shell protocol.
+*
+*/
+NTSTATUS supUnregisterShellAssoc(
+    _In_ LPCWSTR pszExt,
+    _In_ LPCWSTR pszProgId,
+    _In_ USER_ASSOC_PTR* UserAssocFunc
+)
+{
+    NTSTATUS ntStatus = STATUS_UNSUCCESSFUL;
+    HANDLE classesKey = NULL;
+    HRESULT hr;
+
+    if (UserAssocFunc == NULL)
+        return STATUS_INVALID_PARAMETER_3;
+
+    if (UserAssocFunc->Valid == FALSE)
+        return STATUS_INVALID_PARAMETER_3;
+
+    ntStatus = supOpenClassesKey(NULL, &classesKey);
+    if (!NT_SUCCESS(ntStatus))
+        return ntStatus;
+
+    switch (g_ctx->dwBuildNumber) {
+    case 18362:
+    case 18363:
+
+        hr = UserAssocFunc->UserAssocSet2(UASET_CLEAR,
+            pszExt,
+            NULL,
+            0);
+
+        break;
+    default:
+
+        hr = UserAssocFunc->UserAssocSet(UASET_CLEAR,
+            pszExt,
+            NULL);
+
+        break;
+    }
+
+    if (SUCCEEDED(hr))
+        ntStatus = STATUS_SUCCESS;
+
+    supRegDeleteKeyRecursive(classesKey, pszProgId);
+    supRegDeleteKeyRecursive(classesKey, pszExt);
+    NtClose(classesKey);
+
+    return ntStatus;
 }

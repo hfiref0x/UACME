@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.52
+*  VERSION:     3.53
 *
-*  DATE:        28 Oct 2020
+*  DATE:        07 Nov 2020
 *
 *  Common header file for the program support routines.
 *
@@ -22,7 +22,7 @@
 #error ANSI build is not supported
 #endif
 
-#define KUMA_STUB
+//#define KUMA_STUB
 
 #include "shared\libinc.h"
 

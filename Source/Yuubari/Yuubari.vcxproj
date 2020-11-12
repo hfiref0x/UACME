@@ -123,6 +123,7 @@
       <EntryPointSymbol>main</EntryPointSymbol>
       <SetChecksum>true</SetChecksum>
       <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
+      <AdditionalOptions>/NOCOFFGRPINFO %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -156,6 +157,7 @@
       <EntryPointSymbol>main</EntryPointSymbol>
       <SetChecksum>true</SetChecksum>
       <MinimumRequiredVersion>6.0</MinimumRequiredVersion>
+      <AdditionalOptions>/NOCOFFGRPINFO %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>\Utils\StripDebug.exe .\output\$(Platform)\$(Configuration)\UacInfo64.exe</Command>

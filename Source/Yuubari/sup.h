@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     1.47
+*  VERSION:     1.49
 *
-*  DATE:        22 Mar 2020
+*  DATE:        11 Nov 2020
 *
 *  Common header file for the program support routines.
 *
@@ -19,12 +19,12 @@
 #pragma once
 
 BOOL supIsCorImageFile(
-    PVOID ImageBase);
+    _In_ PVOID ImageBase);
 
 LPWSTR supReadKeyString(
-    HKEY hKey,
-    LPWSTR KeyValue,
-    PDWORD pdwDataSize);
+    _In_ HKEY hKey,
+    _In_ LPWSTR KeyValue,
+    _In_ PDWORD pdwDataSize);
 
 PVOID supQueryKeyName(
     _In_ HKEY hKey,

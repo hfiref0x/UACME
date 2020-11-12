@@ -540,6 +540,7 @@
     <ClCompile Include="makecab.c" />
     <ClCompile Include="compress.c" />
     <ClCompile Include="methods\api0cradle.c" />
+    <ClCompile Include="methods\azagarampur.c" />
     <ClCompile Include="methods\dwells.c" />
     <ClCompile Include="methods\shellsup.c" />
     <ClCompile Include="methods\hakril.c" />
@@ -566,6 +567,7 @@
     <ClInclude Include="aic.h" />
     <ClInclude Include="compress.h" />
     <ClInclude Include="global.h" />
+    <ClInclude Include="methods\azagarampur.h" />
     <ClInclude Include="methods\dwells.h" />
     <ClInclude Include="methods\elvint.h" />
     <ClInclude Include="methods\rinn.h" />

@@ -1,12 +1,12 @@
 #/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2020
 *
 *  TITLE:       FUSION.H
 *
-*  VERSION:     1.44
+*  VERSION:     1.49
 *
-*  DATE:        19 Oct 2019
+*  DATE:        11 Nov 2020
 *
 *  Header file for the autoelevated applications scan.
 *
@@ -60,7 +60,7 @@ NTSTATUS SxsGetDllRedirectionFromActivationContext(
     _In_ PDLL_REDIRECTION_LIST DllList);
 
 VOID FusionScanDirectory(
-    LPWSTR lpDirectory,
-    OUTPUTCALLBACK OutputCallback);
+    _In_ LPWSTR lpDirectory,
+    _In_ OUTPUTCALLBACK OutputCallback);
 
 extern ptrWTGetSignatureInfo WTGetSignatureInfo;

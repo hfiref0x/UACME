@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2020
 *
 *  TITLE:       BASIC.C
 *
-*  VERSION:     1.40
+*  VERSION:     1.49
 *
-*  DATE:        19 Mar 2019
+*  DATE:        11 Nov 2019
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -25,7 +25,7 @@
 *
 */
 VOID ScanBasicUacData(
-    OUTPUTCALLBACK OutputCallback
+    _In_ OUTPUTCALLBACK OutputCallback
 )
 {
     ULONG       Flags = 0;

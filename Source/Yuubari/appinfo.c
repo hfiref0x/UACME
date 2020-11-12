@@ -4,9 +4,9 @@
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.48
+*  VERSION:     1.49
 *
-*  DATE:        10 Sep 2020
+*  DATE:        11 Nov 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -19,9 +19,6 @@
 #include "Shared/hde/hde64.h"
 #pragma comment(lib, "dbghelp.lib")
 #pragma comment(lib, "version.lib")
-
-UAC_AI_GLOBALS g_AiData;
-SYMBOL_ENTRY g_SymbolsHead;
 
 #define TEXT_SECTION ".text"
 #define TEXT_SECTION_LEGNTH sizeof(TEXT_SECTION)
@@ -165,6 +162,7 @@ BOOL InitDbgHelp(
 *
 */
 VOID SymbolAddToList(
+    _In_ PSYMBOL_ENTRY SymbolsHead,
     _In_ LPWSTR SymbolName,
     _In_ DWORD64 lpAddress
 )
@@ -172,7 +170,7 @@ VOID SymbolAddToList(
     PSYMBOL_ENTRY Entry;
     SIZE_T        sz;
 
-    Entry = &g_SymbolsHead;
+    Entry = SymbolsHead;
 
     while (Entry->Next != NULL)
         Entry = Entry->Next;
@@ -208,12 +206,13 @@ VOID SymbolAddToList(
 *
 */
 DWORD64 SymbolAddressFromName(
+    _In_ PSYMBOL_ENTRY SymbolsHead,
     _In_ LPWSTR lpszName
 )
 {
     PSYMBOL_ENTRY Entry;
 
-    Entry = g_SymbolsHead.Next;
+    Entry = SymbolsHead;
 
     while (Entry) {
         if (!_strcmp(lpszName, Entry->Name))
@@ -237,10 +236,13 @@ BOOL CALLBACK SymEnumSymbolsProc(
     _In_opt_ PVOID UserContext
 )
 {
+    PSYMBOL_ENTRY SymbolsHead = (PSYMBOL_ENTRY)UserContext;
     UNREFERENCED_PARAMETER(SymbolSize);
-    UNREFERENCED_PARAMETER(UserContext);
 
-    SymbolAddToList(pSymInfo->Name, pSymInfo->Address);
+    if (UserContext == NULL)
+        return FALSE;
+
+    SymbolAddToList(SymbolsHead, pSymInfo->Name, pSymInfo->Address);
     return TRUE;
 }
 
@@ -254,6 +256,7 @@ BOOL CALLBACK SymEnumSymbolsProc(
 */
 _Success_(return == TRUE)
 BOOL GetSupportedPattern(
+    _In_ ULONG AppInfoBuildNumber,
     _In_ UAC_PATTERN * Patterns,
     _Out_ LPCVOID * OutputPattern,
     _Out_ ULONG * OutputPatternSize,
@@ -267,8 +270,8 @@ BOOL GetSupportedPattern(
     *SubtractBytes = 0;
 
     for (i = 0; i < RTL_NUMBER_OF(g_MmcPatterns); i++) {
-        if ((g_AiData.AppInfoBuildNumber >= Patterns[i].AppInfoBuildMin) &&
-            (g_AiData.AppInfoBuildNumber <= Patterns[i].AppInfoBuildMax))
+        if ((AppInfoBuildNumber >= Patterns[i].AppInfoBuildMin) &&
+            (AppInfoBuildNumber <= Patterns[i].AppInfoBuildMax))
         {
             *OutputPattern = Patterns[i].PatternData;
             *OutputPatternSize = Patterns[i].PatternSize;
@@ -280,8 +283,7 @@ BOOL GetSupportedPattern(
 }
 
 BOOLEAN QueryAiMmcBlock21H1(
-    _In_ PBYTE DllBase,
-    _In_ SIZE_T DllVirtualSize,
+    _In_ UAC_AI_GLOBALS * AppInfo,
     _In_ PBYTE PtrCode,
     _In_ ULONG SectionSize
 )
@@ -315,8 +317,8 @@ BOOLEAN QueryAiMmcBlock21H1(
                 {
                     rel = *(PLONG)(ptrCode + instOffset + 3);
                     TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)ptrCode + instOffset + 7 + rel);
-                    if (IN_REGION(TestPtr, DllBase, DllVirtualSize)) {
-                        g_AiData.MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
+                    if (IN_REGION(TestPtr, AppInfo->DllBase, AppInfo->DllVirtualSize)) {
+                        AppInfo->MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
                         return TRUE;
                     }
                 }
@@ -332,8 +334,7 @@ BOOLEAN QueryAiMmcBlock21H1(
 }
 
 BOOLEAN QueryAiMmcBlockPre21H1(
-    _In_ PBYTE DllBase,
-    _In_ SIZE_T DllVirtualSize,
+    _In_ UAC_AI_GLOBALS * AppInfo,
     _In_ PBYTE PtrCode,
     _In_ ULONG SectionSize
 )
@@ -396,8 +397,8 @@ BOOLEAN QueryAiMmcBlockPre21H1(
 
                             rel = *(PLONG)(ptrCode + tempOffset + 3);
                             TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)ptrCode + tempOffset + 7 + rel);
-                            if (IN_REGION(TestPtr, DllBase, DllVirtualSize)) {
-                                g_AiData.MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
+                            if (IN_REGION(TestPtr, AppInfo->DllBase, AppInfo->DllVirtualSize)) {
+                                AppInfo->MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
                                 return TRUE;
                             }
 
@@ -424,8 +425,7 @@ BOOLEAN QueryAiMmcBlockPre21H1(
 *
 */
 BOOLEAN QueryAiMmcBlock(
-    _In_ PBYTE DllBase,
-    _In_ SIZE_T DllVirtualSize
+    _In_ UAC_AI_GLOBALS * AppInfo
 )
 {
     ULONG       PatternSize = 0, SubtractBytes = 0;
@@ -435,31 +435,31 @@ BOOLEAN QueryAiMmcBlock(
     ULONG       sectionSize = 0;
     PBYTE       ptrCode;
 
-    if (DllBase == NULL)
-        return FALSE;
-
-    g_AiData.MmcBlock = NULL;
-
     //
     // Locate .text image section.
     //
     ptrCode = (PBYTE)supLookupImageSectionByName(TEXT_SECTION,
         TEXT_SECTION_LEGNTH,
-        (PVOID)DllBase,
+        (PVOID)AppInfo->DllBase,
         &sectionSize);
 
     if ((ptrCode == NULL) || (sectionSize < 1024))
         return FALSE;
 
-    if (g_NtBuildNumber < 17763) {
-        if (GetSupportedPattern(g_MmcPatterns, &PatternData, &PatternSize, &SubtractBytes)) {
+    if (AppInfo->AppInfoBuildNumber < 17763) {
+        if (GetSupportedPattern(AppInfo->AppInfoBuildNumber,
+            g_MmcPatterns,
+            &PatternData,
+            &PatternSize,
+            &SubtractBytes))
+        {
             if (PatternData) {
                 Pattern = (PVOID)supFindPattern(ptrCode, sectionSize, (PBYTE)PatternData, PatternSize);
                 if (Pattern != NULL) {
                     rel = *(DWORD*)((ULONG_PTR)Pattern - SubtractBytes);
                     TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)Pattern + rel);
-                    if (IN_REGION(TestPtr, DllBase, DllVirtualSize)) {
-                        g_AiData.MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
+                    if (IN_REGION(TestPtr, AppInfo->DllBase, AppInfo->DllVirtualSize)) {
+                        AppInfo->MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
                         return TRUE;
                     }
                 }
@@ -468,11 +468,11 @@ BOOLEAN QueryAiMmcBlock(
     }
     else {
 
-        if (g_NtBuildNumber < 19043) {
-            return QueryAiMmcBlockPre21H1(DllBase, DllVirtualSize, ptrCode, sectionSize);
+        if (AppInfo->AppInfoBuildNumber < 19043) {
+            return QueryAiMmcBlockPre21H1(AppInfo, ptrCode, sectionSize);
         }
         else {
-            return QueryAiMmcBlock21H1(DllBase, DllVirtualSize, ptrCode, sectionSize);
+            return QueryAiMmcBlock21H1(AppInfo, ptrCode, sectionSize);
         }
 
     }
@@ -488,19 +488,24 @@ BOOLEAN QueryAiMmcBlock(
 *
 */
 VOID QueryAiGlobalData(
-    VOID
+    _In_ UAC_AI_GLOBALS * AppInfo
 )
 {
     HANDLE  hSym = GetCurrentProcess();
     WCHAR   szFullSymbolInfo[MAX_PATH * 2];
     WCHAR   szSymbolName[MAX_PATH];
 
-    if (g_AiData.DllBase == NULL)
+    SYMBOL_ENTRY SymbolsHead;
+
+    DWORD64 DllBase;
+
+    DllBase = (DWORD64)AppInfo->DllBase;
+    if (DllBase == 0)
         return;
 
     do {
         pSymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_UNDNAME);
-        RtlSecureZeroMemory(&g_SymbolsHead, sizeof(g_SymbolsHead));
+        RtlSecureZeroMemory(&SymbolsHead, sizeof(SymbolsHead));
 
         RtlSecureZeroMemory(szSymbolName, sizeof(szSymbolName));
         if (GetModuleFileName(NULL, szSymbolName, MAX_PATH) == 0)
@@ -515,16 +520,17 @@ VOID QueryAiGlobalData(
 
         _strcat(szFullSymbolInfo, TEXT("*https://msdl.microsoft.com/download/symbols"));
         if (pSymInitializeW(hSym, szFullSymbolInfo, FALSE)) {
-            if (pSymLoadModuleExW(hSym, NULL, TEXT("appinfo.dll"), NULL, (DWORD64)g_AiData.DllBase, 0, NULL, 0)) {
-                if (pSymEnumSymbolsW(hSym, (DWORD64)g_AiData.DllBase, NULL, SymEnumSymbolsProc, NULL)) {
-                    g_AiData.lpAutoApproveEXEList = (PVOID*)SymbolAddressFromName(TEXT("g_lpAutoApproveEXEList"));
-                    g_AiData.lpIncludedPFDirs = (PVOID*)SymbolAddressFromName(TEXT("g_lpIncludedPFDirs"));
-                    g_AiData.lpIncludedWindowsDirs = (PVOID*)SymbolAddressFromName(TEXT("g_lpIncludedWindowsDirs"));
-                    g_AiData.lpIncludedSystemDirs = (PVOID*)SymbolAddressFromName(TEXT("g_lpIncludedSystemDirs"));
-                    g_AiData.lpExemptedAutoApproveExes = (PVOID*)SymbolAddressFromName(TEXT("g_lpExemptedAutoApproveExes"));
-                    g_AiData.lpExcludedWindowsDirs = (PVOID*)SymbolAddressFromName(TEXT("g_lpExcludedWindowsDirs"));
+            if (pSymLoadModuleExW(hSym, NULL, TEXT("appinfo.dll"), NULL, DllBase, 0, NULL, 0)) {
+                if (pSymEnumSymbolsW(hSym, DllBase, NULL, SymEnumSymbolsProc, (PVOID)&SymbolsHead))
+                {
+                    AppInfo->lpAutoApproveEXEList = (PVOID*)SymbolAddressFromName(&SymbolsHead, TEXT("g_lpAutoApproveEXEList"));
+                    AppInfo->lpIncludedPFDirs = (PVOID*)SymbolAddressFromName(&SymbolsHead, TEXT("g_lpIncludedPFDirs"));
+                    AppInfo->lpIncludedWindowsDirs = (PVOID*)SymbolAddressFromName(&SymbolsHead, TEXT("g_lpIncludedWindowsDirs"));
+                    AppInfo->lpIncludedSystemDirs = (PVOID*)SymbolAddressFromName(&SymbolsHead, TEXT("g_lpIncludedSystemDirs"));
+                    AppInfo->lpExemptedAutoApproveExes = (PVOID*)SymbolAddressFromName(&SymbolsHead, TEXT("g_lpExemptedAutoApproveExes"));
+                    AppInfo->lpExcludedWindowsDirs = (PVOID*)SymbolAddressFromName(&SymbolsHead, TEXT("g_lpExcludedWindowsDirs"));
                 }
-                pSymUnloadModule64(hSym, (DWORD64)g_AiData.DllBase);
+                pSymUnloadModule64(hSym, DllBase);
             }
             pSymCleanup(hSym);
         }
@@ -533,42 +539,43 @@ VOID QueryAiGlobalData(
 }
 
 BOOL IsCrossPtr(
-    ULONG_PTR Ptr,
-    ULONG_PTR CurrentList
+    _In_ UAC_AI_GLOBALS * AppInfo,
+    _In_ ULONG_PTR Ptr,
+    _In_ ULONG_PTR CurrentList
 )
 {
-    if (Ptr == 0) {
+    if (Ptr == 0 || AppInfo == NULL) {
         return TRUE;
     }
 
-    if (g_AiData.lpAutoApproveEXEList) {
-        if (CurrentList != (ULONG_PTR)g_AiData.lpAutoApproveEXEList)
-            if ((ULONG_PTR)Ptr == (ULONG_PTR)g_AiData.lpAutoApproveEXEList[0])
+    if (AppInfo->lpAutoApproveEXEList) {
+        if (CurrentList != (ULONG_PTR)AppInfo->lpAutoApproveEXEList)
+            if ((ULONG_PTR)Ptr == (ULONG_PTR)AppInfo->lpAutoApproveEXEList[0])
                 return TRUE;
     }
-    if (g_AiData.lpExcludedWindowsDirs) {
-        if (CurrentList != (ULONG_PTR)g_AiData.lpExcludedWindowsDirs)
-            if ((ULONG_PTR)Ptr == (ULONG_PTR)g_AiData.lpExcludedWindowsDirs[0])
+    if (AppInfo->lpExcludedWindowsDirs) {
+        if (CurrentList != (ULONG_PTR)AppInfo->lpExcludedWindowsDirs)
+            if ((ULONG_PTR)Ptr == (ULONG_PTR)AppInfo->lpExcludedWindowsDirs[0])
                 return TRUE;
     }
-    if (g_AiData.lpExemptedAutoApproveExes) {
-        if (CurrentList != (ULONG_PTR)g_AiData.lpExemptedAutoApproveExes)
-            if ((ULONG_PTR)Ptr == (ULONG_PTR)g_AiData.lpExemptedAutoApproveExes[0])
+    if (AppInfo->lpExemptedAutoApproveExes) {
+        if (CurrentList != (ULONG_PTR)AppInfo->lpExemptedAutoApproveExes)
+            if ((ULONG_PTR)Ptr == (ULONG_PTR)AppInfo->lpExemptedAutoApproveExes[0])
                 return TRUE;
     }
-    if (g_AiData.lpIncludedPFDirs) {
-        if (CurrentList != (ULONG_PTR)g_AiData.lpIncludedPFDirs)
-            if ((ULONG_PTR)Ptr == (ULONG_PTR)g_AiData.lpIncludedPFDirs[0])
+    if (AppInfo->lpIncludedPFDirs) {
+        if (CurrentList != (ULONG_PTR)AppInfo->lpIncludedPFDirs)
+            if ((ULONG_PTR)Ptr == (ULONG_PTR)AppInfo->lpIncludedPFDirs[0])
                 return TRUE;
     }
-    if (g_AiData.lpIncludedSystemDirs) {
-        if (CurrentList != (ULONG_PTR)g_AiData.lpIncludedSystemDirs)
-            if ((ULONG_PTR)Ptr == (ULONG_PTR)g_AiData.lpIncludedSystemDirs[0])
+    if (AppInfo->lpIncludedSystemDirs) {
+        if (CurrentList != (ULONG_PTR)AppInfo->lpIncludedSystemDirs)
+            if ((ULONG_PTR)Ptr == (ULONG_PTR)AppInfo->lpIncludedSystemDirs[0])
                 return TRUE;
     }
-    if (g_AiData.lpIncludedWindowsDirs) {
-        if (CurrentList != (ULONG_PTR)g_AiData.lpIncludedWindowsDirs)
-            if ((ULONG_PTR)Ptr == (ULONG_PTR)g_AiData.lpIncludedWindowsDirs[0])
+    if (AppInfo->lpIncludedWindowsDirs) {
+        if (CurrentList != (ULONG_PTR)AppInfo->lpIncludedWindowsDirs)
+            if ((ULONG_PTR)Ptr == (ULONG_PTR)AppInfo->lpIncludedWindowsDirs[0])
                 return TRUE;
     }
     return FALSE;
@@ -583,7 +590,8 @@ BOOL IsCrossPtr(
 *
 */
 VOID ListMMCFiles(
-    OUTPUTCALLBACK OutputCallback
+    _In_ UAC_AI_GLOBALS * AppInfo,
+    _In_ OUTPUTCALLBACK OutputCallback
 )
 {
     SIZE_T          i, Length;
@@ -591,29 +599,29 @@ VOID ListMMCFiles(
     PVOID* MscArray = NULL;
     UAC_AI_DATA     CallbackData;
 
-    if (!QueryAiMmcBlock((PBYTE)g_AiData.DllBase, g_AiData.DllVirtualSize))
+    if (!QueryAiMmcBlock(AppInfo))
         return;
 
     __try {
-        if (g_AiData.MmcBlock->NumOfElements > 256) {
+        if (AppInfo->MmcBlock->NumOfElements > 256) {
             OutputDebugString(TEXT("Invalid block data"));
         }
         else {
             CallbackData.Type = AiManagementConsole;
-            TestString = g_AiData.MmcBlock->lpManagementApplication;
+            TestString = AppInfo->MmcBlock->lpManagementApplication;
             if (TestString) {
-                if (IN_REGION(TestString, g_AiData.DllBase, g_AiData.DllVirtualSize)) {
+                if (IN_REGION(TestString, AppInfo->DllBase, AppInfo->DllVirtualSize)) {
                     CallbackData.Name = TestString;
                     CallbackData.Length = _strlen(TestString);
                     OutputCallback((PVOID)&CallbackData);
                 }
             }
             CallbackData.Type = AiSnapinFile;
-            MscArray = (PVOID*)g_AiData.MmcBlock->Base;
-            for (i = 0; i < g_AiData.MmcBlock->NumOfElements; i++) {
+            MscArray = (PVOID*)AppInfo->MmcBlock->Base;
+            for (i = 0; i < AppInfo->MmcBlock->NumOfElements; i++) {
                 TestString = (LPWSTR)MscArray[i];
                 if (TestString != NULL) {
-                    if (IN_REGION(TestString, g_AiData.DllBase, g_AiData.DllVirtualSize)) {
+                    if (IN_REGION(TestString, AppInfo->DllBase, AppInfo->DllVirtualSize)) {
                         Length = _strlen(TestString);
                         CallbackData.Name = TestString;
                         CallbackData.Length = Length;
@@ -638,7 +646,8 @@ VOID ListMMCFiles(
 *
 */
 VOID ListAutoApproveEXE(
-    OUTPUTCALLBACK OutputCallback
+    _In_ UAC_AI_GLOBALS * AppInfo,
+    _In_ OUTPUTCALLBACK OutputCallback
 )
 {
     WCHAR           k, lk;
@@ -646,7 +655,7 @@ VOID ListAutoApproveEXE(
     LPWSTR          TestString = NULL;
     UAC_AI_DATA     CallbackData;
 
-    if (g_AiData.lpAutoApproveEXEList == NULL)
+    if (AppInfo->lpAutoApproveEXEList == NULL)
         return;
 
     CallbackData.Type = AiAutoApproveEXE;
@@ -656,8 +665,8 @@ VOID ListAutoApproveEXE(
     lk = 0;
     __try {
         do {
-            TestString = (LPWSTR)g_AiData.lpAutoApproveEXEList[i];
-            if (IsCrossPtr((ULONG_PTR)TestString, (ULONG_PTR)g_AiData.lpAutoApproveEXEList))
+            TestString = (LPWSTR)AppInfo->lpAutoApproveEXEList[i];
+            if (IsCrossPtr(AppInfo, (ULONG_PTR)TestString, (ULONG_PTR)AppInfo->lpAutoApproveEXEList))
                 break;
 
             k = TestString[0];
@@ -692,6 +701,7 @@ VOID ListAutoApproveEXE(
 *
 */
 VOID ListStringDataUnsorted(
+    UAC_AI_GLOBALS * AppInfo,
     AI_DATA_TYPE AiDataType,
     PVOID * Data,
     OUTPUTCALLBACK OutputCallback
@@ -711,7 +721,7 @@ VOID ListStringDataUnsorted(
     __try {
         do {
             TestString = (LPWSTR)Data[i];
-            if (IsCrossPtr((ULONG_PTR)TestString, (ULONG_PTR)Data))
+            if (IsCrossPtr(AppInfo, (ULONG_PTR)TestString, (ULONG_PTR)Data))
                 break;
 
             if (!TestChar(TestString[0]))
@@ -753,14 +763,14 @@ VOID ScanAppInfo(
     OBJECT_ATTRIBUTES   attr;
     UNICODE_STRING      usFileName;
     IO_STATUS_BLOCK     iosb;
+    UAC_AI_GLOBALS      AppInfo;
 
-
-    RtlSecureZeroMemory(&usFileName, sizeof(usFileName));
-    RtlSecureZeroMemory(&g_AiData, sizeof(g_AiData));
+    RtlSecureZeroMemory(&AppInfo, sizeof(AppInfo));
+    RtlInitEmptyUnicodeString(&usFileName, NULL, 0);
 
     do {
 
-        if (!GetAppInfoBuildVersion(lpFileName, &g_AiData.AppInfoBuildNumber))
+        if (!GetAppInfoBuildVersion(lpFileName, &AppInfo.AppInfoBuildNumber))
             break;
 
         if (RtlDosPathNameToNtPathName_U(lpFileName, &usFileName, NULL, NULL) == FALSE)
@@ -789,19 +799,19 @@ VOID ScanAppInfo(
         if (!NT_SUCCESS(status))
             break;
 
-        g_AiData.DllBase = DllBase;
-        g_AiData.DllVirtualSize = DllVirtualSize;
+        AppInfo.DllBase = DllBase;
+        AppInfo.DllVirtualSize = DllVirtualSize;
 
-        ListMMCFiles(OutputCallback);
+        ListMMCFiles(&AppInfo, OutputCallback);
 
         if (InitDbgHelp()) {
-            QueryAiGlobalData();
-            ListAutoApproveEXE(OutputCallback);
-            ListStringDataUnsorted(AiIncludedPFDirs, g_AiData.lpIncludedPFDirs, OutputCallback);
-            ListStringDataUnsorted(AilpIncludedWindowsDirs, g_AiData.lpIncludedWindowsDirs, OutputCallback);
-            ListStringDataUnsorted(AiIncludedSystemDirs, g_AiData.lpIncludedSystemDirs, OutputCallback);
-            ListStringDataUnsorted(AiExemptedAutoApproveExes, g_AiData.lpExemptedAutoApproveExes, OutputCallback);
-            ListStringDataUnsorted(AiExcludedWindowsDirs, g_AiData.lpExcludedWindowsDirs, OutputCallback);
+            QueryAiGlobalData(&AppInfo);
+            ListAutoApproveEXE(&AppInfo, OutputCallback);
+            ListStringDataUnsorted(&AppInfo, AiIncludedPFDirs, AppInfo.lpIncludedPFDirs, OutputCallback);
+            ListStringDataUnsorted(&AppInfo, AilpIncludedWindowsDirs, AppInfo.lpIncludedWindowsDirs, OutputCallback);
+            ListStringDataUnsorted(&AppInfo, AiIncludedSystemDirs, AppInfo.lpIncludedSystemDirs, OutputCallback);
+            ListStringDataUnsorted(&AppInfo, AiExemptedAutoApproveExes, AppInfo.lpExemptedAutoApproveExes, OutputCallback);
+            ListStringDataUnsorted(&AppInfo, AiExcludedWindowsDirs, AppInfo.lpExcludedWindowsDirs, OutputCallback);
         }
 
     } while (FALSE);

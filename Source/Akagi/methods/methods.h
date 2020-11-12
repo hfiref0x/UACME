@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     3.52
+*  VERSION:     3.53
 *
-*  DATE:        28 Oct 2020
+*  DATE:        07 Nov 2020
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -85,6 +85,7 @@ typedef enum _UCM_METHOD {
     UacMethodNICPoison,         //+
     UacMethodIeAddOnInstall,    //+
     UacMethodWscActionProtocol, //+
+    UacMethodFwCplLua2,         //+
     UacMethodMax,
     UacMethodInvalid = 0xabcdef
 } UCM_METHOD;
@@ -120,6 +121,7 @@ typedef struct _UCM_API_DISPATCH_ENTRY {
 
 #include "elvint.h"
 #include "api0cradle.h"
+#include "azagarampur.h"
 #include "comsup.h"
 #include "dwells.h"
 #include "shellsup.h"

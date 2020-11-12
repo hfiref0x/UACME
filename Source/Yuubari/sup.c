@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.47
+*  VERSION:     1.49
 *
-*  DATE:        22 Mar 2020
+*  DATE:        11 Nov 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -25,7 +25,7 @@
 *
 */
 BOOL supIsCorImageFile(
-    PVOID ImageBase
+    _In_ PVOID ImageBase
     )
 {
     BOOL                bResult = FALSE;
@@ -52,9 +52,9 @@ BOOL supIsCorImageFile(
 *
 */
 LPWSTR supReadKeyString(
-    HKEY hKey,
-    LPWSTR KeyValue,
-    PDWORD pdwDataSize
+    _In_ HKEY hKey,
+    _In_ LPWSTR KeyValue,
+    _In_ PDWORD pdwDataSize
     )
 {
     LRESULT lRet;

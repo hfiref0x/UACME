@@ -150,6 +150,9 @@
     <ClCompile Include="..\Shared\hde\hde64.c">
       <Filter>hde</Filter>
     </ClCompile>
+    <ClCompile Include="methods\azagarampur.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -238,6 +241,9 @@
     </ClInclude>
     <ClInclude Include="..\Shared\hde\table64.h">
       <Filter>hde</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\azagarampur.h">
+      <Filter>Source Files\methods</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

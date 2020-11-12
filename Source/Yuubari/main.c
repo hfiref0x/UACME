@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.48
+*  VERSION:     1.49
 *
-*  DATE:        10 Sep 2020
+*  DATE:        11 Nov 2020
 *
 *  Program entry point.
 *
@@ -40,7 +40,7 @@ VOID LoggerWriteHeader(
 *
 */
 VOID AppInfoDataOutputCallback(
-    UAC_AI_DATA *Data
+    _In_ UAC_AI_DATA* Data
 )
 {
     LPWSTR lpLog = NULL, Text = NULL;
@@ -99,7 +99,7 @@ VOID AppInfoDataOutputCallback(
 *
 */
 VOID WINAPI BasicDataOutputCallback(
-    UAC_BASIC_DATA *Data
+    _In_ UAC_BASIC_DATA* Data
 )
 {
     LPWSTR lpLog = NULL;
@@ -137,10 +137,10 @@ VOID WINAPI BasicDataOutputCallback(
 *
 */
 VOID WINAPI RegistryOutputCallback(
-    UAC_REGISTRY_DATA *Data
+    _In_ UAC_REGISTRY_DATA* Data
 )
 {
-    UAC_INTERFACE_DATA *InterfaceData;
+    UAC_INTERFACE_DATA* InterfaceData;
     LPOLESTR OutputString = NULL;
 
     if (Data == NULL)
@@ -201,13 +201,13 @@ VOID WINAPI RegistryOutputCallback(
 *
 */
 VOID WINAPI FusionOutputCallback(
-    UAC_FUSION_DATA *Data
+    _In_ UAC_FUSION_DATA* Data
 )
 {
     LPWSTR lpText;
     LPWSTR lpLog = NULL;
     SIZE_T sz = 0;
-    UAC_FUSION_DATA_DLL *Dll;
+    UAC_FUSION_DATA_DLL* Dll;
 
     if (Data == NULL)
         return;
@@ -442,13 +442,13 @@ VOID ListAppInfo(
 
     cuiPrintText(T_APPINFO_HEAD, TRUE);
     LoggerWriteHeader(T_APPINFO_HEAD);
-    
-/*#ifndef _DEBUG*/
+
+#ifndef _DEBUG
     _strcpy(szFileName, USER_SHARED_DATA->NtSystemRoot);
     _strcat(szFileName, TEXT("\\system32\\appinfo.dll"));
-/*#else
-    _strcpy(szFileName, TEXT("C:\\install\\appinfo20206.dll"));
-#endif*/
+#else
+    _strcpy(szFileName, TEXT("C:\\install\\appinfo.dll"));
+#endif
     ScanAppInfo(szFileName, (OUTPUTCALLBACK)AppInfoDataOutputCallback);
 }
 

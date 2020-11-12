@@ -672,6 +672,16 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.5.2
+66. Author: Arush Agarampur
+     * Type: Elevated COM interface 
+     * Method: IFwCplLua
+     * Target(s): Shell protocol registry entry and environment variables
+     * Component(s): Attacker defined
+     * Implementation: ucmFwCplLuaMethod2
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.5.3
 
 </details>
 
@@ -694,7 +704,7 @@ Run examples:
 * Most of methods created for x64, with no x86-32 support in mind. I don't see any sense in supporting 32 bit versions of Windows or wow64, however with small tweaks most of them will run under wow64 as well.
 
 If you wondering why this still exists and working - here is the explanation - an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
-https://blogs.msdn.microsoft.com/oldnewthing/20160816-00/?p=94105
+https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # Windows 10 support and testing policy
 * UACMe tested only with LSTB/LTSC variants (1607/1809) and Last RTM-1 versions, e.g. if current version is 2004 it will be tested on 2004 (19041) and previous version 1909 (18363);
