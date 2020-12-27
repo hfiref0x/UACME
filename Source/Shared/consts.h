@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.53
+*  VERSION:     3.54
 *
-*  DATE:        07 Nov 2020
+*  DATE:        26 Dec 2020
 *
 *  Global consts definition file.
 *
@@ -50,8 +50,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       5
-#define UCM_VERSION_REVISION    3
-#define UCM_VERSION_BUILD       2011
+#define UCM_VERSION_REVISION    4
+#define UCM_VERSION_BUILD       2012
 #define UCM_IS_VNEXT            TRUE
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
@@ -84,6 +84,9 @@
 #define T_APPXPACKAGE               L"AppX82a6gwre4fdg3bt635tn5ctqjf8msdd2"
 #define T_LAUNCHERSYSTEMSETTINGS    L"Launcher.SystemSettings"
 
+#define ELLOCNAK_MSU                L"update.msu"
+#define RUN_CMD_COMMAND             L" /c start "
+
 #pragma endregion
 
 #define T_SOFTWARE_CLASSES          L"Software\\Classes"
@@ -93,15 +96,12 @@
 
 #define T_SDDL_ALL_FOR_EVERYONE     L"D:(A;;GA;;;WD)"
 #define T_WINDIR                    L"windir"
+#define T_SYSTEMROOT                L"systemroot"
 #define T_WINDOWSMEDIAPLAYER        L"Windows Media Player"
 
 #define T_DELEGATEEXECUTE           L"DelegateExecute"
 
 #define T_PROTO_HTTP                L"http"
-
-#define ELLOCNAK_MSU                L"update.msu" //PYSH
-
-#define RUN_CMD_COMMAND             L" /c start " //PYSH
 
 //
 // Unit names and entrypoints

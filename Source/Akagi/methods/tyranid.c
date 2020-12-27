@@ -4,9 +4,9 @@
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.54
 *
-*  DATE:        14 Sep 2020
+*  DATE:        24 Nov 2020
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -26,8 +26,6 @@
 *
 *******************************************************************************/
 #include "global.h"
-#include <taskschd.h>
-#pragma comment(lib, "taskschd.lib")
 
 /*
 * ucmxStartTask

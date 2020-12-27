@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.53
+*  VERSION:     3.54
 *
-*  DATE:        07 Nov 2020
+*  DATE:        26 Dec 2020
 *
 *  Common header file for the program support routines.
 *
@@ -60,6 +60,8 @@
 #include <shlobj.h>
 #include <AccCtrl.h>
 #include <wintrust.h>
+#include <taskschd.h>
+#pragma comment(lib, "taskschd.lib")
 
 #pragma warning(push)
 #pragma warning(disable: 4115) //named type definition in parentheses

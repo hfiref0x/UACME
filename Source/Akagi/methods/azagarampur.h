@@ -4,9 +4,9 @@
 *
 *  TITLE:       AZAGARAMPUR.H
 *
-*  VERSION:     3.53
+*  VERSION:     3.54
 *
-*  DATE:        09 Nov 2020
+*  DATE:        26 Dec 2020
 *
 *  Prototypes and definitions for AzAgarampur methods.
 *
@@ -30,4 +30,7 @@ NTSTATUS ucmWscActionProtocolMethod(
     _In_ LPWSTR lpszPayload);
 
 NTSTATUS ucmFwCplLuaMethod2(
+    _In_ LPWSTR lpszPayload);
+
+NTSTATUS ucmMsSettignsProtocolMethod(
     _In_ LPWSTR lpszPayload);

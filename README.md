@@ -682,6 +682,16 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.5.3
+67. Author: Arush Agarampur
+     * Type: Shell API
+     * Method: Registry key manipulation
+     * Target(s): \system32\fodhelper.exe
+     * Component(s): Attacker defined
+     * Implementation: ucmMsSettignsProtocolMethod
+     * Works from: Windows 10 TH1 (10240)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.5.4
 
 </details>
 
@@ -790,6 +800,6 @@ https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105
 
 # Authors
 
-(c) 2014 - 2020 UACMe Project
+(c) 2014 - 2021 UACMe Project
 
 [![HitCount](http://hits.dwyl.io/hfiref0x/uacme.svg)](http://hits.dwyl.io/hfiref0x/uacme)
