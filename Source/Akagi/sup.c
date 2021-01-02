@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2020
+*  (C) COPYRIGHT AUTHORS, 2015 - 2021
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.53
+*  VERSION:     3.54
 *
-*  DATE:        11 Nov 2020
+*  DATE:        30 Dec 2020
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -3490,7 +3490,39 @@ NTSTATUS supFindUserAssocSet(
     if (sectionBase == NULL || sectionSize == 0)
         return STATUS_INVALID_ADDRESS;
 
-    ptrCode = (PBYTE)supFindPattern(sectionBase, sectionSize, patternPtr, patternSize);
+    //
+    // Lookup signature.
+    //
+    ptrCode = (PBYTE)supFindPattern(sectionBase,
+        sectionSize,
+        patternPtr,
+        patternSize);
+
+    if (ptrCode == NULL) {
+
+        switch (g_ctx->dwBuildNumber) {
+
+        case 19041:
+
+            //
+            // Try Windows 10 20H2 signature.
+            //
+            patternPtr = UserAssocSet_19042;
+            patternSize = sizeof(UserAssocSet_19042);
+
+            ptrCode = (PBYTE)supFindPattern(sectionBase,
+                sectionSize,
+                patternPtr,
+                patternSize);
+
+            break;
+
+        default:
+            break;
+        }
+
+    }
+
     if (ptrCode == NULL)
         return STATUS_NOT_FOUND;
 
