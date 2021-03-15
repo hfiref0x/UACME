@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2020
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.53
+*  VERSION:     3.55
 *
-*  DATE:        08 Nov 2020
+*  DATE:        12 Mar 2021
 *
 *  Common header file for the program support routines.
 *
@@ -20,6 +20,10 @@
 
 #define TEXT_SECTION ".text"
 #define TEXT_SECTION_LEGNTH sizeof(TEXT_SECTION)
+
+//
+// Shell association start.
+//
 
 typedef enum {
     UASET_CLEAR = 0,
@@ -46,84 +50,26 @@ typedef struct _USER_ASSOC_PTR {
     BOOL Valid;
 } USER_ASSOC_PTR, * PUSER_ASSOC_PTR;
 
-//
-// UserAssocSet patterns.
-//
+typedef struct USER_ASSOC_PATTERN {
+    PVOID Ptr;
+    DWORD Size;
+} USER_ASSOC_PATTERN, * PUSER_ASSOC_PATTERN;
 
-// mov r8, [rbx + 40h]
-// mov rdx, [rbx + 38h]
-// mov ecx, 1
-// call UserAssocSet
-static BYTE UserAssocSet_7601[] = {
-    0x4C, 0x8B, 0x43, 0x40, 0x48, 0x8B, 0x53, 0x38, 0xB9, 0x01, 0x00, 0x00, 0x00
-};
+typedef struct USER_ASSOC_SIGNATURE {
+    ULONG NtBuildMin;
+    ULONG NtBuildMax;
+    ULONG PatternsCount;
+    PVOID PatternsTable;
+} USER_ASSOC_SIGNATURE, * PUSER_ASSOC_SIGNATURE;
 
-// mov r8, rsi
-// mov rdx, rbx
-// mov ecx, 2
-// call UserAssocSet
-static BYTE UserAssocSet_9600[] = {
-    0x4C, 0x8B, 0xC6, 0x48, 0x8B, 0xD3, 0xB9, 0x02, 0x00, 0x00, 0x00
-};
-
-// imul rax, 4Eh
-// mov ecx, 2
-// add r8, rax
-// call UserAssocSet
-static BYTE UserAssocSet_14393[] = {
-    0x48, 0x6B, 0xC0, 0x4E, 0xB9, 0x02, 0x00, 0x00, 0x00, 0x4C, 0x03, 0xC0
-};
-
-// mov r8, rsi
-// mov r9d, ecx
-// mov rdx, r15
-// call UserAssocSet
-static BYTE UserAssocSet_17763[] = {
-    0x4C, 0x8B, 0xC6, 0x44, 0x8B, 0xC9, 0x49, 0x8B, 0xD7
-};
-
-// mov r9d, ecx
-// mov r8, rsi
-// mov rdx, r15
-// call UserAssocSet
-static BYTE UserAssocSet_18362[] = {
-    0x44, 0x8B, 0xC9, 0x4C, 0x8B, 0xC6, 0x49, 0x8B, 0xD7
-};
-
-// mov r8, rsi
-// mov r9d, ecx
-// mov rdx, r15
-// call UserAssocSet
-static BYTE UserAssocSet_18363[] = {
-    0x4C, 0x8B, 0xC6, 0x44, 0x8B, 0xC9, 0x49, 0x8B, 0xD7
-};
-
-// mov r9d, ecx
-// mov r8, rsi
-// mov rdx, r15
-// call UserAssocSet
-static BYTE UserAssocSet_19041[] = {
-    0x44, 0x8B, 0xC9, 0x4C, 0x8B, 0xC6, 0x49, 0x8B, 0xD7
-};
-
-// mov r8, rdi
-// mov rdx, rsi
-// mov ecx, r9d
-// call UserAssocSet
-static BYTE UserAssocSet_19042[] = {
-    0x4C, 0x8B, 0xC7, 0x48, 0x8B, 0xD6, 0x41, 0x8B, 0xC9
-};
-
-// mov r8, rsi
-// mov rdx, r14
-// mov eax, ecx
-// call UserAssocSet
-static BYTE UserAssocSet_vNext[] = {
-    0x4C, 0x8B, 0xC6, 0x49, 0x8B, 0xD6, 0x8B, 0xC8
-};
+typedef VOID(WINAPI* PSUP_UAS_ENUMERATION_CALLBACK_FUNCTION)(
+    _In_     PUSER_ASSOC_SIGNATURE Signature,
+    _In_opt_ PVOID Context,
+    _Inout_  BOOLEAN* StopEnumeration
+    );
 
 //
-// End of UserAssocSet patterns.
+// Shell association end.
 //
 
 typedef struct _SXS_SEARCH_CONTEXT {
@@ -503,17 +449,48 @@ PVOID supLookupImageSectionByName(
 NTSTATUS supFindUserAssocSet(
     _Out_ USER_ASSOC_PTR* Function);
 
+PUSER_ASSOC_SIGNATURE supGetUserAssocSetDB(
+    _Out_opt_ PULONG SignatureCount);
+
+VOID supEnumUserAssocSetDB(
+    _In_ PSUP_UAS_ENUMERATION_CALLBACK_FUNCTION Callback,
+    _In_opt_ PVOID Context);
+
 NTSTATUS supRegisterShellAssoc(
     _In_ LPCWSTR pszExt,
     _In_ LPCWSTR pszProgId,
     _In_ USER_ASSOC_PTR* UserAssocFunc,
     _In_ LPWSTR lpszPayload,
-    _In_ BOOL fCustomURIScheme);
+    _In_ BOOL fCustomURIScheme,
+    _In_opt_ LPWSTR pszDefaultValue);
+
+NTSTATUS supUnregisterShellAssocEx(
+    _In_ BOOLEAN fResetOnly,
+    _In_ LPCWSTR pszExt,
+    _In_opt_ LPCWSTR pszProgId,
+    _In_ USER_ASSOC_PTR* UserAssocFunc);
 
 NTSTATUS supUnregisterShellAssoc(
     _In_ LPCWSTR pszExt,
     _In_ LPCWSTR pszProgId,
     _In_ USER_ASSOC_PTR* UserAssocFunc);
+
+NTSTATUS supResetShellAssoc(
+    _In_ LPCWSTR pszExt,
+    _In_opt_ LPCWSTR pszProgId,
+    _In_ USER_ASSOC_PTR* UserAssocFunc);
+
+BOOL supGetAppxIdValue(
+    _In_ LPWSTR lpKey,
+    _In_ LPWSTR lpPackageName,
+    _Inout_ LPWSTR* lpAppxId,
+    _Inout_ PDWORD pcbAppxId);
+
+BOOL supGetAppxId(
+    _In_ LPWSTR lpComponentName,
+    _In_ LPWSTR lpPackageName,
+    _Out_ LPWSTR* lpAppxId,
+    _Out_ PDWORD pcbAppxId);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

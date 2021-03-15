@@ -585,6 +585,7 @@
     <ClInclude Include="stub.h" />
     <ClInclude Include="sup.h" />
     <ClInclude Include="tests\test.h" />
+    <ClInclude Include="uas.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="bin32res.rc">

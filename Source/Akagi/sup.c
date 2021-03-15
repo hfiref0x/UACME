@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.54
+*  VERSION:     3.55
 *
-*  DATE:        30 Dec 2020
+*  DATE:        12 Mar 2021
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -15,6 +15,22 @@
 *
 *******************************************************************************/
 #include "global.h"
+#include "uas.h"
+
+//
+// Signatures array.
+//
+USER_ASSOC_SIGNATURE* g_UserAssocSignatures[] = {
+    &UAS_SIG_7601,
+    &UAS_SIG_9600,
+    &UAS_SIG_14393,
+    &UAS_SIG_17763,
+    &UAS_SIG_18362,
+    &UAS_SIG_18363,
+    &UAS_SIG_19041,
+    &UAS_SIG_19042,
+    &UAS_SIG_VNEXT
+};
 
 /*
 * supEncodePointer
@@ -118,7 +134,7 @@ PVOID supVirtualAlloc(
     _Inout_ PSIZE_T Size,
     _In_ ULONG AllocationType,
     _In_ ULONG Protect,
-    _Out_opt_ NTSTATUS *Status)
+    _Out_opt_ NTSTATUS* Status)
 {
     NTSTATUS status;
     PVOID Buffer = NULL;
@@ -154,7 +170,7 @@ PVOID supVirtualAlloc(
 */
 BOOL supVirtualFree(
     _In_ PVOID Memory,
-    _Out_opt_ NTSTATUS *Status)
+    _Out_opt_ NTSTATUS* Status)
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     SIZE_T size = 0;
@@ -181,7 +197,7 @@ BOOL supVirtualFree(
 BOOL supSecureVirtualFree(
     _In_ PVOID Memory,
     _In_ SIZE_T MemorySize,
-    _Out_opt_ NTSTATUS *Status)
+    _Out_opt_ NTSTATUS* Status)
 {
     RtlSecureZeroMemory(Memory, MemorySize);
     return supVirtualFree(Memory, Status);
@@ -253,7 +269,7 @@ BOOLEAN supIsProcess32bit(
 *
 */
 BOOL supGetElevationType(
-    _Out_ TOKEN_ELEVATION_TYPE *lpType
+    _Out_ TOKEN_ELEVATION_TYPE* lpType
 )
 {
     HANDLE hToken = NULL;
@@ -408,12 +424,12 @@ NTSTATUS supRegReadValue(
     _In_ HANDLE hKey,
     _In_ LPWSTR ValueName,
     _In_ DWORD ValueType,
-    _Out_ PVOID *Buffer,
-    _Out_ ULONG *BufferSize,
+    _Out_ PVOID* Buffer,
+    _Out_ ULONG* BufferSize,
     _In_opt_ HANDLE hHeap
 )
 {
-    KEY_VALUE_PARTIAL_INFORMATION *kvpi;
+    KEY_VALUE_PARTIAL_INFORMATION* kvpi;
     UNICODE_STRING usName;
     NTSTATUS Status = STATUS_UNSUCCESSFUL;
     ULONG Length = 0;
@@ -432,7 +448,7 @@ NTSTATUS supRegReadValue(
     Status = NtQueryValueKey(hKey, &usName, KeyValuePartialInformation, NULL, 0, &Length);
     if (Status == STATUS_BUFFER_TOO_SMALL) {
 
-        kvpi = (KEY_VALUE_PARTIAL_INFORMATION *)RtlAllocateHeap(Heap, HEAP_ZERO_MEMORY, Length);
+        kvpi = (KEY_VALUE_PARTIAL_INFORMATION*)RtlAllocateHeap(Heap, HEAP_ZERO_MEMORY, Length);
         if (kvpi) {
 
             Status = NtQueryValueKey(hKey, &usName, KeyValuePartialInformation, kvpi, Length, &Length);
@@ -622,10 +638,10 @@ BOOL supRunProcess(
     _In_opt_ LPWSTR lpszParameters
 )
 {
-    return supRunProcess2(lpszProcessName, 
-        lpszParameters, 
-        NULL, 
-        SW_SHOW, 
+    return supRunProcess2(lpszProcessName,
+        lpszParameters,
+        NULL,
+        SW_SHOW,
         SUPRUNPROCESS_TIMEOUT_DEFAULT);
 }
 
@@ -643,14 +659,14 @@ BOOL supRunProcess(
 *
 */
 void supCopyMemory(
-    _Inout_ void *dest,
+    _Inout_ void* dest,
     _In_ size_t cbdest,
-    _In_ const void *src,
+    _In_ const void* src,
     _In_ size_t cbsrc
 )
 {
-    char *d = (char*)dest;
-    char *s = (char*)src;
+    char* d = (char*)dest;
+    char* s = (char*)src;
 
     if ((dest == 0) || (src == 0) || (cbdest == 0))
         return;
@@ -814,7 +830,7 @@ BOOLEAN supSetCheckSumForMappedFile(
 *
 */
 VOID ucmxBuildVersionString(
-    _In_ WCHAR *pszVersion)
+    _In_ WCHAR* pszVersion)
 {
     WCHAR szShortName[64];
 
@@ -846,11 +862,11 @@ VOID ucmShowMessageById(
     SIZE_T allocSize = PAGE_SIZE;
 
     pszMessage = supVirtualAlloc(&allocSize,
-        DEFAULT_ALLOCATION_TYPE, 
+        DEFAULT_ALLOCATION_TYPE,
         DEFAULT_PROTECT_TYPE, NULL);
     if (pszMessage) {
 
-        if (DecodeStringById(MessageId, pszMessage, PAGE_SIZE/sizeof(WCHAR))) {
+        if (DecodeStringById(MessageId, pszMessage, PAGE_SIZE / sizeof(WCHAR))) {
             ucmShowMessage(OutputToDebugger, pszMessage);
         }
         supSecureVirtualFree(pszMessage, PAGE_SIZE, NULL);
@@ -912,7 +928,7 @@ INT ucmShowQuestionById(
     if (pszMessage) {
 
         if (DecodeStringById(MessageId, pszMessage, PAGE_SIZE / sizeof(WCHAR))) {
-            
+
             szVersion[0] = 0;
             ucmxBuildVersionString(szVersion);
 
@@ -944,7 +960,7 @@ PBYTE supLdrQueryResourceData(
 {
     NTSTATUS                   status;
     ULONG_PTR                  IdPath[3];
-    IMAGE_RESOURCE_DATA_ENTRY  *DataEntry;
+    IMAGE_RESOURCE_DATA_ENTRY* DataEntry;
     PBYTE                      Data = NULL;
     ULONG                      SizeOfData = 0;
 
@@ -995,7 +1011,7 @@ typedef struct _LDR_BACKUP {
     PWSTR CommandLine;
     PWSTR lpFullDllName;
     PWSTR lpBaseDllName;
-} LDR_BACKUP, *PLDR_BACKUP;
+} LDR_BACKUP, * PLDR_BACKUP;
 
 static LDR_BACKUP g_LdrBackup;
 
@@ -1010,7 +1026,7 @@ static LDR_BACKUP g_LdrBackup;
 VOID NTAPI supxLdrEnumModulesCallback(
     _In_ PCLDR_DATA_TABLE_ENTRY DataTableEntry,
     _In_ PVOID Context,
-    _Inout_ BOOLEAN *StopEnumeration
+    _Inout_ BOOLEAN* StopEnumeration
 )
 {
     PPEB Peb = NtCurrentPeb();
@@ -1169,19 +1185,19 @@ DWORD supExpandEnvironmentStrings(
 * same as _filepath except it doesnt return last slash.
 *
 */
-wchar_t *sxsFilePathNoSlash(
-    const wchar_t *fname,
-    wchar_t *fpath
+wchar_t* sxsFilePathNoSlash(
+    const wchar_t* fname,
+    wchar_t* fpath
 )
 {
-    wchar_t *p = (wchar_t *)fname, *p0 = (wchar_t*)fname, *p1 = (wchar_t*)fpath;
+    wchar_t* p = (wchar_t*)fname, * p0 = (wchar_t*)fname, * p1 = (wchar_t*)fpath;
 
     if ((fname == 0) || (fpath == NULL))
         return 0;
 
     while (*fname != (wchar_t)0) {
         if (*fname == '\\')
-            p = (wchar_t *)fname;
+            p = (wchar_t*)fname;
         fname++;
     }
 
@@ -1589,7 +1605,7 @@ BOOL supSetMountPoint(
     NTSTATUS        status;
     IO_STATUS_BLOCK IoStatusBlock;
 
-    REPARSE_DATA_BUFFER *Buffer;
+    REPARSE_DATA_BUFFER* Buffer;
 
     if ((lpTarget == NULL) || (lpPrintName == NULL)) {
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -1950,7 +1966,7 @@ BOOL supIsCorImageFile(
 {
     BOOL                bResult = FALSE;
     ULONG               sz = 0;
-    IMAGE_COR20_HEADER *CliHeader;
+    IMAGE_COR20_HEADER* CliHeader;
 
     if (ImageBase) {
         CliHeader = (IMAGE_COR20_HEADER*)RtlImageDirectoryEntryToData(ImageBase, TRUE,
@@ -1987,7 +2003,7 @@ BOOL supIsConsentApprovedInterface(
 
     ULONG               Index = 0;
 
-    BYTE               *Buffer;
+    BYTE* Buffer;
     ULONG               Size = PAGE_SIZE;
 
     PKEY_VALUE_BASIC_INFORMATION ValueInformation;
@@ -2066,7 +2082,7 @@ BOOL supIsConsentApprovedInterface(
 */
 NTSTATUS supCreateDirectory(
     _Out_opt_ PHANDLE phDirectory,
-    _In_ OBJECT_ATTRIBUTES *ObjectAttributes,
+    _In_ OBJECT_ATTRIBUTES* ObjectAttributes,
     _In_ ULONG DirectoryShareFlags,
     _In_ ULONG DirectoryAttributes
 )
@@ -2107,9 +2123,9 @@ NTSTATUS supCreateDirectory(
 *
 */
 PSID supxCreateBoundaryDescriptorSID(
-    SID_IDENTIFIER_AUTHORITY *SidAuthority,
+    SID_IDENTIFIER_AUTHORITY* SidAuthority,
     UCHAR SubAuthorityCount,
-    ULONG *SubAuthorities
+    ULONG* SubAuthorities
 )
 {
     BOOL    bResult = FALSE;
@@ -2375,7 +2391,7 @@ PVOID supCreateUacmeContext(
     RtlGetVersion((PRTL_OSVERSIONINFOW)&osv);
     NtBuildNumber = osv.dwBuildNumber;
 
-    if (NtBuildNumber < 7000) {
+    if (NtBuildNumber < NT_WIN7_RTM) {
         return NULL;
     }
 
@@ -3072,7 +3088,7 @@ BOOL supFusionFindFileByMVIDCallback(
 *
 */
 VOID supBinTextEncode(
-    _In_ unsigned __int64 x, 
+    _In_ unsigned __int64 x,
     _Inout_ wchar_t* s
 )
 {
@@ -3191,7 +3207,7 @@ NTSTATUS supOpenClassesKey(
     else {
         RtlCopyMemory(&usRootKey, UserRegEntry, sizeof(UNICODE_STRING));
     }
-    
+
     InitializeObjectAttributes(&obja, &usRootKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     ntStatus = NtOpenKey(&rootKeyHandle, MAXIMUM_ALLOWED, &obja);
@@ -3408,6 +3424,59 @@ PVOID supLookupImageSectionByName(
 }
 
 /*
+* supGetUserAssocSetDB
+*
+* Purpose:
+*
+* Return pointer to UAS table and optionally count of entries.
+*
+*/
+PUSER_ASSOC_SIGNATURE supGetUserAssocSetDB(
+    _Out_opt_ PULONG SignatureCount
+)
+{
+    if (SignatureCount)
+        *SignatureCount = RTL_NUMBER_OF(g_UserAssocSignatures);
+
+    return (PUSER_ASSOC_SIGNATURE)&g_UserAssocSignatures;
+}
+
+/*
+* supEnumUserAssocSetDB
+*
+* Purpose:
+*
+* Enumerate UserSetAssocDB.
+*
+*/
+VOID supEnumUserAssocSetDB(
+    _In_ PSUP_UAS_ENUMERATION_CALLBACK_FUNCTION Callback,
+    _In_opt_ PVOID Context
+)
+{
+    USER_ASSOC_SIGNATURE* pSignature;
+    ULONG i, signCount;
+
+    BOOLEAN bStopEnumeration;
+
+    bStopEnumeration = FALSE;
+    signCount = RTL_NUMBER_OF(g_UserAssocSignatures);
+
+    //
+    // Iterate through signatures table.
+    //
+    for (i = 0; i < signCount; i++) {
+
+        pSignature = g_UserAssocSignatures[i];
+
+        Callback(pSignature, Context, &bStopEnumeration);
+
+        if (bStopEnumeration)
+            break;
+    }
+}
+
+/*
 * supFindUserAssocSet
 *
 * Purpose:
@@ -3423,56 +3492,22 @@ NTSTATUS supFindUserAssocSet(
 
     PBYTE  ptrCode;
     PVOID  sectionBase, patternPtr, funcPtr;
-    ULONG  sectionSize = 0, patternSize;
+    ULONG  i, j, signCount;
+    ULONG  sectionSize = 0, patternSize = 0;
     LONG   rel = 0;
     hde64s hs;
     WCHAR  szBuffer[MAX_PATH * 2];
 
+    USER_ASSOC_SIGNATURE* pSignature;
+    USER_ASSOC_PATTERN* pPattern;
+    PVOID* pTable;
+
     Function->UserAssocSet = NULL;
     Function->Valid = FALSE;
 
-    switch (g_ctx->dwBuildNumber) {
-    case 7601:
-        patternPtr = UserAssocSet_7601;
-        patternSize = sizeof(UserAssocSet_7601);
-        break;
-    case 9600:
-        patternPtr = UserAssocSet_9600;
-        patternSize = sizeof(UserAssocSet_9600);
-        break;
-    case 14393:
-        patternPtr = UserAssocSet_14393;
-        patternSize = sizeof(UserAssocSet_14393);
-        break;
-    case 17763:
-        patternPtr = UserAssocSet_17763;
-        patternSize = sizeof(UserAssocSet_17763);
-        break;
-    case 18362:
-        patternPtr = UserAssocSet_18362;
-        patternSize = sizeof(UserAssocSet_18362);
-        break;
-    case 18363:
-        patternPtr = UserAssocSet_18363;
-        patternSize = sizeof(UserAssocSet_18363);
-        break;
-    case 19041:
-        patternPtr = UserAssocSet_19041;
-        patternSize = sizeof(UserAssocSet_19041);
-        break;
-    case 19042:
-        patternPtr = UserAssocSet_19042;
-        patternSize = sizeof(UserAssocSet_19042);
-        break;
-    default:
-        if (g_ctx->dwBuildNumber > 19042) {
-            patternPtr = UserAssocSet_vNext;
-            patternSize = sizeof(UserAssocSet_vNext);
-            break;
-        }
-        return STATUS_NOT_SUPPORTED;
-    }
-
+    //
+    // Preload shell32.dll
+    //
     hModule = (HMODULE)GetModuleHandle(SHELL32_DLL);
     if (hModule == NULL) {
         _strcpy(szBuffer, g_ctx->szSystemDirectory);
@@ -3482,6 +3517,9 @@ NTSTATUS supFindUserAssocSet(
     if (hModule == NULL)
         return STATUS_DLL_NOT_FOUND;
 
+    //
+    // Find text section and remember it boundaries.
+    //
     sectionBase = supLookupImageSectionByName(TEXT_SECTION,
         TEXT_SECTION_LEGNTH,
         (PVOID)hModule,
@@ -3490,44 +3528,76 @@ NTSTATUS supFindUserAssocSet(
     if (sectionBase == NULL || sectionSize == 0)
         return STATUS_INVALID_ADDRESS;
 
+
+    ptrCode = NULL;
+    signCount = RTL_NUMBER_OF(g_UserAssocSignatures);
+
     //
-    // Lookup signature.
+    // Iterate through signatures table and try each one for corresponding nt build.
     //
-    ptrCode = (PBYTE)supFindPattern(sectionBase,
-        sectionSize,
-        patternPtr,
-        patternSize);
+    for (i = 0; i < signCount; i++) {
 
-    if (ptrCode == NULL) {
+        pSignature = g_UserAssocSignatures[i];
 
-        switch (g_ctx->dwBuildNumber) {
+        //
+        // If Windows version is match use signatures.
+        //
+        if (g_ctx->dwBuildNumber >= pSignature->NtBuildMin &&
+            g_ctx->dwBuildNumber <= pSignature->NtBuildMax)
+        {
 
-        case 19041:
+            pTable = pSignature->PatternsTable;
 
             //
-            // Try Windows 10 20H2 signature.
+            // Try all available patterns.
             //
-            patternPtr = UserAssocSet_19042;
-            patternSize = sizeof(UserAssocSet_19042);
+            for (j = 0; j < pSignature->PatternsCount; j++) {
 
-            ptrCode = (PBYTE)supFindPattern(sectionBase,
-                sectionSize,
-                patternPtr,
-                patternSize);
+                pPattern = pTable[j];
 
-            break;
+                patternPtr = pPattern->Ptr;
+                patternSize = pPattern->Size;
 
-        default:
-            break;
+                //
+                // Lookup signature.
+                //
+                ptrCode = (PBYTE)supFindPattern(sectionBase,
+                    sectionSize,
+                    patternPtr,
+                    patternSize);
+
+                if (ptrCode) {
+
+                    //
+                    // Pointer within section.
+                    //
+                    if (IN_REGION(ptrCode, sectionBase, sectionSize)) {
+                        break;
+                    }
+                    else {
+                        ptrCode = NULL;
+                    }
+                }
+
+            }
+
+            if (ptrCode)
+                break;
         }
 
     }
 
-    if (ptrCode == NULL)
+    if (ptrCode == NULL || patternSize == 0)
         return STATUS_NOT_FOUND;
 
+    //
+    // Skip signature bytes.
+    //
     ptrCode = (PBYTE)RtlOffsetToPointer(ptrCode, patternSize);
 
+    //
+    // Disassemble instruction and check it to be call sus.
+    //
     hde64_disasm(ptrCode, &hs);
     if (hs.flags & F_ERROR)
         return STATUS_INTERNAL_ERROR;
@@ -3547,6 +3617,7 @@ NTSTATUS supFindUserAssocSet(
     else {
         return STATUS_CONFLICTING_ADDRESSES;
     }
+
 }
 
 /*
@@ -3562,7 +3633,8 @@ NTSTATUS supRegisterShellAssoc(
     _In_ LPCWSTR pszProgId,
     _In_ USER_ASSOC_PTR* UserAssocFunc,
     _In_ LPWSTR lpszPayload,
-    _In_ BOOL fCustomURIScheme
+    _In_ BOOL fCustomURIScheme,
+    _In_opt_ LPWSTR pszDefaultValue
 )
 {
     HANDLE classesKey = NULL, protoKey = NULL, assocKey = NULL;
@@ -3587,7 +3659,7 @@ NTSTATUS supRegisterShellAssoc(
         return ntStatus;
 
     //
-    // Set mode: write custom pluggable protocol handler mark.
+    // Write custom pluggable protocol handler mark.
     //
 
     if (fCustomURIScheme) {
@@ -3602,13 +3674,19 @@ NTSTATUS supRegisterShellAssoc(
             (HKEY*)&protoKey,
             NULL))
         {
-            RegSetValueEx(protoKey, TEXT("URL Protocol"), 0, REG_SZ, NULL, 0);
+            RegSetValueEx(protoKey, T_URL_PROTOCOL, 0, REG_SZ, NULL, 0);
+
+            if (pszDefaultValue) {
+                sz = (_strlen(pszDefaultValue) + 1) * sizeof(WCHAR);
+                RegSetValueEx(protoKey, TEXT(""), 0, REG_SZ, (BYTE*)pszDefaultValue, (DWORD)sz);
+            }
+
             RegCloseKey(protoKey);
         }
     }
 
     //
-    // Set mode: create protocol registry entry.
+    // Create protocol registry entry.
     //
     _strcpy(szBuffer, pszProgId);
     _strcat(szBuffer, T_SHELL_OPEN);
@@ -3655,9 +3733,9 @@ NTSTATUS supRegisterShellAssoc(
     ntStatus = STATUS_UNSUCCESSFUL;
 
     //
-    // Set mode: register protocol within the shell.
+    // Register protocol within the shell.
     //
-    if (g_ctx->dwBuildNumber > 19042) {
+    if (g_ctx->dwBuildNumber > NT_WIN10_20H2) {
 
         hr = UserAssocFunc->UserAssocSet2(UASET_PROGID,
             pszExt,
@@ -3668,9 +3746,9 @@ NTSTATUS supRegisterShellAssoc(
     else {
 
         switch (g_ctx->dwBuildNumber) {
-        case 18362:
-        case 18363:
-        case 17763:
+        case NT_WIN10_19H1:
+        case NT_WIN10_19H2:
+        case NT_WIN10_REDSTONE5:
 
             hr = UserAssocFunc->UserAssocSet2(UASET_PROGID,
                 pszExt,
@@ -3697,16 +3775,17 @@ NTSTATUS supRegisterShellAssoc(
 }
 
 /*
-* supUnregisterShellAssoc
+* supUnregisterShellAssocEx
 *
 * Purpose:
 *
-* Unregister and remove shell protocol.
+* Unregister and optionally remove shell protocol.
 *
 */
-NTSTATUS supUnregisterShellAssoc(
+NTSTATUS supUnregisterShellAssocEx(
+    _In_ BOOLEAN fResetOnly,
     _In_ LPCWSTR pszExt,
-    _In_ LPCWSTR pszProgId,
+    _In_opt_ LPCWSTR pszProgId,
     _In_ USER_ASSOC_PTR* UserAssocFunc
 )
 {
@@ -3720,13 +3799,15 @@ NTSTATUS supUnregisterShellAssoc(
     if (UserAssocFunc->Valid == FALSE)
         return STATUS_INVALID_PARAMETER_3;
 
-    ntStatus = supOpenClassesKey(NULL, &classesKey);
-    if (!NT_SUCCESS(ntStatus))
-        return ntStatus;
+    if (fResetOnly == FALSE) {
+        ntStatus = supOpenClassesKey(NULL, &classesKey);
+        if (!NT_SUCCESS(ntStatus))
+            return ntStatus;
+    }
 
     switch (g_ctx->dwBuildNumber) {
-    case 18362:
-    case 18363:
+    case NT_WIN10_19H1:
+    case NT_WIN10_19H2:
 
         hr = UserAssocFunc->UserAssocSet2(UASET_CLEAR,
             pszExt,
@@ -3746,9 +3827,235 @@ NTSTATUS supUnregisterShellAssoc(
     if (SUCCEEDED(hr))
         ntStatus = STATUS_SUCCESS;
 
-    supRegDeleteKeyRecursive(classesKey, pszProgId);
-    supRegDeleteKeyRecursive(classesKey, pszExt);
-    NtClose(classesKey);
+    if (fResetOnly == FALSE) {
+        if (pszProgId)
+            supRegDeleteKeyRecursive(classesKey, pszProgId);
+        supRegDeleteKeyRecursive(classesKey, pszExt);
+        NtClose(classesKey);
+    }
 
     return ntStatus;
+}
+
+/*
+* supUnregisterShellAssoc
+*
+* Purpose:
+*
+* Unregister and remove shell protocol.
+*
+*/
+NTSTATUS supUnregisterShellAssoc(
+    _In_ LPCWSTR pszExt,
+    _In_ LPCWSTR pszProgId,
+    _In_ USER_ASSOC_PTR* UserAssocFunc
+)
+{
+    return supUnregisterShellAssocEx(FALSE,
+        pszExt,
+        pszProgId,
+        UserAssocFunc);
+}
+
+/*
+* supResetShellAssoc
+*
+* Purpose:
+*
+* Enable/disable explorer policies.
+*
+*/
+NTSTATUS supResetShellAssoc(
+    _In_ LPCWSTR pszExt,
+    _In_opt_ LPCWSTR pszProgId,
+    _In_ USER_ASSOC_PTR* UserAssocFunc
+)
+{
+    return supUnregisterShellAssocEx(TRUE,
+        pszExt,
+        pszProgId,
+        UserAssocFunc);
+    
+}
+
+/*
+* supGetAppxIdValue
+*
+* Purpose:
+*
+* Read AppX package value name from registry.
+*
+*/
+BOOL supGetAppxIdValue(
+    _In_ LPWSTR lpKey,
+    _In_ LPWSTR lpPackageName,
+    _Inout_ LPWSTR* lpAppxId,
+    _Inout_ PDWORD pcbAppxId
+)
+{
+    BOOL bResult = FALSE;
+    HKEY hKey, hUrlSubKey;
+    DWORD dwType = REG_SZ;
+
+    LPWSTR lpData;
+    DWORD cbData;
+
+    if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER,
+        lpKey,
+        0,
+        KEY_READ,
+        &hKey))
+    {
+
+        if (ERROR_SUCCESS == RegOpenKeyEx(hKey,
+            TEXT("URLAssociations"),
+            0,
+            KEY_READ,
+            &hUrlSubKey))
+        {
+            cbData = 0;
+            dwType = 0;
+
+            if (ERROR_SUCCESS == RegQueryValueEx(hUrlSubKey,
+                lpPackageName,
+                NULL,
+                &dwType,
+                NULL,
+                &cbData))
+            {
+                if (dwType == REG_SZ) {
+                    lpData = (LPWSTR)supHeapAlloc(cbData);
+
+                    if (ERROR_SUCCESS == RegQueryValueEx(hUrlSubKey,
+                        lpPackageName,
+                        NULL,
+                        &dwType,
+                        (LPBYTE)lpData,
+                        &cbData))
+                    {
+                        *pcbAppxId = cbData;
+                        *lpAppxId = lpData;
+                        bResult = TRUE;
+                    }
+
+                }
+            }
+
+            RegCloseKey(hUrlSubKey);
+        }
+
+        RegCloseKey(hKey);
+    }
+
+    return bResult;
+}
+
+/*
+* supGetAppxId
+*
+* Purpose:
+*
+* Query component appx name from registry.
+* Use supHeapFree to release allocated memory.
+*
+*/
+BOOL supGetAppxId(
+    _In_ LPWSTR lpComponentName,
+    _In_ LPWSTR lpPackageName,
+    _Out_ LPWSTR* lpAppxId,
+    _Out_ PDWORD pcbAppxId
+)
+{
+    BOOL bResult = FALSE;
+    HKEY hKey;
+
+    DWORD i, dwValuesCount = 0, dwMaxValueNameLen = 0, dwMaxValueLen = 0, cchValue, dwType, dwDataLen;
+
+    LPWSTR lpValueData = NULL;
+
+    *lpAppxId = NULL;
+    *pcbAppxId = 0;
+
+    WCHAR szValue[MAX_PATH + 1];
+
+    if (ERROR_SUCCESS != RegOpenKeyEx(HKEY_CURRENT_USER,
+        TEXT("SOFTWARE\\RegisteredApplications"),
+        0,
+        KEY_READ,
+        &hKey))
+    {
+        return FALSE;
+    }
+
+    do {
+
+        if (ERROR_SUCCESS != RegQueryInfoKey(hKey,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            &dwValuesCount,
+            &dwMaxValueNameLen,
+            &dwMaxValueLen,
+            NULL,
+            NULL))
+        {
+            break;
+        }
+
+        if (dwValuesCount == 0)
+            break;
+
+        lpValueData = (LPWSTR)supHeapAlloc(dwMaxValueLen);
+        if (lpValueData == NULL)
+            break;
+
+        RtlSecureZeroMemory(&szValue, sizeof(szValue));
+
+        for (i = 0; i < dwValuesCount; i++) {
+
+            dwType = 0;
+            dwDataLen = dwMaxValueLen;
+
+            cchValue = MAX_PATH;
+            szValue[0] = 0;
+
+            if (ERROR_SUCCESS == RegEnumValue(hKey,
+                i,
+                (LPWSTR)&szValue,
+                (LPDWORD)&cchValue,
+                NULL,
+                &dwType,
+                (LPBYTE)lpValueData,
+                &dwDataLen))
+            {
+                if (dwType == REG_SZ) {
+
+                    lpValueData[dwDataLen] = 0;
+
+                    if (NULL != _strstri(lpValueData, lpComponentName)) {
+
+                        bResult = supGetAppxIdValue(lpValueData,
+                            lpPackageName,
+                            lpAppxId,
+                            pcbAppxId);
+
+                        if (bResult)
+                            break;
+
+                    }
+                }
+            }
+
+        }
+
+    } while (FALSE);
+
+    if (lpValueData) supHeapFree(lpValueData);
+
+    RegCloseKey(hKey);
+
+    return bResult;
 }

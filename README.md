@@ -665,7 +665,7 @@ First parameter is number of method to use, second is optional command (executab
 65. Author: Arush Agarampur
      * Type: Elevated COM interface 
      * Method: IWscAdmin
-     * Target(s): Shell protocol registry entry
+     * Target(s): Shell Protocol Hijack
      * Component(s): Attacker defined
      * Implementation: ucmWscActionProtocolMethod
      * Works from: Windows 7 (7600)
@@ -674,7 +674,7 @@ First parameter is number of method to use, second is optional command (executab
       * Code status: added in v3.5.2
 66. Author: Arush Agarampur
      * Type: Elevated COM interface 
-     * Method: IFwCplLua
+     * Method: IFwCplLua, Shell Protocol Hijack
      * Target(s): Shell protocol registry entry and environment variables
      * Component(s): Attacker defined
      * Implementation: ucmFwCplLuaMethod2
@@ -684,14 +684,24 @@ First parameter is number of method to use, second is optional command (executab
       * Code status: added in v3.5.3
 67. Author: Arush Agarampur
      * Type: Shell API
-     * Method: Registry key manipulation
+     * Method: Shell Protocol Hijack
      * Target(s): \system32\fodhelper.exe
      * Component(s): Attacker defined
-     * Implementation: ucmMsSettignsProtocolMethod
+     * Implementation: ucmMsSettingsProtocolMethod
      * Works from: Windows 10 TH1 (10240)
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.5.4
+68. Author: Arush Agarampur
+     * Type: Shell API
+     * Method: Shell Protocol Hijack
+     * Target(s): \system32\wsreset.exe
+     * Component(s): Attacker defined
+     * Implementation: ucmMsStoreProtocolMethod
+     * Works from: Windows 10 RS5 (17763)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.5.5
 
 </details>
 
