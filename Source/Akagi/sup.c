@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.55
 *
-*  DATE:        12 Mar 2021
+*  DATE:        13 Mar 2021
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -3925,17 +3925,21 @@ BOOL supGetAppxIdValue(
             {
                 if (dwType == REG_SZ) {
                     lpData = (LPWSTR)supHeapAlloc(cbData);
-
-                    if (ERROR_SUCCESS == RegQueryValueEx(hUrlSubKey,
-                        lpPackageName,
-                        NULL,
-                        &dwType,
-                        (LPBYTE)lpData,
-                        &cbData))
-                    {
-                        *pcbAppxId = cbData;
-                        *lpAppxId = lpData;
-                        bResult = TRUE;
+                    if (lpData) {
+                        if (ERROR_SUCCESS == RegQueryValueEx(hUrlSubKey,
+                            lpPackageName,
+                            NULL,
+                            &dwType,
+                            (LPBYTE)lpData,
+                            &cbData))
+                        {
+                            *pcbAppxId = cbData;
+                            *lpAppxId = lpData;
+                            bResult = TRUE;
+                        }
+                        else {
+                            supHeapFree(lpData);
+                        }
                     }
 
                 }
