@@ -16,7 +16,7 @@
 *******************************************************************************/
 #include "global.h"
 
-VOID TestEnumDB(
+VOID WINAPI TestEnumDB(
     _In_     PUSER_ASSOC_SIGNATURE Signature,
     _In_opt_ PVOID Context,
     _Inout_  BOOLEAN* StopEnumeration
@@ -49,7 +49,7 @@ VOID TestEnumDB(
 
 VOID TestEnumUAS()
 { 
-    supEnumUserAssocSetDB(TestEnumDB, NULL);
+    supEnumUserAssocSetDB((PSUP_UAS_ENUMERATION_CALLBACK_FUNCTION)TestEnumDB, NULL);
 }
 
 /*
