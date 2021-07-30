@@ -47,9 +47,6 @@
     <ClInclude Include="..\Shared\minirtl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shared\ntos.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Shared\_filename.h">
       <Filter>minirtl</Filter>
     </ClInclude>

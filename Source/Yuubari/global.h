@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     1.40
+*  VERSION:     1.50
 *
-*  DATE:        19 Mar 2019
+*  DATE:        26 July 2021
 *
 *  Common header file for the program support routines.
 *
@@ -35,8 +35,9 @@
 #include <Windows.h>
 #include <ntstatus.h>
 #include <CommCtrl.h>
-#include "shared\ntos.h"
-#include "shared\ntsxs.h"
+#include "shared\ntos\ntos.h"
+#include "shared\ntos\ntsxs.h"
+#include "shared\ntos\ntbuilds.h"
 #include "shared\minirtl.h"
 #include "shared\_filename.h"
 #include "shared\cmdline.h"
@@ -58,3 +59,7 @@ typedef VOID(WINAPI *OUTPUTCALLBACK)(PVOID OutputData);
 
 extern ULONG g_NtBuildNumber;
 extern BOOL g_VerboseOutput;
+
+#ifdef _DEBUG
+extern ULONG g_TestAppInfoBuildNumber;
+#endif

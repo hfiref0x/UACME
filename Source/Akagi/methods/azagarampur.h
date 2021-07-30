@@ -4,9 +4,9 @@
 *
 *  TITLE:       AZAGARAMPUR.H
 *
-*  VERSION:     3.55
+*  VERSION:     3.56
 *
-*  DATE:        11 Mar 2021
+*  DATE:        16 July 2021
 *
 *  Prototypes and definitions for AzAgarampur methods.
 *
@@ -37,3 +37,7 @@ NTSTATUS ucmMsSettingsProtocolMethod(
 
 NTSTATUS ucmMsStoreProtocolMethod(
     _In_ LPWSTR lpszPayload);
+
+NTSTATUS ucmPcaMethod(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);

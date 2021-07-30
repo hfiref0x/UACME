@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2020
+*  (C) COPYRIGHT AUTHORS, 2017 - 2021
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     3.51
+*  VERSION:     3.56
 *
-*  DATE:        16 Oct 2020
+*  DATE:        17 July 2021
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -117,14 +117,14 @@ VOID ucmxQuerySystemDirectory(
 }
 
 /*
-* ucmxBinTextEncode
+* ucmBinTextEncode
 *
 * Purpose:
 *
 * Create pseudo random string from UI64 value.
 *
 */
-VOID ucmxBinTextEncode(
+VOID ucmBinTextEncode(
     _In_ unsigned __int64 x,
     _Inout_ wchar_t* s
 )
@@ -156,14 +156,14 @@ VOID ucmxBinTextEncode(
 }
 
 /*
-* ucmxGenerateSharedObjectName
+* ucmGenerateSharedObjectName
 *
 * Purpose:
 *
 * Create pseudo random object name from it ID.
 *
 */
-VOID ucmxGenerateSharedObjectName(
+VOID ucmGenerateSharedObjectName(
     _In_ WORD ObjectId,
     _Inout_ LPWSTR lpBuffer
 )
@@ -176,7 +176,7 @@ VOID ucmxGenerateSharedObjectName(
 
     value.HighPart = MAKELONG(UACME_SHARED_BASE_ID, ObjectId);
 
-    ucmxBinTextEncode(value.QuadPart, lpBuffer);
+    ucmBinTextEncode(value.QuadPart, lpBuffer);
 }
 
 /*
@@ -238,7 +238,7 @@ HANDLE ucmOpenAkagiNamespace(
     WCHAR szBoundaryDescriptorName[128];
 
     RtlSecureZeroMemory(&szBoundaryDescriptorName, sizeof(szBoundaryDescriptorName));
-    ucmxGenerateSharedObjectName((WORD)AKAGI_BDESCRIPTOR_NAME_ID, szBoundaryDescriptorName);
+    ucmGenerateSharedObjectName((WORD)AKAGI_BDESCRIPTOR_NAME_ID, szBoundaryDescriptorName);
     RtlInitUnicodeString(&usName, szBoundaryDescriptorName);
 
     do {
@@ -311,7 +311,7 @@ BOOL ucmReadSharedParameters(
             break;
 
         RtlSecureZeroMemory(&szSectionName, sizeof(szSectionName));
-        ucmxGenerateSharedObjectName((WORD)AKAGI_SHARED_SECTION_ID, szSectionName);
+        ucmGenerateSharedObjectName((WORD)AKAGI_SHARED_SECTION_ID, szSectionName);
         RtlInitUnicodeString(&usName, szSectionName);
 
         InitializeObjectAttributes(&obja, &usName, OBJ_CASE_INSENSITIVE, hNamespace, NULL);
@@ -432,6 +432,29 @@ PLARGE_INTEGER ucmFormatTimeOut(
 }
 
 /*
+* ucmSleep
+*
+* Purpose:
+*
+* Win32 Sleep replacement.
+*
+*/
+VOID ucmSleep(
+    _In_ DWORD Miliseconds
+)
+{
+    LARGE_INTEGER liDueTime;
+
+    if (Miliseconds == INFINITE) {
+        liDueTime.QuadPart = 0x8000000000000000;
+    }
+    else {
+        ucmFormatTimeOut(&liDueTime, Miliseconds);
+    }
+    NtDelayExecution(FALSE, &liDueTime);
+}
+
+/*
 * ucmCreateSyncMutant
 *
 * Purpose:
@@ -451,7 +474,7 @@ NTSTATUS ucmCreateSyncMutant(
 
     RtlSecureZeroMemory(&szName, sizeof(szName));
     _strcpy(szObjectName, L"\\BaseNamedObjects\\");
-    ucmxGenerateSharedObjectName(FUBUKI_SYNC_MUTEX_ID, szName);
+    ucmGenerateSharedObjectName(FUBUKI_SYNC_MUTEX_ID, szName);
     _strcat(szObjectName, szName);
 
     RtlInitUnicodeString(&usName, szObjectName);
@@ -1781,4 +1804,41 @@ NTSTATUS ucmIsProcessElevated(
     }
 
     return Status;
+}
+
+/*
+* ucmSetEnvironmentVariable
+*
+* Purpose:
+*
+* SetEnvironmentVariable replacement.
+*
+*/
+BOOL ucmSetEnvironmentVariable(
+    _In_ LPCWSTR lpName,
+    _In_ LPCWSTR lpValue
+)
+{
+    NTSTATUS ntStatus;
+    UNICODE_STRING Name, Value;
+
+    ntStatus = RtlInitUnicodeStringEx(&Name, lpName);
+    if (!NT_SUCCESS(ntStatus)) {
+        return FALSE;
+    }
+
+    if (lpValue) {
+        ntStatus = RtlInitUnicodeStringEx(&Value, lpValue);
+        if (!NT_SUCCESS(ntStatus)) {
+            return FALSE;
+        }
+
+        ntStatus = RtlSetEnvironmentVariable(NULL, &Name, &Value);
+    }
+    else {
+        ntStatus = RtlSetEnvironmentVariable(NULL, &Name, NULL);
+    }
+
+    return (NT_SUCCESS(ntStatus));
+
 }

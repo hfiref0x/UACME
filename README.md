@@ -702,11 +702,22 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.5.5
+69. Author: Arush Agarampur
+     * Type: Shell API
+     * Method: Environment variables expansion, Dll Hijack
+     * Target(s): \system32\taskhostw.exe
+     * Component(s): pcadm.dll
+     * Implementation: ucmPcaMethod
+     * Works from: Windows 7 (7600)
+     * AlwaysNotify compatible
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.5.6
 
 </details>
 
 Note:
-* Method (30) (63) (64) (65) implemented only in x64 version;
+* Method (30) (63) and later implemented only in x64 version;
 * Method (30) require x64 because it abuses WOW64 subsystem feature;
 * Method (55) is not really reliable (as any GUI hacks) and included just for fun.
 

@@ -98,9 +98,6 @@
     <ClInclude Include="..\Shared\minirtl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shared\ntos.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Shared\rtltypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -139,9 +136,6 @@
     </ClInclude>
     <ClInclude Include="tests\test_fusion.h">
       <Filter>testunits</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Shared\ntsxs.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="consts.h">
       <Filter>Header Files</Filter>

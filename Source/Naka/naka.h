@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018
+*  (C) COPYRIGHT AUTHORS, 2018 - 2021
 *
 *  TITLE:       NAKA.H
 *
 *  VERSION:     3.03
 *
-*  DATE:        11 Oct 2018
+*  DATE:        15 July 2021
 *
 *  Common header file for Naka.
 *
@@ -41,7 +41,7 @@
 #include <ntstatus.h>
 #include <msdelta.h>
 #include <Bcrypt.h>
-#include "shared\ntos.h"
+#include "shared\ntos\ntos.h"
 #include "shared\minirtl.h"
 #include "shared\cmdline.h"
 #include "shared\_filename.h"

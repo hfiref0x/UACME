@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2020
+*  (C) COPYRIGHT AUTHORS, 2017 - 2021
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     1.49
+*  VERSION:     1.50
 *
-*  DATE:        11 Nov 2020
+*  DATE:        26 July 2021
 *
 *  Global consts definition file.
 *
@@ -19,7 +19,7 @@
 #pragma once
 
 #define YUUBARI_MIN_SUPPORTED_NT_BUILD 7600
-#define YUUBARI_MAX_SUPPORTED_NT_BUILD 20241
+#define YUUBARI_MAX_SUPPORTED_NT_BUILD 22000
 
 #define T_UAC_COM_AUTOAPPROVAL_LIST    TEXT("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\UAC\\COMAutoApprovalList") //RS1+
 #define T_UAC_BROKER_APPROVAL_LIST     TEXT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CloudExperienceHost\\Broker\\ElevatedClsids")
@@ -37,7 +37,7 @@
 #define T_FLAG_INSTALLERDETECT_ENABLED TEXT("InstallerDetectEnabled")
 
 #define T_PROGRAM_NAME                 TEXT("Yuubari")
-#define T_PROGRAM_TITLE                TEXT("[UacView] UAC information gathering tool, v1.4.9 (Nov 11, 2020)\r\n")
+#define T_PROGRAM_TITLE                TEXT("[UacView] UAC information gathering tool, v1.5.0 (July 26, 2021)\r\n")
 
 #define T_HELP	TEXT("Optional parameters to execute: \r\n\n\
 YUUBARI [/v] \r\n\n\

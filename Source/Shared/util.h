@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2020
+*  (C) COPYRIGHT AUTHORS, 2017 - 2021
 *
 *  TITLE:       UTIL.H
 *
-*  VERSION:     3.50
+*  VERSION:     3.56
 *
-*  DATE:        14 Sep 2020
+*  DATE:        19 July 2021
 *
 *  Global support routines header file shared between payload dlls.
 *
@@ -57,6 +57,14 @@ typedef struct _OBJSCANPARAM {
     PWSTR Buffer;
     SIZE_T BufferSize;
 } OBJSCANPARAM, *POBJSCANPARAM;
+
+VOID ucmBinTextEncode(
+    _In_ unsigned __int64 x,
+    _Inout_ wchar_t* s);
+
+VOID ucmGenerateSharedObjectName(
+    _In_ WORD ObjectId,
+    _Inout_ LPWSTR lpBuffer);
 
 BOOLEAN ucmPrivilegeEnabled(
     _In_ HANDLE hToken,
@@ -139,6 +147,13 @@ NTSTATUS ucmIsProcessElevated(
 PLARGE_INTEGER ucmFormatTimeOut(
     _Out_ PLARGE_INTEGER TimeOut,
     _In_ DWORD Milliseconds);
+
+VOID ucmSleep(
+    _In_ DWORD Miliseconds);
+
+BOOL ucmSetEnvironmentVariable(
+    _In_ LPCWSTR lpName,
+    _In_ LPCWSTR lpValue);
 
 #ifdef _DEBUG
 #define ucmDbgMsg(Message)  OutputDebugString(Message)

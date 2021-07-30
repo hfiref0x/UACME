@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2020
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.52
+*  VERSION:     3.56
 *
-*  DATE:        28 Oct 2020
+*  DATE:        17 July 2021
 *
 *  Program entry point.
 *
@@ -319,112 +319,6 @@ INT ucmSehHandler(
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
-#ifdef COMPILE_AS_DLL
-
-typedef struct _CALLEE_PARAMS {
-    UCM_METHOD Method;
-    LPWSTR OptionalParameter;
-    ULONG OptionalParameterLength;
-    BOOL OutputToDebugger;
-} CALLEE_PARAMS, * PCALLEE_PARAMS;
-
-/*
-* ucmCalleeThread
-*
-* Purpose:
-*
-* Worker thread, mostly for COM.
-*
-*/
-DWORD WINAPI ucmCalleeThread(_In_ LPVOID lpParameter)
-{
-    CALLEE_PARAMS* Params = (PCALLEE_PARAMS)lpParameter;
-
-    ExitThread(ucmMain(Params->Method,
-        Params->OptionalParameter,
-        Params->OptionalParameterLength,
-        Params->OutputToDebugger));
-}
-
-/*
-* ucmRunMethod
-*
-* Purpose:
-*
-* Dll only export.
-*
-*/
-NTSTATUS WINAPI ucmRunMethod(
-    _In_ UCM_METHOD Method,
-    _In_reads_or_z_opt_(OptionalParameterLength) LPWSTR OptionalParameter,
-    _In_ ULONG OptionalParameterLength,
-    _In_ BOOL OutputToDebugger
-)
-{
-    HANDLE hCalleeThread;
-    DWORD ThreadId, ExitCode = 0;
-    CALLEE_PARAMS Params;
-
-    if (wdIsEmulatorPresent2()) {
-        RtlRaiseStatus(STATUS_TRUST_FAILURE);
-    }
-
-    if (wdIsEmulatorPresent() == STATUS_NOT_SUPPORTED) {
-
-        Params.Method = Method;
-        Params.OptionalParameter = OptionalParameter;
-        Params.OptionalParameterLength = OptionalParameterLength;
-        Params.OutputToDebugger = OutputToDebugger;
-
-        hCalleeThread = CreateThread(NULL,
-            0,
-            (LPTHREAD_START_ROUTINE)ucmCalleeThread,
-            &Params,
-            0,
-            &ThreadId);
-
-        if (hCalleeThread) {
-            WaitForSingleObject(hCalleeThread, INFINITE);
-            GetExitCodeThread(hCalleeThread, &ExitCode);
-            CloseHandle(hCalleeThread);
-            return ExitCode;
-        }
-
-    }
-    return STATUS_ACCESS_DENIED;
-}
-
-#ifndef KUMA_STUB
-
-/*
-* DllMain
-*
-* Purpose:
-*
-* Dll entry point.
-*
-*/
-#pragma comment(linker, "/DLL /ENTRY:DllMain")
-BOOL WINAPI DllMain(
-    _In_ HINSTANCE hinstDLL,
-    _In_ DWORD fdwReason,
-    _In_ LPVOID lpvReserved
-)
-{
-    UNREFERENCED_PARAMETER(lpvReserved);
-
-    if (fdwReason == DLL_PROCESS_ATTACH) {
-        LdrDisableThreadCalloutsForDll(hinstDLL);
-        g_hInstance = hinstDLL;
-    }
-
-    return TRUE;
-}
-
-#endif
-
-#else
-
 #ifndef KUMA_STUB
 
 /*
@@ -463,7 +357,5 @@ VOID __cdecl main()
     if (v > 0)
         ExitProcess(uctx.ReturnedResult);
 }
-
-#endif
 
 #endif

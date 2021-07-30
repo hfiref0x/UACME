@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2020
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.56
 *
-*  DATE:        14 Sep 2020
+*  DATE:        19 July 2021
 *
 *  Proxy dll entry point.
 *
@@ -21,6 +21,7 @@
 
 UACME_PARAM_BLOCK g_SharedParams;
 HANDLE g_SyncMutant = NULL;
+
 
 /*
 * DummyFunc
@@ -143,7 +144,7 @@ VOID UiAccessMethodPayload(
     lpFileName = _filename(szModuleName);
     if (lpFileName == NULL)
         return;
-   
+
     if (fInstallHook) {
 
         //
@@ -252,7 +253,8 @@ BOOL WINAPI DllMain(
 *
 */
 VOID WINAPI EntryPointExeMode(
-    VOID)
+    VOID
+)
 {
     if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED) {
         RtlExitUserProcess('foff');
@@ -269,7 +271,8 @@ VOID WINAPI EntryPointExeMode(
 *
 */
 VOID WINAPI EntryPointUIAccessLoader(
-    VOID)
+    VOID
+)
 {
     ULONG r;
     WCHAR szParam[MAX_PATH * 2];

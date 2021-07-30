@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2020
+*  (C) COPYRIGHT AUTHORS, 2016 - 2021
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.56
 *
-*  DATE:        14 Sep 2020
+*  DATE:        17 July 2021
 *
 *  Proxy dll entry point, Akatsuki.
 *  Special dll for wow64 logger method.
@@ -151,8 +151,6 @@ VOID DefaultPayload(
     BOOL bIsLocalSystem = FALSE;
     ULONG SessionId;
 
-    LARGE_INTEGER liDueTime;
-
     PFNCREATEPROCESSASUSERW pCreateProcessAsUser;
 
     if (!NT_SUCCESS(ucmCreateSyncMutant(&g_SyncMutant))) {
@@ -197,8 +195,8 @@ VOID DefaultPayload(
         ucmSetCompletion(g_SharedParams.szSignalObject);
     }
 
-    ucmFormatTimeOut(&liDueTime, 5000);
-    NtDelayExecution(FALSE, &liDueTime);
+    ucmSleep(5000);
+
     NtClose(g_SyncMutant);
 
     RtlExitUserProcess(ExitCode);

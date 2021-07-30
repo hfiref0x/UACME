@@ -1,0 +1,16 @@
+[
+	uuid(0767a036-0d22-48aa-ba69-b619480f38cb),
+	version(1.0),
+]
+interface PcaService
+{
+	long RAiMonitorProcess(
+		handle_t bindingHandle,
+		[in]unsigned __int3264 hProcess,
+		[in]long unknown0,
+		[in][unique][string]wchar_t* exeFileName,
+		[in][unique][string]wchar_t* cmdLine,
+		[in][unique][string]wchar_t* workingDir,
+		[in]long flags
+	);
+}

@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.55
+*  VERSION:     3.56
 *
-*  DATE:        12 Mar 2021
+*  DATE:        30 July 2021
 *
 *  Common header file for the program support routines.
 *
@@ -288,6 +288,12 @@ BOOL supSetEnvVariable(
     _In_ LPWSTR lpVariableName,
     _In_opt_ LPWSTR lpVariableData);
 
+BOOL supSetEnvVariable2(
+    _In_ BOOL fRemove,
+    _In_opt_ LPWSTR lpKeyName,
+    _In_ LPWSTR lpVariableName,
+    _In_opt_ LPWSTR lpVariableData);
+
 BOOL supSetMountPoint(
     _In_ HANDLE hDirectory,
     _In_ LPWSTR lpTarget,
@@ -491,6 +497,29 @@ BOOL supGetAppxId(
     _In_ LPWSTR lpPackageName,
     _Out_ LPWSTR* lpAppxId,
     _Out_ PDWORD pcbAppxId);
+
+BOOL supStopTaskByName(
+    _In_ LPCWSTR TaskFolder,
+    _In_ LPCWSTR TaskName);
+
+LPWSTR supPathAddBackSlash(
+    _In_ LPWSTR lpszPath);
+
+HANDLE supOpenShellProcess(
+    _In_ ULONG dwDesiredAccess);
+
+HANDLE supRunProcessFromParent(
+    _In_ HANDLE hParentProcess,
+    _Inout_opt_ LPWSTR lpApplicationName,
+    _In_ LPWSTR lpszParameters,
+    _In_opt_ LPWSTR lpCurrentDirectory,
+    _In_ ULONG CreationFlags,
+    _In_ WORD ShowWindowFlags,
+    _Out_opt_ HANDLE* PrimaryThread);
+
+RPC_STATUS supCreateBindingHandle(
+    _In_ RPC_WSTR RpcInterfaceUuid,
+    _Out_ RPC_BINDING_HANDLE* BindingHandle);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

@@ -48,6 +48,9 @@
     <ClInclude Include="..\Shared\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="pca.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="version.rc">
@@ -101,6 +104,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Shared\windefend.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pca.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

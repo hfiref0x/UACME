@@ -16,6 +16,8 @@ MpHandleClose               = UiAccessMethodHookProc
 MpScanStart                 = EntryPointExeMode
 MpScanControl               = EntryPointUIAccessLoader
 MpThreatOpen                = EntryPointSxsConsent
+MpManagerStatusQuery        = pcaEntryPointLoader
+MpManagerStatusQueryEx      = pcaEntryPointDll
 
 ; MSCOREE.DLL
 ClrCreateManagedInstance    = DummyFunc
@@ -45,10 +47,15 @@ GdipFree                    = DummyFunc
 GdiplusShutdown             = DummyFunc
 GdiplusStartup              = DummyFunc
 
+; WDI
+WdiDiagnosticModuleMain     = WdiStubGeneric
+WdiHandleInstance           = WdiStubGeneric
+
+WdiGetDiagnosticModuleInterfaceVersion
+
 ; Rest of exports
 MpManagerDisable            = DummyFunc
 MpManagerEnable             = DummyFunc
-MpManagerStatusQuery        = DummyFunc
-MpManagerStatusQueryEx      = DummyFunc
 MpManagerVersionQuery       = DummyFunc 
 MpMemoryScanStart           = DummyFunc
+MpGetEngineVersion          = DummyFunc

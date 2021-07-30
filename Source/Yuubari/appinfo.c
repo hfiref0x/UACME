@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2020
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.49
+*  VERSION:     1.50
 *
-*  DATE:        11 Nov 2020
+*  DATE:        26 July 2021
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -32,13 +32,18 @@ pfnSymFromAddrW         pSymFromAddrW = NULL;
 pfnSymCleanup           pSymCleanup = NULL;
 
 UAC_PATTERN g_MmcPatterns[] = {
-    { ptMmcBlock_7600, sizeof(ptMmcBlock_7600), 4, 7600, 7600 },
-    { ptMmcBlock_7601, sizeof(ptMmcBlock_7601), 4, 7601, 7601 },
-    { ptMmcBlock_9200, sizeof(ptMmcBlock_9200), 4, 9200, 9200 },
-    { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 4, 9600, 9600 },
-    { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 4, 10240, 10240 },
-    { ptMmcBlock_10586_16299, sizeof(ptMmcBlock_10586_16299), 4, 10586, 16299 },
-    { ptMmcBlock_16300_17134, sizeof(ptMmcBlock_16300_17134), 4, 16300, 17134 }
+    { ptMmcBlock_7600, sizeof(ptMmcBlock_7600), 4, NT_WIN7_RTM, NT_WIN7_RTM },
+    { ptMmcBlock_7601, sizeof(ptMmcBlock_7601), 4, NT_WIN7_SP1, NT_WIN7_SP1 },
+    { ptMmcBlock_9200, sizeof(ptMmcBlock_9200), 4, NT_WIN8_RTM, NT_WIN8_RTM },
+    { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 4, NT_WIN8_BLUE, NT_WIN8_BLUE },
+    { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 4, NT_WIN10_THRESHOLD1, NT_WIN10_THRESHOLD1 },
+    { ptMmcBlock_10586_16299, sizeof(ptMmcBlock_10586_16299), 4, NT_WIN10_THRESHOLD2, NT_WIN10_REDSTONE3},
+    { ptMmcBlock_16300_17134, sizeof(ptMmcBlock_16300_17134), 4, NT_WIN10_REDSTONE4, NT_WIN10_REDSTONE4 }
+};
+
+UAC_PATTERN g_MmcPatterns2[] = {
+    { ptMmcBlock_Start21H1, sizeof(ptMmcBlock_Start21H1), 0, NT_WIN10_21H1, NT_WIN10_21H1 },
+    { ptMmcBlock_StartW11, sizeof(ptMmcBlock_StartW11), 0, NTX_WIN11_ADB, NTX_WIN11_ADB }
 };
 
 #define TestChar(x)  (((WCHAR)x >= L'A') && ((WCHAR)x <= L'z')) 
@@ -254,20 +259,21 @@ BOOL CALLBACK SymEnumSymbolsProc(
 * Return pointer to requested pattern if present.
 *
 */
-_Success_(return == TRUE)
 BOOL GetSupportedPattern(
     _In_ ULONG AppInfoBuildNumber,
-    _In_ UAC_PATTERN * Patterns,
-    _Out_ LPCVOID * OutputPattern,
-    _Out_ ULONG * OutputPatternSize,
-    _Out_ ULONG * SubtractBytes
+    _In_ UAC_PATTERN* Patterns,
+    _Out_ LPCVOID* OutputPattern,
+    _Out_ ULONG* OutputPatternSize,
+    _Out_opt_ ULONG* SubtractBytes
 )
 {
     ULONG i;
 
     *OutputPattern = NULL;
     *OutputPatternSize = 0;
-    *SubtractBytes = 0;
+
+    if (SubtractBytes)
+        *SubtractBytes = 0;
 
     for (i = 0; i < RTL_NUMBER_OF(g_MmcPatterns); i++) {
         if ((AppInfoBuildNumber >= Patterns[i].AppInfoBuildMin) &&
@@ -275,15 +281,19 @@ BOOL GetSupportedPattern(
         {
             *OutputPattern = Patterns[i].PatternData;
             *OutputPatternSize = Patterns[i].PatternSize;
-            *SubtractBytes = Patterns[i].SubtractBytes;
+
+            if (SubtractBytes)
+                *SubtractBytes = Patterns[i].SubtractBytes;
+
             return TRUE;
         }
     }
+
     return FALSE;
 }
 
-BOOLEAN QueryAiMmcBlock21H1(
-    _In_ UAC_AI_GLOBALS * AppInfo,
+BOOLEAN QueryAiMmcBlock2(
+    _In_ UAC_AI_GLOBALS* AppInfo,
     _In_ PBYTE PtrCode,
     _In_ ULONG SectionSize
 )
@@ -295,46 +305,60 @@ BOOLEAN QueryAiMmcBlock21H1(
     hde64s      hs;
     PBYTE       ptrCode;
 
-    ptrCode = supFindPattern(PtrCode,
-        SectionSize,
-        (CONST PBYTE)ptMmcBlock_Start21H1,
-        sizeof(ptMmcBlock_Start21H1));
+    ULONG       PatternSize = 0;
+    PVOID       PatternData = NULL;
 
-    if (ptrCode) {
 
-        patternOffset = RtlPointerToOffset(PtrCode, ptrCode);
-        instOffset = 0;
+    if (GetSupportedPattern(AppInfo->AppInfoBuildNumber,
+        g_MmcPatterns2,
+        &PatternData,
+        &PatternSize,
+        NULL))
+    {
 
-        do {
+        ptrCode = supFindPattern(PtrCode,
+            SectionSize,
+            (CONST PBYTE)PatternData,
+            PatternSize);
 
-            hde64_disasm((void*)RtlOffsetToPointer(ptrCode, instOffset), &hs);
-            if (hs.flags & F_ERROR)
-                break;
+        if (ptrCode) {
 
-            if (hs.len == 7) {
-                if ((ptrCode[instOffset] == 0x48) &&
-                    (ptrCode[instOffset + 2] == 0x15))
-                {
-                    rel = *(PLONG)(ptrCode + instOffset + 3);
-                    TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)ptrCode + instOffset + 7 + rel);
-                    if (IN_REGION(TestPtr, AppInfo->DllBase, AppInfo->DllVirtualSize)) {
-                        AppInfo->MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
-                        return TRUE;
+            patternOffset = RtlPointerToOffset(PtrCode, ptrCode);
+            instOffset = 0;
+
+            do {
+
+                hde64_disasm((void*)RtlOffsetToPointer(ptrCode, instOffset), &hs);
+                if (hs.flags & F_ERROR)
+                    break;
+
+                if (hs.len == 7) {
+                    if ((ptrCode[instOffset] == 0x48) &&
+                        (ptrCode[instOffset + 2] == 0x15))
+                    {
+                        rel = *(PLONG)(ptrCode + instOffset + 3);
+                        TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)ptrCode + instOffset + 7 + rel);
+                        if (IN_REGION(TestPtr, AppInfo->DllBase, AppInfo->DllVirtualSize)) {
+                            AppInfo->MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
+                            return TRUE;
+                        }
                     }
                 }
-            }
 
-            instOffset += hs.len;
+                instOffset += hs.len;
 
-        } while (instOffset < ((SectionSize - patternOffset) - 16));
+            } while (instOffset < ((SectionSize - patternOffset) - 16));
+
+        }
 
     }
+
 
     return FALSE;
 }
 
 BOOLEAN QueryAiMmcBlockPre21H1(
-    _In_ UAC_AI_GLOBALS * AppInfo,
+    _In_ UAC_AI_GLOBALS* AppInfo,
     _In_ PBYTE PtrCode,
     _In_ ULONG SectionSize
 )
@@ -425,7 +449,7 @@ BOOLEAN QueryAiMmcBlockPre21H1(
 *
 */
 BOOLEAN QueryAiMmcBlock(
-    _In_ UAC_AI_GLOBALS * AppInfo
+    _In_ UAC_AI_GLOBALS* AppInfo
 )
 {
     ULONG       PatternSize = 0, SubtractBytes = 0;
@@ -446,7 +470,7 @@ BOOLEAN QueryAiMmcBlock(
     if ((ptrCode == NULL) || (sectionSize < 1024))
         return FALSE;
 
-    if (AppInfo->AppInfoBuildNumber < 17763) {
+    if (AppInfo->AppInfoBuildNumber < NT_WIN10_REDSTONE5) {
         if (GetSupportedPattern(AppInfo->AppInfoBuildNumber,
             g_MmcPatterns,
             &PatternData,
@@ -468,11 +492,17 @@ BOOLEAN QueryAiMmcBlock(
     }
     else {
 
-        if (AppInfo->AppInfoBuildNumber < 19043) {
+        //
+        // RS5 - 20H1
+        //
+        if (AppInfo->AppInfoBuildNumber < NT_WIN10_21H1) {
             return QueryAiMmcBlockPre21H1(AppInfo, ptrCode, sectionSize);
         }
         else {
-            return QueryAiMmcBlock21H1(AppInfo, ptrCode, sectionSize);
+            //
+            // 21H1 - XXXX
+            //
+            return QueryAiMmcBlock2(AppInfo, ptrCode, sectionSize);
         }
 
     }
@@ -488,7 +518,7 @@ BOOLEAN QueryAiMmcBlock(
 *
 */
 VOID QueryAiGlobalData(
-    _In_ UAC_AI_GLOBALS * AppInfo
+    _In_ UAC_AI_GLOBALS* AppInfo
 )
 {
     HANDLE  hSym = GetCurrentProcess();
@@ -539,7 +569,7 @@ VOID QueryAiGlobalData(
 }
 
 BOOL IsCrossPtr(
-    _In_ UAC_AI_GLOBALS * AppInfo,
+    _In_ UAC_AI_GLOBALS* AppInfo,
     _In_ ULONG_PTR Ptr,
     _In_ ULONG_PTR CurrentList
 )
@@ -590,7 +620,7 @@ BOOL IsCrossPtr(
 *
 */
 VOID ListMMCFiles(
-    _In_ UAC_AI_GLOBALS * AppInfo,
+    _In_ UAC_AI_GLOBALS* AppInfo,
     _In_ OUTPUTCALLBACK OutputCallback
 )
 {
@@ -646,7 +676,7 @@ VOID ListMMCFiles(
 *
 */
 VOID ListAutoApproveEXE(
-    _In_ UAC_AI_GLOBALS * AppInfo,
+    _In_ UAC_AI_GLOBALS* AppInfo,
     _In_ OUTPUTCALLBACK OutputCallback
 )
 {
@@ -701,9 +731,9 @@ VOID ListAutoApproveEXE(
 *
 */
 VOID ListStringDataUnsorted(
-    UAC_AI_GLOBALS * AppInfo,
+    UAC_AI_GLOBALS* AppInfo,
     AI_DATA_TYPE AiDataType,
-    PVOID * Data,
+    PVOID* Data,
     OUTPUTCALLBACK OutputCallback
 )
 {
@@ -770,8 +800,20 @@ VOID ScanAppInfo(
 
     do {
 
-        if (!GetAppInfoBuildVersion(lpFileName, &AppInfo.AppInfoBuildNumber))
-            break;
+        if (g_NtBuildNumber >= NT_WIN10_19H1) {
+
+#ifndef _DEBUG
+
+            AppInfo.AppInfoBuildNumber = g_NtBuildNumber;
+#else
+            AppInfo.AppInfoBuildNumber = g_TestAppInfoBuildNumber;
+#endif
+        }
+        else {
+
+            if (!GetAppInfoBuildVersion(lpFileName, &AppInfo.AppInfoBuildNumber))
+                break;
+        }
 
         if (RtlDosPathNameToNtPathName_U(lpFileName, &usFileName, NULL, NULL) == FALSE)
             break;

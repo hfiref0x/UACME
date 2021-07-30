@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2020
+*  (C) COPYRIGHT AUTHORS, 2018 - 2021
 *
 *  TITLE:       FUBUKI.H
 *
-*  VERSION:     3.50
+*  VERSION:     3.56
 *
-*  DATE:        14 Sep 2020
+*  DATE:        19 July 2021
 *
 *  Fubuki global include header file.
 *
@@ -27,6 +27,7 @@
 #include "shared\cmdline.h"
 
 #include "uihacks.h"
+#include "pca.h"
 
 //
 // Forwards
@@ -40,3 +41,5 @@
 
 //suppress all additional output
 #define AKAGI_FLAG_TANGO 2
+
+extern UACME_PARAM_BLOCK g_SharedParams;

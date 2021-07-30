@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018
+*  (C) COPYRIGHT AUTHORS, 2018 - 2021
 *
 *  TITLE:       SHARED.H
 *
-*  VERSION:     3.10
+*  VERSION:     3.56
 *
-*  DATE:        18 Nov 2018
+*  DATE:        26 July 2021
 *
 *  Shared include header file.
 *
@@ -26,7 +26,8 @@
 
 #include <Windows.h>
 #include <ntstatus.h>
-#include "ntos.h"
+#include "ntos\ntos.h"
+#include "ntos\ntbuilds.h"
 
 #define _NTDEF_
 #include <ntsecapi.h>

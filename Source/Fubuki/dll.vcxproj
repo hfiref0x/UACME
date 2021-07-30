@@ -45,6 +45,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -66,6 +67,7 @@
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternal|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -73,6 +75,7 @@
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -352,6 +355,7 @@
     <ClCompile Include="..\Shared\_strncpy.c" />
     <ClCompile Include="..\Shared\_strstri.c" />
     <ClCompile Include="dllmain.c" />
+    <ClCompile Include="pca.c" />
     <ClCompile Include="uihacks.c" />
   </ItemGroup>
   <ItemGroup>
@@ -362,6 +366,7 @@
     <ClInclude Include="..\Shared\windefend.h" />
     <ClInclude Include="..\Shared\_filename.h" />
     <ClInclude Include="fubuki.h" />
+    <ClInclude Include="pca.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="uihacks.h" />
     <ClInclude Include="winmm.h" />

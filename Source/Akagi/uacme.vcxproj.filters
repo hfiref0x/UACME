@@ -31,6 +31,15 @@
     <Filter Include="hde">
       <UniqueIdentifier>{1df8392c-a609-47c6-b987-44e7268833eb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="pcasvc">
+      <UniqueIdentifier>{bf8226e8-2fd3-40d0-be5f-d04777becad3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pcasvc\w7">
+      <UniqueIdentifier>{b9dae49c-a48a-4bca-9c20-5ee013126ee8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pcasvc\w8_10">
+      <UniqueIdentifier>{3b1593e5-eb08-4b0d-a8a4-362b39344711}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -152,6 +161,18 @@
     </ClCompile>
     <ClCompile Include="methods\azagarampur.c">
       <Filter>Source Files\methods</Filter>
+    </ClCompile>
+    <ClCompile Include="pcasvc\w8_10\x64\pcasvc64.c">
+      <Filter>pcasvc\w8_10</Filter>
+    </ClCompile>
+    <ClCompile Include="pcasvc\w8_10\x86-32\pcasvc32.c">
+      <Filter>pcasvc\w8_10</Filter>
+    </ClCompile>
+    <ClCompile Include="pcasvc\w7\x64\pcasvc7_64.c">
+      <Filter>pcasvc\w7</Filter>
+    </ClCompile>
+    <ClCompile Include="pcasvc\w7\x86-32\pcasvc7_32.c">
+      <Filter>pcasvc\w7</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

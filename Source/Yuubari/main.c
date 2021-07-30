@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2020
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.49
+*  VERSION:     1.50
 *
-*  DATE:        11 Nov 2020
+*  DATE:        26 July 2021
 *
 *  Program entry point.
 *
@@ -22,6 +22,10 @@
 BOOL    g_VerboseOutput = FALSE;
 ULONG   g_NtBuildNumber = 0;
 HANDLE  g_LogFile = INVALID_HANDLE_VALUE;
+
+#ifdef _DEBUG
+ULONG   g_TestAppInfoBuildNumber = 0;
+#endif
 
 VOID LoggerWriteHeader(
     _In_ LPWSTR lpHeaderData)
@@ -360,7 +364,7 @@ VOID ListCOMFromRegistry(
         //
         // AutoApproval COM list added since RS1.
         //
-        if (g_NtBuildNumber >= 14393) {
+        if (g_NtBuildNumber >= NT_WIN10_REDSTONE1) {
             cuiPrintText(T_COM_APPROVE_HEAD, TRUE);
             LoggerWriteHeader(T_COM_APPROVE_HEAD);
             CoScanAutoApprovalList((OUTPUTCALLBACK)RegistryOutputCallback, &InterfaceList);
@@ -447,7 +451,8 @@ VOID ListAppInfo(
     _strcpy(szFileName, USER_SHARED_DATA->NtSystemRoot);
     _strcat(szFileName, TEXT("\\system32\\appinfo.dll"));
 #else
-    _strcpy(szFileName, TEXT("C:\\install\\appinfo.dll"));
+    g_TestAppInfoBuildNumber = 19043;
+    _strcpy(szFileName, TEXT("C:\\appinfo\\appinfo_19043.dll"));
 #endif
     ScanAppInfo(szFileName, (OUTPUTCALLBACK)AppInfoDataOutputCallback);
 }
@@ -463,7 +468,8 @@ VOID ListAppInfo(
 VOID main()
 {
     ULONG l = 0;
-    WCHAR szBuffer[MAX_PATH];
+    WCHAR szBuffer[MAX_PATH + 1];
+    RTL_OSVERSIONINFOW  osv;
 
     __security_init_cookie();
 
@@ -473,7 +479,11 @@ VOID main()
 
     cuiPrintText(T_PROGRAM_TITLE, TRUE);
 
-    g_NtBuildNumber = USER_SHARED_DATA->NtBuildNumber;
+    RtlSecureZeroMemory(&osv, sizeof(osv));
+    osv.dwOSVersionInfoSize = sizeof(osv);
+    RtlGetVersion((RTL_OSVERSIONINFOW*)&osv);
+
+    g_NtBuildNumber = osv.dwBuildNumber;
 
     if (g_NtBuildNumber < YUUBARI_MIN_SUPPORTED_NT_BUILD) {
         cuiPrintText(TEXT("[UacView] Unsupported Windows version."), TRUE);
@@ -484,7 +494,7 @@ VOID main()
     }
 
     RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-    GetCommandLineParam(GetCommandLine(), 1, (LPWSTR)&szBuffer, MAX_PATH * sizeof(WCHAR), &l);
+    GetCommandLineParam(GetCommandLine(), 1, (LPWSTR)&szBuffer, MAX_PATH, &l);
     if (_strcmpi(szBuffer, TEXT("/?")) == 0) {
         MessageBox(GetDesktopWindow(), T_HELP, T_PROGRAM_NAME, MB_ICONINFORMATION);
         ExitProcess(0);

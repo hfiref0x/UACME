@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.55
+*  VERSION:     3.56
 *
-*  DATE:        11 Mar 2021
+*  DATE:        30 July 2021
 *
 *  Global consts definition file.
 *
@@ -50,8 +50,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       5
-#define UCM_VERSION_REVISION    5
-#define UCM_VERSION_BUILD       2103
+#define UCM_VERSION_REVISION    6
+#define UCM_VERSION_BUILD       2107
 #define UCM_IS_VNEXT            TRUE
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
@@ -61,11 +61,23 @@
 //
 #define UACME_SHARED_BASE_ID        'sTlA'
 
+//
+// WORD sized id list.
+//
 #define AKAGI_COMPLETION_EVENT_ID   'ab'
 #define AKAGI_SHARED_SECTION_ID     'cd'
 #define AKAGI_BDESCRIPTOR_NAME_ID   'ef'
 #define FUBUKI_SYNC_MUTEX_ID        'a1'
+#define FUBUKI_PCA_SECTION_ID       '0f'
+#define FUBUKI_PCA_EVENT_ID         '1f'
 
+#define FUBUKI_PCA_PAYLOAD_RUN      (0x1)
+#define FUBUKI_PCA_LOADER_RUN       (0x2)
+#define FUBUKI_PCA_ALL_RUN          (FUBUKI_PCA_PAYLOAD_RUN | FUBUKI_PCA_LOADER_RUN)
+
+//
+// Kamikaze consts
+//
 #define KAMIKAZE_MARKER             "https"
 #define WF_MSC                      L"wf.msc"
 
@@ -78,6 +90,9 @@
 #define T_DISPLAY_CALIBRATION       L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ICM\\Calibration"
 #define T_DOTNET_CLIENT             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\KnownFunctionTableDlls"
 #define T_DOTNET_FULL               L"Software\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full"
+#define T_PCA_STORE                 L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Store"
+#define T_APPCOMPAT_LAYERS          L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers"
+#define T_PCA_PERSISTED             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Persisted"
 
 #define T_MSSETTINGS                L"ms-settings"
 #define T_MSWINDOWSSTORE            L"ms-windows-store"
@@ -89,6 +104,7 @@
 #define RUN_CMD_COMMAND             L" /c start "
 
 #define T_APPXSVC                   L"AppXSvc"
+#define T_PCASVC                    L"PcaSvc"
 
 #pragma endregion
 
@@ -121,6 +137,8 @@
 #define FUBUKI_DEFAULT_ENTRYPOINT       "MpScanStart"
 #define FUBUKI_ENTRYPOINT_UIACCESS2     "MpScanControl"
 #define FUBUKI_ENTRYPOINT_SXS           "MpThreatOpen"
+#define FUBUKI_ENTRYPOINT_PCAEXE        "MpManagerStatusQuery"
+#define FUBUKI_ENTRYPOINT_PCADLL        "MpManagerStatusQueryEx"
 #pragma endregion
 
 //
@@ -136,6 +154,7 @@
 #define MSCOREE_DLL                 L"MSCOREE.DLL"
 #define OLE32_DLL                   L"ole32.dll"
 #define OSKSUPPORT_DLL              L"OskSupport.dll"
+#define PCADM_DLL                   L"pcadm.dll"
 #define SHELL32_DLL                 L"shell32.dll"
 #define WINMM_DLL                   L"winmm.dll"
 #define WOW64LOG_DLL                L"wow64log.dll"
@@ -252,57 +271,9 @@
 //
 #define T_ELEVATION_MONIKER_ADMIN            L"Elevation:Administrator!new:"
 
+
 //
-// Defines for Major Windows NT release builds
+// RPC interface UUID
 //
-
-// Windows 7 RTM
-#define NT_WIN7_RTM             7600
-
-// Windows 7 SP1
-#define NT_WIN7_SP1             7601
-
-// Windows 8 RTM
-#define NT_WIN8_RTM             9200
-
-// Windows 8.1
-#define NT_WIN8_BLUE            9600
-
-// Windows 10 TH1
-#define NT_WIN10_THRESHOLD1     10240
-
-// Windows 10 TH2
-#define NT_WIN10_THRESHOLD2     10586
-
-// Windows 10 RS1
-#define NT_WIN10_REDSTONE1      14393
-
-// Windows 10 RS2
-#define NT_WIN10_REDSTONE2      15063
-
-// Windows 10 RS3
-#define NT_WIN10_REDSTONE3      16299
-
-// Windows 10 RS4
-#define NT_WIN10_REDSTONE4      17134
-
-// Windows 10 RS5
-#define NT_WIN10_REDSTONE5      17763
-
-// Windows 10 19H1
-#define NT_WIN10_19H1           18362
-
-// Windows 10 19H2
-#define NT_WIN10_19H2           18363
-
-// Windows 10 20H1
-#define NT_WIN10_20H1           19041
-
-// Windows 10 20H2
-#define NT_WIN10_20H2           19042
-
-// Windows 10 21H1
-#define NT_WIN10_21H1           19043
-
-// Windows 10 Active Develepment Branch (21XX)
-#define NTX_WIN10_ADB           21323
+#define APPINFO_RPC                         TEXT("201ef99a-7fa0-444c-9399-19ba84f12a1a")
+#define PCASVC_RPC                          TEXT("0767a036-0d22-48aa-ba69-b619480f38cb")
