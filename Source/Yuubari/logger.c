@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2017
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       LOGGER.C
 *
-*  VERSION:     1.0F
+*  VERSION:     1.51
 *
-*  DATE:        14 Feb 2017
+*  DATE:        31 Oct 2021
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -71,13 +71,13 @@ VOID LoggerWrite(
             return;
 
         sz = sz * sizeof(WCHAR) + 4 + sizeof(UNICODE_NULL);
-        Buffer = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
+        Buffer = (LPWSTR)supHeapAlloc(sz);
         if (Buffer) {
             _strcpy(Buffer, lpText);
             if (UseReturn) _strcat(Buffer, TEXT("\r\n"));
             sz = _strlen(Buffer);
             WriteFile(hLogFile, Buffer, (DWORD)(sz * sizeof(WCHAR)), &bytesIO, NULL);
-            HeapFree(GetProcessHeap(), 0, Buffer);
+            supHeapFree(Buffer);
         }
     }
 }

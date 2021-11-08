@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.50
+*  VERSION:     1.51
 *
-*  DATE:        26 July 2021
+*  DATE:        29 Oct 2021
 *
 *  Program entry point.
 *
@@ -54,7 +54,7 @@ VOID AppInfoDataOutputCallback(
         return;
 
     sz = (_strlen(Data->Name) * sizeof(WCHAR)) + MAX_PATH;
-    lpLog = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
+    lpLog = (LPWSTR)supHeapAlloc(sz);
     if (lpLog) {
         switch (Data->Type) {
         case AiSnapinFile:
@@ -90,7 +90,7 @@ VOID AppInfoDataOutputCallback(
         LoggerWrite(g_LogFile, lpLog, TRUE);
 
         cuiPrintText(lpLog, TRUE);
-        HeapFree(GetProcessHeap(), 0, lpLog);
+        supHeapFree(lpLog);
     }
 }
 
@@ -113,7 +113,7 @@ VOID WINAPI BasicDataOutputCallback(
         return;
 
     sz = (_strlen(Data->Name) * sizeof(WCHAR)) + MAX_PATH;
-    lpLog = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
+    lpLog = (LPWSTR)supHeapAlloc(sz);
     if (lpLog) {
         _strcpy(lpLog, Data->Name);
         _strcat(lpLog, TEXT("="));
@@ -128,7 +128,7 @@ VOID WINAPI BasicDataOutputCallback(
         }
         LoggerWrite(g_LogFile, lpLog, TRUE);
         cuiPrintText(lpLog, TRUE);
-        HeapFree(GetProcessHeap(), 0, lpLog);
+        supHeapFree(lpLog);
     }
 }
 
@@ -302,15 +302,15 @@ VOID WINAPI FusionOutputCallback(
     }
     if (Data->DataType == UacFusionDataRedirectedDllType) {
         Dll = (UAC_FUSION_DATA_DLL*)Data;
-        sz = _strlen(Dll->DllName) + _strlen(Dll->FileName) + MAX_PATH;
-        lpLog = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz * sizeof(WCHAR));
+        sz = (_strlen(Dll->DllName) + _strlen(Dll->FileName) + MAX_PATH) * sizeof(WCHAR);
+        lpLog = (LPWSTR)supHeapAlloc(sz);
         if (lpLog) {
             _strcpy(lpLog, TEXT("DllRedirection: "));
             _strcat(lpLog, Dll->FileName);
             _strcat(lpLog, TEXT(" -> "));
             _strcat(lpLog, Dll->DllName);
             LoggerWrite(g_LogFile, lpLog, TRUE);
-            HeapFree(GetProcessHeap(), 0, lpLog);
+            supHeapFree(lpLog);
         }
     }
 }
@@ -376,7 +376,7 @@ VOID ListCOMFromRegistry(
     __finally {
         CoUninitialize();
         if (InterfaceList.List)
-            HeapFree(GetProcessHeap(), 0, InterfaceList.List);
+            supHeapFree(InterfaceList.List);
     }
 }
 
@@ -451,8 +451,8 @@ VOID ListAppInfo(
     _strcpy(szFileName, USER_SHARED_DATA->NtSystemRoot);
     _strcat(szFileName, TEXT("\\system32\\appinfo.dll"));
 #else
-    g_TestAppInfoBuildNumber = 19043;
-    _strcpy(szFileName, TEXT("C:\\appinfo\\appinfo_19043.dll"));
+    g_TestAppInfoBuildNumber = 22494;
+    _strcpy(szFileName, TEXT("C:\\appinfo\\appinfo_22494.dll"));
 #endif
     ScanAppInfo(szFileName, (OUTPUTCALLBACK)AppInfoDataOutputCallback);
 }

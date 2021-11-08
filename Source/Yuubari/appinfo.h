@@ -1,12 +1,12 @@
 #/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2020
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       APPINFO.H
 *
-*  VERSION:     1.48
+*  VERSION:     1.51
 *
-*  DATE:        10 Sep 2020
+*  DATE:        15 Sep 2021
 *
 *  Header file for the AppInfo scan.
 *
@@ -18,12 +18,6 @@
 *******************************************************************************/
 #pragma once
 #include <DbgHelp.h>
-
-typedef struct _SYMBOL_ENTRY {
-    struct _SYMBOL_ENTRY *Next;
-    LPWSTR   Name;
-    DWORD64  Address;
-} SYMBOL_ENTRY, *PSYMBOL_ENTRY;
 
 typedef enum _AI_DATA_TYPE {
     AiSnapinFile = 1,
@@ -72,14 +66,17 @@ typedef struct _UAC_AI_GLOBALS {
 } UAC_AI_GLOBALS, *PUAC_AI_GLOBALS;
 
 typedef  DWORD(WINAPI *pfnSymSetOptions)(
-    _In_ DWORD   SymOptions
-    );
+    _In_ DWORD   SymOptions);
 
 typedef BOOL(WINAPI *pfnSymInitializeW)(
     _In_ HANDLE hProcess,
     _In_opt_ PCWSTR UserSearchPath,
-    _In_ BOOL fInvadeProcess
-    );
+    _In_ BOOL fInvadeProcess);
+
+typedef BOOL(WINAPI* pfnSymFromNameW)(
+    _In_ HANDLE hProcess,
+    _In_ PCWSTR Name,
+    _Inout_ PSYMBOL_INFOW Symbol);
 
 typedef DWORD64(WINAPI *pfnSymLoadModuleExW)(
     _In_ HANDLE hProcess,
@@ -89,32 +86,14 @@ typedef DWORD64(WINAPI *pfnSymLoadModuleExW)(
     _In_ DWORD64 BaseOfDll,
     _In_ DWORD DllSize,
     _In_opt_ PMODLOAD_DATA Data,
-    _In_opt_ DWORD Flags
-    );
-
-typedef BOOL(WINAPI *pfnSymEnumSymbolsW)(
-    _In_ HANDLE hProcess,
-    _In_ ULONG64 BaseOfDll,
-    _In_opt_ PCWSTR Mask,
-    _In_ PSYM_ENUMERATESYMBOLS_CALLBACKW EnumSymbolsCallback,
-    _In_opt_ PVOID UserContext
-    );
+    _In_opt_ DWORD Flags);
 
 typedef BOOL(WINAPI *pfnSymUnloadModule64)(
     _In_ HANDLE hProcess,
-    _In_ DWORD64 BaseOfDll
-    );
+    _In_ DWORD64 BaseOfDll);
 
 typedef BOOL(WINAPI *pfnSymCleanup)(
-    _In_ HANDLE hProcess
-    );
-
-typedef BOOL(WINAPI *pfnSymFromAddrW)(
-    _In_ HANDLE hProcess,
-    _In_ DWORD64 Address,
-    _Out_opt_ PDWORD64 Displacement,
-    _Inout_ PSYMBOL_INFOW Symbol
-    );
+    _In_ HANDLE hProcess);
 
 VOID ScanAppInfo(
     LPWSTR lpFileName,

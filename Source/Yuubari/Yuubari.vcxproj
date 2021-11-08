@@ -18,7 +18,7 @@
     <ProjectGuid>{304D5A8A-EF98-4E21-8F4D-91E66E0BECAC}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Yuubari</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">

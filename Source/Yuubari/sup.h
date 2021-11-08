@@ -1,12 +1,12 @@
 #/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2020
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     1.49
+*  VERSION:     1.51
 *
-*  DATE:        11 Nov 2020
+*  DATE:        29 Oct 2021
 *
 *  Common header file for the program support routines.
 *
@@ -17,6 +17,34 @@
 *
 *******************************************************************************/
 #pragma once
+
+/*
+* supHeapAlloc
+*
+* Purpose:
+*
+* Wrapper for RtlAllocateHeap.
+*
+*/
+PVOID FORCEINLINE supHeapAlloc(
+    _In_ SIZE_T Size)
+{
+    return RtlAllocateHeap(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, Size);
+}
+
+/*
+* supHeapFree
+*
+* Purpose:
+*
+* Wrapper for RtlFreeHeap.
+*
+*/
+BOOL FORCEINLINE supHeapFree(
+    _In_ PVOID Memory)
+{
+    return RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, Memory);
+}
 
 BOOL supIsCorImageFile(
     _In_ PVOID ImageBase);

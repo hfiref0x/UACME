@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2020
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       FUSION.C
 *
-*  VERSION:     1.49
+*  VERSION:     1.51
 *
-*  DATE:        11 Nov 2020
+*  DATE:        01 Nov 2021
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -647,7 +647,7 @@ VOID FusionScanFiles(
     WIN32_FIND_DATA fdata;
 
     sz = (_strlen(lpDirectory) + MAX_PATH) * sizeof(WCHAR);
-    lpLookupDirectory = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
+    lpLookupDirectory = (LPWSTR)supHeapAlloc(sz);
     if (lpLookupDirectory) {
         _strncpy(lpLookupDirectory, MAX_PATH, lpDirectory, MAX_PATH);
         _strcat(lpLookupDirectory, TEXT("\\*.exe"));
@@ -660,7 +660,7 @@ VOID FusionScanFiles(
             } while (FindNextFile(hFile, &fdata));
             FindClose(hFile);
         }
-        HeapFree(GetProcessHeap(), 0, lpLookupDirectory);
+        supHeapFree(lpLookupDirectory);
     }
 }
 

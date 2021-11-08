@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2020
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.49
+*  VERSION:     1.51
 *
-*  DATE:        11 Nov 2020
+*  DATE:        29 Oct 2021
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -66,12 +66,12 @@ LPWSTR supReadKeyString(
     lRet = RegQueryValueEx(hKey, KeyValue, NULL,
         NULL, NULL, pdwDataSize);
     if (lRet == ERROR_SUCCESS) {
-        lpString = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *pdwDataSize);
+        lpString = (LPWSTR)supHeapAlloc(*pdwDataSize);
         if (lpString != NULL) {
             lRet = RegQueryValueEx(hKey, KeyValue, NULL,
                 NULL, (LPBYTE)lpString, pdwDataSize);
             if (lRet != ERROR_SUCCESS) {
-                HeapFree(GetProcessHeap(), 0, lpString);
+                supHeapFree(lpString);
                 lpString = NULL;
             }
         }
@@ -103,13 +103,13 @@ PVOID supQueryKeyName(
         *ReturnedLength = 0;
 
     NtQueryObject(hKey, ObjectNameInformation, NULL, 0, &ulen);
-    pObjName = (POBJECT_NAME_INFORMATION)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ulen);
+    pObjName = (POBJECT_NAME_INFORMATION)supHeapAlloc(ulen);
     if (pObjName) {
         status = NtQueryObject(hKey, ObjectNameInformation, pObjName, ulen, NULL);
         if (NT_SUCCESS(status)) {
             if ((pObjName->Name.Buffer != NULL) && (pObjName->Name.Length > 0)) {
                 sz = pObjName->Name.Length + sizeof(UNICODE_NULL);
-                ReturnBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
+                ReturnBuffer = supHeapAlloc(sz);
                 if (ReturnBuffer) {
                     RtlCopyMemory(ReturnBuffer, pObjName->Name.Buffer, pObjName->Name.Length);
                     if (ReturnedLength)
@@ -117,7 +117,7 @@ PVOID supQueryKeyName(
                 }
             }
         }
-        HeapFree(GetProcessHeap(), 0, pObjName);
+        supHeapFree(pObjName);
     }
     return ReturnBuffer;
 }

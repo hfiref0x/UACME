@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2019
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       COMOBJ.C
 *
-*  VERSION:     1.45
+*  VERSION:     1.51
 *
-*  DATE:        22 Oct 2019
+*  DATE:        31 Oct 2021
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -154,18 +154,18 @@ VOID CopQuerySubKey(
                 dwDataSize = 0;
                 t = supReadKeyString(RootKey, TEXT("LocalizedString"), &dwDataSize);
                 if (t) {
-                    lpLocalizedString = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)MAX_PATH * 2);
+                    lpLocalizedString = (LPWSTR)supHeapAlloc((SIZE_T)MAX_PATH * 2);
                     if (lpLocalizedString) {
                         SHLoadIndirectString(t, lpLocalizedString, MAX_PATH, NULL);
                     }
-                    HeapFree(GetProcessHeap(), 0, t);
+                    supHeapFree(t);
                 }
 
                 //check if AppId present
                 dwDataSize = 0;
                 t = supReadKeyString(RootKey, TEXT("AppId"), &dwDataSize);
                 if (t) {
-                    lpAppId = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (SIZE_T)dwDataSize + 32);
+                    lpAppId = (LPWSTR)supHeapAlloc((SIZE_T)dwDataSize + 32);
                     if (lpAppId) {
                         _strcpy(lpAppId, TEXT("AppId\\"));
                         _strcat(lpAppId, t);
@@ -186,7 +186,7 @@ VOID CopQuerySubKey(
                             RegCloseKey(hAppIdKey);
                         }
                     }
-                    HeapFree(GetProcessHeap(), 0, t);
+                    supHeapFree(t);
                 }
 
                 //
@@ -230,7 +230,7 @@ VOID CopQuerySubKey(
                 OutputCallback((PVOID)&Data);
 
                 if (Data.Key) {
-                    HeapFree(GetProcessHeap(), 0, Data.Key);
+                    supHeapFree(Data.Key);
                 }
 
                 //
@@ -244,7 +244,7 @@ VOID CopQuerySubKey(
                     if (lRet == ERROR_SUCCESS) {
 
                         cMaxLength = (DWORD)((cMaxLength + 1) * sizeof(WCHAR));
-                        lpValue = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
+                        lpValue = (LPWSTR)supHeapAlloc(cMaxLength);
                         if (lpValue) {
 
                             for (i = 0; i < cValues; i++) {
@@ -266,7 +266,7 @@ VOID CopQuerySubKey(
                                 }
                             }
 
-                            HeapFree(GetProcessHeap(), 0, lpValue);
+                            supHeapFree(lpValue);
                         }
                     }
                     RegCloseKey(hServerObjectsKey);
@@ -276,13 +276,13 @@ VOID CopQuerySubKey(
             } while (FALSE);
 
             if (lpAppIdName)
-                HeapFree(GetProcessHeap(), 0, lpAppIdName);
+                supHeapFree(lpAppIdName);
 
             if (lpAppId != NULL)
-                HeapFree(GetProcessHeap(), 0, lpAppId);
+                supHeapFree(lpAppId);
 
             if (lpName != NULL)
-                HeapFree(GetProcessHeap(), 0, lpName);
+                supHeapFree(lpName);
         }
         else {
             CopScanRegistry(hSubKey, OutputCallback, InterfaceList);
@@ -313,7 +313,7 @@ VOID CopEnumSubKey(
 
     do {
         dwcbName = 32 * 1024;
-        lpKeyName = (LPTSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwcbName);
+        lpKeyName = (LPTSTR)supHeapAlloc(dwcbName);
         if (lpKeyName == NULL)
             break;
 
@@ -322,7 +322,7 @@ VOID CopEnumSubKey(
             lpKeyName, &cch, NULL, NULL, NULL, NULL);
         if (lRet == ERROR_MORE_DATA) {
             dwcbName *= 2;
-            HeapFree(GetProcessHeap(), 0, lpKeyName);
+            supHeapFree(lpKeyName);
             lpKeyName = NULL;
             continue;
         }
@@ -340,7 +340,7 @@ VOID CopEnumSubKey(
     } while (lRet == ERROR_MORE_DATA);
 
     if (lpKeyName != NULL)
-        HeapFree(GetProcessHeap(), 0, lpKeyName);
+        supHeapFree(lpKeyName);
 
 }
 
@@ -418,12 +418,12 @@ BOOL CoEnumInterfaces(
         if ((lRet != ERROR_SUCCESS) || (cSubKeys == 0))
             __leave;
 
-        infoBuffer = (INTERFACE_INFO*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cSubKeys * sizeof(INTERFACE_INFO));
+        infoBuffer = (INTERFACE_INFO*)supHeapAlloc(cSubKeys * sizeof(INTERFACE_INFO));
         if (infoBuffer == NULL)
             __leave;
 
         cMaxLength = (DWORD)((cMaxLength + 1) * sizeof(WCHAR));
-        lpKeyName = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
+        lpKeyName = (LPWSTR)supHeapAlloc(cMaxLength);
         if (lpKeyName == NULL)
             __leave;
 
@@ -457,7 +457,7 @@ BOOL CoEnumInterfaces(
             RegCloseKey(hKey);
 
         if (lpKeyName)
-            HeapFree(GetProcessHeap(), 0, lpKeyName);
+            supHeapFree(lpKeyName);
     }
 
     return bResult;
@@ -497,7 +497,7 @@ VOID CoScanBrokerApprovalList(
             __leave;
 
         cMaxLength = (DWORD)((cMaxLength + 1) * sizeof(WCHAR));
-        lpSubKey = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
+        lpSubKey = (LPWSTR)supHeapAlloc(cMaxLength);
         if (lpSubKey == NULL)
             __leave;
 
@@ -553,7 +553,7 @@ VOID CoScanBrokerApprovalList(
             RegCloseKey(hKey);
 
         if (lpSubKey)
-            HeapFree(GetProcessHeap(), 0, lpSubKey);
+            supHeapFree(lpSubKey);
 
     }
 }
@@ -593,7 +593,7 @@ VOID CoScanAutoApprovalList(
             __leave;
 
         cMaxLength = (DWORD)((cMaxLength + 1) * sizeof(WCHAR));
-        lpValue = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cMaxLength);
+        lpValue = (LPWSTR)supHeapAlloc(cMaxLength);
         if (lpValue == NULL)
             __leave;
 
@@ -621,7 +621,7 @@ VOID CoScanAutoApprovalList(
             RegCloseKey(hKey);
 
         if (lpValue)
-            HeapFree(GetProcessHeap(), 0, lpValue);
+            supHeapFree(lpValue);
 
     }
 }
