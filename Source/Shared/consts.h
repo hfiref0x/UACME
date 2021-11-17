@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.56
+*  VERSION:     3.57
 *
-*  DATE:        30 July 2021
+*  DATE:        01 Nov 2021
 *
 *  Global consts definition file.
 *
@@ -50,9 +50,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       5
-#define UCM_VERSION_REVISION    6
-#define UCM_VERSION_BUILD       2107
-#define UCM_IS_VNEXT            TRUE
+#define UCM_VERSION_REVISION    7
+#define UCM_VERSION_BUILD       2111
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
 
@@ -60,6 +59,11 @@
 // A very long list for future use.
 //
 #define UACME_SHARED_BASE_ID        'sTlA'
+
+//
+// Trash end char.
+//
+#define UCM_TRASH_END_CHAR          L'~'
 
 //
 // WORD sized id list.
@@ -89,11 +93,11 @@
 
 #define T_DISPLAY_CALIBRATION       L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ICM\\Calibration"
 #define T_DOTNET_CLIENT             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\KnownFunctionTableDlls"
-#define T_DOTNET_FULL               L"Software\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full"
 #define T_PCA_STORE                 L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Store"
 #define T_APPCOMPAT_LAYERS          L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers"
 #define T_PCA_PERSISTED             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Persisted"
 
+#define T_CURVER                    L"CurVer"
 #define T_MSSETTINGS                L"ms-settings"
 #define T_MSWINDOWSSTORE            L"ms-windows-store"
 #define T_CLASSESFOLDER             L"Folder"
@@ -214,6 +218,7 @@
 // Units specific values
 //
 #define MYSTERIOUSCUTETHING         L"pe386" //PYSH
+#define ABSOLUTEWIN                 L"lzx32" //PYSH
 
 //
 // SxS

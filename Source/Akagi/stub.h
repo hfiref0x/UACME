@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2020
+*  (C) COPYRIGHT AUTHORS, 2018 - 2021
 *
 *  TITLE:       STUB.H
 *
-*  VERSION:     3.50
+*  VERSION:     3.57
 *
-*  DATE:        14 Sep 2020
+*  DATE:        01 Nov 2021
 * 
 *  Kuma stub header file
 *
@@ -18,8 +18,4 @@
 *******************************************************************************/
 #pragma once
 
-VOID __cdecl Stub_main();
-BOOL WINAPI Stub_DllMain(
-    _In_ HINSTANCE hinstDLL,
-    _In_ DWORD fdwReason,
-    _In_ LPVOID lpvReserved);
+DWORD StubInit(VOID);

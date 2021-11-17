@@ -34,39 +34,39 @@ UCM_DEFINE_GUID(IID_IEAxiInstaller2, 0xBC0EC710, 0xA3ED, 0x4F99, 0xB1, 0x4F, 0x5
 UCM_DEFINE_GUID(IID_WscAdmin, 0x49ACAA99, 0xF009, 0x4524, 0x9D, 0x2A, 0xD7, 0x51, 0xC9, 0xA3, 0x8F, 0x60);
 
 HRESULT ucmAllocateElevatedObject(
-    _In_ LPWSTR lpObjectCLSID,
+    _In_ LPCWSTR lpObjectCLSID,
     _In_ REFIID riid,
     _In_ DWORD dwClassContext,
     _Outptr_ void **ppv);
 
 BOOL ucmMasqueradedCreateSubDirectoryCOM(
-    _In_ LPWSTR ParentDirectory,
-    _In_ LPWSTR SubDirectory);
+    _In_ LPCWSTR ParentDirectory,
+    _In_ LPCWSTR SubDirectory);
 
 BOOL ucmMasqueradedMoveCopyFileCOM(
-    _In_ LPWSTR SourceFileName,
-    _In_ LPWSTR DestinationDir,
+    _In_ LPCWSTR SourceFileName,
+    _In_ LPCWSTR DestinationDir,
     _In_ BOOL fMove);
 
 BOOL ucmMasqueradedMoveFileCOM(
-    _In_ LPWSTR SourceFileName,
-    _In_ LPWSTR DestinationDir);
+    _In_ LPCWSTR SourceFileName,
+    _In_ LPCWSTR DestinationDir);
 
 BOOL ucmMasqueradedDeleteDirectoryFileCOM(
-    _In_ LPWSTR FileName);
+    _In_ LPCWSTR FileName);
 
 BOOL ucmMasqueradedRenameElementCOM(
-    _In_ LPWSTR OldName,
-    _In_ LPWSTR NewName);
+    _In_ LPCWSTR OldName,
+    _In_ LPCWSTR NewName);
 
 BOOL ucmMasqueradedGetObjectSecurityCOM(
-    _In_ LPWSTR lpTargetObject,
+    _In_ LPCWSTR lpTargetObject,
     _In_ SECURITY_INFORMATION SecurityInformation,
     _In_ SE_OBJECT_TYPE ObjectType,
     _Inout_ LPOLESTR *Sddl);
 
 BOOL ucmMasqueradedSetObjectSecurityCOM(
-    _In_ LPWSTR lpTargetObject,
+    _In_ LPCWSTR lpTargetObject,
     _In_ SECURITY_INFORMATION SecurityInformation,
     _In_ SE_OBJECT_TYPE ObjectType,
-    _In_ LPWSTR NewSddl);
+    _In_ LPCWSTR NewSddl);

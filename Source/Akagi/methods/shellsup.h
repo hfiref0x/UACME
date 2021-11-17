@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2020
+*  (C) COPYRIGHT AUTHORS, 2016 - 2021
 *
 *  TITLE:       SHELLSUP.H
 *
-*  VERSION:     3.50
+*  VERSION:     3.57
 *
-*  DATE:        14 Sep 2020
+*  DATE:        01 Nov 2021
 *
 *  Prototypes and definitions for shell registry hijack autoelevation method.
 *
@@ -20,12 +20,17 @@
 
 NTSTATUS ucmShellRegModMethod(
     _In_ UCM_METHOD Method,
-    LPWSTR lpTargetKey,
-    LPWSTR lpszTargetApp,
-    LPWSTR lpszPayload);
+    LPCWSTR lpTargetKey,
+    LPCWSTR lpszTargetApp,
+    LPCWSTR lpszPayload);
 
 NTSTATUS ucmShellRegModMethod2(
     _In_ UCM_METHOD Method,
-    LPWSTR lpTargetKey,
-    LPWSTR lpszTargetApp,
-    LPWSTR lpszPayload);
+    LPCWSTR lpTargetKey,
+    LPCWSTR lpszTargetApp,
+    LPCWSTR lpszPayload);
+
+NTSTATUS ucmShellRegModMethod3(
+    LPCWSTR lpTargetKey,
+    LPCWSTR lpszTargetApp,
+    LPCWSTR lpszPayload);

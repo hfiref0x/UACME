@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.56
+*  VERSION:     3.57
 *
-*  DATE:        30 July 2021
+*  DATE:        01 Nov 2021
 *
 *  Common header file for the program support routines.
 *
@@ -20,10 +20,6 @@
 
 #if !defined UNICODE
 #error ANSI build is not supported
-#endif
-
-#ifndef _DEBUG
-#define KUMA_STUB
 #endif
 
 #include "shared\libinc.h"
@@ -157,14 +153,6 @@ typedef UINT(WINAPI *pfnEntryPoint)(
     _In_opt_ ULONG OptionalParameterLength,
     _In_ BOOL OutputToDebugger
     );
-
-typedef struct _UACME_THREAD_CONTEXT {
-    TEB_ACTIVE_FRAME Frame;
-    pfnEntryPoint ucmMain;
-    NTSTATUS ReturnedResult;
-    ULONG OptionalParameterLength;
-    LPWSTR OptionalParameter;
-} UACME_THREAD_CONTEXT, *PUACME_THREAD_CONTEXT;
 
 extern PUACMECONTEXT g_ctx;
 extern HINSTANCE g_hInstance;

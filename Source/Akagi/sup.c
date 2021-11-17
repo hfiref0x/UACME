@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.56
+*  VERSION:     3.57
 *
-*  DATE:        30 July 2021
+*  DATE:        01 Nov 2021
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -29,6 +29,7 @@ USER_ASSOC_SIGNATURE* g_UserAssocSignatures[] = {
     &UAS_SIG_18363,
     &UAS_SIG_19041,
     &UAS_SIG_19042_19043,
+    &UAS_SIG_22000,
     &UAS_SIG_VNEXT
 };
 
@@ -327,7 +328,7 @@ BOOL supGetElevationType(
 *
 */
 BOOL supWriteBufferToFile(
-    _In_ LPWSTR lpFileName,
+    _In_ LPCWSTR lpFileName,
     _In_opt_ PVOID Buffer,
     _In_ DWORD BufferSize
 )
@@ -364,7 +365,7 @@ BOOL supWriteBufferToFile(
 *
 */
 VOID supDebugPrint(
-    _In_ LPWSTR ApiName,
+    _In_ LPCWSTR ApiName,
     _In_ DWORD status
 )
 {
@@ -514,7 +515,7 @@ NTSTATUS supRegReadValue(
 *
 */
 PBYTE supReadFileToBuffer(
-    _In_ LPWSTR lpFileName,
+    _In_ LPCWSTR lpFileName,
     _Inout_opt_ LPDWORD lpBufferSize
 )
 {
@@ -618,9 +619,9 @@ PBYTE supReadFileToBuffer(
 *
 */
 BOOL supRunProcess2(
-    _In_ LPWSTR lpszProcessName,
-    _In_opt_ LPWSTR lpszParameters,
-    _In_opt_ LPWSTR lpVerb,
+    _In_ LPCWSTR lpszProcessName,
+    _In_opt_ LPCWSTR lpszParameters,
+    _In_opt_ LPCWSTR lpVerb,
     _In_ INT nShow,
     _In_ ULONG mTimeOut
 )
@@ -658,8 +659,8 @@ BOOL supRunProcess2(
 *
 */
 BOOL supRunProcess(
-    _In_ LPWSTR lpszProcessName,
-    _In_opt_ LPWSTR lpszParameters
+    _In_ LPCWSTR lpszProcessName,
+    _In_opt_ LPCWSTR lpszParameters
 )
 {
     return supRunProcess2(lpszProcessName,
@@ -907,7 +908,7 @@ VOID ucmShowMessageById(
 */
 VOID ucmShowMessage(
     _In_ BOOL OutputToDebugger,
-    _In_ LPWSTR lpszMsg
+    _In_ LPCWSTR lpszMsg
 )
 {
     WCHAR szVersion[100];
@@ -1412,8 +1413,8 @@ BOOL supRegDeleteKeyRecursive(
 BOOL supSetEnvVariableEx(
     _In_ BOOL fRemove,
     _In_opt_ LPWSTR lpKeyName,
-    _In_ LPWSTR lpVariableName,
-    _In_opt_ LPWSTR lpVariableData
+    _In_ LPCWSTR lpVariableName,
+    _In_opt_ LPCWSTR lpVariableData
 )
 {
     BOOL        bNameAllocated = FALSE;
@@ -1514,8 +1515,8 @@ BOOL supSetEnvVariableEx(
 BOOL supSetEnvVariable(
     _In_ BOOL fRemove,
     _In_opt_ LPWSTR lpKeyName,
-    _In_ LPWSTR lpVariableName,
-    _In_opt_ LPWSTR lpVariableData
+    _In_ LPCWSTR lpVariableName,
+    _In_opt_ LPCWSTR lpVariableData
 )
 {
     BOOL    bResult = FALSE;
@@ -1580,8 +1581,8 @@ BOOL supSetEnvVariable(
 BOOL supSetEnvVariable2(
     _In_ BOOL fRemove,
     _In_opt_ LPWSTR lpKeyName,
-    _In_ LPWSTR lpVariableName,
-    _In_opt_ LPWSTR lpVariableData
+    _In_ LPCWSTR lpVariableName,
+    _In_opt_ LPCWSTR lpVariableData
 )
 {
     BOOL    bResult = FALSE;
@@ -1709,8 +1710,8 @@ BOOL supDeleteMountPoint(
 */
 BOOL supSetMountPoint(
     _In_ HANDLE hDirectory,
-    _In_ LPWSTR lpTarget,
-    _In_ LPWSTR lpPrintName
+    _In_ LPCWSTR lpTarget,
+    _In_ LPCWSTR lpPrintName
 )
 {
     ULONG           memIO;
@@ -1794,7 +1795,7 @@ BOOL supSetMountPoint(
 *
 */
 HANDLE supOpenDirectoryForReparse(
-    _In_ LPWSTR lpDirectory
+    _In_ LPCWSTR lpDirectory
 )
 {
     NTSTATUS            status = STATUS_UNSUCCESSFUL;
@@ -2688,30 +2689,6 @@ NTSTATUS supEnableDisableWow64Redirection(
 }
 
 /*
-* supIsNetfx48PlusInstalled
-*
-* Purpose:
-*
-* Detect Netfx 4.8+
-*
-*/
-BOOLEAN supIsNetfx48PlusInstalled(
-    VOID)
-{
-    HKEY hKey = NULL;
-    DWORD Netfx48ReleaseVersion = 528040;
-    DWORD dwReleaseVersion = 0;
-    DWORD cbData = sizeof(DWORD), dwType = REG_DWORD;
-
-    if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_LOCAL_MACHINE, T_DOTNET_FULL, 0, KEY_READ, &hKey)) {
-        RegQueryValueEx(hKey, TEXT("Release"), NULL, &dwType, (LPBYTE)&dwReleaseVersion, &cbData);
-        RegCloseKey(hKey);
-    }
-
-    return (dwReleaseVersion >= Netfx48ReleaseVersion);
-}
-
-/*
 * supGetProcessDebugObject
 *
 * Purpose:
@@ -2949,7 +2926,7 @@ BOOL supIsProcessRunning(
 *
 */
 BOOL supFusionGetImageMVID(
-    _In_ LPWSTR lpImageName,
+    _In_ LPCWSTR lpImageName,
     _Out_ GUID* ModuleVersionId
 )
 {
@@ -4005,8 +3982,8 @@ NTSTATUS supResetShellAssoc(
 *
 */
 BOOL supGetAppxIdValue(
-    _In_ LPWSTR lpKey,
-    _In_ LPWSTR lpPackageName,
+    _In_ LPCWSTR lpKey,
+    _In_ LPCWSTR lpPackageName,
     _Inout_ LPWSTR* lpAppxId,
     _Inout_ PDWORD pcbAppxId
 )
@@ -4082,8 +4059,8 @@ BOOL supGetAppxIdValue(
 *
 */
 BOOL supGetAppxId(
-    _In_ LPWSTR lpComponentName,
-    _In_ LPWSTR lpPackageName,
+    _In_ LPCWSTR lpComponentName,
+    _In_ LPCWSTR lpPackageName,
     _Out_ LPWSTR* lpAppxId,
     _Out_ PDWORD pcbAppxId
 )
@@ -4398,7 +4375,7 @@ HANDLE supRunProcessFromParent(
                         si.StartupInfo.wShowWindow = ShowWindowFlags;
 
                         bResult = CreateProcess(lpApplicationName,
-                             pszBuffer,
+                            pszBuffer,
                             NULL,
                             NULL,
                             FALSE,

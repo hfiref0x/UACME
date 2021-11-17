@@ -18,7 +18,7 @@
     <ProjectGuid>{07EF7652-1C2D-478B-BB4B-F9560695A387}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Akatsuki</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">

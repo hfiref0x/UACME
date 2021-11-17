@@ -5,9 +5,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.183
+*  VERSION:     1.184
 *
-*  DATE:        04 Oct 2021
+*  DATE:        01 Nov 2021
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -10261,6 +10261,28 @@ NTAPI
 RtlAddIntegrityLabelToBoundaryDescriptor(
     _Inout_ PVOID *BoundaryDescriptor,
     _In_ PSID IntegrityLabel);
+
+/************************************************************************************
+*
+* RTL work item/async IO.
+*
+************************************************************************************/
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlQueueWorkItem(
+    _In_ WORKERCALLBACKFUNC Function,
+    _In_ PVOID Context,
+    _In_ ULONG Flags);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+RtlSetIoCompletionCallback(
+    _In_ HANDLE FileHandle,
+    _In_ APC_CALLBACK_FUNCTION CompletionProc,
+    _In_ ULONG Flags);
 
 /************************************************************************************
 *

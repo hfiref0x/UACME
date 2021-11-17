@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2020
+*  (C) COPYRIGHT AUTHORS, 2017 - 2021
 *
 *  TITLE:       COMSUP.C
 *
-*  VERSION:     3.27
+*  VERSION:     3.57
 *
-*  DATE:        10 Sep 2020
+*  DATE:        01 Nov 2021
 *
 *  COM interfaces based routines.
 *
@@ -27,7 +27,7 @@
 *
 */
 HRESULT ucmAllocateElevatedObject(
-    _In_ LPWSTR lpObjectCLSID,
+    _In_ LPCWSTR lpObjectCLSID,
     _In_ REFIID riid,
     _In_ DWORD dwClassContext,
     _Outptr_ void **ppv
@@ -126,8 +126,8 @@ VOID ucmxFileOpCreateAndRelease(VOID)
 *
 */
 BOOL ucmMasqueradedRenameElementCOM(
-    _In_ LPWSTR OldName,
-    _In_ LPWSTR NewName
+    _In_ LPCWSTR OldName,
+    _In_ LPCWSTR NewName
 )
 {
     BOOL                bResult = FALSE;
@@ -216,8 +216,8 @@ BOOL ucmMasqueradedRenameElementCOM(
 *
 */
 BOOL ucmMasqueradedCreateSubDirectoryCOM(
-    _In_ LPWSTR ParentDirectory,
-    _In_ LPWSTR SubDirectory
+    _In_ LPCWSTR ParentDirectory,
+    _In_ LPCWSTR SubDirectory
 )
 {
     BOOL                bResult = FALSE;
@@ -308,8 +308,8 @@ BOOL ucmMasqueradedCreateSubDirectoryCOM(
 *
 */
 BOOL ucmMasqueradedMoveCopyFileCOM(
-    _In_ LPWSTR SourceFileName,
-    _In_ LPWSTR DestinationDir,
+    _In_ LPCWSTR SourceFileName,
+    _In_ LPCWSTR DestinationDir,
     _In_ BOOL fMove
 )
 {
@@ -422,7 +422,7 @@ BOOL ucmMasqueradedMoveCopyFileCOM(
 *
 */
 BOOL ucmMasqueradedDeleteDirectoryFileCOM(
-    _In_ LPWSTR FileName
+    _In_ LPCWSTR FileName
 )
 {
     BOOL                bResult = FALSE;
@@ -518,8 +518,8 @@ BOOL ucmMasqueradedDeleteDirectoryFileCOM(
 *
 */
 BOOL ucmMasqueradedMoveFileCOM(
-    _In_ LPWSTR SourceFileName,
-    _In_ LPWSTR DestinationDir
+    _In_ LPCWSTR SourceFileName,
+    _In_ LPCWSTR DestinationDir
 )
 {
     return ucmMasqueradedMoveCopyFileCOM(
@@ -541,7 +541,7 @@ BOOL ucmMasqueradedMoveFileCOM(
 *
 */
 BOOL ucmMasqueradedGetObjectSecurityCOM(
-    _In_ LPWSTR lpTargetObject,
+    _In_ LPCWSTR lpTargetObject,
     _In_ SECURITY_INFORMATION SecurityInformation,
     _In_ SE_OBJECT_TYPE ObjectType,
     _Inout_ LPOLESTR *Sddl
@@ -597,10 +597,10 @@ BOOL ucmMasqueradedGetObjectSecurityCOM(
 *
 */
 BOOL ucmMasqueradedSetObjectSecurityCOM(
-    _In_ LPWSTR lpTargetObject,
+    _In_ LPCWSTR lpTargetObject,
     _In_ SECURITY_INFORMATION SecurityInformation,
     _In_ SE_OBJECT_TYPE ObjectType,
-    _In_ LPWSTR NewSddl
+    _In_ LPCWSTR NewSddl
 )
 {
     HRESULT          r = E_FAIL, hr_init;
