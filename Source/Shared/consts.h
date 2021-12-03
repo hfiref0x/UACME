@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.57
+*  VERSION:     3.58
 *
-*  DATE:        01 Nov 2021
+*  DATE:        01 Dec 2021
 *
 *  Global consts definition file.
 *
@@ -42,16 +42,13 @@
 //"This method fixed/unavailable in the current version of Windows, do you still want to continue?"
 #define ISDB_USAGE_UACFIX               5
 
-//"\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\UAC\\COMAutoApprovalList"
-#define ISDB_COMAUTOAPPROVALLIST        6
-
 //"UACMe"
-#define ISDB_PROGRAMNAME                7
+#define ISDB_PROGRAMNAME                6
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       5
-#define UCM_VERSION_REVISION    7
-#define UCM_VERSION_BUILD       2111
+#define UCM_VERSION_REVISION    8
+#define UCM_VERSION_BUILD       2112
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
 
@@ -92,16 +89,15 @@
 #pragma region PYSH
 
 #define T_DISPLAY_CALIBRATION       L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ICM\\Calibration"
-#define T_DOTNET_CLIENT             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\KnownFunctionTableDlls"
 #define T_PCA_STORE                 L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Store"
 #define T_APPCOMPAT_LAYERS          L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers"
 #define T_PCA_PERSISTED             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Persisted"
+#define T_APP_ASSOC_TOASTS          L"Software\\Microsoft\\Windows\\CurrentVersion\\ApplicationAssociationToasts"
 
 #define T_CURVER                    L"CurVer"
 #define T_MSSETTINGS                L"ms-settings"
 #define T_MSWINDOWSSTORE            L"ms-windows-store"
 #define T_CLASSESFOLDER             L"Folder"
-#define T_APPXPACKAGE               L"AppX82a6gwre4fdg3bt635tn5ctqjf8msdd2"
 #define T_LAUNCHERSYSTEMSETTINGS    L"Launcher.SystemSettings"
 
 #define ELLOCNAK_MSU                L"update.msu"
@@ -121,6 +117,7 @@
 #define T_URL_MS_WIN_STORE          L"URL:ms-windows-store"
 
 #define T_SDDL_ALL_FOR_EVERYONE     L"D:(A;;GA;;;WD)"
+#define T_SDDL_EVERYONE_FULL_ACCESS L"D:PAI(A;OICI;FA;;;WD)"
 #define T_WINDIR                    L"windir"
 #define T_SYSTEMROOT                L"systemroot"
 #define T_WINDOWSMEDIAPLAYER        L"Windows Media Player"
@@ -150,18 +147,24 @@
 //
 #define APISET_KERNEL32LEGACY       L"api-ms-win-core-kernel32-legacy-l1.DLL"
 
-#define ACCESSIBILITY_NI_DLL        L"Accessibility.ni.dll"
 #define COMCTL32_DLL                L"comctl32.dll"
 #define DISMCORE_DLL                L"dismcore.dll"
 #define DUSER_DLL                   L"duser.dll"
 #define GDIPLUS_DLL                 L"GdiPlus.dll"
-#define MSCOREE_DLL                 L"MSCOREE.DLL"
-#define OLE32_DLL                   L"ole32.dll"
 #define OSKSUPPORT_DLL              L"OskSupport.dll"
 #define PCADM_DLL                   L"pcadm.dll"
 #define SHELL32_DLL                 L"shell32.dll"
 #define WINMM_DLL                   L"winmm.dll"
 #define WOW64LOG_DLL                L"wow64log.dll"
+
+//
+// Native image cache targets
+//
+#define ASSEMBLY_MMCEX              L"MMCEx"
+#define MMCEX_NI_DLL                L"MMCEx.ni.dll"
+#define MMCEX_NI_DLL_AUX            L"MMCEx.ni.dll.aux"
+
+#define ASSEMBLY_ACCESSIBILITY      L"Accessibility"
 
 //
 // Windows executables
@@ -170,7 +173,6 @@
 #define CLIPUP_EXE                  L"Clipup.exe"
 #define COMPUTERDEFAULTS_EXE        L"computerdefaults.exe"
 #define CONSENT_EXE                 L"consent.exe"
-#define DCOMCNFG_EXE                L"dcomcnfg.exe"
 #define DCCW_EXE                    L"dccw.exe"
 #define EVENTVWR_EXE                L"eventvwr.exe"
 #define EXPLORER_EXE                L"explorer.exe"
@@ -182,6 +184,7 @@
 #define PKGMGR_EXE                  L"pkgmgr.exe"
 #define SDCLT_EXE                   L"sdclt.exe"
 #define SLUI_EXE                    L"slui.exe"
+#define TASKHOSTW_EXE               L"taskhostw.exe"
 #define WINSAT_EXE                  L"winsat.exe"
 #define WINVER_EXE                  L"winver.exe"
 #define WSRESET_EXE                 L"WSReset.exe"
@@ -203,6 +206,7 @@
 #define NET2_DIR                    L"v2.0.50727"
 #define NET4_DIR                    L"v4.0.30319"
 #define MSNETFRAMEWORK_DIR          L"Microsoft.NET\\Framework"
+#define MMCEX_DIR                   L"\\MMCEx"
 
 //
 // Shell Verbs
@@ -223,7 +227,6 @@
 //
 // SxS
 //
-
 #define LOCAL_SXS                   L".local"  //PYSH
 #define FAKE_LOCAL_SXS              L".@" //PYSH
 #define COMCTL32_SXS                L"microsoft.windows.common-controls"

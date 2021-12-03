@@ -30,7 +30,7 @@
     <ProjectGuid>{3BEF8A16-981F-4C65-8AE7-C612B46BE446}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Naka</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

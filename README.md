@@ -723,6 +723,16 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.5.7
+71. Author: Arush Agarampur
+     * Type: Dll Hijack 
+     * Method: ISecurityEditor
+     * Target(s): Native Image Cache elements
+     * Component(s): Attacker defined
+     * Implementation: ucmNICPoisonMethod2
+     * Works from: Windows 7 RTM (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.5.8
 
 </details>
 

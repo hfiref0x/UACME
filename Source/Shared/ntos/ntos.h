@@ -5,9 +5,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.184
+*  VERSION:     1.185
 *
-*  DATE:        01 Nov 2021
+*  DATE:        19 Nov 2021
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -1101,6 +1101,8 @@ typedef enum _THREADINFOCLASS {
     ThreadManageWritesToExecutableMemory,
     ThreadPowerThrottlingState,
     ThreadWorkloadClass,
+    ThreadCreateStateChange,
+    ThreadApplyStateChange,
     MaxThreadInfoClass
 } THREADINFOCLASS;
 
@@ -1164,6 +1166,18 @@ typedef struct _PROCESS_HANDLE_SNAPSHOT_INFORMATION {
     ULONG Reserved;
     PROCESS_HANDLE_TABLE_ENTRY_INFO Handles[1];
 } PROCESS_HANDLE_SNAPSHOT_INFORMATION, *PPROCESS_HANDLE_SNAPSHOT_INFORMATION;
+
+typedef enum _PROCESS_STATE_CHANGE_TYPE {
+    ProcessStateChangeSuspend,
+    ProcessStateChangeResume,
+    ProcessStateChangeMax,
+} PROCESS_STATE_CHANGE_TYPE, *PPROCESS_STATE_CHANGE_TYPE;
+
+typedef enum _THREAD_STATE_CHANGE_TYPE {
+    ThreadStateChangeSuspend,
+    ThreadStateChangeResume,
+    ThreadStateChangeMax,
+} THREAD_STATE_CHANGE_TYPE, *PTHREAD_STATE_CHANGE_TYPE;
 
 //
 // Process/Thread System and User Time
@@ -5157,7 +5171,7 @@ typedef struct _RTL_PROCESS_MODULES {
 */
 
 typedef enum _MEMORY_INFORMATION_CLASS {
-    MemoryBasicInformation,
+    MemoryBasicInformation = 0,
     MemoryWorkingSetInformation,
     MemoryMappedFilenameInformation,
     MemoryRegionInformation,
@@ -5169,6 +5183,7 @@ typedef enum _MEMORY_INFORMATION_CLASS {
     MemoryEnclaveImageInformation,
     MemoryBasicInformationCapped,
     MemoryPhysicalContiguityInformation,
+    MemoryBadInformation,
     MaxMemoryInfoClass
 } MEMORY_INFORMATION_CLASS, *PMEMORY_INFORMATION_CLASS;
 
@@ -6132,6 +6147,7 @@ __inline struct _PEB * NtCurrentPeb() { return NtCurrentTeb()->ProcessEnvironmen
 #define ProcessChildProcessPolicy           13
 #define ProcessSideChannelIsolationPolicy   14
 #define ProcessUserShadowStackPolicy        15
+#define ProcessRedirectionTrustPolicy       16
 
 typedef struct tagPROCESS_MITIGATION_BINARY_SIGNATURE_POLICY_W10 {
     union {
@@ -6240,7 +6256,7 @@ typedef struct tagPROCESS_MITIGATION_CHILD_PROCESS_POLICY_W10 {
     } DUMMYUNIONNAME;
 } PROCESS_MITIGATION_CHILD_PROCESS_POLICY_W10, *PPROCESS_MITIGATION_CHILD_PROCESS_POLICY_W10;
 
-typedef struct _PROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10 {
+typedef struct tagPROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10 {
     union {
         DWORD Flags;
         struct {
@@ -6253,7 +6269,7 @@ typedef struct _PROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10 {
     } DUMMYUNIONNAME;
 } PROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10, *PPROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10;
 
-typedef struct _PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY_W10 {
+typedef struct tagPROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY_W10 {
     union {
         DWORD Flags;
         struct {
@@ -6264,7 +6280,7 @@ typedef struct _PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY_W10 {
     } DUMMYUNIONNAME;
 } PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY_W10, *PPROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY_W10;
 
-typedef struct _PROCESS_MITIGATION_USER_SHADOW_STACK_POLICY_W10 {
+typedef struct tagPROCESS_MITIGATION_USER_SHADOW_STACK_POLICY_W10 {
     union {
         DWORD Flags;
         struct {
@@ -6281,6 +6297,17 @@ typedef struct _PROCESS_MITIGATION_USER_SHADOW_STACK_POLICY_W10 {
         } DUMMYSTRUCTNAME;
     } DUMMYUNIONNAME;
 } PROCESS_MITIGATION_USER_SHADOW_STACK_POLICY_W10, * PPROCESS_MITIGATION_USER_SHADOW_STACK_POLICY_W10;
+
+typedef struct tagPROCESS_MITIGATION_REDIRECTION_TRUST_POLICY_W10 {
+    union {
+        DWORD Flags;
+        struct {
+            DWORD EnforceRedirectionTrust : 1;
+            DWORD AuditRedirectionTrust : 1;
+            DWORD ReservedFlags : 30;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+} PROCESS_MITIGATION_REDIRECTION_TRUST_POLICY_W10, * PPROCESS_MITIGATION_REDIRECTION_TRUST_POLICY_W10;
 
 typedef struct _PROCESS_MITIGATION_POLICY_INFORMATION {
     PROCESS_MITIGATION_POLICY Policy;
@@ -6300,6 +6327,7 @@ typedef struct _PROCESS_MITIGATION_POLICY_INFORMATION {
         PROCESS_MITIGATION_CHILD_PROCESS_POLICY_W10 ChildProcessPolicy;
         PROCESS_MITIGATION_SIDE_CHANNEL_ISOLATION_POLICY_W10 SideChannelIsolationPolicy;
         PROCESS_MITIGATION_USER_SHADOW_STACK_POLICY_W10 UserShadowStackPolicy;
+        PROCESS_MITIGATION_REDIRECTION_TRUST_POLICY_W10 RedirectionTrustPolicy;
     };
 } PROCESS_MITIGATION_POLICY_INFORMATION, *PPROCESS_MITIGATION_POLICY_INFORMATION;
 
@@ -11690,14 +11718,41 @@ NtAreMappedFilesTheSame(
     _In_ PVOID File1MappedAsAnImage,
     _In_ PVOID File2MappedAsFile);
 
-NTSYSAPI
-NTSTATUS
-NTAPI
-NtCreatePartition(
+//
+// NtCreatePartition
+//
+
+//
+// 10248
+//
+typedef NTSTATUS(NTAPI* pfnNtCreatePartitionV1)(
     _Out_ PHANDLE PartitionHandle,
     _In_ ACCESS_MASK DesiredAccess,
     _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
     _In_ ULONG PreferredNode);
+
+//
+// 10586
+//
+typedef NTSTATUS(NTAPI* pfnNtCreatePartitionV2)(
+    _In_ HANDLE ParentPartitionHandle,
+    _Out_ HANDLE* PartitionHandle,
+    _In_ ULONG DesiredAccess,
+    _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
+    _In_ ULONG Node);
+
+//
+// Actual NtCreatePartition definition since Win10 10586
+//
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtCreatePartition(
+    _In_ HANDLE ParentPartitionHandle,
+    _Out_ HANDLE* PartitionHandle,
+    _In_ ULONG DesiredAccess,
+    _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
+    _In_ ULONG Node);
 
 NTSYSAPI
 NTSTATUS
@@ -12875,6 +12930,27 @@ NtResumeProcess(
 NTSYSAPI
 NTSTATUS
 NTAPI
+NtCreateProcessStateChange(
+    _Out_ PHANDLE ProcessStateChangeHandle,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
+    _In_ HANDLE ProcessHandle,
+    _In_opt_ ULONG64 Reserved);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtChangeProcessState(
+    _In_ HANDLE ProcessStateChangeHandle,
+    _In_ HANDLE ProcessHandle,
+    _In_ PROCESS_STATE_CHANGE_TYPE StateChangeType,
+    _In_opt_ PVOID ExtendedInformation,
+    _In_opt_ SIZE_T ExtendedInformationLength,
+    _In_opt_ ULONG64 Reserved);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
 NtSuspendThread(
     _In_ HANDLE ThreadHandle,
     _Out_opt_ PULONG PreviousSuspendCount);
@@ -12885,6 +12961,27 @@ NTAPI
 NtResumeThread(
     _In_ HANDLE ThreadHandle,
     _Out_opt_ PULONG PreviousSuspendCount);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtCreateThreadStateChange(
+    _Out_ PHANDLE ThreadStateChangeHandle,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
+    _In_ HANDLE ThreadHandle,
+    _In_opt_ ULONG64 Reserved);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtChangeThreadState(
+    _In_ HANDLE ThreadStateChangeHandle,
+    _In_ HANDLE ThreadHandle,
+    _In_ THREAD_STATE_CHANGE_TYPE StateChangeType,
+    _In_opt_ PVOID ExtendedInformation,
+    _In_opt_ SIZE_T ExtendedInformationLength,
+    _In_opt_ ULONG64 Reserved);
 
 NTSYSAPI
 NTSTATUS

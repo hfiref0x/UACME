@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.51
+*  VERSION:     1.52
 *
-*  DATE:        29 Oct 2021
+*  DATE:        23 Nov 2021
 *
 *  Program entry point.
 *
@@ -518,9 +518,9 @@ VOID main()
     ListBasicSettings();
     ListCOMFromRegistry();
 #endif
-    ListAppInfo();
-#ifndef _DEBUG
     ListFusion();
+#ifndef _DEBUG
+    ListAppInfo();
 #endif
     if (g_LogFile != INVALID_HANDLE_VALUE)
         CloseHandle(g_LogFile);

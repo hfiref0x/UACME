@@ -68,7 +68,6 @@ BOOL ucmTestRoutine(
     UNREFERENCED_PARAMETER(PayloadSize);
 
     //TestEnumUAS();
-
     supSetGlobalCompletionEvent();
     return TRUE;
 }

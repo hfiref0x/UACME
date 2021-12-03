@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2020
+*  (C) COPYRIGHT AUTHORS, 2014 - 2021
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.58
 *
-*  DATE:        14 Sep 2020
+*  DATE:        01 Dec 2020
 *
 *  Compression and encoding/decoding support.
 *
@@ -42,7 +42,6 @@ UCM_STRING_TABLE_ENTRY ucmStringTable[] = {
     { ISDB_USAGE_WOW_DETECTED, sizeof(B_USAGE_WOW64STRING), B_USAGE_WOW64STRING },
     { ISDB_USAGE_WOW64WIN32ONLY, sizeof(B_USAGE_WOW64WIN32STRING), B_USAGE_WOW64WIN32STRING },
     { ISDB_USAGE_UACFIX, sizeof(B_USAGE_UACFIX), B_USAGE_UACFIX },
-    { ISDB_COMAUTOAPPROVALLIST, sizeof(B_COMAUTOAPPROVALLIST), B_COMAUTOAPPROVALLIST },
     { ISDB_PROGRAMNAME, sizeof(B_PROGRAM_NAME), B_PROGRAM_NAME }
 };
 

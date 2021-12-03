@@ -409,6 +409,7 @@
     <ClCompile Include="aic.c" />
     <ClCompile Include="appinfo\x64\appinfo64.c" />
     <ClCompile Include="appinfo\x86-32\appinfo32.c" />
+    <ClCompile Include="fusutil.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="makecab.c" />
     <ClCompile Include="compress.c" />
@@ -443,6 +444,7 @@
     <ClInclude Include="..\Shared\_filename.h" />
     <ClInclude Include="aic.h" />
     <ClInclude Include="compress.h" />
+    <ClInclude Include="fusutil.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="methods\azagarampur.h" />
     <ClInclude Include="methods\dwells.h" />

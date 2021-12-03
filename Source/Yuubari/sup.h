@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     1.51
+*  VERSION:     1.52
 *
-*  DATE:        29 Oct 2021
+*  DATE:        23 Nov 2021
 *
 *  Common header file for the program support routines.
 *
@@ -77,3 +77,8 @@ PVOID supLookupImageSectionByName(
     _In_ ULONG SectionNameLength,
     _In_ PVOID DllBase,
     _Out_ PULONG SectionSize);
+
+BOOL supConcatenatePaths(
+    _Inout_ LPWSTR Target,
+    _In_ LPCWSTR Path,
+    _In_ SIZE_T TargetBufferSize);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.51
+*  VERSION:     1.52
 *
-*  DATE:        29 Oct 2021
+*  DATE:        23 Nov 2021
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -26,21 +26,15 @@
 */
 BOOL supIsCorImageFile(
     _In_ PVOID ImageBase
-    )
+)
 {
-    BOOL                bResult = FALSE;
     ULONG               sz = 0;
-    IMAGE_COR20_HEADER *CliHeader;
+    IMAGE_COR20_HEADER* CliHeader;
 
-    if (ImageBase) {
-        CliHeader = (IMAGE_COR20_HEADER*)RtlImageDirectoryEntryToData(ImageBase, TRUE,
-            IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &sz);
+    CliHeader = (IMAGE_COR20_HEADER*)RtlImageDirectoryEntryToData(ImageBase, TRUE,
+        IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &sz);
 
-        if ((CliHeader == NULL) || (sz < sizeof(IMAGE_COR20_HEADER)))
-            return bResult;
-        bResult = TRUE;
-    }
-    return bResult;
+    return ((CliHeader != NULL) && (sz >= sizeof(IMAGE_COR20_HEADER)));
 }
 
 /*
@@ -288,4 +282,61 @@ PVOID supLookupImageSectionByName(
         *SectionSize = SectionTableEntry->Misc.VirtualSize;
 
     return Section;
+}
+
+/*
+* supConcatenatePaths
+*
+* Purpose:
+*
+* Concatenate 2 paths.
+*
+*/
+BOOL supConcatenatePaths(
+    _Inout_ LPWSTR Target,
+    _In_ LPCWSTR Path,
+    _In_ SIZE_T TargetBufferSize
+)
+{
+    SIZE_T TargetLength, PathLength;
+    BOOL TrailingBackslash, LeadingBackslash;
+    SIZE_T EndingLength;
+
+    TargetLength = _strlen(Target);
+    PathLength = _strlen(Path);
+
+    if (TargetLength && (*CharPrev(Target, Target + TargetLength) == TEXT('\\'))) {
+        TrailingBackslash = TRUE;
+        TargetLength--;
+    }
+    else {
+        TrailingBackslash = FALSE;
+    }
+
+    if (Path[0] == TEXT('\\')) {
+        LeadingBackslash = TRUE;
+        PathLength--;
+    }
+    else {
+        LeadingBackslash = FALSE;
+    }
+
+    EndingLength = TargetLength + PathLength + 2;
+
+    if (!LeadingBackslash && (TargetLength < TargetBufferSize)) {
+        Target[TargetLength++] = TEXT('\\');
+    }
+
+    if (TargetBufferSize > TargetLength) {
+        _strncpy(Target + TargetLength,
+            TargetBufferSize - TargetLength,
+            Path,
+            TargetBufferSize - TargetLength);
+    }
+
+    if (TargetBufferSize) {
+        Target[TargetBufferSize - 1] = 0;
+    }
+
+    return (EndingLength <= TargetBufferSize);
 }
