@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2021
+*  (C) COPYRIGHT AUTHORS, 2018 - 2022
 *
 *  TITLE:       STUB.C
 *
-*  VERSION:     3.57
+*  VERSION:     3.58
 *
-*  DATE:        01 Nov 2021
+*  DATE:        28 Jan 2022
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -15,6 +15,8 @@
 *
 *******************************************************************************/
 #include "global.h"
+
+UINT ucmExitCode = (UINT)STATUS_ACCESS_DENIED;
 
 /*
 * ucmSehHandler
@@ -50,7 +52,7 @@ INT ucmSehHandler(
             0x20 - (result & 0x1f)) ^ result);
 #endif
 
-        ((pfnEntryPoint)(entry))(UacMethodInvalid,
+        ucmExitCode = ((pfnEntryPoint)(entry))(UacMethodInvalid,
             NULL,
             0,
             FALSE);
@@ -87,8 +89,8 @@ DWORD StubInit(VOID)
         v = (int)(v / d);
     }
     __except (ucmSehHandler(GetExceptionCode(), GetExceptionInformation())) {
-        v = 1;
+        v = ucmExitCode;
     }
 
-    return v;
+    return ucmExitCode;
 }
