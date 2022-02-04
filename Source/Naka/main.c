@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2020
+*  (C) COPYRIGHT AUTHORS, 2016 - 2022
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.59
 *
-*  DATE:        14 Sep 2020
+*  DATE:        02 Feb 2022
 *
 *  Naka, support payload compressor.
 *
@@ -1119,6 +1119,11 @@ VOID CreateSecretTables(VOID)
     szFileName[l] = 0;
     _strcat(&szFileName[l], L"Fubuki64.key");
     if (ProcessUnit(szFileName, IDR_FUBUKI64, &S[c]))
+        c++;
+
+    szFileName[l] = 0;
+    _strcat(&szFileName[l], L"Fubuki32.key");
+    if (ProcessUnit(szFileName, IDR_FUBUKI32, &S[c]))
         c++;
 
     szFileName[l] = 0;

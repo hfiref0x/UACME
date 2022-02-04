@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2022
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.58
+*  VERSION:     3.59
 *
-*  DATE:        01 Dec 2021
+*  DATE:        04 Feb 2022
 *
 *  Common header file for the program support routines.
 *
@@ -45,11 +45,13 @@
 #include "bin64res.h"
 #define FUBUKI_ID IDR_FUBUKI64
 #define AKATSUKI_ID IDR_AKATSUKI64
+#define FUBUKI32_ID IDR_FUBUKI32
 #define KAMIKAZE_ID IDR_KAMIKAZE
 #else
 #include "bin32res.h"
 #define FUBUKI_ID IDR_FUBUKI32
 #define AKATSUKI_ID PAYLOAD_ID_NONE //this module unavailable for 32 bit
+#define FUBUKI32_ID IDR_FUBUKI32
 #define KAMIKAZE_ID IDR_KAMIKAZE
 #endif
 
@@ -148,6 +150,14 @@ typedef UINT(WINAPI *pfnEntryPoint)(
     _In_opt_ ULONG OptionalParameterLength,
     _In_ BOOL OutputToDebugger
     );
+
+typedef struct _UACME_THREAD_CONTEXT {
+    TEB_ACTIVE_FRAME Frame;
+    pfnEntryPoint ucmMain;
+    DWORD ReturnedResult;
+    ULONG OptionalParameterLength;
+    LPWSTR OptionalParameter;
+} UACME_THREAD_CONTEXT, * PUACME_THREAD_CONTEXT;
 
 extern PUACMECONTEXT g_ctx;
 extern HINSTANCE g_hInstance;
