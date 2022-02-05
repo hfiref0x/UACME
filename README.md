@@ -733,6 +733,16 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.5.8
+72. Author: Emeric Nasi
+     * Type: Dll Hijack 
+     * Method: Dll path search abuse
+     * Target(s): \syswow64\msdt.exe, \system32\sdiagnhost.exe
+     * Component(s): BluetoothDiagnosticUtil.dll
+     * Implementation: ucmMsdtMethod
+     * Works from: Windows 10 (10240)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.5.9
 
 </details>
 
@@ -835,9 +845,10 @@ https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105
 * UACMe 3.5, WD and the ways of mitigation, https://swapcontext.blogspot.com/2020/10/uacme-35-wd-and-ways-of-mitigation.html
 * UAC bypasses from COMAutoApprovalList, https://swapcontext.blogspot.com/2020/11/uac-bypasses-from-comautoapprovallist.html
 * Utilizing Programmatic Identifiers (ProgIDs) for UAC Bypasses, https://v3ded.github.io/redteam/utilizing-programmatic-identifiers-progids-for-uac-bypasses
+* MSDT DLL Hijack UAC bypass, https://blog.sevagas.com/?MSDT-DLL-Hijack-UAC-bypass
 
 # Authors
 
-(c) 2014 - 2021 UACMe Project
+(c) 2014 - 2022 UACMe Project
 
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fhfiref0x%2FUACME&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)

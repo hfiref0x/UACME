@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.58
+*  VERSION:     3.59
 *
-*  DATE:        28 Jan 2022
+*  DATE:        04 Feb 2022
 *
 *  Global consts definition file.
 *
@@ -47,8 +47,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       5
-#define UCM_VERSION_REVISION    8
-#define UCM_VERSION_BUILD       2201
+#define UCM_VERSION_REVISION    9
+#define UCM_VERSION_BUILD       2202
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
 
@@ -147,6 +147,7 @@
 //
 #define APISET_KERNEL32LEGACY       L"api-ms-win-core-kernel32-legacy-l1.DLL"
 
+#define BLUETOOTHDIAGNOSTICUTIL_DLL L"BluetoothDiagnosticUtil.dll"
 #define COMCTL32_DLL                L"comctl32.dll"
 #define DISMCORE_DLL                L"dismcore.dll"
 #define DUSER_DLL                   L"duser.dll"
@@ -180,6 +181,7 @@
 #define MMC_EXE                     L"mmc.exe"
 #define MSCONFIG_EXE                L"msconfig.exe"
 #define MSCHEDEXE_EXE               L"mschedexe.exe"
+#define MSDT_EXE                    L"msdt.exe"
 #define OSK_EXE                     L"osk.exe"
 #define PKGMGR_EXE                  L"pkgmgr.exe"
 #define SDCLT_EXE                   L"sdclt.exe"
