@@ -803,7 +803,11 @@ https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105
   * v142 for Visual Studio 2019.
 * For v140 and above set Target Platform Version (Project->Properties->General):
   * If v140 then select 8.1 (Note that Windows 8.1 SDK must be installed);
-  * If v141/v142 then select 10 (Note that Windows 10 (19041) SDK must be installed). 
+  * If v141/v142 then select 10.
+
+* The following SDK are required for building the binaries:
+  * Windows 8.1 or Windows 10 SDK (tested with 19041 version)
+  * NET Framework SDK (tested with 4.8 version)
 
 * To build working binary:
   * Compile payload units
