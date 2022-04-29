@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2021
+*  (C) COPYRIGHT AUTHORS, 2015 - 2022
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.58
+*  VERSION:     3.60
 *
-*  DATE:        01 Dec 2021
+*  DATE:        27 Apr 2022
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -611,6 +611,36 @@ PBYTE supReadFileToBuffer(
 }
 
 /*
+* supRunProcess3
+*
+* Purpose:
+*
+* ShellExecuteEx given process with given parameters and return handle to it.
+*
+*/
+HANDLE supRunProcess3(
+    _In_ LPCWSTR lpFile,
+    _In_opt_ LPCWSTR lpParameters,
+    _In_opt_ LPCWSTR lpVerb,
+    _In_ INT nShow
+)
+{
+    SHELLEXECUTEINFO shinfo;
+
+    RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
+    shinfo.cbSize = sizeof(shinfo);
+    shinfo.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_NOCLOSEPROCESS;
+    shinfo.lpFile = lpFile;
+    shinfo.lpParameters = lpParameters;
+    shinfo.nShow = nShow;
+    shinfo.lpVerb = lpVerb;
+    if (ShellExecuteEx(&shinfo))
+        return shinfo.hProcess;
+
+    return NULL;
+}
+
+/*
 * supRunProcess2
 *
 * Purpose:
@@ -626,23 +656,19 @@ BOOL supRunProcess2(
     _In_ ULONG mTimeOut
 )
 {
-    BOOL bResult;
-    SHELLEXECUTEINFO shinfo;
+    BOOL bResult = FALSE;
+    HANDLE hProcess = supRunProcess3(lpFile,
+        lpParameters,
+        lpVerb,
+        nShow);
 
-    RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
-    shinfo.cbSize = sizeof(shinfo);
-    shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-    shinfo.lpFile = lpFile;
-    shinfo.lpParameters = lpParameters;
-    shinfo.nShow = nShow;
-    shinfo.lpVerb = lpVerb;
-    bResult = ShellExecuteEx(&shinfo);
-    if (bResult) {
+    if (hProcess) {
         if (mTimeOut != 0) {
-            if (WaitForSingleObject(shinfo.hProcess, mTimeOut) == WAIT_TIMEOUT)
-                TerminateProcess(shinfo.hProcess, WAIT_TIMEOUT);
+            if (WaitForSingleObject(hProcess, mTimeOut) == WAIT_TIMEOUT)
+                TerminateProcess(hProcess, WAIT_TIMEOUT);
         }
-        CloseHandle(shinfo.hProcess);
+        CloseHandle(hProcess);
+        bResult = TRUE;
     }
     return bResult;
 }
@@ -4055,4 +4081,110 @@ VOID supEnableToastForProtocol(
 
     enumHandlers->lpVtbl->Release(enumHandlers);
 
+}
+
+/*
+* supWaitForChildProcesses
+*
+* Purpose:
+*
+* Check for child instances of process with given name is running and wait some time.
+*
+*/
+ULONG supWaitForChildProcesses(
+    _In_ LPCWSTR lpProcessName,
+    _In_ DWORD dwWaitMiliseconds
+)
+{
+    BOOL bRetry;
+    DWORD dwCreatorPid, dwSessionId, dummy, dwCurrentWait, dwMaxWait = dwWaitMiliseconds;
+    PROCESS_BASIC_INFORMATION pbi;
+    ULONG nextEntryDelta;
+    PVOID processList;
+    HANDLE hEnumProcess;
+    OBJECT_ATTRIBUTES obja;
+    CLIENT_ID cid;
+    UNICODE_STRING lookupPsName;
+
+    union {
+        PSYSTEM_PROCESSES_INFORMATION Processes;
+        PBYTE ListRef;
+    } List;
+
+    dwCreatorPid = HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess);
+    dwSessionId = NtCurrentPeb()->SessionId;
+
+    dwCurrentWait = 0;
+    if (dwMaxWait < 1000) dwMaxWait = 1000;
+    RtlSecureZeroMemory(&pbi, sizeof(pbi));
+    RtlInitUnicodeString(&lookupPsName, lpProcessName);
+    InitializeObjectAttributes(&obja, NULL, 0, NULL, NULL);
+
+    do {
+
+        bRetry = FALSE;
+
+        processList = supGetSystemInfo(SystemProcessInformation);
+        if (processList) {
+
+            List.ListRef = (PBYTE)processList;
+            nextEntryDelta = 0;
+
+            do {
+
+                List.ListRef += nextEntryDelta;
+
+                if (List.Processes->SessionId == dwSessionId &&
+                    RtlEqualUnicodeString(&lookupPsName,
+                        &List.Processes->ImageName,
+                        TRUE))
+                {
+
+                    hEnumProcess = NULL;
+                    cid.UniqueProcess = List.Processes->UniqueProcessId;
+                    cid.UniqueThread = NULL;
+
+                    if (NT_SUCCESS(NtOpenProcess(
+                        &hEnumProcess,
+                        PROCESS_QUERY_LIMITED_INFORMATION,
+                        &obja,
+                        &cid)))
+                    {
+                        if (NT_SUCCESS(NtQueryInformationProcess(hEnumProcess,
+                            ProcessBasicInformation,
+                            &pbi,
+                            sizeof(pbi),
+                            &dummy)))
+                        {
+                            bRetry = (pbi.InheritedFromUniqueProcessId == dwCreatorPid);
+                        }
+
+                        NtClose(hEnumProcess);
+                    }
+
+                }
+
+                if (bRetry)
+                    break;
+
+                nextEntryDelta = List.Processes->NextEntryDelta;
+
+            } while (nextEntryDelta);
+
+            supHeapFree(processList);
+
+        }
+        else
+            break;
+
+        if (bRetry) {
+            Sleep(1000);
+            dwCurrentWait += 1000;
+        }
+        else 
+            break;
+
+    } while (dwCurrentWait <= dwMaxWait);
+
+    return dwCurrentWait;
 }

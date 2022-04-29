@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2022
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.58
+*  VERSION:     3.60
 *
-*  DATE:        01 Dec 2021
+*  DATE:        27 Apr 2022
 *
 *  Common header file for the program support routines.
 *
@@ -141,6 +141,12 @@ BOOL supDecodeAndWriteBufferToFile(
 PBYTE supReadFileToBuffer(
     _In_ LPCWSTR lpFileName,
     _Inout_opt_ LPDWORD lpBufferSize);
+
+HANDLE supRunProcess3(
+    _In_ LPCWSTR lpFile,
+    _In_opt_ LPCWSTR lpParameters,
+    _In_opt_ LPCWSTR lpVerb,
+    _In_ INT nShow);
 
 BOOL supRunProcess2(
     _In_ LPCWSTR lpFile,
@@ -450,6 +456,10 @@ BOOL supRemoveDirectoryRecursive(
 VOID supEnableToastForProtocol(
     _In_ LPCWSTR lpProtocol,
     _In_ BOOL fEnable);
+
+ULONG supWaitForChildProcesses(
+    _In_ LPCWSTR lpProcessName,
+    _In_ DWORD dwWaitMiliseconds);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

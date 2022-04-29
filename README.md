@@ -743,6 +743,16 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.5.9
+73. Author: orange_8361 and antonioCoco
+     * Type: Shell API 
+     * Method: .NET deserialization
+     * Target(s): \system32\mmc.exe EventVwr.msc
+     * Component(s): Attacker defined
+     * Implementation: ucmDotNetSerialMethod
+     * Works from: Windows 7 RTM (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.6.0
 
 </details>
 
@@ -850,6 +860,7 @@ https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105
 * UAC bypasses from COMAutoApprovalList, https://swapcontext.blogspot.com/2020/11/uac-bypasses-from-comautoapprovallist.html
 * Utilizing Programmatic Identifiers (ProgIDs) for UAC Bypasses, https://v3ded.github.io/redteam/utilizing-programmatic-identifiers-progids-for-uac-bypasses
 * MSDT DLL Hijack UAC bypass, https://blog.sevagas.com/?MSDT-DLL-Hijack-UAC-bypass
+* UAC bypass through .Net Deserialization vulnerability in eventvwr.exe, https://twitter.com/orange_8361/status/1518970259868626944
 
 # Authors
 

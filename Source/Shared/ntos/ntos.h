@@ -1,13 +1,13 @@
 /************************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2021 
+*  (C) COPYRIGHT AUTHORS, 2015 - 2022 
 *  Translated from Microsoft sources/debugger or mentioned elsewhere.
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.185
+*  VERSION:     1.192
 *
-*  DATE:        19 Nov 2021
+*  DATE:        24 Mar 2022
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -341,21 +341,40 @@ char _RTL_CONSTANT_STRING_type_check(const void *s);
 //
 // Semaphore Object Access Rights
 //
+#ifndef SEMAPHORE_QUERY_STATE       //SDK compatibility
 #define SEMAPHORE_QUERY_STATE       0x0001
+#endif
 
 #ifndef SEMAPHORE_MODIFY_STATE      //SDK compatibility
 #define SEMAPHORE_MODIFY_STATE      0x0002 
 #endif
 
 #ifndef SEMAPHORE_ALL_ACCESS //SDK compatibility
-#define SEMAPHORE_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3)
+#define SEMAPHORE_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|SEMAPHORE_QUERY_STATE|SEMAPHORE_MODIFY_STATE)
+#endif
+
+//
+// Time Object Access rights
+//
+#ifndef TIMER_QUERY_STATE
+#define TIMER_QUERY_STATE 0x0001
+#endif
+
+#ifndef TIMER_MODIFY_STATE
+#define TIMER_MODIFY_STATE 0x0002
+#endif
+
+#ifndef TIMER_ALL_ACCESS
+#define TIMER_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|TIMER_QUERY_STATE|TIMER_MODIFY_STATE)
 #endif
 
 //
 // SymbolicLink Object Access Rights
 //
 #define SYMBOLIC_LINK_QUERY 0x0001
+#define SYMBOLIC_LINK_SET   0x0002
 #define SYMBOLIC_LINK_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | SYMBOLIC_LINK_QUERY)
+#define SYMBOLIC_LINK_ALL_ACCESS_EX (STANDARD_RIGHTS_REQUIRED | 0xFFFF)
 
 //
 // Thread Object Access Rights
@@ -656,6 +675,7 @@ typedef enum _KWAIT_REASON {
     WrDeferredPreempt,
     WrPhysicalFault,
     WrIoRing,
+    WrMdlCache,
     MaximumWaitReason
 } KWAIT_REASON;
 
@@ -1046,6 +1066,15 @@ typedef enum _PROCESSINFOCLASS {
     ProcessAltSystemCallInformation = 100,
     ProcessDynamicEHContinuationTargets = 101,
     ProcessDynamicEnforcedCetCompatibleRanges = 102,
+    ProcessCreateStateChange = 103,
+    ProcessApplyStateChange = 104,
+    ProcessEnableOptionalXStateFeatures = 105,
+    ProcessAltPrefetchParam = 106,
+    ProcessAssignCpuPartitions = 107,
+    ProcessPriorityClassEx = 108,
+    ProcessMembershipInformation = 109,
+    ProcessEffectiveIoPriority = 110,
+    ProcessEffectivePagePriority = 111,
     MaxProcessInfoClass
 } PROCESSINFOCLASS;
 
@@ -1103,6 +1132,9 @@ typedef enum _THREADINFOCLASS {
     ThreadWorkloadClass,
     ThreadCreateStateChange,
     ThreadApplyStateChange,
+    ThreadStrongerBadHandleChecks,
+    ThreadEffectiveIoPriority,
+    ThreadEffectivePagePriority,
     MaxThreadInfoClass
 } THREADINFOCLASS;
 
@@ -1390,6 +1422,10 @@ typedef enum _PS_ATTRIBUTE_NUM {
     PsAttributeBnoIsolation,
     PsAttributeDesktopAppPolicy,
     PsAttributeChpe,
+    PsAttributeMitigationAuditOptions,
+    PsAttributeMachineType,
+    PsAttributeComponentFilter,
+    PsAttributeEnableOptionalXStateFeatures,
     PsAttributeMax
 } PS_ATTRIBUTE_NUM;
 
@@ -1703,6 +1739,12 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
     SystemSupportedProcessorArchitectures2 = 230,
     SystemSingleProcessorRelationshipInformation = 231,
     SystemXfgCheckFailureInformation = 232,
+    SystemIommuStateInformation = 233,
+    SystemHypervisorMinrootInformation = 234,
+    SystemHypervisorBootPagesInformation = 235,
+    SystemPointerAuthInformation = 236,
+    SystemSecureKernelDebuggerInformation = 237,
+    SystemOriginalImageFeatureInformation = 238,
     MaxSystemInfoClass
 } SYSTEM_INFORMATION_CLASS, * PSYSTEM_INFORMATION_CLASS;
 
@@ -1790,6 +1832,8 @@ typedef struct _SYSTEM_CODEINTEGRITY_INFORMATION {
 #define CODEINTEGRITY_OPTION_HVCI_KMCI_AUDITMODE_ENABLED  0x800
 #define CODEINTEGRITY_OPTION_HVCI_KMCI_STRICTMODE_ENABLED 0x1000
 #define CODEINTEGRITY_OPTION_HVCI_IUM_ENABLED             0x2000
+#define CODEINTEGRITY_OPTION_WHQL_ENFORCEMENT_ENABLED     0x4000
+#define CODEINTEGRITY_OPTION_WHQL_AUDITMODE_ENABLED       0x8000
 
 typedef VOID(NTAPI *PIO_APC_ROUTINE)(
     _In_ PVOID ApcContext,
@@ -5128,6 +5172,47 @@ typedef struct _RTL_CALLBACK_REGISTER {
     LIST_ENTRY ListEntry;
 } RTL_CALLBACK_REGISTER, *PRTL_CALLBACK_REGISTER;
 
+typedef
+VOID
+(*PPO_COALESCING_CALLBACK) (
+    _In_ ULONG Reason,
+    _In_ PDEVICE_OBJECT DeviceObject,
+    _In_ PVOID Context);
+
+typedef struct _PO_COALESCING_CALLBACK_V1 {
+    EX_PUSH_LOCK PushLock;
+    PVOID CoalescingCallback;
+    PVOID SelfPtr;
+    PPO_COALESCING_CALLBACK Callback;
+    BOOLEAN ClientOrServer;
+    PVOID Context;
+} PO_COALESCING_CALLBACK_V1, * PPO_COALESCING_CALLBACK_V1;
+
+typedef struct _PO_COALESCING_CALLBACK_V2 {
+    EX_PUSH_LOCK PushLock;
+    PVOID CoalescingCallback;
+    PVOID SelfPtr;
+    PPO_COALESCING_CALLBACK Callback;
+    BOOLEAN ClientOrServer;
+    PVOID Context;
+    LIST_ENTRY Link;
+    EX_CALLBACK ExCallback;
+} PO_COALESCING_CALLBACK_V2, * PPO_COALESCING_CALLBACK_V2;
+
+typedef
+BOOLEAN
+(*PNMI_CALLBACK)(
+    __in_opt PVOID Context,
+    __in BOOLEAN Handled
+    );
+
+typedef struct _KNMI_HANDLER_CALLBACK {
+    struct _KNMI_HANDLER_CALLBACK* Next;
+    PNMI_CALLBACK Callback;
+    PVOID Context;
+    PVOID Handle;
+} KNMI_HANDLER_CALLBACK, * PKNMI_HANDLER_CALLBACK;
+
 /*
 ** Callbacks END
 */
@@ -5184,6 +5269,7 @@ typedef enum _MEMORY_INFORMATION_CLASS {
     MemoryBasicInformationCapped,
     MemoryPhysicalContiguityInformation,
     MemoryBadInformation,
+    MemoryBadInformationAllProcesses,
     MaxMemoryInfoClass
 } MEMORY_INFORMATION_CLASS, *PMEMORY_INFORMATION_CLASS;
 
@@ -5258,7 +5344,11 @@ typedef struct _MEMORY_REGION_INFORMATION_V3 {
             ULONG SoftwareEnclave : 1; // RS3
             ULONG PageSize64K : 1;
             ULONG PlaceholderReservation : 1; // RS4
-            ULONG Reserved : 23;
+            ULONG MappedAwe : 1; // 21H1
+            ULONG MappedWriteWatch : 1;
+            ULONG PageSizeLarge : 1;
+            ULONG PageSizeHuge : 1;
+            ULONG Reserved : 19;
         };
     };
     SIZE_T RegionSize;
@@ -7491,7 +7581,8 @@ typedef struct _LDR_DATA_TABLE_ENTRY_FULL
             ULONG DontRelocate : 1;
             ULONG CorILOnly : 1;
             ULONG ChpeImage : 1;
-            ULONG ReservedFlags5 : 2;
+            ULONG ChpeEmulatorImage : 1;
+            ULONG ReservedFlags5 : 1;
             ULONG Redirected : 1;
             ULONG ReservedFlags6 : 2;
             ULONG CompatDatabaseProcessed : 1;
@@ -8868,7 +8959,7 @@ RtlSetDaclSecurityDescriptor(
     _Inout_ PSECURITY_DESCRIPTOR SecurityDescriptor,
     _In_ BOOLEAN DaclPresent,
     _In_opt_ PACL Dacl,
-    _In_opt_ BOOLEAN DaclDefaulted);
+    _In_ BOOLEAN DaclDefaulted);
 
 NTSYSAPI
 NTSTATUS
@@ -8886,7 +8977,7 @@ RtlSetSaclSecurityDescriptor(
     _Inout_ PSECURITY_DESCRIPTOR SecurityDescriptor,
     _In_ BOOLEAN SaclPresent,
     _In_opt_ PACL Sacl,
-    _In_opt_ BOOLEAN SaclDefaulted);
+    _In_ BOOLEAN SaclDefaulted);
 
 NTSYSAPI
 NTSTATUS
@@ -10274,7 +10365,7 @@ NTSYSAPI
 VOID
 NTAPI
 RtlDeleteBoundaryDescriptor(
-    _In_ PVOID BoundaryDescriptor);
+    _In_ _Post_invalid_ PVOID BoundaryDescriptor);
 
 NTSYSAPI
 NTSTATUS
@@ -10705,7 +10796,7 @@ NTAPI
 NtCreateTimer2(
     _Out_ PHANDLE TimerHandle,
     _In_opt_ PVOID Reserved1,
-    _In_opt_ PVOID Reserved2,
+    _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
     _In_ ULONG Attributes,
     _In_ ACCESS_MASK DesiredAccess);
 
@@ -11503,8 +11594,8 @@ NtManageHotPatch(
 *
 ************************************************************************************/
 
-#define MEM_EXECUTE_OPTION_DISABLE 0x1
-#define MEM_EXECUTE_OPTION_ENABLE 0x2
+#define MEM_EXECUTE_OPTION_ENABLE 0x1
+#define MEM_EXECUTE_OPTION_DISABLE 0x2
 #define MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION 0x4
 #define MEM_EXECUTE_OPTION_PERMANENT 0x8
 #define MEM_EXECUTE_OPTION_EXECUTE_DISPATCH_ENABLE 0x10
@@ -11525,6 +11616,7 @@ typedef enum _MEMORY_PARTITION_INFORMATION_CLASS {
     SystemMemoryPartitionOpenDedicatedMemory,
     SystemMemoryPartitionMemoryChargeAttributes,
     SystemMemoryPartitionClearAttributes,
+    SystemMemoryPartitionSetMemoryThresholds,
     SystemMemoryPartitionMax
 } MEMORY_PARTITION_INFORMATION_CLASS;
 
@@ -12538,7 +12630,7 @@ typedef enum _IO_SESSION_EVENT {
 } IO_SESSION_EVENT;
 
 typedef enum _IO_SESSION_STATE {
-    IoSessionStateCreated,
+    IoSessionStateCreated = 1,
     IoSessionStateInitialized,
     IoSessionStateConnected,
     IoSessionStateDisconnected,
@@ -12670,8 +12762,8 @@ NTAPI
 NtOpenTransaction(
     _Out_ PHANDLE TransactionHandle,
     _In_ ACCESS_MASK DesiredAccess,
-    _In_ POBJECT_ATTRIBUTES ObjectAttributes,
-    _In_ LPGUID Uow,
+    _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
+    _In_opt_ LPGUID Uow,
     _In_opt_ HANDLE TmHandle);
 
 NTSYSAPI
@@ -13237,6 +13329,17 @@ NtReadVirtualMemory(
 NTSYSAPI
 NTSTATUS
 NTAPI
+NtReadVirtualMemoryEx(
+    _In_ HANDLE ProcessHandle,
+    _In_opt_ PVOID BaseAddress,
+    _Out_writes_bytes_(BufferSize) PVOID Buffer,
+    _In_ SIZE_T BufferSize,
+    _Out_opt_ PSIZE_T NumberOfBytesRead,
+    _In_ ULONG Flags);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
 NtWriteVirtualMemory(
     _In_ HANDLE ProcessHandle,
     _In_opt_ PVOID BaseAddress,
@@ -13304,19 +13407,27 @@ NtCreatePagingFile(
 ************************************************************************************/
 
 typedef struct _PORT_VIEW {
-    ULONG Length;
-    HANDLE SectionHandle;
-    ULONG SectionOffset;
-    SIZE_T ViewSize;
-    PVOID ViewBase;
-    PVOID ViewRemoteBase;
-} PORT_VIEW, *PPORT_VIEW;
+
+    ULONG  Length;                      // Size of this structure
+    HANDLE SectionHandle;               // Handle to section object with
+                                        // SECTION_MAP_WRITE and SECTION_MAP_READ
+    ULONG  SectionOffset;               // The offset in the section to map a view for
+                                        // the port data area. The offset must be aligned 
+                                        // with the allocation granularity of the system.
+    SIZE_T ViewSize;                    // The size of the view (in bytes)
+    PVOID  ViewBase;                    // The base address of the view in the creator
+                                        // 
+    PVOID  ViewRemoteBase;              // The base address of the view in the process
+                                        // connected to the port.
+} PORT_VIEW, * PPORT_VIEW;
 
 typedef struct _REMOTE_PORT_VIEW {
-    ULONG Length;
-    SIZE_T ViewSize;
-    PVOID ViewBase;
-} REMOTE_PORT_VIEW, *PREMOTE_PORT_VIEW;
+
+    ULONG  Length;                      // Size of this structure
+    SIZE_T ViewSize;                    // The size of the view (bytes)
+    PVOID  ViewBase;                    // Base address of the view
+
+} REMOTE_PORT_VIEW, * PREMOTE_PORT_VIEW;
 
 typedef struct _PORT_MESSAGE {
     union {
@@ -13339,11 +13450,69 @@ typedef struct _PORT_MESSAGE {
     } u3;
     ULONG MessageId;
     union {
+        SIZE_T ClientViewSize;               // Only valid on LPC_CONNECTION_REQUEST message
+        ULONG CallbackId;                   // Only valid on LPC_REQUEST message
+    } u4;
+} PORT_MESSAGE, *PPORT_MESSAGE;
+
+typedef struct _PORT_MESSAGE32 {
+    union {
+        struct {
+            CSHORT DataLength;
+            CSHORT TotalLength;
+        } s1;
+        ULONG Length;
+    } u1;
+    union {
+        struct {
+            CSHORT Type;
+            CSHORT DataInfoOffset;
+        } s2;
+        ULONG ZeroInit;
+    } u2;
+    union {
+        CLIENT_ID32 ClientId;
+        double DoNotUseThisField;       // Force quadword alignment
+    } u3;
+    ULONG MessageId;
+    union {
         ULONG ClientViewSize;               // Only valid on LPC_CONNECTION_REQUEST message
         ULONG CallbackId;                   // Only valid on LPC_REQUEST message
     } u4;
-    UCHAR Reserved[8];
-} PORT_MESSAGE, *PPORT_MESSAGE;
+} PORT_MESSAGE32, * PPORT_MESSAGE32;
+
+typedef struct _PORT_MESSAGE64
+{
+    union
+    {
+        struct
+        {
+            CSHORT DataLength;
+            CSHORT TotalLength;
+        } s1;
+        ULONG Length;
+    } u1;
+    union
+    {
+        struct
+        {
+            CSHORT Type;
+            CSHORT DataInfoOffset;
+        } s2;
+        ULONG ZeroInit;
+    } u2;
+    union
+    {
+        CLIENT_ID64 ClientId;
+        double DoNotUseThisField;
+    };
+    ULONG MessageId;
+    union
+    {
+        ULONGLONG ClientViewSize; // only valid for LPC_CONNECTION_REQUEST messages
+        ULONG CallbackId; // only valid for LPC_REQUEST messages
+    };
+} PORT_MESSAGE64, * PPORT_MESSAGE64;
 
 typedef struct _PORT_DATA_ENTRY {
     PVOID Base;
@@ -13355,16 +13524,32 @@ typedef struct _PORT_DATA_INFORMATION {
     PORT_DATA_ENTRY DataEntries[1];
 } PORT_DATA_INFORMATION, *PPORT_DATA_INFORMATION;
 
-#define LPC_REQUEST             1
-#define LPC_REPLY               2
-#define LPC_DATAGRAM            3
-#define LPC_LOST_REPLY          4
-#define LPC_PORT_CLOSED         5
-#define LPC_CLIENT_DIED         6
-#define LPC_EXCEPTION           7
-#define LPC_DEBUG_EVENT         8
-#define LPC_ERROR_EVENT         9
-#define LPC_CONNECTION_REQUEST 10
+#ifndef InitializeMessageHeader
+#define InitializeMessageHeader(ph, l, t)                              \
+{                                                                      \
+    (ph)->u1.s1.TotalLength      = (USHORT)(l);                        \
+    (ph)->u1.s1.DataLength       = (USHORT)(l - sizeof(PORT_MESSAGE)); \
+    (ph)->u2.s2.Type             = (USHORT)(t);                        \
+    (ph)->u2.s2.DataInfoOffset   = 0;                                  \
+    (ph)->ClientId.UniqueProcess = NULL;                               \
+    (ph)->ClientId.UniqueThread  = NULL;                               \
+    (ph)->MessageId              = 0;                                  \
+    (ph)->ClientViewSize         = 0;                                  \
+}
+#endif
+
+#define LPC_REQUEST                 1
+#define LPC_REPLY                   2
+#define LPC_DATAGRAM                3
+#define LPC_LOST_REPLY              4
+#define LPC_PORT_CLOSED             5
+#define LPC_CLIENT_DIED             6
+#define LPC_EXCEPTION               7
+#define LPC_DEBUG_EVENT             8
+#define LPC_ERROR_EVENT             9
+#define LPC_CONNECTION_REQUEST      10
+#define LPC_CONTINUATION_REQUIRED   0x2000
+
 
 #define PORT_VALID_OBJECT_ATTRIBUTES (OBJ_CASE_INSENSITIVE)
 #define PORT_MAXIMUM_MESSAGE_LENGTH 256
@@ -13974,7 +14159,9 @@ typedef enum _SYSDBG_COMMAND {
     SysDbgClearUmBreakPid,
     SysDbgGetUmAttachPid,
     SysDbgClearUmAttachPid,
-    SysDbgGetLiveKernelDump
+    SysDbgGetLiveKernelDump,
+    SysDbgKdPullRemoteFile,
+    SysDbgMaxInfoClass
 } SYSDBG_COMMAND, *PSYSDBG_COMMAND;
 
 typedef struct _SYSDBG_VIRTUAL {

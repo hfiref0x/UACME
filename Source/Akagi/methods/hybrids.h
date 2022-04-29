@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.H
 *
-*  VERSION:     3.59
+*  VERSION:     3.60
 *
-*  DATE:        02 Feb 2022
+*  DATE:        27 Apr 2022
 *
 *  Prototypes and definitions for hybrid methods.
 *
@@ -56,6 +56,9 @@ NTSTATUS ucmJunctionMethod(
 NTSTATUS ucmMsdtMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
+
+NTSTATUS ucmDotNetSerialMethod(
+    _In_ LPWSTR lpszPayload);
 
 //
 // Post execution cleanup routines.
