@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2020
+*  (C) COPYRIGHT AUTHORS, 2014 - 2022
 *
 *  TITLE:       COMPRESS.H
 *
-*  VERSION:     3.50
+*  VERSION:     3.61
 *
-*  DATE:        14 Sep 2020
+*  DATE:        22 Jun 2022
 *
 *  Prototypes and definitions for compression.
 *
@@ -55,20 +55,3 @@ VOID EncodeBuffer(
     _In_ PVOID Buffer,
     _In_ ULONG BufferSize,
     _In_ ULONG Key);
-
-SIZE_T StringCryptEncrypt(
-    _In_ PWCHAR Src,
-    _In_ PWCHAR Dst,
-    _In_ PWCHAR Key);
-
-VOID StringCryptDecrypt(
-    _In_ PWCHAR Src,
-    _In_ PWCHAR Dst,
-    _In_ SIZE_T Len,
-    _In_ PWCHAR Key);
-
-_Success_(return == TRUE)
-BOOLEAN DecodeStringById(
-    _In_ ULONG Id,
-    _Inout_ LPWSTR lpBuffer,
-    _In_ SIZE_T cbBuffer);

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2020
+*  (C) COPYRIGHT AUTHORS, 2018 - 2022
 *
 *  TITLE:       ELVINT.H
 *
-*  VERSION:     3.53
+*  VERSION:     3.61
 *
-*  DATE:        07 Nov 2020
+*  DATE:        22 Jun 2022
 *
 *  Prototypes and definitions for elevated interface methods.
 *
@@ -26,6 +26,7 @@ typedef interface ISecurityEditor ISecurityEditor;
 typedef interface IIEAdminBrokerObject IIEAdminBrokerObject;
 typedef interface IActiveXInstallBroker IActiveXInstallBroker;
 typedef interface IWscAdmin IWscAdmin;
+typedef interface IElevatedFactoryServer IElevatedFactoryServer;
 
 //VTBL DEF
 
@@ -455,6 +456,33 @@ typedef struct IWscAdminVtbl {
 
 } *PIWscAdminVtbl;
 
+typedef struct IElevatedFactoryServerVtbl {
+
+    BEGIN_INTERFACE
+
+        HRESULT(STDMETHODCALLTYPE* QueryInterface)(
+            __RPC__in IElevatedFactoryServer* This,
+            __RPC__in REFIID riid,
+            _COM_Outptr_ void** ppvObject);
+
+        ULONG(STDMETHODCALLTYPE* AddRef)(
+            __RPC__in IElevatedFactoryServer* This);
+
+        ULONG(STDMETHODCALLTYPE* Release)(
+            __RPC__in IElevatedFactoryServer* This);
+
+        HRESULT(STDMETHODCALLTYPE* ServerCreateElevatedObject)(
+            __RPC__in IElevatedFactoryServer* This,
+            __RPC__in REFCLSID rclsid,
+            __RPC__in REFIID riid,
+            _COM_Outptr_ void** ppvObject);
+
+    //incomplete definition
+
+    END_INTERFACE
+
+} *PIElevatedFactoryServerVtbll;
+
 // INTERFACE DEF
 
 interface IColorDataProxy { CONST_VTBL struct IColorDataProxyVtbl* lpVtbl; };
@@ -465,3 +493,4 @@ interface ISecurityEditor { CONST_VTBL struct ISecurityEditorVtbl* lpVtbl; };
 interface IIEAdminBrokerObject { CONST_VTBL struct IIEAdminBrokerObjectVtbl* lpVtbl; };
 interface IActiveXInstallBroker { CONST_VTBL struct IActiveXInstallBrokerVtbl* lpVtbl; };
 interface IWscAdmin { CONST_VTBL struct IWscAdminVtbl* lpVtbl; };
+interface IElevatedFactoryServer { CONST_VTBL struct IElevatedFactoryServerVtbl* lpVtbl; };

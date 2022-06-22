@@ -4,9 +4,9 @@
 *
 *  TITLE:       STUB.C
 *
-*  VERSION:     3.59
+*  VERSION:     3.61
 *
-*  DATE:        02 Feb 2022
+*  DATE:        22 Jun 2022
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -16,7 +16,7 @@
 *******************************************************************************/
 #include "global.h"
 
-TEB_ACTIVE_FRAME_CONTEXT g_fctx = { 0, "(^/\\^)" };
+TEB_ACTIVE_FRAME_CONTEXT g_fctx = { 0, "(*^-^*)" };
 
 /*
 * ucmSehHandler
@@ -46,8 +46,7 @@ INT ucmSehHandler(
 
                 uctx->ReturnedResult = uctx->ucmMain(UacMethodInvalid,
                     NULL,
-                    0,
-                    FALSE);
+                    0);
             }
         }
         return EXCEPTION_EXECUTE_HANDLER;

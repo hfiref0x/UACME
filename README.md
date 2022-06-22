@@ -5,7 +5,7 @@
 
 # System Requirements
 
-* x86-32/x64 Windows 7/8/8.1/10 (client, some methods however works on server version too).
+* x86-32/x64 Windows 7/8/8.1/10/11 (client, some methods however works on server version too).
 * Admin account with UAC set on default settings required.
 
 # Usage
@@ -331,7 +331,7 @@ First parameter is number of method to use, second is optional command (executab
         * How: Shell API / Windows components update
       * Code status: removed starting from v3.5.0 :tractor:
 32. Author: xi-tauw
-     * Type: Dll Hijack 
+     * Type: Dll Hijack
      * Method: UIPI bypass with uiAccess application
      * Target(s): \Program Files\Windows Media Player\osk.exe, \system32\EventVwr.exe, \system32\mmc.exe
      * Component(s): duser.dll, osksupport.dll
@@ -341,7 +341,7 @@ First parameter is number of method to use, second is optional command (executab
         * How: -
       * Code status: added in v2.7.1
 33. Author: winscripting.blog
-     * Type: Shell API 
+     * Type: Shell API
      * Method: Registry key manipulation
      * Target(s): \system32\fodhelper.exe
      * Component(s): Attacker defined
@@ -351,7 +351,7 @@ First parameter is number of method to use, second is optional command (executab
         * How: -
       * Code status: added in v2.7.2
 34. Author: James Forshaw
-     * Type: Shell API 
+     * Type: Shell API
      * Method: Environment variables expansion
      * Target(s): \system32\svchost.exe via \system32\schtasks.exe
      * Component(s): Attacker defined
@@ -563,7 +563,7 @@ First parameter is number of method to use, second is optional command (executab
         * How: SysDm.cpl!_CreateSystemRestorePage has been updated for secured load library call
       * Code status: removed starting from v3.5.0 :tractor:
 55. Author: James Forshaw
-     * Type: GUI Hack 
+     * Type: GUI Hack
      * Method: UIPI bypass with token modification
      * Target(s): \system32\osk.exe, \system32\msconfig.exe
      * Component(s): Attacker defined
@@ -633,7 +633,7 @@ First parameter is number of method to use, second is optional command (executab
         * How: -		
       * Code status: added in v3.2.5
 62. Author: winscripting.blog
-     * Type: Shell API 
+     * Type: Shell API
      * Method: Registry key manipulation
      * Target(s): \system32\computerdefaults.exe
      * Component(s): Attacker defined
@@ -643,7 +643,7 @@ First parameter is number of method to use, second is optional command (executab
         * How: -
       * Code status: added in v3.2.6
 63. Author: Arush Agarampur
-     * Type: Dll Hijack 
+     * Type: Dll Hijack
      * Method: ISecurityEditor
      * Target(s): Native Image Cache elements
      * Component(s): Attacker defined
@@ -653,7 +653,7 @@ First parameter is number of method to use, second is optional command (executab
         * How: -
       * Code status: added in v3.2.7
 64. Author: Arush Agarampur
-     * Type: Elevated COM interface 
+     * Type: Elevated COM interface
      * Method: IIEAxiAdminInstaller, IIEAxiInstaller2, IFileOperation
      * Target(s): IE add-on install cache
      * Component(s): Attacker defined
@@ -663,7 +663,7 @@ First parameter is number of method to use, second is optional command (executab
         * How: -
       * Code status: added in v3.5.1
 65. Author: Arush Agarampur
-     * Type: Elevated COM interface 
+     * Type: Elevated COM interface
      * Method: IWscAdmin
      * Target(s): Shell Protocol Hijack
      * Component(s): Attacker defined
@@ -673,7 +673,7 @@ First parameter is number of method to use, second is optional command (executab
         * How: -
       * Code status: added in v3.5.2
 66. Author: Arush Agarampur
-     * Type: Elevated COM interface 
+     * Type: Elevated COM interface
      * Method: IFwCplLua, Shell Protocol Hijack
      * Target(s): Shell protocol registry entry and environment variables
      * Component(s): Attacker defined
@@ -724,7 +724,7 @@ First parameter is number of method to use, second is optional command (executab
         * How: -
       * Code status: added in v3.5.7
 71. Author: Arush Agarampur
-     * Type: Dll Hijack 
+     * Type: Dll Hijack
      * Method: ISecurityEditor
      * Target(s): Native Image Cache elements
      * Component(s): Attacker defined
@@ -734,7 +734,7 @@ First parameter is number of method to use, second is optional command (executab
         * How: -
       * Code status: added in v3.5.8
 72. Author: Emeric Nasi
-     * Type: Dll Hijack 
+     * Type: Dll Hijack
      * Method: Dll path search abuse
      * Target(s): \syswow64\msdt.exe, \system32\sdiagnhost.exe
      * Component(s): BluetoothDiagnosticUtil.dll
@@ -744,7 +744,7 @@ First parameter is number of method to use, second is optional command (executab
         * How: -
       * Code status: added in v3.5.9
 73. Author: orange_8361 and antonioCoco
-     * Type: Shell API 
+     * Type: Shell API
      * Method: .NET deserialization
      * Target(s): \system32\mmc.exe EventVwr.msc
      * Component(s): Attacker defined
@@ -753,6 +753,16 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.6.0
+74. Author: zcgonvh
+     * Type: Elevated COM interface
+     * Method: IElevatedFactoryServer
+     * Target(s): Attacker defined
+     * Component(s): Attacker defined
+     * Implementation: ucmVirtualFactoryServer
+     * Works from: Windows 8.1 (9600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.6.1
 
 </details>
 
@@ -810,10 +820,11 @@ https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105
 * Select Platform ToolSet first for project in solution you want to build (Project->Properties->General): 
   * v140 for Visual Studio 2015; 
   * v141 for Visual Studio 2017;
-  * v142 for Visual Studio 2019.
+  * v142 for Visual Studio 2019;
+  * v143 for Visual Studio 2022.
 * For v140 and above set Target Platform Version (Project->Properties->General):
   * If v140 then select 8.1 (Note that Windows 8.1 SDK must be installed);
-  * If v141/v142 then select 10.
+  * If v141 and above then select 10.
 
 * The following SDK are required for building the binaries:
   * Windows 8.1 or Windows 10 SDK (tested with 19041 version)

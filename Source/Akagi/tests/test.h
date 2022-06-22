@@ -1,12 +1,12 @@
 #/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017
+*  (C) COPYRIGHT AUTHORS, 2017 - 2022
 *
 *  TITLE:       TEST.H
 *
-*  VERSION:     2.79
+*  VERSION:     3.61
 *
-*  DATE:        16 Aug 2017
+*  DATE:        22 Jun 2022
 *
 *  Test unit header file.
 *
@@ -101,4 +101,4 @@ interface ITestInterface
 
 BOOL ucmTestRoutine(
     _In_opt_ PVOID PayloadCode, 
-    _In_opt_ ULONG PayloadSize);
+    _In_ ULONG PayloadSize);

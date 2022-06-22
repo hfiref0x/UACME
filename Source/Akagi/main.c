@@ -4,9 +4,9 @@
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.59
+*  VERSION:     3.61
 *
-*  DATE:        02 Feb 2022
+*  DATE:        22 Jun 2022
 *
 *  Program entry point.
 *
@@ -26,6 +26,38 @@ PUACMECONTEXT g_ctx;
 //Image Base Address global variable
 HINSTANCE g_hInstance;
 
+#define ENABLE_OUTPUT
+#undef ENABLE_OUTPUT
+
+#ifdef ENABLE_OUTPUT
+VOID ucmShowVersion(
+    VOID)
+{
+    DWORD bytesIO;
+    WCHAR szVersion[100];
+
+#ifdef _DEBUG
+    if (!AllocConsole()) {
+        return;
+    }
+#else
+    if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+        return;
+    }
+#endif
+
+    RtlSecureZeroMemory(&szVersion, sizeof(szVersion));
+    wsprintf(szVersion, TEXT("v%lu.%lu.%lu.%lu"),
+        UCM_VERSION_MAJOR,
+        UCM_VERSION_MINOR,
+        UCM_VERSION_REVISION,
+        UCM_VERSION_BUILD);
+
+    WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), &szVersion, _strlen(szVersion), &bytesIO, NULL);
+
+    FreeConsole();
+}
+#endif
 
 /*
 * ucmInit
@@ -42,12 +74,10 @@ HINSTANCE g_hInstance;
 NTSTATUS ucmInit(
     _Inout_ UCM_METHOD *RunMethod,
     _In_reads_or_z_opt_(OptionalParameterLength) LPWSTR OptionalParameter,
-    _In_opt_ ULONG OptionalParameterLength,
-    _In_ BOOL OutputToDebugger
+    _In_ ULONG OptionalParameterLength
 )
 {
     UCM_METHOD  Method;
-    NTSTATUS    Result = STATUS_SUCCESS;
     LPWSTR      optionalParameter = NULL;
     ULONG       optionalParameterLength = 0;
 
@@ -58,95 +88,88 @@ NTSTATUS ucmInit(
     ULONG bytesIO;
     WCHAR szBuffer[MAX_PATH + 1];
 
+    wdCheckEmulatedVFS();
 
-    do {
+    bytesIO = 0;
+    RtlQueryElevationFlags(&bytesIO);
+    if ((bytesIO & DBG_FLAG_ELEVATION_ENABLED) == 0)
+        return STATUS_ELEVATION_REQUIRED;
 
-        //we could read this from usershareddata but why not use it
+    if (FAILED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED)))
+        return STATUS_INTERNAL_ERROR;
+
+    InitCommonControls();
+
+    if (g_hInstance == NULL)
+        g_hInstance = (HINSTANCE)NtCurrentPeb()->ImageBaseAddress;
+
+    if (*RunMethod == UacMethodInvalid) {
+
         bytesIO = 0;
-        RtlQueryElevationFlags(&bytesIO);
-        if ((bytesIO & DBG_FLAG_ELEVATION_ENABLED) == 0) {
-            Result = STATUS_ELEVATION_REQUIRED;
-            break;
+        RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
+        GetCommandLineParam(GetCommandLine(), 1, szBuffer, MAX_PATH, &bytesIO);
+        if (bytesIO == 0) {
+#ifdef ENABLE_OUTPUT
+            ucmShowVersion();
+#endif
+            return STATUS_INVALID_PARAMETER;
         }
 
-        if (FAILED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED))) {
-            Result = STATUS_INTERNAL_ERROR;
-            break;
-        }
+        Method = (UCM_METHOD)_strtoul(szBuffer);
+        *RunMethod = Method;
 
-        InitCommonControls();
-
-        if (g_hInstance == NULL)
-            g_hInstance = (HINSTANCE)NtCurrentPeb()->ImageBaseAddress;
-
-        if (*RunMethod == UacMethodInvalid) {
-
-            bytesIO = 0;
-            RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
-            GetCommandLineParam(GetCommandLine(), 1, szBuffer, MAX_PATH, &bytesIO);
-            if (bytesIO == 0)
-                return STATUS_INVALID_PARAMETER;
-
-            Method = (UCM_METHOD)_strtoul(szBuffer);
-            *RunMethod = Method;
-
-        }
-        else {
-            Method = *RunMethod;
-        }
+    }
+    else {
+        Method = *RunMethod;
+    }
 
 #ifndef _DEBUG
-        if (Method == UacMethodTest)
-            return STATUS_INVALID_PARAMETER;
+    if (Method == UacMethodTest)
+        return STATUS_INVALID_PARAMETER;
 #endif
-        if (Method >= UacMethodMax)
-            return STATUS_INVALID_PARAMETER;
+    if (Method >= UacMethodMax)
+        return STATUS_INVALID_PARAMETER;
 
 #ifndef _DEBUG
-        ElevType = TokenElevationTypeDefault;
-        if (supGetElevationType(&ElevType)) {
-            if (ElevType != TokenElevationTypeLimited) {
-                return STATUS_NOT_SUPPORTED;
-            }
+    ElevType = TokenElevationTypeDefault;
+    if (supGetElevationType(&ElevType)) {
+        if (ElevType != TokenElevationTypeLimited) {
+            return STATUS_NOT_SUPPORTED;
         }
-        else {
-            Result = STATUS_INTERNAL_ERROR;
-            break;
-        }
+    }
+    else {
+        return STATUS_INTERNAL_ERROR;
+    }
 #endif
 
-        //
-        // Process optional parameter.
-        //
-        if ((OptionalParameter == NULL) || (OptionalParameterLength == 0)) {
+    //
+    // Process optional parameter.
+    //
+    if ((OptionalParameter == NULL) || (OptionalParameterLength == 0)) {
 
-            RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
-            bytesIO = 0;
-            GetCommandLineParam(GetCommandLine(), 2, szBuffer, MAX_PATH, &bytesIO);
-            if (bytesIO > 0) {
-                optionalParameter = (LPWSTR)&szBuffer;
-                optionalParameterLength = bytesIO;
-            }
-
-        }
-        else {
-            optionalParameter = OptionalParameter;
-            optionalParameterLength = OptionalParameterLength;
+        RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
+        bytesIO = 0;
+        GetCommandLineParam(GetCommandLine(), 2, szBuffer, MAX_PATH, &bytesIO);
+        if (bytesIO > 0) {
+            optionalParameter = (LPWSTR)&szBuffer;
+            optionalParameterLength = bytesIO;
         }
 
-        g_ctx = (PUACMECONTEXT)supCreateUacmeContext(Method,
-            optionalParameter,
-            optionalParameterLength,
-            supEncodePointer(DecompressPayload),
-            OutputToDebugger);
+    }
+    else {
+        optionalParameter = OptionalParameter;
+        optionalParameterLength = OptionalParameterLength;
+    }
 
-
-    } while (FALSE);
+    g_ctx = (PUACMECONTEXT)supCreateUacmeContext(Method,
+        optionalParameter,
+        optionalParameterLength,
+        supEncodePointer(DecompressPayload));
 
     if (g_ctx == NULL)
-        Result = STATUS_FATAL_APP_EXIT;
+        return STATUS_FATAL_APP_EXIT;
 
-    return Result;
+    return STATUS_SUCCESS;
 }
 
 /*
@@ -158,48 +181,20 @@ NTSTATUS ucmInit(
 *
 */
 NTSTATUS WINAPI ucmMain(
-    _In_opt_ UCM_METHOD Method,
+    _In_ UCM_METHOD Method,
     _In_reads_or_z_opt_(OptionalParameterLength) LPWSTR OptionalParameter,
-    _In_opt_ ULONG OptionalParameterLength,
-    _In_ BOOL OutputToDebugger
+    _In_ ULONG OptionalParameterLength
 )
 {
-    NTSTATUS    Status;
-    UCM_METHOD  method = Method;
-
-    wdCheckEmulatedVFS();
+    NTSTATUS Status;
+    UCM_METHOD method = Method;
 
     Status = ucmInit(&method,
         OptionalParameter,
-        OptionalParameterLength,
-        OutputToDebugger);
+        OptionalParameterLength);
 
-    switch (Status) {
-
-    case STATUS_ELEVATION_REQUIRED:
-        ucmShowMessageById(OutputToDebugger, IDSB_USAGE_UAC_REQUIRED);
-        break;
-
-    case STATUS_NOT_SUPPORTED:
-        ucmShowMessageById(OutputToDebugger, IDSB_USAGE_ADMIN_REQUIRED);
-        break;
-
-    case STATUS_INVALID_PARAMETER:
-        ucmShowMessageById(OutputToDebugger, IDSB_USAGE_HELP);
-        break;
-
-    case STATUS_FATAL_APP_EXIT:
+    if (!NT_SUCCESS(Status))
         return Status;
-        break;
-
-    default:
-        break;
-
-    }
-
-    if (Status != STATUS_SUCCESS) {
-        return Status;
-    }
 
     supMasqueradeProcess(FALSE);
 

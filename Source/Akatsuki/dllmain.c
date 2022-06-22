@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2021
+*  (C) COPYRIGHT AUTHORS, 2016 - 2022
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.56
+*  VERSION:     3.61
 *
-*  DATE:        17 July 2021
+*  DATE:        22 Jun 2022
 *
 *  Proxy dll entry point, Akatsuki.
 *  Special dll for wow64 logger method.
@@ -231,4 +231,22 @@ BOOL WINAPI DllMain(
 
     }
     return TRUE;
+}
+
+/*
+* EntryPointExeMode
+*
+* Purpose:
+*
+* Entry point to be used in exe mode.
+*
+*/
+VOID WINAPI EntryPointExeMode(
+    VOID
+)
+{
+    if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED) {
+        RtlExitUserProcess('foff');
+    }
+    DefaultPayload();
 }

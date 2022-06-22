@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.60
+*  VERSION:     3.61
 *
-*  DATE:        27 Apr 2022
+*  DATE:        22 Jun 2022
 *
 *  Common header file for the program support routines.
 *
@@ -180,17 +180,6 @@ BOOLEAN supSetCheckSumForMappedFile(
     _In_ PVOID BaseAddress,
     _In_ ULONG CheckSum);
 
-VOID ucmShowMessageById(
-    _In_ BOOL OutputToDebugger,
-    _In_ ULONG MessageId);
-
-VOID ucmShowMessage(
-    _In_ BOOL OutputToDebugger,
-    _In_ LPCWSTR lpszMsg);
-
-INT ucmShowQuestionById(
-    _In_ ULONG MessageId);
-
 PBYTE supLdrQueryResourceData(
     _In_ ULONG_PTR ResourceId,
     _In_ PVOID DllHandle,
@@ -329,8 +318,7 @@ PVOID supCreateUacmeContext(
     _In_ ULONG Method,
     _In_reads_or_z_opt_(OptionalParameterLength) LPWSTR OptionalParameter,
     _In_ ULONG OptionalParameterLength,
-    _In_ PVOID DecompressRoutine,
-    _In_ BOOL OutputToDebugger);
+    _In_ PVOID DecompressRoutine);
 
 VOID supDestroyUacmeContext(
     _In_ PVOID Context);

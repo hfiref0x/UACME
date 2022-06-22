@@ -31,44 +31,44 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>uacme</RootNamespace>
     <ProjectName>Akagi</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternal|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternal|x64'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
@@ -424,6 +424,7 @@
     <ClCompile Include="methods\rinn.c" />
     <ClCompile Include="methods\tyranid.c" />
     <ClCompile Include="methods\wusa.c" />
+    <ClCompile Include="methods\zcgonvh.c" />
     <ClCompile Include="pcasvc\w7\x64\pcasvc7_64.c" />
     <ClCompile Include="pcasvc\w7\x86-32\pcasvc7_32.c" />
     <ClCompile Include="pcasvc\w8_10\x64\pcasvc64.c" />
@@ -446,20 +447,12 @@
     <ClInclude Include="compress.h" />
     <ClInclude Include="fusutil.h" />
     <ClInclude Include="global.h" />
-    <ClInclude Include="methods\azagarampur.h" />
-    <ClInclude Include="methods\dwells.h" />
     <ClInclude Include="methods\elvint.h" />
-    <ClInclude Include="methods\rinn.h" />
     <ClInclude Include="makecab.h" />
     <ClInclude Include="encresource.h" />
-    <ClInclude Include="methods\api0cradle.h" />
     <ClInclude Include="methods\comsup.h" />
-    <ClInclude Include="methods\shellsup.h" />
-    <ClInclude Include="methods\hakril.h" />
-    <ClInclude Include="methods\hybrids.h" />
+    <ClInclude Include="methods\routines.h" />
     <ClInclude Include="methods\methods.h" />
-    <ClInclude Include="methods\tyranid.h" />
-    <ClInclude Include="methods\wusa.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stub.h" />
     <ClInclude Include="sup.h" />

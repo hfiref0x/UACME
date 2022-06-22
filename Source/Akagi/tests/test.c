@@ -4,9 +4,9 @@
 *
 *  TITLE:       TEST.C
 *
-*  VERSION:     3.60
+*  VERSION:     3.61
 *
-*  DATE:        27 Apr 2022
+*  DATE:        22 Jun 2022
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -62,12 +62,13 @@ VOID TestEnumUAS()
 */
 BOOL ucmTestRoutine(
     _In_opt_ PVOID PayloadCode,
-    _In_opt_ ULONG PayloadSize)
+    _In_ ULONG PayloadSize)
 {
     UNREFERENCED_PARAMETER(PayloadCode);
     UNREFERENCED_PARAMETER(PayloadSize);
 
     //TestEnumUAS();
+
     supSetGlobalCompletionEvent();
     return TRUE;
 }

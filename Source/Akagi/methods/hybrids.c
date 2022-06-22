@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.60
+*  VERSION:     3.61
 *
-*  DATE:        27 Apr 2022
+*  DATE:        22 Jun 2022
 *
 *  Hybrid UAC bypass methods.
 *
@@ -910,7 +910,6 @@ NTSTATUS ucmDccwCOMMethod(
         }
 
         if (CMLuaUtil == NULL) {
-            r = E_OUTOFMEMORY;
             break;
         }
 
@@ -942,7 +941,6 @@ NTSTATUS ucmDccwCOMMethod(
         }
 
         if (ColorDataProxy == NULL) {
-            r = E_OUTOFMEMORY;
             break;
         }
 

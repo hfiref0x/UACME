@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.60
+*  VERSION:     3.61
 *
-*  DATE:        27 Apr 2022
+*  DATE:        22 Jun 2022
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -867,129 +867,6 @@ BOOLEAN supSetCheckSumForMappedFile(
         return TRUE;
     }
     return FALSE;
-}
-
-/*
-* ucmxBuildVersionString
-*
-* Purpose:
-*
-* Combine version numbers into string.
-*
-*/
-VOID ucmxBuildVersionString(
-    _In_ WCHAR* pszVersion)
-{
-    WCHAR szShortName[64];
-
-    RtlSecureZeroMemory(&szShortName, sizeof(szShortName));
-    DecodeStringById(ISDB_PROGRAMNAME, (LPWSTR)&szShortName, sizeof(szShortName));
-
-    wsprintf(pszVersion, TEXT("%s v%lu.%lu.%lu.%lu"),
-        szShortName,
-        UCM_VERSION_MAJOR,
-        UCM_VERSION_MINOR,
-        UCM_VERSION_REVISION,
-        UCM_VERSION_BUILD);
-}
-
-/*
-* ucmShowMessage
-*
-* Purpose:
-*
-* Output message to user by message id.
-*
-*/
-VOID ucmShowMessageById(
-    _In_ BOOL OutputToDebugger,
-    _In_ ULONG MessageId
-)
-{
-    PWCHAR pszMessage;
-    SIZE_T allocSize = PAGE_SIZE;
-
-    pszMessage = supVirtualAlloc(&allocSize,
-        DEFAULT_ALLOCATION_TYPE,
-        DEFAULT_PROTECT_TYPE, NULL);
-    if (pszMessage) {
-
-        if (DecodeStringById(MessageId, pszMessage, PAGE_SIZE / sizeof(WCHAR))) {
-            ucmShowMessage(OutputToDebugger, pszMessage);
-        }
-        supSecureVirtualFree(pszMessage, PAGE_SIZE, NULL);
-    }
-}
-
-/*
-* ucmShowMessage
-*
-* Purpose:
-*
-* Output message to user.
-*
-*/
-VOID ucmShowMessage(
-    _In_ BOOL OutputToDebugger,
-    _In_ LPCWSTR lpszMsg
-)
-{
-    WCHAR szVersion[100];
-
-    if (OutputToDebugger) {
-        OutputDebugString(lpszMsg);
-        OutputDebugString(TEXT("\r\n"));
-    }
-    else {
-        szVersion[0] = 0;
-        ucmxBuildVersionString(szVersion);
-        MessageBox(GetDesktopWindow(),
-            lpszMsg,
-            szVersion,
-            MB_ICONINFORMATION);
-    }
-}
-
-/*
-* ucmShowQuestionById
-*
-* Purpose:
-*
-* Output message with question to user with given question id.
-*
-*/
-INT ucmShowQuestionById(
-    _In_ ULONG MessageId
-)
-{
-    INT iResult = IDNO;
-    WCHAR szVersion[100];
-    PWCHAR pszMessage;
-    SIZE_T allocSize = PAGE_SIZE;
-
-    if (g_ctx->UserRequestsAutoApprove == TRUE)
-        return IDYES;
-
-    pszMessage = supVirtualAlloc(&allocSize,
-        DEFAULT_ALLOCATION_TYPE,
-        DEFAULT_PROTECT_TYPE, NULL);
-    if (pszMessage) {
-
-        if (DecodeStringById(MessageId, pszMessage, PAGE_SIZE / sizeof(WCHAR))) {
-
-            szVersion[0] = 0;
-            ucmxBuildVersionString(szVersion);
-
-            iResult = MessageBox(GetDesktopWindow(),
-                pszMessage,
-                szVersion,
-                MB_YESNO);
-
-        }
-        supSecureVirtualFree(pszMessage, PAGE_SIZE, NULL);
-    }
-
-    return iResult;
 }
 
 /*
@@ -2406,14 +2283,13 @@ PVOID supCreateUacmeContext(
     _In_ ULONG Method,
     _In_reads_or_z_opt_(OptionalParameterLength) LPWSTR OptionalParameter,
     _In_ ULONG OptionalParameterLength,
-    _In_ PVOID DecompressRoutine,
-    _In_ BOOL OutputToDebugger
+    _In_ PVOID DecompressRoutine
 )
 {
     BOOLEAN IsWow64;
     ULONG Seed, NtBuildNumber = 0;
-    SIZE_T Size = sizeof(UACMECONTEXT);
     PUACMECONTEXT Context;
+    HANDLE ContextHeap = NtCurrentPeb()->ProcessHeap;
 
     RTL_OSVERSIONINFOW osv;
 
@@ -2433,11 +2309,7 @@ PVOID supCreateUacmeContext(
         return NULL;
     }
 
-    Context = supVirtualAlloc(&Size,
-        DEFAULT_ALLOCATION_TYPE,
-        DEFAULT_PROTECT_TYPE,
-        NULL);
-
+    Context = RtlAllocateHeap(ContextHeap, HEAP_ZERO_MEMORY, sizeof(UACMECONTEXT));
     if (Context == NULL) {
         return NULL;
     }
@@ -2447,7 +2319,7 @@ PVOID supCreateUacmeContext(
     //
     Context->ucmHeap = RtlCreateHeap(HEAP_GROWABLE, NULL, 0, 0, NULL, NULL);
     if (Context->ucmHeap == NULL) {
-        supVirtualFree(Context, NULL);
+        RtlFreeHeap(ContextHeap, 0, Context);
         return NULL;
     }
     RtlSetHeapInformation(Context->ucmHeap, HeapEnableTerminationOnCorruption, NULL, 0);
@@ -2456,16 +2328,6 @@ PVOID supCreateUacmeContext(
     // Set Fubuki flag.
     //
     Context->AkagiFlag = AKAGI_FLAG_KILO;
-
-    //
-    // Remember flag for ucmShow* routines.
-    //
-    Context->OutputToDebugger = OutputToDebugger;
-
-    //
-    // Changes behavior of ucmShowQuestion routine to autoapprove.
-    //
-    Context->UserRequestsAutoApprove = USER_REQUESTS_AUTOAPPROVED;
 
     //
     // Remember NtBuildNumber.
@@ -2515,7 +2377,7 @@ PVOID supCreateUacmeContext(
     // 2. System32
     if (!supQuerySystemRoot(Context)) {
         RtlDestroyHeap(Context->ucmHeap);
-        supVirtualFree((PVOID)Context, NULL);
+        RtlFreeHeap(ContextHeap, 0, Context);
         return NULL;
     }
     // 3. Temp
@@ -2553,7 +2415,7 @@ VOID supDestroyUacmeContext(
 
     RtlDestroyHeap(context->ucmHeap);
 
-    supVirtualFree(Context, NULL);
+    RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, Context);
 }
 
 /*

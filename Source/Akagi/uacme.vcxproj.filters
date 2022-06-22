@@ -177,6 +177,9 @@
     <ClCompile Include="fusutil.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="methods\zcgonvh.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -215,34 +218,13 @@
     <ClInclude Include="encresource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="methods\api0cradle.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
     <ClInclude Include="methods\comsup.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\dwells.h">
       <Filter>Source Files\methods</Filter>
     </ClInclude>
     <ClInclude Include="methods\elvint.h">
       <Filter>Source Files\methods</Filter>
     </ClInclude>
-    <ClInclude Include="methods\hakril.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\hybrids.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
     <ClInclude Include="methods\methods.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\rinn.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\tyranid.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
-    <ClInclude Include="methods\wusa.h">
       <Filter>Source Files\methods</Filter>
     </ClInclude>
     <ClInclude Include="..\Shared\windefend.h">
@@ -254,9 +236,6 @@
     <ClInclude Include="stub.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="methods\shellsup.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
     <ClInclude Include="..\Shared\hde\hde64.h">
       <Filter>hde</Filter>
     </ClInclude>
@@ -266,14 +245,14 @@
     <ClInclude Include="..\Shared\hde\table64.h">
       <Filter>hde</Filter>
     </ClInclude>
-    <ClInclude Include="methods\azagarampur.h">
-      <Filter>Source Files\methods</Filter>
-    </ClInclude>
     <ClInclude Include="uas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="fusutil.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="methods\routines.h">
+      <Filter>Source Files\methods</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

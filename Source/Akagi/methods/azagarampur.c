@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2020 - 2021
+*  (C) COPYRIGHT AUTHORS, 2020 - 2022
 *
 *  TITLE:       AZAGARAMPUR.C
 *
-*  VERSION:     3.58
+*  VERSION:     3.61
 *
-*  DATE:        01 Dec 2021
+*  DATE:        22 Jun 2022
 *
 *  UAC bypass methods from AzAgarampur.
 *
@@ -841,7 +841,6 @@ NTSTATUS ucmFwCplLuaMethod2(
             break;
 
         if (FwCplLua == NULL) {
-            r = E_OUTOFMEMORY;
             break;
         }
 
@@ -1436,7 +1435,7 @@ BOOL ucmxExamineTaskhost(
     ITaskService* pService = NULL;
     IRunningTaskCollection* pTasks = NULL;
     IRunningTask* pTask;
-    TASK_STATE taskState;
+    TASK_STATE taskState = TASK_STATE_UNKNOWN;
 
     do {
 

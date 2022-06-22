@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     3.60
+*  VERSION:     3.61
 *
-*  DATE:        27 Apr 2022
+*  DATE:        22 Jun 2022
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -93,6 +93,7 @@ typedef enum _UCM_METHOD {
     UacMethodNICPoison2,        //+
     UacMethodMsdt,              //+
     UacMethodDotNetSerial,      //+
+    UacMethodVFServer,          //+
     UacMethodMax,
     UacMethodInvalid = 0xabcdef
 } UCM_METHOD;
@@ -127,17 +128,9 @@ typedef struct _UCM_API_DISPATCH_ENTRY {
 } UCM_API_DISPATCH_ENTRY, *PUCM_API_DISPATCH_ENTRY;
 
 #include "elvint.h"
-#include "api0cradle.h"
-#include "azagarampur.h"
+#include "routines.h"
 #include "comsup.h"
-#include "dwells.h"
-#include "shellsup.h"
-#include "hakril.h"
-#include "hybrids.h"
-#include "rinn.h"
-#include "wusa.h"
 #include "tests\test.h"
-#include "tyranid.h"
 
 NTSTATUS MethodsManagerCall(
     _In_ UCM_METHOD Method);

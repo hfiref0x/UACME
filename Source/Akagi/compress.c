@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2022
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     3.58
+*  VERSION:     3.61
 *
-*  DATE:        01 Dec 2020
+*  DATE:        22 Jun 2022
 *
 *  Compression and encoding/decoding support.
 *
@@ -28,131 +28,6 @@ typedef struct _DCK_HEADER {
     DWORD Id;
     BYTE Data[UACME_KEY_SIZE];
 } DCK_HEADER, * PDCK_HEADER;
-
-typedef struct _UCM_STRING_TABLE_ENTRY {
-    WORD Id;
-    WORD DataLength;//in bytes
-    CONST UCHAR* Data;
-} UCM_STRING_TABLE_ENTRY, * PUCM_STRING_TABLE_ENTRY;
-
-UCM_STRING_TABLE_ENTRY ucmStringTable[] = {
-    { IDSB_USAGE_HELP, sizeof(B_USAGE_HELP), B_USAGE_HELP },
-    { IDSB_USAGE_UAC_REQUIRED, sizeof(B_USAGE_UAC_REQUIRED), B_USAGE_UAC_REQUIRED },
-    { IDSB_USAGE_ADMIN_REQUIRED, sizeof(B_USAGE_ADMIN_REQUIRED), B_USAGE_ADMIN_REQUIRED },
-    { ISDB_USAGE_WOW_DETECTED, sizeof(B_USAGE_WOW64STRING), B_USAGE_WOW64STRING },
-    { ISDB_USAGE_WOW64WIN32ONLY, sizeof(B_USAGE_WOW64WIN32STRING), B_USAGE_WOW64WIN32STRING },
-    { ISDB_USAGE_UACFIX, sizeof(B_USAGE_UACFIX), B_USAGE_UACFIX },
-    { ISDB_PROGRAMNAME, sizeof(B_PROGRAM_NAME), B_PROGRAM_NAME }
-};
-
-
-UINT64 StringCryptGenKey(
-    _In_ PWCHAR Key
-)
-{
-    UINT64    k = 0;
-    WCHAR     c;
-
-    while (*Key)
-    {
-        k ^= *Key;
-
-        for (c = 0; c < 8; ++c)
-        {
-            k = (k << 8) | (k >> 56);
-            k += (UINT64)c * 7 + *Key;
-        }
-
-        ++Key;
-    }
-
-    return k;
-}
-
-SIZE_T StringCryptEncrypt(
-    _In_ PWCHAR Src,
-    _In_ PWCHAR Dst,
-    _In_ PWCHAR Key
-)
-{
-    UINT64    k;
-    WCHAR     c;
-    SIZE_T    len = 0;
-
-    k = StringCryptGenKey(Key);
-
-    c = 0;
-    while (*Src)
-    {
-        c ^= *Src + (wchar_t)k;
-        *Dst = c;
-
-        k = (k << 8) | (k >> 56);
-        ++Src;
-        ++Dst;
-        ++len;
-    }
-
-    return len;
-}
-
-VOID StringCryptDecrypt(
-    _In_ PWCHAR Src,
-    _In_ PWCHAR Dst,
-    _In_ SIZE_T Len,
-    _In_ PWCHAR Key)
-{
-    UINT64    k;
-    WCHAR     c, c0;
-
-    k = StringCryptGenKey(Key);
-
-    c = 0;
-    while (Len > 0)
-    {
-        c0 = *Src;
-        *Dst = (c0 ^ c) - (wchar_t)k;
-        c = c0;
-
-        k = (k << 8) | (k >> 56);
-        ++Src;
-        ++Dst;
-        --Len;
-    }
-}
-
-/*
-* DecodeStringById
-*
-* Purpose:
-*
-* Return decrypted string by ID.
-*
-*/
-_Success_(return == TRUE)
-BOOLEAN DecodeStringById(
-    _In_ ULONG Id,
-    _Inout_ LPWSTR lpBuffer,
-    _In_ SIZE_T cbBuffer)
-{
-    ULONG i;
-
-    for (i = 0; i < RTL_NUMBER_OF(ucmStringTable); i++) {
-        if (ucmStringTable[i].Id == Id) {
-
-            if (cbBuffer < ucmStringTable[i].DataLength)
-                break;
-
-            StringCryptDecrypt((PWCHAR)ucmStringTable[i].Data,
-                (PWCHAR)lpBuffer,
-                (SIZE_T)ucmStringTable[i].DataLength / sizeof(WCHAR),
-                (PWCHAR)RtlNtdllName);
-
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
 
 /*
 * EncodeBuffer
