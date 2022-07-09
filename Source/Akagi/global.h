@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.61
+*  VERSION:     3.62
 *
-*  DATE:        22 Jun 2022
+*  DATE:        07 Jul 2022
 *
 *  Common header file for the program support routines.
 *
@@ -82,6 +82,7 @@
 #include "compress.h"
 #include "aic.h"
 #include "stub.h"
+#include "console.h"
 #include "methods\methods.h"
 
 //default execution flow
@@ -108,6 +109,8 @@ typedef struct _UACME_CONTEXT {
 
     PVOID                   ucmHeap;
     pfnDecompressPayload    DecompressRoutine;
+    pswprintf_s             swprintf_s;
+    
     UACME_FUSION_CONTEXT    FusionContext;
     UACME_SHARED_CONTEXT    SharedContext;
 

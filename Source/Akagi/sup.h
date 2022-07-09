@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.61
+*  VERSION:     3.62
 *
-*  DATE:        22 Jun 2022
+*  DATE:        07 Jul 2022
 *
 *  Common header file for the program support routines.
 *
@@ -17,6 +17,12 @@
 *
 *******************************************************************************/
 #pragma once
+
+typedef int(__cdecl* pswprintf_s)(
+    wchar_t* buffer,
+    size_t sizeOfBuffer,
+    const wchar_t* format,
+    ...);
 
 #define TEXT_SECTION ".text"
 #define TEXT_SECTION_LEGNTH sizeof(TEXT_SECTION)
@@ -344,7 +350,7 @@ VOID supGenerateSharedObjectName(
 VOID supSetGlobalCompletionEvent(
     VOID);
 
-VOID supWaitForGlobalCompletionEvent(
+NTSTATUS supWaitForGlobalCompletionEvent(
     VOID);
 
 NTSTATUS supOpenClassesKey(

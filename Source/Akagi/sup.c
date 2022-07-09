@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.61
+*  VERSION:     3.62
 *
-*  DATE:        22 Jun 2022
+*  DATE:        08 Jul 2022
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -2290,7 +2290,9 @@ PVOID supCreateUacmeContext(
     ULONG Seed, NtBuildNumber = 0;
     PUACMECONTEXT Context;
     HANDLE ContextHeap = NtCurrentPeb()->ProcessHeap;
-
+#ifdef _UCM_CONSOLE
+    HMODULE hNtdll;
+#endif
     RTL_OSVERSIONINFOW osv;
 
     UNREFERENCED_PARAMETER(Method);
@@ -2395,6 +2397,15 @@ PVOID supCreateUacmeContext(
     _strcat(Context->szDefaultPayload, CMD_EXE);
 
     Context->DecompressRoutine = (pfnDecompressPayload)supDecodePointer(DecompressRoutine);
+
+#ifdef _UCM_CONSOLE
+    hNtdll = GetModuleHandle(L"ntdll.dll");
+    if (hNtdll) {
+        Context->swprintf_s = (pswprintf_s)GetProcAddress(hNtdll, "swprintf_s");
+    }
+#else
+    Context->swprintf_s = (PVOID)-1;
+#endif
 
     return (PVOID)Context;
 }
@@ -2637,15 +2648,17 @@ VOID supSetGlobalCompletionEvent(
 * Wait a little bit for things to complete.
 *
 */
-VOID supWaitForGlobalCompletionEvent(
+NTSTATUS supWaitForGlobalCompletionEvent(
     VOID)
 {
     LARGE_INTEGER liDueTime;
 
     if (g_ctx->SharedContext.hCompletionEvent) {
         liDueTime.QuadPart = -(LONGLONG)UInt32x32To64(200000, 10000);
-        NtWaitForSingleObject(g_ctx->SharedContext.hCompletionEvent, FALSE, &liDueTime);
+        return NtWaitForSingleObject(g_ctx->SharedContext.hCompletionEvent, FALSE, &liDueTime);
     }
+
+    return STATUS_WAIT_0;
 }
 
 /*

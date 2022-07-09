@@ -26,39 +26,6 @@ PUACMECONTEXT g_ctx;
 //Image Base Address global variable
 HINSTANCE g_hInstance;
 
-#define ENABLE_OUTPUT
-#undef ENABLE_OUTPUT
-
-#ifdef ENABLE_OUTPUT
-VOID ucmShowVersion(
-    VOID)
-{
-    DWORD bytesIO;
-    WCHAR szVersion[100];
-
-#ifdef _DEBUG
-    if (!AllocConsole()) {
-        return;
-    }
-#else
-    if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
-        return;
-    }
-#endif
-
-    RtlSecureZeroMemory(&szVersion, sizeof(szVersion));
-    wsprintf(szVersion, TEXT("v%lu.%lu.%lu.%lu"),
-        UCM_VERSION_MAJOR,
-        UCM_VERSION_MINOR,
-        UCM_VERSION_REVISION,
-        UCM_VERSION_BUILD);
-
-    WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), &szVersion, _strlen(szVersion), &bytesIO, NULL);
-
-    FreeConsole();
-}
-#endif
-
 /*
 * ucmInit
 *
@@ -90,6 +57,8 @@ NTSTATUS ucmInit(
 
     wdCheckEmulatedVFS();
 
+    ucmConsoleInit();
+
     bytesIO = 0;
     RtlQueryElevationFlags(&bytesIO);
     if ((bytesIO & DBG_FLAG_ELEVATION_ENABLED) == 0)
@@ -109,9 +78,6 @@ NTSTATUS ucmInit(
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
         GetCommandLineParam(GetCommandLine(), 1, szBuffer, MAX_PATH, &bytesIO);
         if (bytesIO == 0) {
-#ifdef ENABLE_OUTPUT
-            ucmShowVersion();
-#endif
             return STATUS_INVALID_PARAMETER;
         }
 
@@ -193,6 +159,8 @@ NTSTATUS WINAPI ucmMain(
         OptionalParameter,
         OptionalParameterLength);
 
+    ucmConsolePrintStatus(TEXT("[*] ucmInit"), Status);
+
     if (!NT_SUCCESS(Status))
         return Status;
 
@@ -212,5 +180,15 @@ NTSTATUS WINAPI ucmMain(
 #pragma comment(linker, "/ENTRY:main")
 VOID __cdecl main()
 {
+#ifdef _UCM_CONSOLE
+    ULONG result;
+
+    result = StubInit(ucmMain);
+    ucmConsolePrintValueUlong(TEXT("[+] ucmMain"), result, TRUE);
+    ucmConsoleRelease();
+    ExitProcess(result);
+
+#else
     ExitProcess(StubInit(ucmMain));
+#endif
 }

@@ -758,11 +758,21 @@ First parameter is number of method to use, second is optional command (executab
      * Method: IElevatedFactoryServer
      * Target(s): Attacker defined
      * Component(s): Attacker defined
-     * Implementation: ucmVirtualFactoryServer
+     * Implementation: ucmVFServerTaskSchedMethod
      * Works from: Windows 8.1 (9600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.6.1
+75. Author: zcgonvh derivative by Wh04m1001
+     * Type: Elevated COM interface
+     * Method: IDiagnosticProfile
+     * Target(s): Attacker defined
+     * Component(s): Attacker defined
+     * Implementation: ucmVFServerDiagProfileMethod
+     * Works from: Windows 7 RTM (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.6.2
 
 </details>
 

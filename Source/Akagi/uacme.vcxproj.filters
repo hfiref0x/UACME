@@ -180,6 +180,9 @@
     <ClCompile Include="methods\zcgonvh.c">
       <Filter>Source Files\methods</Filter>
     </ClCompile>
+    <ClCompile Include="console.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">
@@ -253,6 +256,9 @@
     </ClInclude>
     <ClInclude Include="methods\routines.h">
       <Filter>Source Files\methods</Filter>
+    </ClInclude>
+    <ClInclude Include="console.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

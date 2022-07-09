@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     3.61
+*  VERSION:     3.62
 *
-*  DATE:        22 Jun 2022
+*  DATE:        04 Jul 2022
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -93,7 +93,8 @@ typedef enum _UCM_METHOD {
     UacMethodNICPoison2,        //+
     UacMethodMsdt,              //+
     UacMethodDotNetSerial,      //+
-    UacMethodVFServer,          //+
+    UacMethodVFServerTaskSched, //+
+    UacMethodVFServerDiagProf,  //+
     UacMethodMax,
     UacMethodInvalid = 0xabcdef
 } UCM_METHOD;
