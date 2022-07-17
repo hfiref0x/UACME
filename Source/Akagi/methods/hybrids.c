@@ -1221,14 +1221,14 @@ NTSTATUS ucmDotNetSerialMethod(
 }
 
 /*
-* ucmIsciCplMethodCleanup
+* ucmIscsiCplMethodCleanup
 *
 * Purpose:
 *
 * Post execution cleanup routine.
 *
 */
-VOID ucmIsciCplMethodCleanup(
+VOID ucmIscsiCplMethodCleanup(
     VOID
 )
 {
@@ -1240,7 +1240,7 @@ VOID ucmIsciCplMethodCleanup(
 }
 
 /*
-* ucmIsciCplMethod
+* ucmIscsiCplMethod
 *
 * Purpose:
 *
@@ -1248,7 +1248,8 @@ VOID ucmIsciCplMethodCleanup(
 * https://github.com/hackerhouse-opensource/iscsicpl_bypassUAC
 *
 */
-NTSTATUS ucmIsciCplMethod(
+
+NTSTATUS ucmIscsiCplMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )

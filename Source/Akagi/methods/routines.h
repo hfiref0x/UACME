@@ -113,7 +113,7 @@ NTSTATUS ucmMsdtMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
-NTSTATUS ucmIsciCplMethod(
+NTSTATUS ucmIscsiCplMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
@@ -176,5 +176,5 @@ BOOL ucmHakrilMethodCleanup(
 VOID ucmWusaCabinetCleanup(
     VOID);
 
-VOID ucmIsciCplMethodCleanup(
+VOID ucmIscsiCplMethodCleanup(
     VOID);

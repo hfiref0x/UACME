@@ -250,7 +250,7 @@ VOID PostCleanupAttempt(
         break;
 
     case UacMethodIscsiCpl:
-        ucmIsciCplMethodCleanup();
+        ucmIscsiCplMethodCleanup();
         break;
 
     default:
@@ -801,7 +801,7 @@ UCM_API(MethodVFServerDiagProf)
 
 UCM_API(MethodIscsiCpl)
 {
-    return ucmIsciCplMethod(
+    return ucmIscsiCplMethod(
         Parameter->PayloadCode,
         Parameter->PayloadSize);
 }

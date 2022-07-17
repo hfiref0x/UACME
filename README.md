@@ -778,7 +778,7 @@ First parameter is number of method to use, second is optional command (executab
      * Method: Dll path search abuse, Registry key manipulation
      * Target(s): \syswow64\iscsicpl.exe
      * Component(s): iscsiexe.dll
-     * Implementation: ucmIsciCplMethod
+     * Implementation: ucmIscsiCplMethod
      * Works from: Windows 7 RTM (7600)
      * Fixed in: unfixed :see_no_evil:
         * How: -
