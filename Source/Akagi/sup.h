@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.62
+*  VERSION:     3.63
 *
-*  DATE:        07 Jul 2022
+*  DATE:        16 Jul 2022
 *
 *  Common header file for the program support routines.
 *
@@ -249,6 +249,14 @@ BOOL supSetEnvVariable2(
     _In_ LPCWSTR lpVariableName,
     _In_opt_ LPCWSTR lpVariableData);
 
+_Success_(return)
+BOOL supReplaceEnvironmentVariableValue(
+    _In_opt_ LPWSTR lpKeyName,
+    _In_ LPWSTR lpVariableName,
+    _In_ DWORD dwType,
+    _In_opt_ LPWSTR lpVariableData,
+    _Out_opt_ PVOID* lpOldVariableData);
+
 BOOL supSetMountPoint(
     _In_ HANDLE hDirectory,
     _In_ LPCWSTR lpTarget,
@@ -292,6 +300,10 @@ NTSTATUS supRegReadValue(
     _Out_ PVOID *Buffer,
     _Out_ ULONG *BufferSize,
     _In_opt_ HANDLE hHeap);
+
+NTSTATUS supRegCurrentUserDeleteSubKeyValue(
+    _In_ LPWSTR SubKey,
+    _In_ LPWSTR ValueName);
 
 BOOL supQuerySystemRoot(
     _Inout_ PVOID Context);

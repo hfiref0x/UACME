@@ -773,6 +773,16 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.6.2
+76. Author: HackerHouse
+     * Type: Dll Hijack
+     * Method: Dll path search abuse, Registry key manipulation
+     * Target(s): \syswow64\iscsicpl.exe
+     * Component(s): iscsiexe.dll
+     * Implementation: ucmIsciCplMethod
+     * Works from: Windows 7 RTM (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.6.3
 
 </details>
 

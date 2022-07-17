@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.62
+*  VERSION:     3.63
 *
-*  DATE:        04 Jul 2022
+*  DATE:        16 Jul 2022
 *
 *  Global consts definition file.
 *
@@ -29,7 +29,7 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       6
-#define UCM_VERSION_REVISION    2
+#define UCM_VERSION_REVISION    3
 #define UCM_VERSION_BUILD       2207
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
@@ -135,6 +135,7 @@
 #define DISMCORE_DLL                L"dismcore.dll"
 #define DUSER_DLL                   L"duser.dll"
 #define GDIPLUS_DLL                 L"GdiPlus.dll"
+#define ISCSIEXE_DLL                L"iscsiexe.dll"
 #define OSKSUPPORT_DLL              L"OskSupport.dll"
 #define PCADM_DLL                   L"pcadm.dll"
 #define SHELL32_DLL                 L"shell32.dll"
@@ -161,6 +162,7 @@
 #define EVENTVWR_EXE                L"eventvwr.exe"
 #define EXPLORER_EXE                L"explorer.exe"
 #define FODHELPER_EXE               L"fodhelper.exe"
+#define ISCSICPL_EXE                L"iscsicpl.exe"
 #define MMC_EXE                     L"mmc.exe"
 #define MSCONFIG_EXE                L"msconfig.exe"
 #define MSCHEDEXE_EXE               L"mschedexe.exe"

@@ -59,3 +59,9 @@ MpManagerEnable             = DummyFunc
 MpManagerVersionQuery       = DummyFunc 
 MpMemoryScanStart           = DummyFunc
 MpGetEngineVersion          = DummyFunc
+
+; ISCSIEXE.DLL
+
+SvchostPushServiceGlobals       = DummyFunc
+DiscpEstablishServiceLinkage    = DummyFunc
+ServiceMain                     = DummyFunc
