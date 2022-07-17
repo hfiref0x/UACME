@@ -1248,7 +1248,6 @@ VOID ucmIscsiCplMethodCleanup(
 * https://github.com/hackerhouse-opensource/iscsicpl_bypassUAC
 *
 */
-
 NTSTATUS ucmIscsiCplMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
