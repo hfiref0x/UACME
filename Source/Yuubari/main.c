@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2022
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.52
+*  VERSION:     1.54
 *
-*  DATE:        23 Nov 2021
+*  DATE:        01 Dec 2022
 *
 *  Program entry point.
 *
@@ -22,10 +22,6 @@
 BOOL    g_VerboseOutput = FALSE;
 ULONG   g_NtBuildNumber = 0;
 HANDLE  g_LogFile = INVALID_HANDLE_VALUE;
-
-#ifdef _DEBUG
-ULONG   g_TestAppInfoBuildNumber = 0;
-#endif
 
 VOID LoggerWriteHeader(
     _In_ LPWSTR lpHeaderData)
@@ -451,8 +447,7 @@ VOID ListAppInfo(
     _strcpy(szFileName, USER_SHARED_DATA->NtSystemRoot);
     _strcat(szFileName, TEXT("\\system32\\appinfo.dll"));
 #else
-    g_TestAppInfoBuildNumber = 22494;
-    _strcpy(szFileName, TEXT("C:\\appinfo\\appinfo_22494.dll"));
+    _strcpy(szFileName, TEXT("C:\\appinfo\\19041.dll"));
 #endif
     ScanAppInfo(szFileName, (OUTPUTCALLBACK)AppInfoDataOutputCallback);
 }
@@ -518,9 +513,9 @@ VOID main()
     ListBasicSettings();
     ListCOMFromRegistry();
 #endif
-    ListFusion();
-#ifndef _DEBUG
     ListAppInfo();
+#ifndef _DEBUG
+    ListFusion();
 #endif
     if (g_LogFile != INVALID_HANDLE_VALUE)
         CloseHandle(g_LogFile);

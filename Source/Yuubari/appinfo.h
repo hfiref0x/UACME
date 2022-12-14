@@ -1,12 +1,12 @@
 #/*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2022
 *
 *  TITLE:       APPINFO.H
 *
-*  VERSION:     1.51
+*  VERSION:     1.54
 *
-*  DATE:        15 Sep 2021
+*  DATE:        01 Dec 2022
 *
 *  Header file for the AppInfo scan.
 *
@@ -44,14 +44,6 @@ typedef struct _UAC_MMC_BLOCK {
     ULONG Reserved;
 } UAC_MMC_BLOCK, *PUAC_MMC_BLOCK;
 
-typedef struct _UAC_PATTERN {
-    LPCVOID PatternData;
-    ULONG PatternSize;
-    ULONG SubtractBytes;
-    ULONG AppInfoBuildMin;
-    ULONG AppInfoBuildMax;
-} UAC_PATTERN, *PUAC_PATTERN;
-
 typedef struct _UAC_AI_GLOBALS {
     ULONG AppInfoBuildNumber;
     PVOID DllBase;
@@ -86,7 +78,7 @@ typedef DWORD64(WINAPI *pfnSymLoadModuleExW)(
     _In_ DWORD64 BaseOfDll,
     _In_ DWORD DllSize,
     _In_opt_ PMODLOAD_DATA Data,
-    _In_opt_ DWORD Flags);
+    _In_ DWORD Flags);
 
 typedef BOOL(WINAPI *pfnSymUnloadModule64)(
     _In_ HANDLE hProcess,

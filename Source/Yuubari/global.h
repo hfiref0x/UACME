@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2022
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     1.50
+*  VERSION:     1.54
 *
-*  DATE:        26 July 2021
+*  DATE:        02 Dec 2022
 *
 *  Common header file for the program support routines.
 *
@@ -60,6 +60,3 @@ typedef VOID(WINAPI *OUTPUTCALLBACK)(PVOID OutputData);
 extern ULONG g_NtBuildNumber;
 extern BOOL g_VerboseOutput;
 
-#ifdef _DEBUG
-extern ULONG g_TestAppInfoBuildNumber;
-#endif

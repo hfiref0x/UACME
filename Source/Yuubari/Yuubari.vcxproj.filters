@@ -122,9 +122,6 @@
     <ClInclude Include="appinfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="patterns.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Shared\_filename.h">
       <Filter>minirtl</Filter>
     </ClInclude>

@@ -5,9 +5,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.198
+*  VERSION:     1.201
 *
-*  DATE:        12 Jun 2022
+*  DATE:        17 Aug 2022
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -962,6 +962,22 @@ typedef struct _SYSTEM_BIGPOOL_INFORMATION {
     SYSTEM_BIGPOOL_ENTRY AllocatedInfo[1];
 } SYSTEM_BIGPOOL_INFORMATION, * PSYSTEM_BIGPOOL_INFORMATION;
 
+typedef struct _RTL_PROCESS_BACKTRACE_INFORMATION {
+    PCHAR SymbolicBackTrace;
+    ULONG TraceCount;
+    USHORT Index;
+    USHORT Depth;
+    PVOID BackTrace[32];
+} RTL_PROCESS_BACKTRACE_INFORMATION, * PRTL_PROCESS_BACKTRACE_INFORMATION;
+
+typedef struct _RTL_PROCESS_BACKTRACES {
+    ULONG CommittedMemory;
+    ULONG ReservedMemory;
+    ULONG NumberOfBackTraceLookups;
+    ULONG NumberOfBackTraces;
+    RTL_PROCESS_BACKTRACE_INFORMATION BackTraces[1];
+} RTL_PROCESS_BACKTRACES, * PRTL_PROCESS_BACKTRACES;
+
 typedef enum _PROCESSINFOCLASS {
     ProcessBasicInformation = 0,
     ProcessQuotaLimits = 1,
@@ -1536,6 +1552,47 @@ typedef enum _PS_ATTRIBUTE_NUM {
 #define RTL_USER_PROC_IMAGE_KEY_MISSING     0x00004000
 #define RTL_USER_PROC_OPTIN_PROCESS         0x00020000
 
+typedef struct _PROCESS_HANDLE_TRACING_ENABLE {
+    ULONG Flags;
+} PROCESS_HANDLE_TRACING_ENABLE, * PPROCESS_HANDLE_TRACING_ENABLE;
+
+#define PROCESS_HANDLE_TRACING_MAX_SLOTS 0x20000
+
+typedef struct _PROCESS_HANDLE_TRACING_ENABLE_EX {
+    ULONG Flags;
+    ULONG TotalSlots;
+} PROCESS_HANDLE_TRACING_ENABLE_EX, * PPROCESS_HANDLE_TRACING_ENABLE_EX;
+
+#define PROCESS_HANDLE_TRACING_MAX_STACKS 16
+
+#define PROCESS_HANDLE_TRACE_TYPE_OPEN      1
+#define PROCESS_HANDLE_TRACE_TYPE_CLOSE     2
+#define PROCESS_HANDLE_TRACE_TYPE_BADREF    3
+
+typedef struct _PROCESS_HANDLE_TRACING_ENTRY {
+    HANDLE Handle;
+    CLIENT_ID ClientId;
+    ULONG Type;
+    PVOID Stacks[PROCESS_HANDLE_TRACING_MAX_STACKS];
+} PROCESS_HANDLE_TRACING_ENTRY, * PPROCESS_HANDLE_TRACING_ENTRY;
+
+typedef struct _PROCESS_HANDLE_TRACING_QUERY {
+    HANDLE Handle;
+    ULONG TotalTraces;
+    PROCESS_HANDLE_TRACING_ENTRY HandleTrace[1];
+} PROCESS_HANDLE_TRACING_QUERY, * PPROCESS_HANDLE_TRACING_QUERY;
+
+typedef struct _PROCESS_WS_WATCH_INFORMATION {
+    PVOID FaultingPc;
+    PVOID FaultingVa;
+} PROCESS_WS_WATCH_INFORMATION, * PPROCESS_WS_WATCH_INFORMATION;
+
+typedef struct _PROCESS_WS_WATCH_INFORMATION_EX {
+    PROCESS_WS_WATCH_INFORMATION BasicInfo;
+    ULONG_PTR FaultingThreadId;
+    ULONG_PTR Flags;
+} PROCESS_WS_WATCH_INFORMATION_EX, * PPROCESS_WS_WATCH_INFORMATION_EX;
+
 /*
 ** Processes END
 */
@@ -1829,6 +1886,56 @@ typedef struct _SYSTEM_SPECULATION_CONTROL_INFORMATION {
         } SpeculationControlFlags;
     };
 } SYSTEM_SPECULATION_CONTROL_INFORMATION, *PSYSTEM_SPECULATION_CONTROL_INFORMATION;
+
+typedef struct _SYSTEM_SPECULATION_CONTROL_INFORMATION_V2 {
+    union {
+        ULONG Flags;
+        struct {
+            ULONG BpbEnabled : 1;
+            ULONG BpbDisabledSystemPolicy : 1;
+            ULONG BpbDisabledNoHardwareSupport : 1;
+            ULONG SpecCtrlEnumerated : 1;
+            ULONG SpecCmdEnumerated : 1;
+            ULONG IbrsPresent : 1;
+            ULONG StibpPresent : 1;
+            ULONG SmepPresent : 1;
+            ULONG SpeculativeStoreBypassDisableAvailable : 1;
+            ULONG SpeculativeStoreBypassDisableSupported : 1;
+            ULONG SpeculativeStoreBypassDisabledSystemWide : 1;
+            ULONG SpeculativeStoreBypassDisabledKernel : 1;
+            ULONG SpeculativeStoreBypassDisableRequired : 1;
+            ULONG BpbDisabledKernelToUser : 1;
+            ULONG SpecCtrlRetpolineEnabled : 1;
+            ULONG SpecCtrlImportOptimizationEnabled : 1;
+            ULONG EnhancedIbrs : 1;
+            ULONG HvL1tfStatusAvailable : 1;
+            ULONG HvL1tfProcessorNotAffected : 1;
+            ULONG HvL1tfMigitationEnabled : 1;
+            ULONG HvL1tfMigitationNotEnabled_Hardware : 1;
+            ULONG HvL1tfMigitationNotEnabled_LoadOption : 1;
+            ULONG HvL1tfMigitationNotEnabled_CoreScheduler : 1;
+            ULONG EnhancedIbrsReported : 1;
+            ULONG MdsHardwareProtected : 1;
+            ULONG MbClearEnabled : 1;
+            ULONG MbClearReported : 1;
+            ULONG TsxCtrlStatus : 2;
+            ULONG TsxCtrlReported : 1;
+            ULONG TaaHardwareImmune : 1;
+            ULONG Reserved : 1;
+        } SpeculationControlFlags;
+    };
+    union {
+        ULONG Flags2;
+        struct {
+            ULONG SbdrSsdpHardwareProtected : 1;
+            ULONG FbsdpHardwareProtected : 1;
+            ULONG PsdpHardwareProtected : 1;
+            ULONG FbClearEnabled : 1;
+            ULONG FbClearReported : 1;
+            ULONG Reserved : 27;
+        } SpeculationControlFlags2;
+    };
+} SYSTEM_SPECULATION_CONTROL_INFORMATION_V2, * PSYSTEM_SPECULATION_CONTROL_INFORMATION_V2;
 
 typedef struct _SYSTEM_KERNEL_VA_SHADOW_INFORMATION {
     union {

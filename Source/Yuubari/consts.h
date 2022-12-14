@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2021
+*  (C) COPYRIGHT AUTHORS, 2017 - 2022
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     1.52
+*  VERSION:     1.54
 *
-*  DATE:        23 Nov 2021
+*  DATE:        02 Dec 2022
 *
 *  Global consts definition file.
 *
@@ -37,7 +37,7 @@
 #define T_FLAG_INSTALLERDETECT_ENABLED TEXT("InstallerDetectEnabled")
 
 #define T_PROGRAM_NAME                 TEXT("Yuubari")
-#define T_PROGRAM_TITLE                TEXT("[UacView] UAC information gathering tool, v1.5.2 (Nov 23, 2021)\r\n")
+#define T_PROGRAM_TITLE                TEXT("[UacView] UAC information gathering tool, v1.5.4 (Dec 02, 2022)\r\n")
 
 #define T_HELP	TEXT("Optional parameters to execute: \r\n\n\
 YUUBARI [/v] \r\n\n\

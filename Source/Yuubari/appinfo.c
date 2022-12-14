@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2022
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.51
+*  VERSION:     1.54
 *
-*  DATE:        31 Oct 2021
+*  DATE:        01 Dec 2022
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -15,8 +15,6 @@
 *
 *******************************************************************************/
 #include "global.h"
-#include "patterns.h"
-#include "Shared/hde/hde64.h"
 #pragma comment(lib, "version.lib")
 
 #define DEFAULT_SYMPATH     L"*https://msdl.microsoft.com/download/symbols"
@@ -24,19 +22,8 @@
 #define TEXT_SECTION ".text"
 #define TEXT_SECTION_LEGNTH sizeof(TEXT_SECTION)
 
-static UAC_PATTERN g_MmcPatterns[] = {
-    { ptMmcBlock_7600, sizeof(ptMmcBlock_7600), 4, NT_WIN7_RTM, NT_WIN7_RTM },
-    { ptMmcBlock_7601, sizeof(ptMmcBlock_7601), 4, NT_WIN7_SP1, NT_WIN7_SP1 },
-    { ptMmcBlock_9200, sizeof(ptMmcBlock_9200), 4, NT_WIN8_RTM, NT_WIN8_RTM },
-    { ptMmcBlock_9600, sizeof(ptMmcBlock_9600), 4, NT_WIN8_BLUE, NT_WIN8_BLUE },
-    { ptMmcBlock_10240, sizeof(ptMmcBlock_10240), 4, NT_WIN10_THRESHOLD1, NT_WIN10_THRESHOLD1 },
-    { ptMmcBlock_10586_16299, sizeof(ptMmcBlock_10586_16299), 4, NT_WIN10_THRESHOLD2, NT_WIN10_REDSTONE3},
-    { ptMmcBlock_16300_17134, sizeof(ptMmcBlock_16300_17134), 4, NT_WIN10_REDSTONE4, NT_WIN10_REDSTONE4 }
-};
-
-static UAC_PATTERN g_MmcPatterns2[] = {
-    { ptMmcBlock_StartW11, sizeof(ptMmcBlock_StartW11), 0, NT_WIN11_21H2, NTX_WIN11_ADB }
-};
+#define RDATA_SECTION ".rdata"
+#define RDATA_SECTION_LENGTH sizeof(RDATA_SECTION)
 
 #define TestChar(x)  (((WCHAR)x >= L'A') && ((WCHAR)x <= L'z')) 
 
@@ -235,263 +222,113 @@ BOOL ResolveAppInfoSymbols(
     return FALSE;
 }
 
-/*
-* GetSupportedPattern
-*
-* Purpose:
-*
-* Return pointer to requested pattern if present.
-*
-*/
-BOOL GetSupportedPattern(
-    _In_ ULONG AppInfoBuildNumber,
-    _In_ UAC_PATTERN* Patterns,
-    _In_ ULONG PatternsCount,
-    _Out_ LPCVOID* OutputPattern,
-    _Out_ ULONG* OutputPatternSize,
-    _Out_opt_ ULONG* SubtractBytes
+PVOID AipFindMSBlockInSection(
+    _In_ PVOID DllBase,
+    _In_ IMAGE_SECTION_HEADER* SectionTableEntry,
+    _In_ ULONG_PTR PatternValue
 )
 {
-    ULONG i;
+    PBYTE SectionBase;
+    ULONG SectionSize, Offset;
 
-    *OutputPattern = NULL;
-    *OutputPatternSize = 0;
+    ULONG_PTR TestValue;
+    PVOID RefPointer = NULL, pvMmcBlock = NULL;
 
-    if (SubtractBytes)
-        *SubtractBytes = 0;
+    SectionBase = (PBYTE)RtlOffsetToPointer(DllBase, SectionTableEntry->VirtualAddress);
+    SectionSize = SectionTableEntry->Misc.VirtualSize;
 
-    for (i = 0; i < PatternsCount; i++) {
-        if ((AppInfoBuildNumber >= Patterns[i].AppInfoBuildMin) &&
-            (AppInfoBuildNumber <= Patterns[i].AppInfoBuildMax))
-        {
-            *OutputPattern = Patterns[i].PatternData;
-            *OutputPatternSize = Patterns[i].PatternSize;
+    for (Offset = 0; Offset < SectionSize - sizeof(ULONG_PTR); Offset++) {
 
-            if (SubtractBytes)
-                *SubtractBytes = Patterns[i].SubtractBytes;
-
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-
-BOOLEAN QueryAiMmcBlockWin11(
-    _In_ UAC_AI_GLOBALS* AppInfo,
-    _In_ PBYTE PtrCode,
-    _In_ ULONG SectionSize
-)
-{
-    ULONG       instOffset, patternOffset;
-    LONG        rel = 0;
-    PVOID       TestPtr = NULL;
-
-    hde64s      hs;
-    PBYTE       ptrCode;
-
-    ULONG       PatternSize = 0;
-    PVOID       PatternData = NULL;
-
-
-    if (GetSupportedPattern(AppInfo->AppInfoBuildNumber,
-        g_MmcPatterns2,
-        RTL_NUMBER_OF(g_MmcPatterns2),
-        &PatternData,
-        &PatternSize,
-        NULL))
-    {
-
-        ptrCode = supFindPattern(PtrCode,
-            SectionSize,
-            (CONST PBYTE)PatternData,
-            PatternSize);
-
-        if (ptrCode) {
-
-            patternOffset = RtlPointerToOffset(PtrCode, ptrCode);
-            instOffset = 0;
-
-            do {
-
-                hde64_disasm((void*)RtlOffsetToPointer(ptrCode, instOffset), &hs);
-                if (hs.flags & F_ERROR)
-                    break;
-
-                if (hs.len == 7) {
-                    if ((ptrCode[instOffset] == 0x48) &&
-                        (ptrCode[instOffset + 2] == 0x15))
-                    {
-                        rel = *(PLONG)(ptrCode + instOffset + 3);
-                        TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)ptrCode + instOffset + 7 + rel);
-                        if (IN_REGION(TestPtr, AppInfo->DllBase, AppInfo->DllVirtualSize)) {
-                            AppInfo->MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
-                            return TRUE;
-                        }
-                    }
-                }
-
-                instOffset += hs.len;
-
-            } while (instOffset < ((SectionSize - patternOffset) - 16));
-
-        }
-
-    }
-
-    return FALSE;
-}
-
-BOOLEAN QueryAiMmcBlockWin10(
-    _In_ UAC_AI_GLOBALS* AppInfo,
-    _In_ PBYTE PtrCode,
-    _In_ ULONG SectionSize
-)
-{
-    ULONG       instOffset, tempOffset;
-    LONG        rel = 0;
-    PVOID       TestPtr = NULL;
-
-    hde64s      hs;
-    ULONG       sectionSize = SectionSize;
-    PBYTE       ptrCode = PtrCode;
-    SIZE_T      matchBytes, reqMatchSize;
-
-    instOffset = 0;
-
-    do {
-
-        hde64_disasm((void*)(ptrCode + instOffset), &hs);
-        if (hs.flags & F_ERROR)
+        RefPointer = SectionBase + Offset;
+        TestValue = *(PULONG_PTR)RefPointer;
+        if (TestValue == PatternValue) {
+            pvMmcBlock = (PVOID)RefPointer;
             break;
-
-        if (hs.len == 3) {
-
-            hde64_disasm((void*)(void*)RtlOffsetToPointer(ptrCode, instOffset), &hs);
-            if (hs.flags & F_ERROR)
-                break;
-
-            reqMatchSize = sizeof(ptMmcBlock_Start);
-
-            matchBytes = RtlCompareMemory(
-                (CONST VOID*)RtlOffsetToPointer(ptrCode, instOffset),
-                (CONST VOID*)ptMmcBlock_Start,
-                reqMatchSize);
-
-            if (matchBytes == reqMatchSize) {
-
-                //
-                // Next instruction check.
-                //
-                tempOffset = (instOffset += hs.len);
-
-                hde64_disasm((void*)(void*)RtlOffsetToPointer(ptrCode, instOffset), &hs);
-                if (hs.flags & F_ERROR)
-                    break;
-
-                if (hs.len == 7) {
-
-                    if ((ptrCode[tempOffset + 1] == 0x8D) &&
-                        (ptrCode[tempOffset + 2] == 0x35))
-                    {
-
-                        //
-                        // Next instruction check.
-                        //                        
-                        hde64_disasm((void*)(ptrCode + tempOffset + hs.len), &hs);
-                        if (hs.flags & F_ERROR)
-                            break;
-
-                        if (hs.len == 3) {
-
-                            rel = *(PLONG)(ptrCode + tempOffset + 3);
-                            TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)ptrCode + tempOffset + 7 + rel);
-                            if (IN_REGION(TestPtr, AppInfo->DllBase, AppInfo->DllVirtualSize)) {
-                                AppInfo->MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
-                                return TRUE;
-                            }
-
-                        }
-
-                    }
-                }
-            }
         }
+    }
 
-        instOffset += hs.len;
-
-    } while (instOffset < (sectionSize - 16));
-
-    return FALSE;
+    return pvMmcBlock;
 }
 
 /*
-* QueryAiMmcBlock
+* AipQueryMSBlock
 *
 * Purpose:
 *
-* Locate mmc block. No corresponding symbol, code very vary from compiler version.
+* Locate mmc block.
 *
 */
-BOOLEAN QueryAiMmcBlock(
+BOOLEAN AipQueryMSBlock(
     _In_ UAC_AI_GLOBALS* AppInfo
 )
 {
-    ULONG       PatternSize = 0, SubtractBytes = 0;
-    LONG        rel = 0;
-    PVOID       Pattern = NULL, PatternData = NULL, TestPtr = NULL;
+    ULONG i;
+    ULONG SectionSize;
+    ULONG_PTR PatternValue = 0;
+    PVOID pvMmcBlock = NULL;
+    PBYTE SectionBase;
+    IMAGE_NT_HEADERS* NtHeaders = RtlImageNtHeader(AppInfo->DllBase);
+    IMAGE_SECTION_HEADER* SectionTableEntry, *RDataTableEntry = NULL;
 
-    ULONG       sectionSize = 0;
-    PBYTE       ptrCode;
+    WCHAR szSignature[] = L"mmc.exe";
 
-    //
-    // Locate .text image section.
-    //
-    ptrCode = (PBYTE)supLookupImageSectionByName(TEXT_SECTION,
-        TEXT_SECTION_LEGNTH,
-        (PVOID)AppInfo->DllBase,
-        &sectionSize);
+    SectionTableEntry = IMAGE_FIRST_SECTION(NtHeaders);
 
-    if ((ptrCode == NULL) || (sectionSize < 1024))
+    for (i = 0; i < NtHeaders->FileHeader.NumberOfSections; i++, SectionTableEntry++) {
+
+        SectionBase = (PBYTE)RtlOffsetToPointer(AppInfo->DllBase, SectionTableEntry->VirtualAddress);
+        SectionSize = SectionTableEntry->Misc.VirtualSize;
+
+        PatternValue = (ULONG_PTR)supFindPattern(SectionBase,
+            SectionSize,
+            (CONST PBYTE)szSignature,
+            sizeof(szSignature));
+
+        if (PatternValue)
+            break;
+    }
+
+    if (PatternValue == 0)
         return FALSE;
 
-    if (AppInfo->AppInfoBuildNumber < NT_WIN10_REDSTONE5) {
-        if (GetSupportedPattern(AppInfo->AppInfoBuildNumber,
-            g_MmcPatterns,
-            RTL_NUMBER_OF(g_MmcPatterns),
-            &PatternData,
-            &PatternSize,
-            &SubtractBytes))
+    SectionTableEntry = IMAGE_FIRST_SECTION(NtHeaders);
+    for (i = 0; i < NtHeaders->FileHeader.NumberOfSections; i++, SectionTableEntry++) {
+        if (_strncmp_a(
+            (CHAR*)SectionTableEntry->Name,
+            RDATA_SECTION,
+            RDATA_SECTION_LENGTH) == 0)
         {
-            if (PatternData) {
-                Pattern = (PVOID)supFindPattern(ptrCode, sectionSize, (PBYTE)PatternData, PatternSize);
-                if (Pattern != NULL) {
-                    rel = *(DWORD*)((ULONG_PTR)Pattern - SubtractBytes);
-                    TestPtr = (UAC_MMC_BLOCK*)((ULONG_PTR)Pattern + rel);
-                    if (IN_REGION(TestPtr, AppInfo->DllBase, AppInfo->DllVirtualSize)) {
-                        AppInfo->MmcBlock = (UAC_MMC_BLOCK*)TestPtr;
-                        return TRUE;
-                    }
-                }
-            }
+            RDataTableEntry = SectionTableEntry;
+            break;
         }
+    }
+
+    if (RDataTableEntry) {
+
+        pvMmcBlock = AipFindMSBlockInSection(AppInfo->DllBase,
+            RDataTableEntry,
+            PatternValue);
+
     }
     else {
 
-        //
-        // Windows 10 RS5 - 21H2
-        //
-        if (AppInfo->AppInfoBuildNumber < NT_WIN11_21H2) {
-            return QueryAiMmcBlockWin10(AppInfo, ptrCode, sectionSize);
-        }
-        else {
-            //
-            // Windows 11 21H2 - XXXX
-            //
-            return QueryAiMmcBlockWin11(AppInfo, ptrCode, sectionSize);
-        }
+        SectionTableEntry = IMAGE_FIRST_SECTION(NtHeaders);
+        for (i = 0; i < NtHeaders->FileHeader.NumberOfSections; i++, SectionTableEntry++) {
 
+            pvMmcBlock = AipFindMSBlockInSection(AppInfo->DllBase,
+                SectionTableEntry,
+                PatternValue);
+
+            if (pvMmcBlock)
+                break;
+        }
     }
+
+    if (pvMmcBlock) {
+        AppInfo->MmcBlock = pvMmcBlock;
+        return TRUE;
+    }
+
     return FALSE;
 }
 
@@ -556,7 +393,7 @@ VOID ListMMCFiles(
     PVOID* MscArray = NULL;
     UAC_AI_DATA     CallbackData;
 
-    if (!QueryAiMmcBlock(AppInfo))
+    if (!AipQueryMSBlock(AppInfo))
         return;
 
     __try {
@@ -739,37 +576,33 @@ VOID ScanAppInfo(
                 break;
         }
 
-#ifdef _DEBUG
-        AppInfo.AppInfoBuildNumber = g_TestAppInfoBuildNumber;
-#endif
-
         if (RtlDosPathNameToNtPathName_U(lpFileName, &usFileName, NULL, NULL) == FALSE)
             break;
 
-        InitializeObjectAttributes(&attr, &usFileName, OBJ_CASE_INSENSITIVE, NULL, NULL);    
+        InitializeObjectAttributes(&attr, &usFileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
         RtlSecureZeroMemory(&iosb, sizeof(iosb));
 
-        status = NtCreateFile(&hFile, 
+        status = NtCreateFile(&hFile,
             SYNCHRONIZE | FILE_READ_DATA,
-            &attr, 
-            &iosb, 
-            NULL, 
-            0, 
-            FILE_SHARE_READ, 
+            &attr,
+            &iosb,
+            NULL,
+            0,
+            FILE_SHARE_READ,
             FILE_OPEN,
-            FILE_SYNCHRONOUS_IO_NONALERT, 
-            NULL, 
+            FILE_SYNCHRONOUS_IO_NONALERT,
+            NULL,
             0);
 
         if (!NT_SUCCESS(status))
             break;
 
-        status = NtCreateSection(&hSection, 
-            SECTION_ALL_ACCESS, 
+        status = NtCreateSection(&hSection,
+            SECTION_ALL_ACCESS,
             NULL,
-            NULL, 
-            PAGE_READONLY, 
-            SEC_IMAGE, 
+            NULL,
+            PAGE_READONLY,
+            SEC_IMAGE,
             hFile);
 
         if (!NT_SUCCESS(status))
@@ -778,15 +611,15 @@ VOID ScanAppInfo(
         DllBase = NULL;
         DllVirtualSize = 0;
 
-        status = NtMapViewOfSection(hSection, 
-            NtCurrentProcess(), 
+        status = NtMapViewOfSection(hSection,
+            NtCurrentProcess(),
             (PVOID*)&DllBase,
-            0, 
-            0, 
-            NULL, 
-            &DllVirtualSize, 
-            ViewUnmap, 
-            0, 
+            0,
+            0,
+            NULL,
+            &DllVirtualSize,
+            ViewUnmap,
+            0,
             PAGE_READONLY);
 
         if (!NT_SUCCESS(status))
