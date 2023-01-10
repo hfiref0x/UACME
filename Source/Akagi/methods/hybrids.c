@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2022
+*  (C) COPYRIGHT AUTHORS, 2015 - 2023
 *
 *  TITLE:       HYBRIDS.C
 *
 *  VERSION:     3.63
 *
-*  DATE:        16 Jul 2022
+*  DATE:        11 Jan 2023
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1262,9 +1262,9 @@ NTSTATUS ucmIscsiCplMethod(
 
 #ifndef _WIN64
     if (g_ctx->IsWow64) {
-        ntStatus = supEnableDisableWow64Redirection(TRUE);
-        if (!NT_SUCCESS(ntStatus))
-            return ntStatus;
+        MethodResult = supEnableDisableWow64Redirection(TRUE);
+        if (!NT_SUCCESS(MethodResult))
+            return MethodResult;
     }
 #endif
 
