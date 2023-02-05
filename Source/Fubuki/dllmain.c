@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2023
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.57
+*  VERSION:     3.64
 *
-*  DATE:        01 Nov 2021
+*  DATE:        04 Feb 2023
 *
 *  Proxy dll entry point.
 *
@@ -21,7 +21,6 @@
 
 UACME_PARAM_BLOCK g_SharedParams;
 HANDLE g_SyncMutant = NULL;
-
 
 /*
 * DummyFunc
@@ -232,7 +231,7 @@ BOOL WINAPI DllMain(
 {
     UNREFERENCED_PARAMETER(hinstDLL);
     UNREFERENCED_PARAMETER(lpvReserved);
-    
+   
     if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED) {
         RtlExitUserProcess('foff');
     }

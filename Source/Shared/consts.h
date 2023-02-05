@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2022
+*  (C) COPYRIGHT AUTHORS, 2015 - 2023
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.63
+*  VERSION:     3.64
 *
-*  DATE:        16 Jul 2022
+*  DATE:        04 Feb 2023
 *
 *  Global consts definition file.
 *
@@ -29,8 +29,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       6
-#define UCM_VERSION_REVISION    3
-#define UCM_VERSION_BUILD       2207
+#define UCM_VERSION_REVISION    4
+#define UCM_VERSION_BUILD       2302
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
 
@@ -130,6 +130,7 @@
 //
 #define APISET_KERNEL32LEGACY       L"api-ms-win-core-kernel32-legacy-l1.DLL"
 
+#define ATL_DLL                     L"ATL.dll"
 #define BLUETOOTHDIAGNOSTICUTIL_DLL L"BluetoothDiagnosticUtil.dll"
 #define COMCTL32_DLL                L"comctl32.dll"
 #define DISMCORE_DLL                L"dismcore.dll"
@@ -194,6 +195,7 @@
 #define NET4_DIR                    L"v4.0.30319"
 #define MSNETFRAMEWORK_DIR          L"Microsoft.NET\\Framework"
 #define MMCEX_DIR                   L"\\MMCEx"
+#define WBEM_DIR                    L"wbem\\"
 
 //
 // Shell Verbs
@@ -204,6 +206,7 @@
 // Windows MMC snap-ins
 //
 #define EVENTVWR_MSC                L"eventvwr.msc"
+#define WMIMGMT_MSC                 L"WmiMgmt.msc"
 
 //
 // Units specific values

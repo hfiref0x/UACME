@@ -365,6 +365,7 @@
     <ClInclude Include="..\Shared\util.h" />
     <ClInclude Include="..\Shared\windefend.h" />
     <ClInclude Include="..\Shared\_filename.h" />
+    <ClInclude Include="atldll.h" />
     <ClInclude Include="fubuki.h" />
     <ClInclude Include="pca.h" />
     <ClInclude Include="resource.h" />

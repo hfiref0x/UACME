@@ -1,5 +1,5 @@
 EXPORTS
-DllRegisterServer           = DummyFunc PRIVATE
+;DllRegisterServer           = DummyFunc PRIVATE
 
 ; WOW64LOG
 Wow64LogSystemService		= DummyFunc
