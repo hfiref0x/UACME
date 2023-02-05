@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2021
+*  (C) COPYRIGHT AUTHORS, 2018 - 2023
 *
 *  TITLE:       FUBUKI.H
 *
-*  VERSION:     3.57
+*  VERSION:     3.64
 *
-*  DATE:        08 Nov 2021
+*  DATE:        04 Feb 2023
 *
 *  Fubuki global include header file.
 *
@@ -33,6 +33,7 @@
 // Forwards
 //
 #include "winmm.h"
+#include "atldll.h"
 
 #define LoadedMsg      TEXT("Fubuki lock and loaded")
 

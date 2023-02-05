@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2022
+*  (C) COPYRIGHT AUTHORS, 2014 - 2023
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.62
+*  VERSION:     3.64
 *
-*  DATE:        07 Jul 2022
+*  DATE:        04 Feb 2023
 *
 *  Common header file for the program support routines.
 *
@@ -44,6 +44,7 @@
 #define FUBUKI_ID IDR_FUBUKI64
 #define AKATSUKI_ID IDR_AKATSUKI64
 #define FUBUKI32_ID IDR_FUBUKI32
+#define FUBUKI64_ID IDR_FUBUKI64
 #define KAMIKAZE_ID IDR_KAMIKAZE
 #else
 #include "bin32res.h"

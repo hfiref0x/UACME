@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2022
+*  (C) COPYRIGHT AUTHORS, 2014 - 2023
 *
 *  TITLE:       ROUTINES.H
 *
-*  VERSION:     3.63
+*  VERSION:     3.64
 *
-*  DATE:        16 Jul 2022
+*  DATE:        04 Feb 2023
 *
 *  Prototypes of methods for UAC bypass methods table.
 *
@@ -17,6 +17,20 @@
 *
 *******************************************************************************/
 #pragma once
+
+NTSTATUS ucmGenericAutoelevationEx(
+    _In_opt_ LPCWSTR lpTargetApp,
+    _In_ LPCWSTR lpTargetDll,
+    _In_opt_ LPCWSTR lpParameters,
+    _In_opt_ LPCWSTR lpSubDirectory,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
+
+NTSTATUS ucmGenericAutoelevation(
+    _In_opt_ LPCWSTR lpTargetApp,
+    _In_ LPCWSTR lpTargetDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 NTSTATUS ucmShellRegModMethod(
     _In_ UCM_METHOD Method,
@@ -151,12 +165,18 @@ BOOL ucmCreateCabinetForSingleFile(
 BOOL ucmWusaExtractViaJunction(
     _In_ LPWSTR lpTargetDirectory);
 
+NTSTATUS ucmAtlHijackMethod(
+    _In_opt_ LPCWSTR lpTargetApp,
+    _In_ LPCWSTR lpTargetDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
 
 //
 // Post execution cleanup routines.
 //
 BOOL ucmMethodCleanupSingleItemSystem32(
-    LPCWSTR lpItemName);
+    _In_ LPCWSTR lpItemName,
+    _In_opt_ LPCWSTR lpSubDirectory);
 
 BOOL ucmJunctionMethodCleanup(
     VOID);

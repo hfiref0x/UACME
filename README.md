@@ -783,6 +783,16 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.6.3
+77. Author: Arush Agarampur
+     * Type: Dll Hijack
+     * Method: IFileOperation
+     * Target(s): \system32\mmc.exe
+     * Component(s): atl.dll
+     * Implementation: ucmAtlHijackMethod
+     * Works from: Windows 7 RTM (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.6.4
 
 </details>
 

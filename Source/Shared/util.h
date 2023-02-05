@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2021
+*  (C) COPYRIGHT AUTHORS, 2017 - 2023
 *
 *  TITLE:       UTIL.H
 *
-*  VERSION:     3.56
+*  VERSION:     3.64
 *
-*  DATE:        19 July 2021
+*  DATE:        04 Feb 2023
 *
 *  Global support routines header file shared between payload dlls.
 *
@@ -158,5 +158,5 @@ BOOL ucmSetEnvironmentVariable(
 #ifdef _DEBUG
 #define ucmDbgMsg(Message)  OutputDebugString(Message)
 #else
-#define ucmDbgMsg(Message)  
+#define ucmDbgMsg(Message) 
 #endif
