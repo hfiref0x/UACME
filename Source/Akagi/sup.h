@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2022
+*  (C) COPYRIGHT AUTHORS, 2014 - 2023
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.63
+*  VERSION:     3.64
 *
-*  DATE:        16 Jul 2022
+*  DATE:        15 Feb 2023
 *
 *  Common header file for the program support routines.
 *
@@ -186,10 +186,16 @@ BOOLEAN supSetCheckSumForMappedFile(
     _In_ PVOID BaseAddress,
     _In_ ULONG CheckSum);
 
+NTSTATUS supLdrQueryResourceDataEx(
+    _In_ ULONG_PTR ResourceId,
+    _In_ PVOID DllHandle,
+    _Out_ PULONG DataSize,
+    _Out_ PVOID* Data);
+
 PBYTE supLdrQueryResourceData(
     _In_ ULONG_PTR ResourceId,
     _In_ PVOID DllHandle,
-    _In_ PULONG DataSize);
+    _Out_ PULONG DataSize);
 
 VOID supMasqueradeProcess(
     _In_ BOOL Restore);
@@ -466,6 +472,9 @@ VOID supEnableToastForProtocol(
 ULONG supWaitForChildProcesses(
     _In_ LPCWSTR lpProcessName,
     _In_ DWORD dwWaitMiliseconds);
+
+VOID supRaiseHardError(
+    _In_ NTSTATUS HardErrorStatus);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)
