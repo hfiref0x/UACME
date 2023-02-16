@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2023
+*  (C) COPYRIGHT AUTHORS, 2015 - 2022
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.64
+*  VERSION:     3.63
 *
-*  DATE:        15 Feb 2023
+*  DATE:        16 Jul 2022
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -913,49 +913,6 @@ BOOLEAN supSetCheckSumForMappedFile(
 }
 
 /*
-* supLdrQueryResourceDataEx
-*
-* Purpose:
-*
-* Load resource by given id (win32 FindResource, SizeofResource, LockResource).
-*
-*/
-NTSTATUS supLdrQueryResourceDataEx(
-    _In_ ULONG_PTR ResourceId,
-    _In_ PVOID DllHandle,
-    _Out_ PULONG DataSize,
-    _Out_ PVOID* Data
-)
-{
-    NTSTATUS                   status;
-    ULONG_PTR                  IdPath[3];
-    IMAGE_RESOURCE_DATA_ENTRY* DataEntry;
-    ULONG                      SizeOfData = 0;
-
-    *DataSize = 0;
-
-    if (DllHandle == NULL) {
-        return STATUS_INVALID_PARAMETER_2;
-    }
-
-    IdPath[0] = (ULONG_PTR)RT_RCDATA; //type
-    IdPath[1] = ResourceId;           //id
-    IdPath[2] = 0;                    //lang
-
-    status = LdrFindResource_U(DllHandle, (ULONG_PTR*)&IdPath, 3, &DataEntry);
-    if (NT_SUCCESS(status)) {
-        status = LdrAccessResource(DllHandle, DataEntry, Data, &SizeOfData);
-        if (NT_SUCCESS(status)) {
-            if (DataSize) {
-                *DataSize = SizeOfData;
-            }
-        }
-    }
-
-    return status;
-}
-
-/*
 * supLdrQueryResourceData
 *
 * Purpose:
@@ -966,21 +923,32 @@ NTSTATUS supLdrQueryResourceDataEx(
 PBYTE supLdrQueryResourceData(
     _In_ ULONG_PTR ResourceId,
     _In_ PVOID DllHandle,
-    _Out_ PULONG DataSize
+    _In_ PULONG DataSize
 )
 {
-    NTSTATUS status;
-    PBYTE Data = NULL;
+    NTSTATUS                   status;
+    ULONG_PTR                  IdPath[3];
+    IMAGE_RESOURCE_DATA_ENTRY* DataEntry;
+    PBYTE                      Data = NULL;
+    ULONG                      SizeOfData = 0;
 
-    status = supLdrQueryResourceDataEx(ResourceId,
-        DllHandle,
-        DataSize,
-        &Data);
+    if (DllHandle != NULL) {
 
-    if (NT_SUCCESS(status))
-        return Data;
+        IdPath[0] = (ULONG_PTR)RT_RCDATA; //type
+        IdPath[1] = ResourceId;           //id
+        IdPath[2] = 0;                    //lang
 
-    return NULL;
+        status = LdrFindResource_U(DllHandle, (ULONG_PTR*)&IdPath, 3, &DataEntry);
+        if (NT_SUCCESS(status)) {
+            status = LdrAccessResource(DllHandle, DataEntry, (PVOID*)&Data, &SizeOfData);
+            if (NT_SUCCESS(status)) {
+                if (DataSize) {
+                    *DataSize = SizeOfData;
+                }
+            }
+        }
+    }
+    return Data;
 }
 
 /*
@@ -4249,53 +4217,4 @@ ULONG supWaitForChildProcesses(
     } while (dwCurrentWait <= dwMaxWait);
 
     return dwCurrentWait;
-}
-
-/*
-* supRaiseHardError
-*
-* Purpose:
-*
-* Display UACMe hard error.
-*
-*/
-VOID supRaiseHardError(
-    _In_ NTSTATUS HardErrorStatus
-)
-{
-    ULONG dwFlags;
-    HMODULE hModule = NULL;
-    WCHAR errorBuffer[1024];
-
-    UNICODE_STRING usText;
-    ULONG_PTR params[] = { (ULONG_PTR)&usText };
-    HARDERROR_RESPONSE heResponse;
-
-    if (HRESULT_FACILITY(HardErrorStatus) == FACILITY_WIN32) {
-        dwFlags = FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM;
-    }
-    else {
-        dwFlags = FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_HMODULE;
-        hModule = GetModuleHandle(RtlNtdllName);
-    }
-
-    errorBuffer[0] = 0;
-
-    if (FormatMessage(dwFlags,
-        hModule,
-        HardErrorStatus,
-        0,
-        errorBuffer,
-        RTL_NUMBER_OF(errorBuffer),
-        NULL))
-    {
-        RtlInitUnicodeString(&usText, errorBuffer);
-
-        NtRaiseHardError(STATUS_FATAL_APP_EXIT | HARDERROR_OVERRIDE_ERRORMODE,
-            RTL_NUMBER_OF(params),
-            1,
-            (PULONG_PTR)params,
-            OptionOk,
-            (PULONG)&heResponse);
-    }
 }

