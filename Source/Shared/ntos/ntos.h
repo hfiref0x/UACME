@@ -1,13 +1,13 @@
 /************************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2022 
+*  (C) COPYRIGHT AUTHORS, 2015 - 2023 
 *  Translated from Microsoft sources/debugger or mentioned elsewhere.
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.201
+*  VERSION:     1.205
 *
-*  DATE:        17 Aug 2022
+*  DATE:        15 Feb 2023
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -14489,6 +14489,53 @@ NtSystemDebugControl(
     _Out_writes_bytes_opt_(OutputBufferLength) PVOID OutputBuffer,
     _In_ ULONG OutputBufferLength,
     _Out_opt_ PULONG ReturnLength);
+
+/************************************************************************************
+*
+* HardError API.
+*
+************************************************************************************/
+
+#ifndef HARDERROR_OVERRIDE_ERRORMODE
+#define HARDERROR_OVERRIDE_ERRORMODE 0x10000000
+#endif
+
+typedef enum _HARDERROR_RESPONSE_OPTION {
+    OptionAbortRetryIgnore,
+    OptionOk,
+    OptionOkCancel,
+    OptionRetryCancel,
+    OptionYesNo,
+    OptionYesNoCancel,
+    OptionShutdownSystem,
+    OptionOkNoWait,
+    OptionCancelTryContinue
+} HARDERROR_RESPONSE_OPTION;
+
+typedef enum _HARDERROR_RESPONSE {
+    ResponseReturnToCaller,
+    ResponseNotHandled,
+    ResponseAbort,
+    ResponseCancel,
+    ResponseIgnore,
+    ResponseNo,
+    ResponseOk,
+    ResponseRetry,
+    ResponseYes,
+    ResponseTryAgain,
+    ResponseContinue
+} HARDERROR_RESPONSE;
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtRaiseHardError(
+    _In_ NTSTATUS ErrorStatus,
+    _In_ ULONG NumberOfParameters,
+    _In_ ULONG UnicodeStringParameterMask,
+    _In_reads_(NumberOfParameters) PULONG_PTR Parameters,
+    _In_ ULONG ValidResponseOptions,
+    _Out_ PULONG Response);
 
 /************************************************************************************
 *
