@@ -358,8 +358,8 @@ First parameter is number of method to use, second is optional command (executab
      * Implementation: ucmDiskCleanupEnvironmentVariable
      * Works from: Windows 8.1 (9600)
      * AlwaysNotify compatible
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 (silent ninja patch, presumable May 2023 security bulletin)
+        * How: Shell API / Windows components update
       * Code status: added in v2.7.2
 35. Author: CIA & James Forshaw
      * Type: Impersonation
