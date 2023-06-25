@@ -1,12 +1,12 @@
 /************************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2018, translated from Microsoft sources/debugger
+*  (C) COPYRIGHT AUTHORS, 2017 - 2023, translated from Microsoft sources/debugger
 *
 *  TITLE:       NTSXS.H
 *
-*  VERSION:     1.04
+*  VERSION:     1.05
 *
-*  DATE:        18 Nov 2018
+*  DATE:        24 Jun 2023
 *
 *  Common header file for the SxS related API functions and definitions.
 *
@@ -57,15 +57,6 @@ typedef const struct _ACTIVATION_CONTEXT *PCACTIVATION_CONTEXT;
 #define ACTIVATION_CONTEXT_DATA_MAGIC               0x78746341 //'xtcA'
 #define ACTIVATION_CONTEXT_STRING_SECTION_MAGIC     0x64487353 //'dHsS'
 #define ACTIVATION_CONTEXT_GUID_SECTION_MAGIC       0x64487347 //'dHsG'
-
-typedef VOID(NTAPI * PACTIVATION_CONTEXT_NOTIFY_ROUTINE)(
-    _In_ ULONG NotificationType,
-    _In_ PACTIVATION_CONTEXT ActivationContext,
-    _In_ const VOID *ActivationContextData,
-    _In_ PVOID NotificationContext,
-    _In_ PVOID NotificationData,
-    _Inout_ PBOOLEAN DisableThisNotification
-    );
 
 typedef struct _ACTIVATION_CONTEXT_DATA_TOC_HEADER {
     ULONG HeaderSize;
@@ -171,18 +162,6 @@ typedef struct _ACTIVATION_CONTEXT_DATA_ASSEMBLY_GLOBAL_INFORMATION {
     ULONG ApplicationDirectoryOffset;
     ULONG ResourceName;
 } ACTIVATION_CONTEXT_DATA_ASSEMBLY_GLOBAL_INFORMATION, *PACTIVATION_CONTEXT_DATA_ASSEMBLY_GLOBAL_INFORMATION;
-
-typedef struct _ASSEMBLY_STORAGE_MAP_ENTRY {
-    ULONG Flags;
-    UNICODE_STRING DosPath;
-    HANDLE Handle;
-} ASSEMBLY_STORAGE_MAP_ENTRY, *PASSEMBLY_STORAGE_MAP_ENTRY;
-
-typedef struct _ASSEMBLY_STORAGE_MAP {
-    ULONG Flags;
-    ULONG Count;
-    ASSEMBLY_STORAGE_MAP_ENTRY *AssemblyArray[ANYSIZE_ARRAY];
-} ASSEMBLY_STORAGE_MAP, *PASSEMBLY_STORAGE_MAP;
 
 #define ACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION_ROOT_ASSEMBLY              (0x00000001)
 #define ACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION_POLICY_APPLIED             (0x00000002)
@@ -411,46 +390,6 @@ typedef struct _ACTIVATION_CONTEXT_SECTION_KEYED_DATA {
     ULONG Flags;
     ACTIVATION_CONTEXT_SECTION_KEYED_DATA_ASSEMBLY_METADATA AssemblyMetadata;
 } ACTIVATION_CONTEXT_SECTION_KEYED_DATA, *PACTIVATION_CONTEXT_SECTION_KEYED_DATA;
-
-typedef struct _RTL_ACTIVATION_CONTEXT_STACK_FRAME {
-    struct _RTL_ACTIVATION_CONTEXT_STACK_FRAME *Previous;
-    PACTIVATION_CONTEXT ActivationContext;
-    ULONG Flags;
-} RTL_ACTIVATION_CONTEXT_STACK_FRAME, *PRTL_ACTIVATION_CONTEXT_STACK_FRAME;
-
-typedef struct _ACTIVATION_CONTEXT_STACK {
-    RTL_ACTIVATION_CONTEXT_STACK_FRAME *ActiveFrame;
-    LIST_ENTRY FrameListCache;
-    ULONG Flags;
-    ULONG NextCookieSequenceNumber;
-    ULONG StackId;
-} ACTIVATION_CONTEXT_STACK, *PACTIVATION_CONTEXT_STACK;
-
-typedef struct _ACTIVATION_CONTEXT_DATA {
-    ULONG Magic; //'xtcA'
-    ULONG HeaderSize;
-    ULONG FormatVersion;
-    ULONG TotalSize;
-    ULONG DefaultTocOffset;
-    ULONG ExtendedTocOffset;
-    ULONG AssemblyRosterOffset;
-    ULONG Flags;
-} ACTIVATION_CONTEXT_DATA, *PACTIVATION_CONTEXT_DATA;
-
-typedef struct _ACTIVATION_CONTEXT {
-    ULONG RefCount;
-    ULONG Flags;
-    LIST_ENTRY Links;
-    ACTIVATION_CONTEXT_DATA *ActivationContextData;
-    PACTIVATION_CONTEXT_NOTIFY_ROUTINE NotificationRoutine;
-    PVOID NotificationContext;
-    ULONG SendNotifications[4];
-    ULONG DisabledNotifications[4];
-    ASSEMBLY_STORAGE_MAP StorageMap;
-    ASSEMBLY_STORAGE_MAP_ENTRY *InlineStorageMapEntries;
-    ULONG StackTraceIndex;
-    PVOID StackTraces[4][4];
-} ACTIVATION_CONTEXT, *PACTIVATION_CONTEXT;
 
 #define RTL_ACTIVATE_ACTIVATION_CONTEXT_EX_FLAG_RELEASE_ON_STACK_DEALLOCATION (0x00000001)
 

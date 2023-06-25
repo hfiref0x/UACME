@@ -6411,7 +6411,7 @@ typedef struct _GDI_TEB_BATCH {
 } GDI_TEB_BATCH, *PGDI_TEB_BATCH;
 
 typedef struct _ACTIVATION_CONTEXT_DATA {
-    ULONG Magic;
+    ULONG Magic; //'xtcA'
     ULONG HeaderSize;
     ULONG FormatVersion;
     ULONG TotalSize;
