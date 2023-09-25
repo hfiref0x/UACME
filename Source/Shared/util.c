@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2021
+*  (C) COPYRIGHT AUTHORS, 2017 - 2023
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     3.56
+*  VERSION:     3.65
 *
-*  DATE:        17 July 2021
+*  DATE:        22 Sep 2023
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -1190,7 +1190,7 @@ LPWSTR ucmQueryRuntimeInfo(
 
     PROCESS_BASIC_INFORMATION pbi;
     PROCESS_EXTENDED_BASIC_INFORMATION pebi;
-    PSYSTEM_PROCESSES_INFORMATION ProcessList, pList;
+    PSYSTEM_PROCESS_INFORMATION ProcessList, pList;
 
     LSA_OBJECT_ATTRIBUTES lobja;
     LSA_HANDLE PolicyHandle = NULL;
@@ -1240,7 +1240,7 @@ LPWSTR ucmQueryRuntimeInfo(
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
         bFound = FALSE;
 
-        ProcessList = (PSYSTEM_PROCESSES_INFORMATION)ucmGetSystemInfo(SystemProcessInformation);
+        ProcessList = (PSYSTEM_PROCESS_INFORMATION)ucmGetSystemInfo(SystemProcessInformation);
         if (ProcessList) {
 
             pList = ProcessList;
@@ -1261,7 +1261,7 @@ LPWSTR ucmQueryRuntimeInfo(
                 if (pList->NextEntryDelta == 0) {
                     break;
                 }
-                pList = (PSYSTEM_PROCESSES_INFORMATION)(((LPBYTE)pList) + pList->NextEntryDelta);
+                pList = (PSYSTEM_PROCESS_INFORMATION)(((LPBYTE)pList) + pList->NextEntryDelta);
             }
             ucmxHeapFree(ProcessList);
         }

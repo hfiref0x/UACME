@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.64
+*  VERSION:     3.65
 *
-*  DATE:        24 Jun 2023
+*  DATE:        22 Sep 2023
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -2711,7 +2711,7 @@ BOOL supIsProcessRunning(
     UNICODE_STRING lookupPsName;
 
     union {
-        PSYSTEM_PROCESSES_INFORMATION Processes;
+        PSYSTEM_PROCESS_INFORMATION Processes;
         PBYTE ListRef;
     } List;
 
@@ -4035,7 +4035,7 @@ BOOL supEnumProcessesForSession(
     PVOID processList;
 
     union {
-        PSYSTEM_PROCESSES_INFORMATION Processes;
+        PSYSTEM_PROCESS_INFORMATION Processes;
         PBYTE ListRef;
     } List;
 
@@ -4169,7 +4169,7 @@ ULONG supWaitForChildProcesses(
     UNICODE_STRING lookupPsName;
 
     union {
-        PSYSTEM_PROCESSES_INFORMATION Processes;
+        PSYSTEM_PROCESS_INFORMATION Processes;
         PBYTE ListRef;
     } List;
 
@@ -4298,4 +4298,78 @@ VOID supRaiseHardError(
             OptionOk,
             (PULONG)&heResponse);
     }
+}
+
+/*
+* supGetThreadTokenImpersonationLevel
+*
+* Purpose:
+*
+* Query thread token impersonation level.
+*
+*/
+BOOL supGetThreadTokenImpersonationLevel(
+    _In_ HANDLE ThreadHandle,
+    _Out_ PSECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
+{
+    ULONG dummy;
+    HANDLE hToken = NULL;
+    SECURITY_IMPERSONATION_LEVEL level = SecurityAnonymous;
+    NTSTATUS ntStatus;
+
+    ntStatus = NtOpenThreadToken(ThreadHandle,
+        MAXIMUM_ALLOWED,
+        TRUE,
+        &hToken);
+
+    if (NT_SUCCESS(ntStatus)) {
+
+        ntStatus = NtQueryInformationToken(hToken,
+            TokenImpersonationLevel,
+            (PVOID)&level,
+            sizeof(SECURITY_IMPERSONATION_LEVEL),
+            &dummy);
+
+        NtClose(hToken);
+    }
+
+    *ImpersonationLevel = level;
+    return NT_SUCCESS(ntStatus);
+}
+
+/*
+* supGetTickCount64
+*
+* Purpose:
+*
+* GetTickCount64 eqv.
+*
+*/
+ULONGLONG supGetTickCount64(
+    VOID
+)
+{
+    ULARGE_INTEGER tickCount;
+
+#ifdef _WIN64
+
+    tickCount.QuadPart = USER_SHARED_DATA->TickCountQuad;
+
+#else
+
+    while (TRUE)
+    {
+        tickCount.HighPart = (ULONG)USER_SHARED_DATA->TickCount.High1Time;
+        tickCount.LowPart = USER_SHARED_DATA->TickCount.LowPart;
+
+        if (tickCount.HighPart == (ULONG)USER_SHARED_DATA->TickCount.High2Time)
+            break;
+
+        NtYieldExecution();
+    }
+
+#endif
+
+    return (UInt32x32To64(tickCount.LowPart, USER_SHARED_DATA->TickCountMultiplier) >> 24) +
+        (UInt32x32To64(tickCount.HighPart, USER_SHARED_DATA->TickCountMultiplier) << 8);
 }

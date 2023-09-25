@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.64
+*  VERSION:     3.65
 *
-*  DATE:        15 Feb 2023
+*  DATE:        22 Sep 2023
 *
 *  Common header file for the program support routines.
 *
@@ -453,7 +453,7 @@ BOOL supConcatenatePaths(
     _In_ SIZE_T TargetBufferSize);
 
 typedef BOOL(CALLBACK* pfnEnumProcessCallback)(
-    _In_ PSYSTEM_PROCESSES_INFORMATION ProcessEntry,
+    _In_ PSYSTEM_PROCESS_INFORMATION ProcessEntry,
     _In_opt_ PVOID UserContext
     );
 
@@ -475,6 +475,13 @@ ULONG supWaitForChildProcesses(
 
 VOID supRaiseHardError(
     _In_ NTSTATUS HardErrorStatus);
+
+BOOL supGetThreadTokenImpersonationLevel(
+    _In_ HANDLE ThreadHandle,
+    _Out_ PSECURITY_IMPERSONATION_LEVEL ImpersonationLevel);
+
+ULONGLONG supGetTickCount64(
+    VOID);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

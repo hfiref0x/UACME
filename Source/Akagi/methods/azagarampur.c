@@ -4,9 +4,9 @@
 *
 *  TITLE:       AZAGARAMPUR.C
 *
-*  VERSION:     3.64
+*  VERSION:     3.65
 *
-*  DATE:        04 Feb 2023
+*  DATE:        22 Sep 2023
 *
 *  UAC bypass methods from AzAgarampur.
 *
@@ -1497,7 +1497,7 @@ BOOL ucmxExamineTaskhost(
 *
 */
 BOOL CALLBACK ucmxEnumTaskhost(
-    _In_ PSYSTEM_PROCESSES_INFORMATION ProcessEntry,
+    _In_ PSYSTEM_PROCESS_INFORMATION ProcessEntry,
     _In_ PVOID UserContext
 )
 {

@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.64
+*  VERSION:     3.65
 *
-*  DATE:        04 Feb 2023
+*  DATE:        22 Sep 2023
 *
 *  Global consts definition file.
 *
@@ -29,8 +29,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       6
-#define UCM_VERSION_REVISION    4
-#define UCM_VERSION_BUILD       2302
+#define UCM_VERSION_REVISION    5
+#define UCM_VERSION_BUILD       2309
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
 
@@ -50,6 +50,7 @@
 #define AKAGI_COMPLETION_EVENT_ID   'ab'
 #define AKAGI_SHARED_SECTION_ID     'cd'
 #define AKAGI_BDESCRIPTOR_NAME_ID   'ef'
+#define AKAGI_RPC_SVC               'zz'
 #define FUBUKI_SYNC_MUTEX_ID        'a1'
 #define FUBUKI_PCA_SECTION_ID       '0f'
 #define FUBUKI_PCA_EVENT_ID         '1f'

@@ -651,6 +651,7 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="makecab.c" />
     <ClCompile Include="compress.c" />
+    <ClCompile Include="methods\antonioCoco.c" />
     <ClCompile Include="methods\api0cradle.c" />
     <ClCompile Include="methods\azagarampur.c" />
     <ClCompile Include="methods\dwells.c" />

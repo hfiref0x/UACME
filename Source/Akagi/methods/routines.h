@@ -4,9 +4,9 @@
 *
 *  TITLE:       ROUTINES.H
 *
-*  VERSION:     3.64
+*  VERSION:     3.65
 *
-*  DATE:        04 Feb 2023
+*  DATE:        22 Sep 2023
 *
 *  Prototypes of methods for UAC bypass methods table.
 *
@@ -168,6 +168,10 @@ BOOL ucmWusaExtractViaJunction(
 NTSTATUS ucmAtlHijackMethod(
     _In_opt_ LPCWSTR lpTargetApp,
     _In_ LPCWSTR lpTargetDll,
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
+
+NTSTATUS ucmSspiDatagramMethod(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 

