@@ -66,7 +66,8 @@ ULONG UCM_WIN32_NOT_IMPLEMENTED[] = {
     UacMethodCurVer,
     UacMethodVFServerTaskSched,
     UacMethodVFServerDiagProf,
-    UacMethodAtlHijack
+    UacMethodAtlHijack,
+    UacMethodSspiDatagram
 };
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {

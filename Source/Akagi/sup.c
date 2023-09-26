@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.65
 *
-*  DATE:        22 Sep 2023
+*  DATE:        25 Sep 2023
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -932,7 +932,8 @@ NTSTATUS supLdrQueryResourceDataEx(
     IMAGE_RESOURCE_DATA_ENTRY* DataEntry;
     ULONG                      SizeOfData = 0;
 
-    *DataSize = 0;
+    if (DataSize)
+        *DataSize = 0;
 
     if (DllHandle == NULL) {
         return STATUS_INVALID_PARAMETER_2;

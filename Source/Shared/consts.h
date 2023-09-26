@@ -50,7 +50,6 @@
 #define AKAGI_COMPLETION_EVENT_ID   'ab'
 #define AKAGI_SHARED_SECTION_ID     'cd'
 #define AKAGI_BDESCRIPTOR_NAME_ID   'ef'
-#define AKAGI_RPC_SVC               'zz'
 #define FUBUKI_SYNC_MUTEX_ID        'a1'
 #define FUBUKI_PCA_SECTION_ID       '0f'
 #define FUBUKI_PCA_EVENT_ID         '1f'

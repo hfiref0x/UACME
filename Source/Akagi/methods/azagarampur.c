@@ -408,8 +408,6 @@ NTSTATUS ucmIeAddOnInstallMethod(
         _strcpy(szDummyTarget, g_ctx->szSystemDirectory);
         _strcat(szDummyTarget, CONSENT_EXE);
 
-        r = E_FAIL;
-
         //
         // Verify image embedded signature.
         // Uppon success copy given file to the temporary directory and return full filepath.
@@ -430,9 +428,7 @@ NTSTATUS ucmIeAddOnInstallMethod(
                 &dummy,
                 &dummyPtr);
 
-            if (dummyPtr)
-                CoTaskMemFree(dummyPtr);
-
+            CoTaskMemFree(dummyPtr);
             SysFreeString(fileToVerify);
         }
 
