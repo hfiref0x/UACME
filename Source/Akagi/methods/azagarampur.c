@@ -4,9 +4,9 @@
 *
 *  TITLE:       AZAGARAMPUR.C
 *
-*  VERSION:     3.64
+*  VERSION:     3.65
 *
-*  DATE:        04 Feb 2023
+*  DATE:        22 Sep 2023
 *
 *  UAC bypass methods from AzAgarampur.
 *
@@ -408,8 +408,6 @@ NTSTATUS ucmIeAddOnInstallMethod(
         _strcpy(szDummyTarget, g_ctx->szSystemDirectory);
         _strcat(szDummyTarget, CONSENT_EXE);
 
-        r = E_FAIL;
-
         //
         // Verify image embedded signature.
         // Uppon success copy given file to the temporary directory and return full filepath.
@@ -430,9 +428,7 @@ NTSTATUS ucmIeAddOnInstallMethod(
                 &dummy,
                 &dummyPtr);
 
-            if (dummyPtr)
-                CoTaskMemFree(dummyPtr);
-
+            CoTaskMemFree(dummyPtr);
             SysFreeString(fileToVerify);
         }
 
@@ -1497,7 +1493,7 @@ BOOL ucmxExamineTaskhost(
 *
 */
 BOOL CALLBACK ucmxEnumTaskhost(
-    _In_ PSYSTEM_PROCESSES_INFORMATION ProcessEntry,
+    _In_ PSYSTEM_PROCESS_INFORMATION ProcessEntry,
     _In_ PVOID UserContext
 )
 {

@@ -6,7 +6,7 @@
 *
 *  VERSION:     1.54
 *
-*  DATE:        02 Dec 2022
+*  DATE:        25 Sep 2023
 *
 *  Global consts definition file.
 *
@@ -19,7 +19,7 @@
 #pragma once
 
 #define YUUBARI_MIN_SUPPORTED_NT_BUILD NT_WIN7_RTM
-#define YUUBARI_MAX_SUPPORTED_NT_BUILD NTX_WIN11_ADB
+#define YUUBARI_MAX_SUPPORTED_NT_BUILD NT_WIN11_24H2
 
 #define T_UAC_COM_AUTOAPPROVAL_LIST    TEXT("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\UAC\\COMAutoApprovalList") //RS1+
 #define T_UAC_BROKER_APPROVAL_LIST     TEXT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CloudExperienceHost\\Broker\\ElevatedClsids")

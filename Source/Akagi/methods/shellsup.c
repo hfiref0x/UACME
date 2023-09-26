@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2021
+*  (C) COPYRIGHT AUTHORS, 2016 - 2023
 *
 *  TITLE:       SHELLSUP.C
 *
-*  VERSION:     3.57
+*  VERSION:     3.65
 *
-*  DATE:        01 Nov 2021
+*  DATE:        25 Sep 2023
 *
 *  Shell registry hijack autoelevation methods.
 *
@@ -121,8 +121,7 @@ NTSTATUS ucmxCreateSlaveKey(
 
     } while (FALSE);
 
-    if (lpGuidKey)
-        CoTaskMemFree(lpGuidKey);
+    CoTaskMemFree(lpGuidKey);
 
     return ntStatus;
 }

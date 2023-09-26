@@ -793,13 +793,25 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.6.4
+78. Author: antonioCoco
+     * Type: Impersonation
+     * Method: SSPI Datagram
+     * Target(s): Attacker defined
+     * Component(s): Attacker defined
+     * Implementation: ucmSspiDatagramMethod
+     * Works from: Windows 7 RTM (7600)
+     * AlwaysNotify compatible
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.6.5
 
 </details>
 
 Note:
 * Method (30) (63) and later implemented only in x64 version;
 * Method (30) require x64 because it abuses WOW64 subsystem feature;
-* Method (55) is not really reliable (as any GUI hacks) and included just for fun.
+* Method (55) is not really reliable (as any GUI hacks) and included just for fun;
+* Method (78) requires current user account password not to be blank.
 
 Run examples:
 * akagi32.exe 23
@@ -903,6 +915,7 @@ https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105
 * MSDT DLL Hijack UAC bypass, https://blog.sevagas.com/?MSDT-DLL-Hijack-UAC-bypass
 * UAC bypass through .Net Deserialization vulnerability in eventvwr.exe, https://twitter.com/orange_8361/status/1518970259868626944
 * Advanced Windows Task Scheduler Playbook - Part.2 from COM to UAC bypass and get SYSTEM directly, http://www.zcgonvh.com/post/Advanced_Windows_Task_Scheduler_Playbook-Part.2_from_COM_to_UAC_bypass_and_get_SYSTEM_dirtectly.html
+* Bypassing UAC with SSPI Datagram Contexts, https://splintercod3.blogspot.com/p/bypassing-uac-with-sspi-datagram.html
 
 # Authors
 

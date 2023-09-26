@@ -183,6 +183,9 @@
     <ClCompile Include="console.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="methods\antonioCoco.c">
+      <Filter>Source Files\methods</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">

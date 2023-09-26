@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.64
+*  VERSION:     3.65
 *
-*  DATE:        04 Feb 2023
+*  DATE:        25 Sep 2023
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1275,7 +1275,7 @@ NTSTATUS ucmDotNetSerialMethod(
 
     } while (FALSE);
 
-    if (lpAppData) CoTaskMemFree(lpAppData);
+    CoTaskMemFree(lpAppData);
     if (lpTargetPath) {
         DeleteFile(lpTargetPath);
         supHeapFree(lpTargetPath);

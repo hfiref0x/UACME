@@ -4,9 +4,9 @@
 *
 *  TITLE:       GLOBAL.H
 *
-*  VERSION:     3.64
+*  VERSION:     3.65
 *
-*  DATE:        04 Feb 2023
+*  DATE:        22 Sep 2023
 *
 *  Common header file for the program support routines.
 *
@@ -61,8 +61,13 @@
 #include <AccCtrl.h>
 #include <wintrust.h>
 #include <taskschd.h>
+
+#define SECURITY_WIN32
+#include <Security.h>
+
 #pragma comment(lib, "taskschd.lib")
 #pragma comment(lib, "rpcrt4.lib")
+#pragma comment (lib, "Secur32.lib")
 
 #pragma warning(push)
 #pragma warning(disable: 4115) //named type definition in parentheses

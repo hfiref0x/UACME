@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2022
+*  (C) COPYRIGHT AUTHORS, 2018 - 2023
 *
 *  TITLE:       RINN.C
 *
-*  VERSION:     3.61
+*  VERSION:     3.65
 *
-*  DATE:        22 Jun 2022
+*  DATE:        25 Sep 2023
 *
 *  FBK UAC bypass methods.
 *
@@ -152,8 +152,7 @@ NTSTATUS ucmEditionUpgradeManagerMethod(
     if (bEnvSet)
         supSetEnvVariable(TRUE, NULL, T_WINDIR, NULL);
 
-    if (lpGuidDir)
-        CoTaskMemFree(lpGuidDir);
+    CoTaskMemFree(lpGuidDir);
 
     supWaitForGlobalCompletionEvent();
 
