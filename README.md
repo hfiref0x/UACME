@@ -811,7 +811,7 @@ Note:
 * Method (30) (63) and later implemented only in x64 version;
 * Method (30) require x64 because it abuses WOW64 subsystem feature;
 * Method (55) is not really reliable (as any GUI hacks) and included just for fun;
-* Method (78) requires current user account password not to be blank.
+* Method (78) requires current user account password not to be blank; requires at least one network adapater available;
 
 Run examples:
 * akagi32.exe 23
