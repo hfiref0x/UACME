@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2023
+*  (C) COPYRIGHT AUTHORS, 2017 - 2024
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     3.65
+*  VERSION:     3.66
 *
-*  DATE:        22 Sep 2023
+*  DATE:        03 Apr 2024
 *
 *  Global support routines file shared between payload dlls.
 *

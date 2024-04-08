@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2019
+*  (C) COPYRIGHT AUTHORS, 2019 - 2024
 *
 *  TITLE:       UIHACKS.H
 *
-*  VERSION:     3.15
+*  VERSION:     3.66
 *
-*  DATE:        15 Feb 2019
+*  DATE:        03 Apr 2024
 *
 *  Fubuki UIAccess related code header file.
 *
@@ -25,3 +25,6 @@ typedef struct _SEARCH_WND {
 
 VOID ucmUIHackExecute(
     _In_ LPWSTR lpPayload);
+
+VOID ucmUIHackExecute2(
+    VOID);

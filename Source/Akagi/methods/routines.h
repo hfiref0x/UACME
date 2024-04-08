@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2023
+*  (C) COPYRIGHT AUTHORS, 2014 - 2024
 *
 *  TITLE:       ROUTINES.H
 *
-*  VERSION:     3.65
+*  VERSION:     3.66
 *
-*  DATE:        22 Sep 2023
+*  DATE:        03 Apr 2024
 *
 *  Prototypes of methods for UAC bypass methods table.
 *
@@ -142,6 +142,10 @@ NTSTATUS ucmDiskCleanupEnvironmentVariable(
     _In_ LPWSTR lpszPayload);
 
 NTSTATUS ucmTokenModUIAccessMethod(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize);
+
+NTSTATUS ucmTokenModUIAccessMethod2(
     _In_ PVOID ProxyDll,
     _In_ DWORD ProxyDllSize);
 

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2023
+*  (C) COPYRIGHT AUTHORS, 2014 - 2024
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.64
+*  VERSION:     3.66
 *
-*  DATE:        04 Feb 2023
+*  DATE:        03 Apr 2024
 *
 *  Proxy dll entry point.
 *
@@ -285,6 +285,26 @@ VOID WINAPI EntryPointUIAccessLoader(
             ucmUIHackExecute(szParam);
         }
     }
+    RtlExitUserProcess(0);
+}
+
+/*
+* EntryPointUIAccessLoader2
+*
+* Purpose:
+*
+* Entry point to be used in exe mode.
+*
+*/
+VOID WINAPI EntryPointUIAccessLoader2(
+    VOID
+)
+{
+    if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED) {
+        RtlExitUserProcess('foff');
+    }
+    ucmUIHackExecute2();
+    
     RtlExitUserProcess(0);
 }
 

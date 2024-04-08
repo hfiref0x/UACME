@@ -39,7 +39,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugConsole|x64'">
-    <LocalDebuggerCommandArguments>78</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>79</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

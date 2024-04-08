@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2020 - 2023
+*  (C) COPYRIGHT AUTHORS, 2020 - 2024
 *
 *  TITLE:       ZCGONVH.C
 *
-*  VERSION:     3.63
+*  VERSION:     3.66
 *
-*  DATE:        11 Jan 2023
+*  DATE:        03 Apr 2024
 *
 *  UAC bypass methods based on zcgonvh original work.
 *
@@ -471,7 +471,7 @@ HRESULT ucmxTriggerDiagProfile(
     } while (FALSE);
 
     if (methodName)
-        SysFreeString(methodName);
+        SysFreeString((BSTR)methodName);
 
     if (pDispatch) {
         pDispatch->lpVtbl->Release(pDispatch);

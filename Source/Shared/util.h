@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2023
+*  (C) COPYRIGHT AUTHORS, 2017 - 2024
 *
 *  TITLE:       UTIL.H
 *
-*  VERSION:     3.64
+*  VERSION:     3.66
 *
-*  DATE:        04 Feb 2023
+*  DATE:        03 Apr 2024
 *
 *  Global support routines header file shared between payload dlls.
 *

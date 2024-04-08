@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2023
+*  (C) COPYRIGHT AUTHORS, 2015 - 2024
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.65
+*  VERSION:     3.66
 *
-*  DATE:        25 Sep 2023
+*  DATE:        03 Apr 2024
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -2842,7 +2842,11 @@ NTSTATUS supWaitForGlobalCompletionEvent(
     LARGE_INTEGER liDueTime;
 
     if (g_ctx->SharedContext.hCompletionEvent) {
-        liDueTime.QuadPart = -(LONGLONG)UInt32x32To64(200000, 10000);
+#ifdef _DEBUG
+        liDueTime.QuadPart = -(LONGLONG)UInt32x32To64(10000, 10000);
+#else
+        liDueTime.QuadPart = -(LONGLONG)UInt32x32To64(100000, 10000);
+#endif
         return NtWaitForSingleObject(g_ctx->SharedContext.hCompletionEvent, FALSE, &liDueTime);
     }
 

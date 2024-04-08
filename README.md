@@ -804,6 +804,16 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.6.5
+79. Author: James Forshaw and Stefan Kanthak
+     * Type: GUI Hack
+     * Method: UIPI bypass with token modification
+     * Target(s): \system32\osk.exe, \system32\mmc.exe
+     * Component(s): Attacker defined
+     * Implementation: ucmTokenModUIAccessMethod2
+     * Works from: Windows 7 (7600)
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.6.6
 
 </details>
 
@@ -916,9 +926,10 @@ https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105
 * UAC bypass through .Net Deserialization vulnerability in eventvwr.exe, https://twitter.com/orange_8361/status/1518970259868626944
 * Advanced Windows Task Scheduler Playbook - Part.2 from COM to UAC bypass and get SYSTEM directly, http://www.zcgonvh.com/post/Advanced_Windows_Task_Scheduler_Playbook-Part.2_from_COM_to_UAC_bypass_and_get_SYSTEM_dirtectly.html
 * Bypassing UAC with SSPI Datagram Contexts, https://splintercod3.blogspot.com/p/bypassing-uac-with-sspi-datagram.html
+* Mitigate some Exploits for Windows’® UAC, https://skanthak.hier-im-netz.de/uacamole.html
 
 # Authors
 
-(c) 2014 - 2023 UACMe Project
+(c) 2014 - 2024 UACMe Project
 
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fhfiref0x%2FUACME&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2023
+*  (C) COPYRIGHT AUTHORS, 2015 - 2024
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.65
+*  VERSION:     3.66
 *
-*  DATE:        22 Sep 2023
+*  DATE:        03 Apr 2024
 *
 *  Global consts definition file.
 *
@@ -29,8 +29,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       6
-#define UCM_VERSION_REVISION    5
-#define UCM_VERSION_BUILD       2309
+#define UCM_VERSION_REVISION    6
+#define UCM_VERSION_BUILD       2403
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
 
@@ -75,12 +75,14 @@
 #define T_APPCOMPAT_LAYERS          L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers"
 #define T_PCA_PERSISTED             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Persisted"
 #define T_APP_ASSOC_TOASTS          L"Software\\Microsoft\\Windows\\CurrentVersion\\ApplicationAssociationToasts"
+#define T_HTMLHELP_AUTHOR           L"Software\\Microsoft\\HtmlHelp Author"
 
 #define T_CURVER                    L"CurVer"
 #define T_MSSETTINGS                L"ms-settings"
 #define T_MSWINDOWSSTORE            L"ms-windows-store"
 #define T_CLASSESFOLDER             L"Folder"
 #define T_LAUNCHERSYSTEMSETTINGS    L"Launcher.SystemSettings"
+#define T_LOCATION                  L"Location"
 
 #define ELLOCNAK_MSU                L"update.msu"
 #define RUN_CMD_COMMAND             L" /c start "
@@ -119,6 +121,7 @@
 #define FUBUKI_WND_HOOKPROC             "MpHandleClose"
 #define FUBUKI_DEFAULT_ENTRYPOINT       "MpScanStart"
 #define FUBUKI_ENTRYPOINT_UIACCESS2     "MpScanControl"
+#define FUBUKI_ENTRYPOINT_UIACCESS3     "MpUpdateEngine"
 #define FUBUKI_ENTRYPOINT_SXS           "MpThreatOpen"
 #define FUBUKI_ENTRYPOINT_PCAEXE        "MpManagerStatusQuery"
 #define FUBUKI_ENTRYPOINT_PCADLL        "MpManagerStatusQueryEx"
