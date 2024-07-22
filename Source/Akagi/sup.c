@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.66
 *
-*  DATE:        03 Apr 2024
+*  DATE:        22 Jul 2024
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -30,7 +30,8 @@ USER_ASSOC_SIGNATURE* g_UserAssocSignatures[] = {
     &UAS_SIG_19041,
     &UAS_SIG_19042_19043,
     &UAS_SIG_22000,
-    &UAS_SIG_22621
+    &UAS_SIG_22621,
+    &UAS_SIG_26100
 };
 
 #if defined(__cplusplus)
@@ -3444,8 +3445,12 @@ NTSTATUS supRegisterShellAssoc(
 
     }
 
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr)) {
         ntStatus = STATUS_SUCCESS;
+    }
+    else if (hr == E_ACCESSDENIED) {
+        ntStatus = STATUS_ACCESS_DENIED;
+    }
 
     return ntStatus;
 }

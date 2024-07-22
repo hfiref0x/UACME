@@ -669,8 +669,8 @@ First parameter is number of method to use, second is optional command (executab
      * Component(s): Attacker defined
      * Implementation: ucmWscActionProtocolMethod
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 11 24H2 (26100)
+        * How: Side effect of Windows changes
       * Code status: added in v3.5.2
 66. Author: Arush Agarampur
      * Type: Elevated COM interface
@@ -679,8 +679,8 @@ First parameter is number of method to use, second is optional command (executab
      * Component(s): Attacker defined
      * Implementation: ucmFwCplLuaMethod2
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 11 24H2 (26100)
+        * How: Side effect of Windows changes
       * Code status: added in v3.5.3
 67. Author: Arush Agarampur
      * Type: Shell API
@@ -857,7 +857,7 @@ https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105
 # Build 
 
 * UACMe comes with full source code, written in C;
-* In order to build from source you need Microsoft Visual Studio 2015 and later versions.
+* In order to build from source you need Microsoft Visual Studio 2019 and later versions.
 
 # Compiled Binaries
 
@@ -870,8 +870,6 @@ https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105
 ## Instructions
 
 * Select Platform ToolSet first for project in solution you want to build (Project->Properties->General): 
-  * v140 for Visual Studio 2015; 
-  * v141 for Visual Studio 2017;
   * v142 for Visual Studio 2019;
   * v143 for Visual Studio 2022.
 * For v140 and above set Target Platform Version (Project->Properties->General):

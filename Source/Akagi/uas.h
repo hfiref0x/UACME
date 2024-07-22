@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2021 - 2023
+*  (C) COPYRIGHT AUTHORS, 2021 - 2024
 *
 *  TITLE:       UAS.H
 *
-*  VERSION:     3.64
+*  VERSION:     3.66
 *
-*  DATE:        24 Jun 2023
+*  DATE:        22 Jul 2024
 *
 *  UserAssocSet signature file.
 *
@@ -130,6 +130,14 @@ static BYTE UserAssocSet_22621[] = {
     0x44, 0x8B, 0xC9, 0x4C, 0x8B, 0xC7, 0x49, 0x8B, 0xD6
 };
 
+// mov r8, rsi
+// mov rdx, r15
+// lea ecx, [r9 + 2]
+// call UserAssocSet
+static BYTE UserAssocSet_26100[] = {
+    0x4C, 0x8B, 0xC6, 0x49, 0x8B, 0xD7, 0x41, 0x8D, 0x49, 0x02
+};
+
 //
 // End of UserAssocSet patterns.
 //
@@ -200,8 +208,15 @@ PVOID UAS_PATTERN_TABLE_22000[] = { &UAS_22000 };
 USER_ASSOC_SIGNATURE UAS_SIG_22000 = { NT_WIN11_21H2 , NT_WIN11_21H2, RTL_NUMBER_OF(UAS_PATTERN_TABLE_22000), &UAS_PATTERN_TABLE_22000 };
 
 //
-// Windows 11 22H2 (22621)
+// Windows 11 22H2-23H2 (22621/22631)
 //
 USER_ASSOC_PATTERN UAS_22621 = { UserAssocSet_22621, sizeof(UserAssocSet_22621) };
 PVOID UAS_PATTERN_TABLE_22621[] = { &UAS_22621 };
-USER_ASSOC_SIGNATURE UAS_SIG_22621 = { NT_WIN11_22H2, NT_WIN11_22H2, RTL_NUMBER_OF(UAS_PATTERN_TABLE_22621), &UAS_PATTERN_TABLE_22621 };
+USER_ASSOC_SIGNATURE UAS_SIG_22621 = { NT_WIN11_22H2, NT_WIN11_23H2, RTL_NUMBER_OF(UAS_PATTERN_TABLE_22621), &UAS_PATTERN_TABLE_22621 };
+
+//
+// Windows 11 24H2 (26100+)
+//
+USER_ASSOC_PATTERN UAS_26100 = { UserAssocSet_26100, sizeof(UserAssocSet_26100) };
+PVOID UAS_PATTERN_TABLE_26100[] = { &UAS_26100 };
+USER_ASSOC_SIGNATURE UAS_SIG_26100 = { NT_WIN11_24H2, NT_WIN11_24H2, RTL_NUMBER_OF(UAS_PATTERN_TABLE_26100), &UAS_PATTERN_TABLE_26100 };
