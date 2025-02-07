@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2024
+*  (C) COPYRIGHT AUTHORS, 2015 - 2025
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.66
+*  VERSION:     3.67
 *
-*  DATE:        21 Jul 2024
+*  DATE:        04 Feb 2025
 *
 *  Global consts definition file.
 *
@@ -29,8 +29,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       6
-#define UCM_VERSION_REVISION    6
-#define UCM_VERSION_BUILD       2407
+#define UCM_VERSION_REVISION    7
+#define UCM_VERSION_BUILD       2502
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
 
