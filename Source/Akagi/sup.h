@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2023
+*  (C) COPYRIGHT AUTHORS, 2014 - 2025
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.65
+*  VERSION:     3.67
 *
-*  DATE:        22 Sep 2023
+*  DATE:        11 Feb 2025
 *
 *  Common header file for the program support routines.
 *
@@ -482,6 +482,14 @@ BOOL supGetThreadTokenImpersonationLevel(
 
 ULONGLONG supGetTickCount64(
     VOID);
+
+BOOL CALLBACK supEnumTaskhostTasksCallback(
+    _In_ PSYSTEM_PROCESS_INFORMATION ProcessEntry,
+    _In_ PVOID UserContext);
+
+BOOLEAN supStartScheduledTask(
+    _In_ LPCWSTR lpTaskFolder,
+    _In_ LPCWSTR lpTaskName);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

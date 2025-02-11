@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.67
 *
-*  DATE:        04 Feb 2025
+*  DATE:        11 Feb 2025
 *
 *  Global consts definition file.
 *
@@ -142,6 +142,7 @@
 #define ISCSIEXE_DLL                L"iscsiexe.dll"
 #define OSKSUPPORT_DLL              L"OskSupport.dll"
 #define PCADM_DLL                   L"pcadm.dll"
+#define PERFORMANCETRACEHANDLER_DLL L"PerformanceTraceHandler.dll"
 #define SHELL32_DLL                 L"shell32.dll"
 #define WINMM_DLL                   L"winmm.dll"
 #define WOW64LOG_DLL                L"wow64log.dll"
@@ -229,7 +230,7 @@
 //
 // System consts
 //
-#define T_SYSTEMROOT_VAR            L"SYSTEMROOT"
+#define T_VOLATILE_ENV              L"Volatile Environment"
 #define T_REGISTRY_PREP             L"\\REGISTRY\\" //end slash included
 
 //

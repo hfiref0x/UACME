@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2024
+*  (C) COPYRIGHT AUTHORS, 2015 - 2025
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.66
+*  VERSION:     3.67
 *
-*  DATE:        22 Jul 2024
+*  DATE:        11 Feb 2025
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -2846,7 +2846,7 @@ NTSTATUS supWaitForGlobalCompletionEvent(
 #ifdef _DEBUG
         liDueTime.QuadPart = -(LONGLONG)UInt32x32To64(10000, 10000);
 #else
-        liDueTime.QuadPart = -(LONGLONG)UInt32x32To64(100000, 10000);
+        liDueTime.QuadPart = -(LONGLONG)UInt32x32To64(50000, 10000);
 #endif
         return NtWaitForSingleObject(g_ctx->SharedContext.hCompletionEvent, FALSE, &liDueTime);
     }
@@ -4382,4 +4382,209 @@ ULONGLONG supGetTickCount64(
 
     return (UInt32x32To64(tickCount.LowPart, USER_SHARED_DATA->TickCountMultiplier) >> 24) +
         (UInt32x32To64(tickCount.HighPart, USER_SHARED_DATA->TickCountMultiplier) << 8);
+}
+
+/*
+* supxExamineTaskhost
+*
+* Purpose:
+*
+* Find all tasks registered with the host process and stop them.
+*
+*/
+BOOL supxExamineTaskhost(
+    _In_ HANDLE UniqueProcessId
+)
+{
+    HRESULT hr = E_FAIL;
+    ULONG processId;
+    LONG i, cTasks = 0;
+    VARIANT varDummy, varIndex;
+    ITaskService* pService = NULL;
+    IRunningTaskCollection* pTasks = NULL;
+    IRunningTask* pTask;
+    TASK_STATE taskState = TASK_STATE_UNKNOWN;
+
+    do {
+
+        hr = CoCreateInstance(&CLSID_TaskScheduler,
+            NULL,
+            CLSCTX_INPROC_SERVER,
+            &IID_ITaskService,
+            (void**)&pService);
+
+        HRESULT_BREAK_ON_FAILED(hr);
+
+        VariantInit(&varDummy);
+
+        hr = pService->lpVtbl->Connect(pService,
+            varDummy,
+            varDummy,
+            varDummy,
+            varDummy);
+
+        HRESULT_BREAK_ON_FAILED(hr);
+
+        hr = pService->lpVtbl->GetRunningTasks(pService,
+            TASK_ENUM_HIDDEN,
+            &pTasks);
+
+        HRESULT_BREAK_ON_FAILED(hr);
+
+        hr = pTasks->lpVtbl->get_Count(pTasks, &cTasks);
+
+        HRESULT_BREAK_ON_FAILED(hr);
+
+        varIndex.vt = VT_INT;
+
+        for (i = 1; i <= cTasks; i++) {
+
+            varIndex.lVal = i;
+
+            hr = pTasks->lpVtbl->get_Item(pTasks, varIndex, &pTask);
+            if (SUCCEEDED(hr)) {
+
+                processId = 0;
+                hr = pTask->lpVtbl->get_EnginePID(pTask, &processId);
+                if (SUCCEEDED(hr) && processId == HandleToUlong(UniqueProcessId)) {
+
+                    hr = pTask->lpVtbl->get_State(pTask, &taskState);
+                    if (taskState == TASK_STATE_RUNNING) {
+                        hr = pTask->lpVtbl->Stop(pTask);
+                    }
+                }
+                pTask->lpVtbl->Release(pTask);
+            }
+        }
+
+
+    } while (FALSE);
+
+    if (pTasks)
+        pTasks->lpVtbl->Release(pTasks);
+
+    if (pService)
+        pService->lpVtbl->Release(pService);
+
+    return SUCCEEDED(hr);
+}
+
+/*
+* supEnumTaskhostTasksCallback
+*
+* Purpose:
+*
+* Callback for taskhost task enumeration.
+*
+*/
+BOOL CALLBACK supEnumTaskhostTasksCallback(
+    _In_ PSYSTEM_PROCESS_INFORMATION ProcessEntry,
+    _In_ PVOID UserContext
+)
+{
+    PUNICODE_STRING targetProcess = (PUNICODE_STRING)UserContext;
+
+    if (!RtlEqualUnicodeString(&ProcessEntry->ImageName, targetProcess, TRUE))
+        return FALSE;
+
+    supxExamineTaskhost(ProcessEntry->UniqueProcessId);
+
+    return FALSE;
+}
+
+/*
+* supStartScheduledTask
+*
+* Purpose:
+*
+* Run target task as schtasks does.
+*
+*/
+BOOLEAN supStartScheduledTask(
+    _In_ LPCWSTR lpTaskFolder,
+    _In_ LPCWSTR lpTaskName
+)
+{
+    HRESULT hr_init, hr = E_FAIL;
+    ITaskService* pService = NULL;
+    ITaskFolder* pRootFolder = NULL;
+    IRegisteredTask* pTask = NULL;
+    IRunningTask* pRunningTask = NULL;
+    VARIANT var;
+
+    BSTR bstrTaskFolder = NULL;
+    BSTR bstrTask = NULL;
+
+    hr_init = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    do {
+
+        bstrTaskFolder = SysAllocString(lpTaskFolder);
+        if (bstrTaskFolder == NULL) {
+            break;
+        }
+
+        bstrTask = SysAllocString(lpTaskName);
+        if (bstrTask == NULL) {
+            break;
+        }
+
+        hr = CoCreateInstance(&CLSID_TaskScheduler,
+            NULL,
+            CLSCTX_INPROC_SERVER,
+            &IID_ITaskService,
+            (void**)&pService);
+
+        if (FAILED(hr)) {
+            break;
+        }
+
+        var.vt = VT_NULL;
+
+        hr = pService->lpVtbl->Connect(pService, var, var, var, var);
+        if (FAILED(hr)) {
+            break;
+        }
+
+        hr = pService->lpVtbl->GetFolder(pService, bstrTaskFolder, &pRootFolder);
+        if (FAILED(hr)) {
+            break;
+        }
+
+        hr = pRootFolder->lpVtbl->GetTask(pRootFolder, bstrTask, &pTask);
+        if (FAILED(hr)) {
+            break;
+        }
+
+        hr = pTask->lpVtbl->RunEx(pTask, var, TASK_RUN_IGNORE_CONSTRAINTS, 0, NULL, &pRunningTask);
+        if (FAILED(hr)) {
+            break;
+        }
+
+    } while (FALSE);
+
+    if (bstrTaskFolder)
+        SysFreeString(bstrTaskFolder);
+
+    if (bstrTask)
+        SysFreeString(bstrTask);
+
+    if (pRunningTask) {
+        pRunningTask->lpVtbl->Stop(pRunningTask);
+        pRunningTask->lpVtbl->Release(pRunningTask);
+    }
+
+    if (pTask)
+        pTask->lpVtbl->Release(pTask);
+
+    if (pRootFolder)
+        pRootFolder->lpVtbl->Release(pRootFolder);
+
+    if (pService)
+        pService->lpVtbl->Release(pService);
+
+    if (SUCCEEDED(hr_init))
+        CoUninitialize();
+
+    return SUCCEEDED(hr);
 }

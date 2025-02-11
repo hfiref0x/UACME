@@ -814,6 +814,17 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.6.6
+80. Author: R41N3RZUF477
+     * Type: Shell API
+     * Method: Environment variables expansion, Dll Hijack
+     * Target(s): \system32\taskhostw.exe
+     * Component(s): PerformanceTraceHandler.dll
+     * Implementation: ucmRequestTraceMethod
+     * Works from: Windows 11 (26100)
+     * AlwaysNotify compatible
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.6.7
 
 </details>
 

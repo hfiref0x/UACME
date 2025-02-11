@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2024
+*  (C) COPYRIGHT AUTHORS, 2014 - 2025
 *
 *  TITLE:       METHODS.H
 *
-*  VERSION:     3.66
+*  VERSION:     3.67
 *
-*  DATE:        03 Apr 2024
+*  DATE:        11 Feb 2025
 *
 *  Prototypes and definitions for UAC bypass methods table.
 *
@@ -99,6 +99,7 @@ typedef enum _UCM_METHOD {
     UacMethodAtlHijack,         //+
     UacMethodSspiDatagram,      //+
     UacMethodTokenModUiAccess2, //+
+    UacMethodRequestTrace,      //+
     UacMethodMax,
     UacMethodInvalid = 0xabcdef
 } UCM_METHOD;
