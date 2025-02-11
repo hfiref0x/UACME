@@ -1406,7 +1406,6 @@ NTSTATUS ucmRequestTraceMethod(
 )
 {
     BOOL fDirCreated = FALSE, fEnvSet = FALSE;
-    INT i;
     NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
     SIZE_T PayloadDirNameLen = 0, nLen;
     WCHAR szBuffer[MAX_PATH + 1];
