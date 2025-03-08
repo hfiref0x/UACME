@@ -825,6 +825,17 @@ First parameter is number of method to use, second is optional command (executab
      * Fixed in: unfixed :see_no_evil:
         * How: -
       * Code status: added in v3.6.7
+81. Author: R41N3RZUF477
+     * Type: Shell API
+     * Method: Environment variables expansion, Dll Hijack, UIPI bypass
+     * Target(s): \system32\QuickAssist.exe
+     * Component(s): EmbeddedBrowserWebView.dll
+     * Implementation: ucmQuickAssistMethod
+     * Works from: Windows 10 (19041)
+     * AlwaysNotify compatible
+     * Fixed in: unfixed :see_no_evil:
+        * How: -
+      * Code status: added in v3.6.8
 
 </details>
 

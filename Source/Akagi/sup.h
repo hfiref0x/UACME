@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.H
 *
-*  VERSION:     3.67
+*  VERSION:     3.68
 *
-*  DATE:        11 Feb 2025
+*  DATE:        07 Mar 2025
 *
 *  Common header file for the program support routines.
 *
@@ -490,6 +490,12 @@ BOOL CALLBACK supEnumTaskhostTasksCallback(
 BOOLEAN supStartScheduledTask(
     _In_ LPCWSTR lpTaskFolder,
     _In_ LPCWSTR lpTaskName);
+
+BOOLEAN supReplaceVersionInfo(
+    _In_ LPCWSTR lpFileName,
+    _In_ PBYTE lpResource,
+    _In_ DWORD dwResourceSize,
+    _In_ DWORD dwKey);
 
 #ifdef _DEBUG
 #define supDbgMsg(Message)  OutputDebugString(Message)

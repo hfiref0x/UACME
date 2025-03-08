@@ -4,9 +4,9 @@
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     3.67
+*  VERSION:     3.68
 *
-*  DATE:        11 Feb 2025
+*  DATE:        07 Mar 2025
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -4587,4 +4587,60 @@ BOOLEAN supStartScheduledTask(
         CoUninitialize();
 
     return SUCCEEDED(hr);
+}
+
+/*
+* supReplaceVersionInfo
+*
+* Purpose:
+*
+* Add a new VERSION_INFO block to the file.
+*
+*/
+BOOLEAN supReplaceVersionInfo(
+    _In_ LPCWSTR lpFileName,
+    _In_ PBYTE lpResource,
+    _In_ DWORD dwResourceSize,
+    _In_ DWORD dwKey
+)
+{
+    BOOLEAN bResult = TRUE;
+    HANDLE hUpdate;
+    PVOID pvBuffer;
+    SIZE_T bufferSize = ALIGN_UP_BY(dwResourceSize, PAGE_SIZE);
+
+    do {
+        pvBuffer = supVirtualAlloc(&bufferSize, DEFAULT_ALLOCATION_TYPE | MEM_TOP_DOWN, DEFAULT_PROTECT_TYPE, NULL);
+        if (pvBuffer == NULL) {
+            bResult = FALSE;
+            break;
+        }
+
+        RtlCopyMemory(pvBuffer, lpResource, dwResourceSize);
+        EncodeBuffer(pvBuffer, dwResourceSize, dwKey);
+
+        hUpdate = BeginUpdateResource(lpFileName, FALSE);
+        if (hUpdate == NULL) {
+            bResult = FALSE;
+            break;
+        }
+
+        if (!UpdateResource(hUpdate, RT_VERSION, MAKEINTRESOURCEW(1), 
+            MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+            pvBuffer, dwResourceSize))
+        {
+            EndUpdateResource(hUpdate, TRUE);
+            break;
+        }
+
+        if (!EndUpdateResource(hUpdate, FALSE)) {
+            EndUpdateResource(hUpdate, TRUE);
+        }
+
+    } while (FALSE);
+
+    if (pvBuffer)
+        supSecureVirtualFree(pvBuffer, bufferSize, NULL);
+
+    return bResult;
 }

@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.67
+*  VERSION:     3.68
 *
-*  DATE:        11 Feb 2025
+*  DATE:        07 Mar 2025
 *
 *  Global consts definition file.
 *
@@ -29,8 +29,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       6
-#define UCM_VERSION_REVISION    7
-#define UCM_VERSION_BUILD       2502
+#define UCM_VERSION_REVISION    8
+#define UCM_VERSION_BUILD       2503
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
 
@@ -76,10 +76,12 @@
 #define T_PCA_PERSISTED             L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Persisted"
 #define T_APP_ASSOC_TOASTS          L"Software\\Microsoft\\Windows\\CurrentVersion\\ApplicationAssociationToasts"
 #define T_HTMLHELP_AUTHOR           L"Software\\Microsoft\\HtmlHelp Author"
+#define T_WEBVIEW_POLICY            L"Software\\Policies\\Microsoft\\Edge\\WebView2\\BrowserExecutableFolder"
 
 #define T_CURVER                    L"CurVer"
 #define T_MSSETTINGS                L"ms-settings"
 #define T_MSWINDOWSSTORE            L"ms-windows-store"
+#define T_QUICKASSIST               L"ms-quick-assist:"
 #define T_CLASSESFOLDER             L"Folder"
 #define T_LAUNCHERSYSTEMSETTINGS    L"Launcher.SystemSettings"
 #define T_LOCATION                  L"Location"
@@ -125,6 +127,7 @@
 #define FUBUKI_ENTRYPOINT_SXS           "MpThreatOpen"
 #define FUBUKI_ENTRYPOINT_PCAEXE        "MpManagerStatusQuery"
 #define FUBUKI_ENTRYPOINT_PCADLL        "MpManagerStatusQueryEx"
+#define FUBUKI_ENTRYPOINT_QASSIST       "MpThreatEnumerate"
 #define AKATSUKI_ENTRYPOINT_EXE         "Wow64LogMessageArgList" 
 #pragma endregion
 
@@ -138,6 +141,7 @@
 #define COMCTL32_DLL                L"comctl32.dll"
 #define DISMCORE_DLL                L"dismcore.dll"
 #define DUSER_DLL                   L"duser.dll"
+#define EMBEDDEDBROWSERWEBVIEW_DLL  L"EmbeddedBrowserWebView.dll"
 #define GDIPLUS_DLL                 L"GdiPlus.dll"
 #define ISCSIEXE_DLL                L"iscsiexe.dll"
 #define OSKSUPPORT_DLL              L"OskSupport.dll"
@@ -174,6 +178,7 @@
 #define MSDT_EXE                    L"msdt.exe"
 #define OSK_EXE                     L"osk.exe"
 #define PKGMGR_EXE                  L"pkgmgr.exe"
+#define QUICKASSIST_EXE             L"QuickAssist.exe"
 #define SDCLT_EXE                   L"sdclt.exe"
 #define SLUI_EXE                    L"slui.exe"
 #define TASKHOSTW_EXE               L"taskhostw.exe"
@@ -200,6 +205,7 @@
 #define MSNETFRAMEWORK_DIR          L"Microsoft.NET\\Framework"
 #define MMCEX_DIR                   L"\\MMCEx"
 #define WBEM_DIR                    L"wbem\\"
+#define WEBVIEW_DIR                 L"EBWebView"
 
 //
 // Shell Verbs
@@ -239,6 +245,11 @@
 #define COR_PROFILER                L"COR_PROFILER"
 #define COR_PROFILER_PATH           L"COR_PROFILER_PATH"
 #define COR_ENABLE_PROFILING        L"COR_ENABLE_PROFILING"
+
+//
+// WebView environment variable
+//
+#define WEBVIEW2_FOLRDER_VAR        L"WEBVIEW2_BROWSER_EXECUTABLE_FOLDER"
 
 //
 // DCCW calibrator

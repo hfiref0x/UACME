@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2024
+*  (C) COPYRIGHT AUTHORS, 2017 - 2025
 *
 *  TITLE:       UTIL.H
 *
-*  VERSION:     3.66
+*  VERSION:     3.68
 *
-*  DATE:        03 Apr 2024
+*  DATE:        07 Mar 2025
 *
 *  Global support routines header file shared between payload dlls.
 *
@@ -26,7 +26,7 @@ typedef struct _UACME_PARAM_BLOCK {
     WCHAR szDesktop[MAX_PATH + 1];
     WCHAR szWinstation[MAX_PATH + 1];
     WCHAR szSignalObject[MAX_PATH + 1];
-} UACME_PARAM_BLOCK, *PUACME_PARAM_BLOCK;
+} UACME_PARAM_BLOCK, * PUACME_PARAM_BLOCK;
 
 typedef BOOL(WINAPI* PFNCREATEPROCESSW)(
     LPCWSTR lpApplicationName,
@@ -40,7 +40,7 @@ typedef BOOL(WINAPI* PFNCREATEPROCESSW)(
     LPSTARTUPINFOW lpStartupInfo,
     LPPROCESS_INFORMATION lpProcessInformation);
 
-typedef BOOL(WINAPI *PFNCREATEPROCESSASUSERW)(
+typedef BOOL(WINAPI* PFNCREATEPROCESSASUSERW)(
     _In_opt_ HANDLE hToken,
     _In_opt_ LPCWSTR lpApplicationName,
     _Inout_opt_ LPWSTR lpCommandLine,
@@ -56,7 +56,13 @@ typedef BOOL(WINAPI *PFNCREATEPROCESSASUSERW)(
 typedef struct _OBJSCANPARAM {
     PWSTR Buffer;
     SIZE_T BufferSize;
-} OBJSCANPARAM, *POBJSCANPARAM;
+} OBJSCANPARAM, * POBJSCANPARAM;
+
+typedef struct _OPLOCK_FILE_CONTEXT {
+    DWORD Length;
+    HANDLE FileHandle;
+    OVERLAPPED Overlapped;
+} OPLOCK_FILE_CONTEXT, * POPLOCK_FILE_CONTEXT;
 
 VOID ucmBinTextEncode(
     _In_ unsigned __int64 x,
@@ -110,6 +116,10 @@ BOOL ucmLaunchPayload2(
     _In_opt_ LPWSTR pszPayload,
     _In_opt_ DWORD cbPayload);
 
+BOOL ucmLaunchPayload3(
+    _In_opt_ LPWSTR pszPayload,
+    _In_opt_ DWORD cbPayload);
+
 LPWSTR ucmQueryRuntimeInfo(
     _In_ BOOL ReturnData);
 
@@ -131,14 +141,14 @@ HANDLE ucmOpenAkagiNamespace(
 
 _Success_(return == TRUE)
 BOOL ucmReadSharedParameters(
-    _Out_ UACME_PARAM_BLOCK *SharedParameters);
+    _Out_ UACME_PARAM_BLOCK * SharedParameters);
 
 VOID ucmSetCompletion(
     _In_ LPWSTR lpEvent);
 
 BOOL ucmGetProcessElevationType(
     _In_opt_ HANDLE ProcessHandle,
-    _Out_ TOKEN_ELEVATION_TYPE *lpType);
+    _Out_ TOKEN_ELEVATION_TYPE * lpType);
 
 NTSTATUS ucmIsProcessElevated(
     _In_ ULONG ProcessId,
@@ -154,6 +164,45 @@ VOID ucmSleep(
 BOOL ucmSetEnvironmentVariable(
     _In_ LPCWSTR lpName,
     _In_ LPCWSTR lpValue);
+
+BOOL ucmOpLockFile(
+    _In_ LPCWSTR FileName,
+    _In_ ACCESS_MASK DesiredAccess,
+    _In_ DWORD ShareMode,
+    _In_ BOOL Exclusive,
+    _In_ POPLOCK_FILE_CONTEXT ofc);
+
+BOOL ucmReleaseOpLock(
+    _In_ POPLOCK_FILE_CONTEXT ofc);
+
+BOOL ucmWaitForOpLock(
+    _In_ POPLOCK_FILE_CONTEXT ofc,
+    _In_ DWORD timeout);
+
+VOID ucmHideMainWindow(
+    VOID);
+
+BOOL ucmCheckUIAccessPermissions(
+    VOID);
+
+HANDLE ucmCallGetProcessHandleFromHwnd(
+    _In_ HWND hwnd);
+
+BOOL ucmCreateProcessWithParent(
+    _In_ LPWSTR lpCommandLine,
+    _In_ HANDLE hParent,
+    _In_ DWORD dwFlags,
+    _In_ WORD wShow,
+    _In_ PROCESS_INFORMATION * pi);
+
+HANDLE ucmGetHwndFullProcessHandle(
+    _In_ HWND hwnd);
+
+HWND ucmFindFirstElevatedWindow(
+    VOID);
+
+BOOL ucmStartBackupLockedElevatedProcess(
+    _In_ POPLOCK_FILE_CONTEXT ofc);
 
 #ifdef _DEBUG
 #define ucmDbgMsg(Message)  OutputDebugString(Message)
