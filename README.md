@@ -569,8 +569,8 @@ First parameter is number of method to use, second is optional command (executab
      * Component(s): Attacker defined
      * Implementation: ucmTokenModUIAccessMethod
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 RS5 (17763), a part of patch, 2024 year
+        * How: When integrity level of an UIAccess token is lowered, the UIAccess property is removed
       * Code status: added in v3.1.5
 56. Author: Hashim Jawad
      * Type: Shell API
@@ -811,8 +811,8 @@ First parameter is number of method to use, second is optional command (executab
      * Component(s): Attacker defined
      * Implementation: ucmTokenModUIAccessMethod2
      * Works from: Windows 7 (7600)
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 RS5 (17763), a part of patch, 2024 year
+        * How: When integrity level of an UIAccess token is lowered, the UIAccess property is removed
       * Code status: added in v3.6.6
 80. Author: R41N3RZUF477
      * Type: Shell API
