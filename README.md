@@ -1,20 +1,44 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/dvnyciarevyj3vuj?svg=true)](https://ci.appveyor.com/project/hfiref0x/uacme)
+![Visitors](https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fgithub.com%2Fhfiref0x%2Fuacme&countColor=%23263759&style=flat)
 
 # UACMe
-* Defeating Windows User Account Control by abusing built-in Windows AutoElevate backdoor.
+Defeating Windows User Account Control by abusing built-in Windows AutoElevate backdoor. This project demonstrates various UAC bypass techniques and serves as an educational resource for understanding Windows security mechanisms.
+
+> ⚠️ **Warning**: This tool demonstrates security vulnerabilities that could be exploited maliciously. Use responsibly and only in controlled environments.
 
 # System Requirements
 
-* x86-32/x64 Windows 7/8/8.1/10/11 (client, some methods however works on server version too).
-* Admin account with UAC set on default settings required.
+* **Operating Systems**: Windows 7/8/8.1/10/11 (x86-32/x64, client, some methods however works on server version too)
+* **User Account**: Administrator account with UAC set on default settings
 
 # Usage
 
-Run executable from command line: akagi32 [Key] [Param] or akagi64 [Key] [Param]. See "Run examples" below for more info.
+## Usage
 
-First parameter is number of method to use, second is optional command (executable file name including full path) to run. Second parameter can be empty - in this case program will execute elevated cmd.exe from system32 folder.
+Run the executable from command line using the following syntax:
 
-**Note**: Since 3.5.0 version all "fixed" methods are considered obsolete and removed altogether with all supporting code/units. If you still need them - use [v3.2.x branch](https://github.com/hfiref0x/UACME/tree/v3.2.x)
+```
+akagi32.exe [Method_Number] [Optional_Command]
+```
+or
+```
+akagi64.exe [Method_Number] [Optional_Command]
+```
+### Parameters:
+* **Method_Number**: Number corresponding to the UAC bypass method (see Methods List below)
+* **Optional_Command**: Full path to an executable file to run with elevated privileges
+  * If omitted, the program will launch an elevated command prompt (%systemroot%\system32\cmd.exe)
+
+### Examples:
+```
+akagi32.exe 23
+akagi64.exe 61
+akagi32.exe 23 c:\windows\system32\calc.exe
+akagi64.exe 61 c:\windows\system32\charmap.exe
+```
+
+
+> **Note**: Since version 3.5.0, all previously "fixed" methods are considered obsolete and have been removed. If you need them, use [v3.2.x branch](https://github.com/hfiref0x/UACME/tree/v3.2.x).
 
 <details>
   <summary>Keys (click to expand/collapse)</summary>
@@ -839,76 +863,67 @@ First parameter is number of method to use, second is optional command (executab
 
 </details>
 
-Note:
-* Method (30) (63) and later implemented only in x64 version;
-* Method (30) require x64 because it abuses WOW64 subsystem feature;
-* Method (55) is not really reliable (as any GUI hacks) and included just for fun;
-* Method (78) requires current user account password not to be blank.
+**Important Notes:**
+* Method 30, 63 and later are implemented only in x64 version
+* Method 30 requires x64 because it exploits WOW64 subsystem feature
+* Method 55 is included primarily for educational purposes and may not be reliable
+* Method 78 requires that the current user account password is not blank
 
-Run examples:
-* akagi32.exe 23
-* akagi64.exe 61
-* akagi32 23 c:\windows\system32\calc.exe
-* akagi64 61 c:\windows\system32\charmap.exe
+## Warning
 
-# Warning
-* This tool shows ONLY popular UAC bypass method used by malware, and re-implement some of them in a different way improving original concepts. There are different, not yet known to the general public, methods. Be aware of this;  
-* This tool is not intended for AV tests and not tested to work in aggressive AV environment, if you still plan to use it with installed bloatware AV soft - use it at your own risk;
-* Some AV may flag this tool as HackTool, MSE/WinDefender constantly marks it as malware, nope;
-* If you run this program on real computer remember to remove all program leftovers after usage, for more info about files it drops to system folders see source code;
-* Most of methods created for x64, with no x86-32 support in mind. I don't see any sense in supporting 32 bit versions of Windows or wow64, however with small tweaks most of them will run under wow64 as well.
+⚠️ **Important Security and Usage Information**:
 
-If you wondering why this still exists and working - here is the explanation - an official Microsoft WHITEFLAG (including totally incompetent statements as bonus)
-https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105
+* This tool demonstrates **only publicly known UAC bypass methods** used by malware. It reimplements some techniques in different ways to improve upon original concepts.
+* **Not intended for antivirus testing** and not guaranteed to work in environments with aggressive security software. Use with active antivirus at your own risk.
+* Many antivirus solutions may flag this tool as a "HackTool" - this is expected behavior due to its capabilities.
+* **Clean up after usage**: If running on a production system, ensure you remove all program artifacts afterward. See source code for details about files dropped to system folders.
+* Most methods were developed primarily for x64 systems. While many can work on x86-32 with minor adjustments, 32-bit support is not a focus of this project.
+* For an official Microsoft explanation on why UAC bypasses still exist, see: [Microsoft's stance on UAC](https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105)
 
 # Windows 10 support and testing policy
-* UACMe tested only with LSTB/LTSC variants (1607/1809) and Last RTM-1 versions, e.g. if current version is 2004 it will be tested on 2004 (19041) and previous version 1909 (18363);
-* Insider builds are not supported as methods may be fixed there.
+* UACMe is tested only with LSTB/LTSC variants (1607/1809) and the current RTM-1 versions
+* For example: if the current version is 2004, it will be tested on 2004 (19041) and the previous 1909 (18363)
+* Insider builds are not supported as methods may be fixed in preview releases
 
-# Protection
-* Account without administrative privileges.
+# Protection Measures
+The most effective protection against UAC bypass techniques is using an account without administrative privileges.
 
-# Malware usage
-* We do  not take any responsibility for this tool usage in the malicious purposes. It is free, open-source and provided AS-IS for everyone.
+# Build instructions
 
-# Other usage
-* Currently used as "signature" by "THOR APT" scanner (handmade pattern matching fraudware from Germany). We do  not take any responsibility for this tool usage in the fraudware;
-* The repository https://github.com/hfiref0x/UACME and it contents are the only genuine source for UACMe code. We have nothing to do with external links to this project, mentions anywhere as well as modifications (forks);
-* In July 2016 so-called "security company" Cymmetria released report about script-kiddie malware bundle called "Patchwork" and false flagged it as APT. They stated it was using "UACME method", which in fact is just slightly and unprofessionally modified injector dll from UACMe v1.9 and was using Carberp/Pitou hybrid method in malware self-implemented way. We do not take any responsibility for UACMe usage in the dubious advertising campaigns from third party "security companies".
+UACMe is written in C and requires Microsoft Visual Studio 2019 or later to build from source.
 
-# Build 
-
-* UACMe comes with full source code, written in C;
-* In order to build from source you need Microsoft Visual Studio 2019 and later versions.
-
-# Compiled Binaries
-
-* They are not provided since 2.8.9 and will never be provided in future. The reasons (and why you too should not provide them to the general public):
-   * If you look at this project in a nutshell it is a HackTool, despite initial goal to be a demonstrator. Of course several AV's detects it as HackTool (MS WD for example), however most of VirusTotal patients detects it as generic "malware". Which is of course incorrect, however unfortunately some lazy malware writers blindly copy-paste code to their crapware (or even simple use this tool directly) thus some AV created signatures based on project code parts;
-   * By giving compiled binaries to everyone you make life of script-kiddies much easier because having need to compile from source works as perfect barrier for exceptionally dumb script-kiddies and "button-clickers";
-   * Having compiled binaries in the repository will ultimately lead to flagging this repository pages as malicious (due to above reasons) by various content filters (SmartScreen, Google Safe Browsing etc).
-* This decision is a final and won't be changed.
-
-## Instructions
-
-* Select Platform ToolSet first for project in solution you want to build (Project->Properties->General): 
-  * v142 for Visual Studio 2019;
-  * v143 for Visual Studio 2022.
-* For v140 and above set Target Platform Version (Project->Properties->General):
-  * If v140 then select 8.1 (Note that Windows 8.1 SDK must be installed);
-  * If v141 and above then select 10.
-
-* The following SDK are required for building the binaries:
+### Prerequisites
+* **IDE**: Microsoft Visual Studio 2019 or 2022
+* **SDK Requirements**:
   * Windows 8.1 or Windows 10 SDK (tested with 19041 version)
   * NET Framework SDK (tested with 4.8 version)
 
-* To build working binary:
-  * Compile payload units
-  * Compile Naka module
-  * Encrypt all payload units using Naka module
-  * Generate secret blobs for these units using Naka module
-  * Move compiled units and secret blobs to the Akagi\Bin directory
-  * Rebuild Akagi
+### Build Steps
+
+1. **Configure Platform ToolSet** (Project->Properties->General):
+   * For Visual Studio 2019: Select v142
+   * For Visual Studio 2022: Select v143
+
+2. **Set Target Platform Version** (Project->Properties->General):
+   * For v140: Select 8.1 (Windows 8.1 SDK must be installed)
+   * For v141 and above: Select 10
+
+3. **Build Process**:
+   * Compile payload units
+   * Compile Naka module
+   * Encrypt all payload units using Naka module
+   * Generate secret blobs for these units using Naka module
+   * Move compiled units and secret blobs to the Akagi\Bin directory
+   * Rebuild Akagi
+
+> **Note**: Compiled binaries are not provided and will never be provided. This serves as a barrier against malicious usage and helps maintain the educational purpose of this project.
+
+## Legal Disclaimer
+
+* This tool is provided for **educational and research purposes only**
+* We do not take any responsibility for this tool being used in malicious activities
+* We have no affiliation with any "security company" using this code for commercial activities
+* This GitHub repository (hfiref0x/UACME) is the only genuine source for UACMe code
   
 # References
 
@@ -951,5 +966,3 @@ https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105
 # Authors
 
 (c) 2014 - 2025 UACMe Project
-
-[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fhfiref0x%2FUACME&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
