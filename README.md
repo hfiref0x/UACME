@@ -11,8 +11,6 @@ Defeating Windows User Account Control by abusing built-in Windows AutoElevate b
 * **Operating Systems**: Windows 7/8/8.1/10/11 (x86-32/x64, client, some methods however works on server version too)
 * **User Account**: Administrator account with UAC set on default settings
 
-# Usage
-
 ## Usage
 
 Run the executable from command line using the following syntax:
