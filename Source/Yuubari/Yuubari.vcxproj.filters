@@ -90,6 +90,9 @@
     <ClCompile Include="..\Shared\_strncmp.c">
       <Filter>minirtl</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\itostr.c">
+      <Filter>minirtl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h">

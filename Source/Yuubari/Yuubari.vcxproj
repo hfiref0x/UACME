@@ -168,6 +168,7 @@
   <ItemGroup>
     <ClCompile Include="..\Shared\cmdline.c" />
     <ClCompile Include="..\Shared\hde\hde64.c" />
+    <ClCompile Include="..\Shared\itostr.c" />
     <ClCompile Include="..\Shared\strtoi.c" />
     <ClCompile Include="..\Shared\ultostr.c" />
     <ClCompile Include="..\Shared\_filename.c" />

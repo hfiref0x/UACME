@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2018
+*  (C) COPYRIGHT AUTHORS, 2016 - 2025
 *
 *  TITLE:       CUI.C
 *
-*  VERSION:     1.30
+*  VERSION:     1.60
 *
-*  DATE:        01 Aug 2018
+*  DATE:        17 Jun 2025
 *
 *  Console output.
 *
@@ -21,6 +21,8 @@
 HANDLE g_ConOut = NULL, g_ConIn = NULL;
 BOOL   g_ConsoleOutput = FALSE;
 WCHAR  g_BE = 0xFEFF;
+const SIZE_T MAX_CONSOLE_OUTPUT = 4096;
+
 
 /*
 * cuiInitialize
@@ -38,15 +40,29 @@ VOID cuiInitialize(
     ULONG dummy;
 
     g_ConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (g_ConOut == INVALID_HANDLE_VALUE || g_ConOut == NULL) {
+        g_ConOut = GetStdHandle(STD_ERROR_HANDLE);
+    }
 
-    if (InitInput) g_ConIn = GetStdHandle(STD_INPUT_HANDLE);
-
-    SetConsoleMode(g_ConOut, ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_OUTPUT);
+    if (InitInput) {
+        g_ConIn = GetStdHandle(STD_INPUT_HANDLE);
+        if (g_ConIn == INVALID_HANDLE_VALUE) {
+            g_ConIn = NULL;
+        }
+    }
 
     g_ConsoleOutput = TRUE;
-    if (!GetConsoleMode(g_ConOut, &dummy)) {
+
+    if (g_ConOut != INVALID_HANDLE_VALUE && g_ConOut != NULL) {
+        SetConsoleMode(g_ConOut, ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_OUTPUT);
+
+        if (!GetConsoleMode(g_ConOut, &dummy)) {
+            g_ConsoleOutput = FALSE;
+            WriteFile(g_ConOut, &g_BE, sizeof(WCHAR), &dummy, NULL);
+        }
+    }
+    else {
         g_ConsoleOutput = FALSE;
-        WriteFile(g_ConOut, &g_BE, sizeof(WCHAR), &dummy, NULL);
     }
 
     if (IsConsoleOutput)
@@ -108,32 +124,45 @@ VOID cuiPrintTextA(
     _In_ BOOL UseReturn
 )
 {
-    SIZE_T consoleIO;
+    BOOL writeSuccess;
     DWORD bytesIO;
+    SIZE_T consoleIO, bufferSize, copySize;
     LPSTR Buffer;
 
     if (lpText == NULL)
         return;
 
     consoleIO = _strlen_a(lpText);
-    if ((consoleIO == 0) || (consoleIO > MAX_PATH * 4))
+    if (consoleIO == 0 || consoleIO > MAX_CONSOLE_OUTPUT)
         return;
 
-    consoleIO = 5 + consoleIO;
-    Buffer = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, consoleIO);
-    if (Buffer) {
+    if (UseReturn) {
+        bufferSize = consoleIO + 3;
+    }
+    else {
+        bufferSize = consoleIO + 1;
+    }
 
-        _strcpy_a(Buffer, lpText);
+    if (bufferSize > MAX_CONSOLE_OUTPUT)
+        return;
+
+    Buffer = (LPSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
+    if (Buffer) {
+        copySize = min(bufferSize - 1, consoleIO);
+        memcpy(Buffer, lpText, copySize);
+        Buffer[copySize] = '\0';
+
         if (UseReturn) _strcat_a(Buffer, "\r\n");
 
         consoleIO = _strlen_a(Buffer);
 
         if (g_ConsoleOutput != FALSE) {
-            WriteConsoleA(g_ConOut, Buffer, (DWORD)consoleIO, &bytesIO, NULL);
+            writeSuccess = WriteConsoleA(g_ConOut, Buffer, (DWORD)consoleIO, &bytesIO, NULL);
         }
         else {
-            WriteFile(g_ConOut, Buffer, (DWORD)consoleIO, &bytesIO, NULL);
+            writeSuccess = WriteFile(g_ConOut, Buffer, (DWORD)consoleIO, &bytesIO, NULL);
         }
+
         HeapFree(GetProcessHeap(), 0, Buffer);
     }
 }
@@ -148,38 +177,51 @@ VOID cuiPrintTextA(
 *
 */
 VOID cuiPrintTextW(
-	_In_ LPWSTR lpText,
-	_In_ BOOL UseReturn
-	)
+    _In_ LPWSTR lpText,
+    _In_ BOOL UseReturn
+)
 {
-	SIZE_T consoleIO;
-	DWORD bytesIO;
-	LPWSTR Buffer;
+    BOOL writeSuccess;
+    DWORD bytesIO;
+    SIZE_T consoleIO, bufferSize, copySize;
+    LPWSTR Buffer;
 
-	if (lpText == NULL)
-		return;
+    if (lpText == NULL)
+        return;
 
-	consoleIO = _strlen_w(lpText);
-	if ((consoleIO == 0) || (consoleIO > MAX_PATH * 4))
-		return;
+    consoleIO = _strlen_w(lpText);
+    if (consoleIO == 0 || consoleIO > MAX_CONSOLE_OUTPUT)
+        return;
 
-	consoleIO = consoleIO * sizeof(WCHAR) + 4 + sizeof(UNICODE_NULL);
-	Buffer = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, consoleIO);
-	if (Buffer) {
+    if (UseReturn) {
+        bufferSize = (consoleIO + 3) * sizeof(WCHAR);
+    }
+    else {
+        bufferSize = (consoleIO + 1) * sizeof(WCHAR);
+    }
 
-		_strcpy(Buffer, lpText);
-		if (UseReturn) _strcat_w(Buffer, TEXT("\r\n"));
+    if (bufferSize > MAX_CONSOLE_OUTPUT * sizeof(WCHAR))
+        return;
 
-		consoleIO = _strlen_w(Buffer);
+    Buffer = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
+    if (Buffer) {
+        copySize = min(bufferSize / sizeof(WCHAR) - 1, consoleIO);
+        memcpy(Buffer, lpText, copySize * sizeof(WCHAR));
+        Buffer[copySize] = L'\0';
 
-		if (g_ConsoleOutput != FALSE) {
-			WriteConsoleW(g_ConOut, Buffer, (DWORD)consoleIO, &bytesIO, NULL);
-		}
-		else {
-			WriteFile(g_ConOut, Buffer, (DWORD)(consoleIO * sizeof(WCHAR)), &bytesIO, NULL);
-		}
-		HeapFree(GetProcessHeap(), 0, Buffer);
-	}
+        if (UseReturn) _strcat_w(Buffer, TEXT("\r\n"));
+
+        consoleIO = _strlen_w(Buffer);
+
+        if (g_ConsoleOutput != FALSE) {
+            writeSuccess = WriteConsoleW(g_ConOut, Buffer, (DWORD)consoleIO, &bytesIO, NULL);
+        }
+        else {
+            writeSuccess = WriteFile(g_ConOut, Buffer, (DWORD)(consoleIO * sizeof(WCHAR)), &bytesIO, NULL);
+        }
+
+        HeapFree(GetProcessHeap(), 0, Buffer);
+    }
 }
 
 /*
@@ -193,12 +235,18 @@ VOID cuiPrintTextW(
 */
 VOID cuiPrintTextLastErrorA(
     _In_ BOOL UseReturn
-    )
+)
 {
-    CHAR szTextBuffer[512];
+    CHAR szTextBuffer[1024];
     DWORD dwLastError = GetLastError();
-    
-    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwLastError, LANG_USER_DEFAULT, (LPSTR)&szTextBuffer, 512, NULL);
+
+    RtlSecureZeroMemory(szTextBuffer, sizeof(szTextBuffer));
+    if (FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwLastError, LANG_USER_DEFAULT,
+        (LPSTR)&szTextBuffer, sizeof(szTextBuffer) - 64, NULL) == 0)
+    {
+        _strcpy_a(szTextBuffer, "Error code: ");
+        itostr_a(dwLastError, _strend_a(szTextBuffer));
+    }
     cuiPrintTextA(szTextBuffer, UseReturn);
 }
 
@@ -215,9 +263,16 @@ VOID cuiPrintTextLastErrorW(
     _In_ BOOL UseReturn
 )
 {
-    WCHAR szTextBuffer[512];
+    WCHAR szTextBuffer[1024];
     DWORD dwLastError = GetLastError();
 
-    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwLastError, LANG_USER_DEFAULT, (LPWSTR)&szTextBuffer, 512, NULL);
+    RtlSecureZeroMemory(szTextBuffer, sizeof(szTextBuffer));
+    if (FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwLastError, LANG_USER_DEFAULT,
+        (LPWSTR)&szTextBuffer, (sizeof(szTextBuffer) / sizeof(WCHAR)) - 64, NULL) == 0)
+    {
+        _strcpy_w(szTextBuffer, TEXT("Error code: "));
+        itostr_w(dwLastError, _strend_w(szTextBuffer));
+    }
+
     cuiPrintTextW(szTextBuffer, UseReturn);
 }

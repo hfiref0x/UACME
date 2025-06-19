@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2025
 *
 *  TITLE:       SUP.C
 *
-*  VERSION:     1.52
+*  VERSION:     1.60
 *
-*  DATE:        23 Nov 2021
+*  DATE:        17 Jun 2025
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -302,10 +302,21 @@ BOOL supConcatenatePaths(
     BOOL TrailingBackslash, LeadingBackslash;
     SIZE_T EndingLength;
 
-    TargetLength = _strlen(Target);
-    PathLength = _strlen(Path);
+    if (Target == NULL || Path == NULL || TargetBufferSize == 0)
+        return FALSE;
 
-    if (TargetLength && (*CharPrev(Target, Target + TargetLength) == TEXT('\\'))) {
+    TargetLength = 0;
+    while (Target[TargetLength] != 0 && TargetLength < TargetBufferSize)
+        TargetLength++;
+
+    if (TargetLength >= TargetBufferSize) 
+        return FALSE;
+
+    PathLength = 0;
+    while (Path[PathLength] != 0)
+        PathLength++;
+
+    if (TargetLength > 0 && Target[TargetLength - 1] == TEXT('\\')) {
         TrailingBackslash = TRUE;
         TargetLength--;
     }
@@ -313,30 +324,27 @@ BOOL supConcatenatePaths(
         TrailingBackslash = FALSE;
     }
 
-    if (Path[0] == TEXT('\\')) {
-        LeadingBackslash = TRUE;
+    LeadingBackslash = (Path[0] == TEXT('\\'));
+    if (LeadingBackslash) {
+        Path++;
         PathLength--;
     }
-    else {
-        LeadingBackslash = FALSE;
+
+    EndingLength = TargetLength + PathLength + ((!LeadingBackslash && !TrailingBackslash) ? 1 : 0) + 1; // +1 for NULL
+
+    if (EndingLength > TargetBufferSize)
+        return FALSE;
+
+    if (!LeadingBackslash && !TrailingBackslash) {
+        Target[TargetLength] = TEXT('\\');
+        TargetLength++;
     }
 
-    EndingLength = TargetLength + PathLength + 2;
-
-    if (!LeadingBackslash && (TargetLength < TargetBufferSize)) {
-        Target[TargetLength++] = TEXT('\\');
+    for (SIZE_T i = 0; i < PathLength && (TargetLength + i + 1) < TargetBufferSize; i++) {
+        Target[TargetLength + i] = Path[i];
     }
 
-    if (TargetBufferSize > TargetLength) {
-        _strncpy(Target + TargetLength,
-            TargetBufferSize - TargetLength,
-            Path,
-            TargetBufferSize - TargetLength);
-    }
-
-    if (TargetBufferSize) {
-        Target[TargetBufferSize - 1] = 0;
-    }
+    Target[EndingLength - 1] = 0;
 
     return (EndingLength <= TargetBufferSize);
 }

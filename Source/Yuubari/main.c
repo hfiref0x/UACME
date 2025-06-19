@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2022
+*  (C) COPYRIGHT AUTHORS, 2014 - 2025
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     1.54
+*  VERSION:     1.60
 *
-*  DATE:        01 Dec 2022
+*  DATE:        17 Jun 2025
 *
 *  Program entry point.
 *
@@ -44,13 +44,18 @@ VOID AppInfoDataOutputCallback(
 )
 {
     LPWSTR lpLog = NULL, Text = NULL;
-    SIZE_T sz = 0;
+    SIZE_T sz = 0, textLen, nameLen, bufferChars;
 
     if (Data == NULL)
         return;
 
-    sz = (_strlen(Data->Name) * sizeof(WCHAR)) + MAX_PATH;
-    lpLog = (LPWSTR)supHeapAlloc(sz);
+    sz = (_strlen(Data->Name) * sizeof(WCHAR));
+    if (sz == 0 || sz > MAXDWORD - MAX_PATH)
+        return;
+
+    sz += MAX_PATH;
+
+    lpLog = (LPWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz);
     if (lpLog) {
         switch (Data->Type) {
         case AiSnapinFile:
@@ -81,12 +86,22 @@ VOID AppInfoDataOutputCallback(
             Text = TEXT("Unknown ");
             break;
         }
-        _strcpy(lpLog, Text);
-        _strcat(lpLog, Data->Name);
-        LoggerWrite(g_LogFile, lpLog, TRUE);
 
-        cuiPrintText(lpLog, TRUE);
-        supHeapFree(lpLog);
+        if (Text != NULL) {
+            _strcpy(lpLog, Text);
+
+            textLen = _strlen(Text);
+            nameLen = _strlen(Data->Name);
+            bufferChars = sz / sizeof(WCHAR);
+
+            if (textLen + nameLen < bufferChars) {
+                _strcat(lpLog, Data->Name);
+                LoggerWrite(g_LogFile, lpLog, TRUE);
+                cuiPrintText(lpLog, TRUE);
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, lpLog);
     }
 }
 
@@ -155,11 +170,15 @@ VOID WINAPI RegistryOutputCallback(
         //
         // Output current registry key to show that we are alive.
         //
-        LoggerWrite(g_LogFile, Data->Name, TRUE);
-        cuiPrintText(Data->Key, TRUE);
-        LoggerWrite(g_LogFile, Data->AppId, TRUE);
-        LoggerWrite(g_LogFile, Data->LocalizedString, TRUE);
-        LoggerWrite(g_LogFile, Data->Key, TRUE);
+        if (Data->Name)
+            LoggerWrite(g_LogFile, Data->Name, TRUE);
+        if (Data->Key)
+            cuiPrintText(Data->Key, TRUE);
+        if (Data->AppId)
+            LoggerWrite(g_LogFile, Data->AppId, TRUE);
+        if (Data->LocalizedString)
+            LoggerWrite(g_LogFile, Data->LocalizedString, TRUE);
+
         LoggerWrite(g_LogFile, TEXT("\r\n"), TRUE);
     }
 
@@ -171,9 +190,10 @@ VOID WINAPI RegistryOutputCallback(
         (Data->DataType == UacCOMDataInterfaceTypeVF))
     {
         InterfaceData = (UAC_INTERFACE_DATA*)(PVOID)Data;
-
-        LoggerWrite(g_LogFile, InterfaceData->Name, TRUE);
-        cuiPrintText(InterfaceData->Name, TRUE);
+        if (InterfaceData->Name) {
+            LoggerWrite(g_LogFile, InterfaceData->Name, TRUE);
+            cuiPrintText(InterfaceData->Name, TRUE);
+        }
 
         if (StringFromCLSID(&InterfaceData->Clsid, &OutputString) == S_OK) {
             LoggerWrite(g_LogFile, TEXT("CLSID"), TRUE);
@@ -206,7 +226,7 @@ VOID WINAPI FusionOutputCallback(
 {
     LPWSTR lpText;
     LPWSTR lpLog = NULL;
-    SIZE_T sz = 0;
+    SIZE_T sz = 0, fileNameLen, prefixLen, bufferChars;
     UAC_FUSION_DATA_DLL* Dll;
 
     if (Data == NULL)
@@ -298,15 +318,35 @@ VOID WINAPI FusionOutputCallback(
     }
     if (Data->DataType == UacFusionDataRedirectedDllType) {
         Dll = (UAC_FUSION_DATA_DLL*)Data;
-        sz = (_strlen(Dll->DllName) + _strlen(Dll->FileName) + MAX_PATH) * sizeof(WCHAR);
+
+        if (Dll->DllName == NULL || Dll->FileName == NULL)
+            return;
+
+        sz = _strlen(Dll->DllName);
+        if (sz == 0 || sz > MAXDWORD - MAX_PATH)
+            return;
+
+        fileNameLen = _strlen(Dll->FileName);
+        if (fileNameLen == 0 || fileNameLen > MAXDWORD - sz - MAX_PATH)
+            return;
+
+        sz += fileNameLen + MAX_PATH;
         lpLog = (LPWSTR)supHeapAlloc(sz);
         if (lpLog) {
+            bufferChars = sz;
+
             _strcpy(lpLog, TEXT("DllRedirection: "));
-            _strcat(lpLog, Dll->FileName);
-            _strcat(lpLog, TEXT(" -> "));
-            _strcat(lpLog, Dll->DllName);
-            LoggerWrite(g_LogFile, lpLog, TRUE);
-            supHeapFree(lpLog);
+            prefixLen = _strlen(TEXT("DllRedirection: "));
+
+            if (prefixLen + fileNameLen + 4 + _strlen(Dll->DllName) < bufferChars) {
+                _strcat(lpLog, Dll->FileName);
+                _strcat(lpLog, TEXT(" -> "));
+                _strcat(lpLog, Dll->DllName);
+
+                LoggerWrite(g_LogFile, lpLog, TRUE);
+            }
+
+            HeapFree(GetProcessHeap(), 0, lpLog);
         }
     }
 }
@@ -341,21 +381,21 @@ VOID ListCOMFromRegistry(
 )
 {
     INTERFACE_INFO_LIST InterfaceList;
+    HRESULT hr;
 
-    if (CoInitializeEx(NULL, COINIT_APARTMENTTHREADED) != S_OK)
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    if (FAILED(hr))
         return;
 
     RtlSecureZeroMemory(&InterfaceList, sizeof(InterfaceList));
 
     __try {
-
         if (!CoEnumInterfaces(&InterfaceList))
             __leave;
 
         cuiPrintText(T_COM_HEAD, TRUE);
         LoggerWriteHeader(T_COM_HEAD);
         CoListInformation((OUTPUTCALLBACK)RegistryOutputCallback, &InterfaceList);
-
 
         //
         // AutoApproval COM list added since RS1.
@@ -370,9 +410,10 @@ VOID ListCOMFromRegistry(
         CoScanBrokerApprovalList((OUTPUTCALLBACK)RegistryOutputCallback, &InterfaceList);
     }
     __finally {
-        CoUninitialize();
         if (InterfaceList.List)
             supHeapFree(InterfaceList.List);
+        if (hr == S_OK)
+            CoUninitialize();
     }
 }
 
@@ -403,11 +444,11 @@ VOID ListFusion(
     //scan Windows first
     cuiPrintText(T_WINFILES_HEAD, TRUE);
     LoggerWriteHeader(T_WINFILES_HEAD);
-
+    /*
 #ifdef _DEBUG
-    FusionScanDirectory(L"C:\\Windows\\WinSxS", (OUTPUTCALLBACK)FusionOutputCallback);
+    FusionScanDirectory(L"C:\\Windows\\system32", (OUTPUTCALLBACK)FusionOutputCallback);
     return;
-#else
+#else*/
     FusionScanDirectory(USER_SHARED_DATA->NtSystemRoot, (OUTPUTCALLBACK)FusionOutputCallback);
 
     //scan program files next
@@ -423,7 +464,7 @@ VOID ListFusion(
     {
         FusionScanDirectory(szPath, (OUTPUTCALLBACK)FusionOutputCallback);
     }
-#endif
+    //#endif
 }
 
 /*
@@ -443,12 +484,12 @@ VOID ListAppInfo(
     cuiPrintText(T_APPINFO_HEAD, TRUE);
     LoggerWriteHeader(T_APPINFO_HEAD);
 
-#ifndef _DEBUG
+    /*#ifndef _DEBUG*/
     _strcpy(szFileName, USER_SHARED_DATA->NtSystemRoot);
     _strcat(szFileName, TEXT("\\system32\\appinfo.dll"));
-#else
-    _strcpy(szFileName, TEXT("C:\\appinfo\\19041.dll"));
-#endif
+    /*#else
+        _strcpy(szFileName, TEXT("C:\\appinfo\\19041.dll"));
+    #endif*/
     ScanAppInfo(szFileName, (OUTPUTCALLBACK)AppInfoDataOutputCallback);
 }
 
@@ -509,14 +550,11 @@ VOID main()
         cuiPrintText(szBuffer, TRUE);
     }
 
-#ifndef _DEBUG
     ListBasicSettings();
-    ListCOMFromRegistry();
-#endif
     ListAppInfo();
-#ifndef _DEBUG
+    ListCOMFromRegistry();
     ListFusion();
-#endif
+
     if (g_LogFile != INVALID_HANDLE_VALUE)
         CloseHandle(g_LogFile);
 

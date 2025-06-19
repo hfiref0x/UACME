@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2025
 *
 *  TITLE:       FUSION.C
 *
-*  VERSION:     1.52
+*  VERSION:     1.60
 *
-*  DATE:        23 Nov 2021
+*  DATE:        17 Jun 2025
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -61,13 +61,13 @@ BOOLEAN IsExemptedAutoApproveEXE(
 */
 NTSTATUS SxsGetTocHeaderFromActivationContext(
     _In_ PACTIVATION_CONTEXT ActivationContext,
-    _Out_ PACTIVATION_CONTEXT_DATA_TOC_HEADER *TocHeader,
-    _Out_opt_ PACTIVATION_CONTEXT_DATA *ActivationContextData
+    _Out_ PACTIVATION_CONTEXT_DATA_TOC_HEADER* TocHeader,
+    _Out_opt_ PACTIVATION_CONTEXT_DATA* ActivationContextData
 )
 {
     NTSTATUS result = STATUS_UNSUCCESSFUL;
-    ACTIVATION_CONTEXT_DATA *ContextData = NULL;
-    ACTIVATION_CONTEXT_DATA_TOC_HEADER *Header;
+    ACTIVATION_CONTEXT_DATA* ContextData = NULL;
+    ACTIVATION_CONTEXT_DATA_TOC_HEADER* Header;
     WCHAR szLog[0x100];
 
     if (ActivationContext == NULL)
@@ -102,7 +102,7 @@ NTSTATUS SxsGetTocHeaderFromActivationContext(
                 break;
             }
 
-            Header = (ACTIVATION_CONTEXT_DATA_TOC_HEADER *)(((LPBYTE)ContextData) + ContextData->DefaultTocOffset);
+            Header = (ACTIVATION_CONTEXT_DATA_TOC_HEADER*)(((LPBYTE)ContextData) + ContextData->DefaultTocOffset);
             if (Header->HeaderSize != sizeof(ACTIVATION_CONTEXT_DATA_TOC_HEADER)) {
                 wsprintf(szLog, TEXT("Unexpected Toc HeaderSize %lu"), Header->HeaderSize);
                 break;
@@ -151,44 +151,65 @@ NTSTATUS SxsGetTocHeaderFromActivationContext(
 *
 */
 NTSTATUS SxsGetStringSectionRedirectionDlls(
-    _In_ ACTIVATION_CONTEXT_STRING_SECTION_HEADER *SectionHeader,
-    _In_ ACTIVATION_CONTEXT_STRING_SECTION_ENTRY *StringEntry,
+    _In_ ACTIVATION_CONTEXT_STRING_SECTION_HEADER* SectionHeader,
+    _In_ ACTIVATION_CONTEXT_STRING_SECTION_ENTRY* StringEntry,
     _Inout_ PDLL_REDIRECTION_LIST DllList
 )
 {
     ULONG SegmentIndex;
     NTSTATUS result = STATUS_SXS_KEY_NOT_FOUND;
-    ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION *DataDll = NULL;
-    ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION_PATH_SEGMENT *DllPathSegment = NULL;
-    DLL_REDIRECTION_LIST_ENTRY *DllListEntry = NULL;
-    WCHAR *wszDllName = NULL;
+    WCHAR* wszDllName = NULL;
+    DLL_REDIRECTION_LIST_ENTRY* DllListEntry;
+    ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION_PATH_SEGMENT* DllPathSegment;
+    ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION* DataDll;
 
-    if (DllList == NULL)
-        return STATUS_INVALID_PARAMETER;
+    if (!DllList)
+        return result;
 
     __try {
-
         DataDll = (ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION*)(((LPBYTE)SectionHeader) + StringEntry->Offset);
-        if (DataDll->PathSegmentOffset) {
-            DllPathSegment = (ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION_PATH_SEGMENT*)(((LPBYTE)SectionHeader) + DataDll->PathSegmentOffset);
-            if (DllPathSegment) {
-                for (SegmentIndex = 0; SegmentIndex < DataDll->PathSegmentCount; SegmentIndex++) {
-                    if ((DllPathSegment->Length) && (DllPathSegment->Offset)) {
-                        DllListEntry = (DLL_REDIRECTION_LIST_ENTRY*)RtlAllocateHeap(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, sizeof(DLL_REDIRECTION_LIST_ENTRY));
-                        if (DllListEntry) {
-                            wszDllName = (WCHAR*)RtlAllocateHeap(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, DllPathSegment->Length);
-                            if (wszDllName) {
-                                RtlCopyMemory(wszDllName, (((PBYTE)SectionHeader) + DllPathSegment->Offset), DllPathSegment->Length);
-                                RtlInitUnicodeString(&DllListEntry->DllName, wszDllName);
-                            }
-                            RtlInterlockedPushEntrySList(&DllList->Header, &DllListEntry->ListEntry);
+
+        if (!DataDll || !DataDll->PathSegmentOffset || DataDll->PathSegmentCount == 0)
+            return result;
+
+        DllPathSegment = (ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION_PATH_SEGMENT*)(((LPBYTE)SectionHeader) + DataDll->PathSegmentOffset);
+
+        for (SegmentIndex = 0; SegmentIndex < DataDll->PathSegmentCount; SegmentIndex++) {
+            if (DllPathSegment && DllPathSegment->Length && DllPathSegment->Offset) {
+                DllListEntry = (DLL_REDIRECTION_LIST_ENTRY*)
+                    RtlAllocateHeap(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, sizeof(DLL_REDIRECTION_LIST_ENTRY));
+
+                if (DllListEntry) {
+                    wszDllName = (WCHAR*)RtlAllocateHeap(NtCurrentPeb()->ProcessHeap, HEAP_ZERO_MEMORY, DllPathSegment->Length);
+                    if (wszDllName) {
+                        __try {
+                            RtlCopyMemory(
+                                wszDllName,
+                                ((PBYTE)SectionHeader) + DllPathSegment->Offset,
+                                DllPathSegment->Length);
+
+                            RtlInitUnicodeString(&DllListEntry->DllName, wszDllName);
+                        }
+                        __except (EXCEPTION_EXECUTE_HANDLER) {
+                            RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, wszDllName);
+                            RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, DllListEntry);
+                            return STATUS_SXS_CORRUPTION;
                         }
                     }
-                    DllPathSegment = (ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION_PATH_SEGMENT*)(((LPBYTE)SectionHeader) + DataDll->Size);
+                    else {
+                        RtlFreeHeap(NtCurrentPeb()->ProcessHeap, 0, DllListEntry);
+                        continue;
+                    }
+
+                    RtlInterlockedPushEntrySList(&DllList->Header, &DllListEntry->ListEntry);
                 }
             }
-            result = STATUS_SUCCESS;
+
+            DllPathSegment = (ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION_PATH_SEGMENT*)
+                (((LPBYTE)DllPathSegment) + sizeof(ACTIVATION_CONTEXT_DATA_DLL_REDIRECTION_PATH_SEGMENT));
         }
+
+        result = STATUS_SUCCESS;
     }
     __except (EXCEPTION_EXECUTE_HANDLER) {
         return STATUS_SXS_CORRUPTION;
@@ -212,11 +233,11 @@ NTSTATUS SxsGetDllRedirectionFromActivationContext(
 {
     ULONG i, j;
     NTSTATUS result = STATUS_UNSUCCESSFUL, status;
-    ACTIVATION_CONTEXT_DATA *ContextData = NULL;
-    ACTIVATION_CONTEXT_DATA_TOC_HEADER *TocHeader = NULL;
-    ACTIVATION_CONTEXT_DATA_TOC_ENTRY *TocEntry = NULL;
-    ACTIVATION_CONTEXT_STRING_SECTION_HEADER *SectionHeader = NULL;
-    ACTIVATION_CONTEXT_STRING_SECTION_ENTRY *StringEntry = NULL;
+    ACTIVATION_CONTEXT_DATA* ContextData = NULL;
+    ACTIVATION_CONTEXT_DATA_TOC_HEADER* TocHeader = NULL;
+    ACTIVATION_CONTEXT_DATA_TOC_ENTRY* TocEntry = NULL;
+    ACTIVATION_CONTEXT_STRING_SECTION_HEADER* SectionHeader = NULL;
+    ACTIVATION_CONTEXT_STRING_SECTION_ENTRY* StringEntry = NULL;
 
     WCHAR szLog[0x100];
 
@@ -228,7 +249,6 @@ NTSTATUS SxsGetDllRedirectionFromActivationContext(
             return STATUS_INVALID_PARAMETER_2;
 
         do {
-
             if (!NT_SUCCESS(SxsGetTocHeaderFromActivationContext(ActivationContext, &TocHeader, &ContextData)))
                 break;
 
@@ -270,10 +290,7 @@ NTSTATUS SxsGetDllRedirectionFromActivationContext(
             } //while (i < TocHeader->EntryCount)
 
             DllList->Depth = RtlQueryDepthSList(&DllList->Header);
-            if (DllList->Depth == 0)
-                result = STATUS_SXS_SECTION_NOT_FOUND;
-            else
-                result = STATUS_SUCCESS;
+            result = (DllList->Depth == 0) ? STATUS_SXS_SECTION_NOT_FOUND : STATUS_SUCCESS;
 
         } while (FALSE);
 
@@ -295,13 +312,13 @@ NTSTATUS SxsGetDllRedirectionFromActivationContext(
 */
 NTSTATUS FusionProbeForRedirectedDlls(
     _In_ LPWSTR lpFileName,
-    _In_ ACTIVATION_CONTEXT *ActivationContext,
+    _In_ ACTIVATION_CONTEXT* ActivationContext,
     _In_ OUTPUTCALLBACK OutputCallback
 )
 {
     NTSTATUS status;
-    SLIST_ENTRY *ListEntry = NULL;
-    DLL_REDIRECTION_LIST_ENTRY *DllData = NULL;
+    SLIST_ENTRY* ListEntry = NULL;
+    DLL_REDIRECTION_LIST_ENTRY* DllData = NULL;
     UAC_FUSION_DATA_DLL FusionRedirectedDll;
     DLL_REDIRECTION_LIST DllList;
 
@@ -314,7 +331,6 @@ NTSTATUS FusionProbeForRedirectedDlls(
                 if (ListEntry) {
                     DllData = (PDLL_REDIRECTION_ENTRY)ListEntry;
                     RtlSecureZeroMemory(&FusionRedirectedDll, sizeof(FusionRedirectedDll));
-
                     FusionRedirectedDll.DataType = UacFusionDataRedirectedDllType;
                     FusionRedirectedDll.FileName = lpFileName;
                     FusionRedirectedDll.DllName = DllData->DllName.Buffer;
@@ -344,13 +360,13 @@ NTSTATUS FusionProbeForRedirectedDlls(
 */
 VOID FusionCheckFile(
     _In_ LPWSTR lpDirectory,
-    _In_ WIN32_FIND_DATA *fdata,
+    _In_ WIN32_FIND_DATA* fdata,
     _In_ OUTPUTCALLBACK OutputCallback
 )
 {
     DWORD               lastError;
     NTSTATUS            status;
-    HANDLE              hFile = NULL, hSection = NULL, hActCtx = NULL;
+    HANDLE              hFile = NULL, hSection = NULL, hActCtx = INVALID_HANDLE_VALUE;
     LPWSTR              FileName = NULL, pt = NULL;
     PBYTE               DllBase = NULL;
     SIZE_T              DllVirtualSize, sz, l;
@@ -377,7 +393,7 @@ VOID FusionCheckFile(
         if (fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             break;
 
-        sz = (_strlen(lpDirectory) + _strlen(fdata->cFileName)) * sizeof(WCHAR) + sizeof(UNICODE_NULL);
+        sz = (_strlen(lpDirectory) + _strlen(fdata->cFileName) + 2) * sizeof(WCHAR); // +2 for NULL and possible '\'
         sz = ALIGN_UP_BY(sz, PAGE_SIZE);
         FileName = (LPWSTR)VirtualAlloc(NULL, sz, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if (FileName == NULL)
@@ -391,7 +407,13 @@ VOID FusionCheckFile(
             pt[l] = L'\\';
             pt[l + 1] = 0;
         }
-        _strcat(FileName, fdata->cFileName);
+
+        if (l + _strlen(fdata->cFileName) < sz / sizeof(WCHAR)) {
+            _strcat(FileName, fdata->cFileName);
+        }
+        else {
+            break; // Path too long, skip this file
+        }
 
         if (RtlDosPathNameToNtPathName_U(FileName, &usFileName, NULL, NULL) == FALSE)
             break;
@@ -603,13 +625,13 @@ VOID FusionCheckFile(
 
         //
         // Print redirection dlls from activation context
-        //
+        //       
         FusionProbeForRedirectedDlls(FileName, (PACTIVATION_CONTEXT)hActCtx, OutputCallback);
 
 
     } while (FALSE);
 
-    if (hActCtx != NULL)
+    if (hActCtx != INVALID_HANDLE_VALUE)
         ReleaseActCtx(hActCtx);
 
     if (usFileName.Buffer != NULL)

@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2022
+*  (C) COPYRIGHT AUTHORS, 2014 - 2025
 *
 *  TITLE:       APPINFO.C
 *
-*  VERSION:     1.54
+*  VERSION:     1.60
 *
-*  DATE:        01 Dec 2022
+*  DATE:        17 Jun 2025
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -268,7 +268,7 @@ BOOLEAN AipQueryMSBlock(
     PVOID pvMmcBlock = NULL;
     PBYTE SectionBase;
     IMAGE_NT_HEADERS* NtHeaders = RtlImageNtHeader(AppInfo->DllBase);
-    IMAGE_SECTION_HEADER* SectionTableEntry, *RDataTableEntry = NULL;
+    IMAGE_SECTION_HEADER* SectionTableEntry, * RDataTableEntry = NULL;
 
     WCHAR szSignature[] = L"mmc.exe";
 
@@ -339,6 +339,10 @@ BOOL IsCrossPtr(
 )
 {
     if (Ptr == 0 || AppInfo == NULL) {
+        return TRUE;
+    }
+
+    if (!IN_REGION(Ptr, AppInfo->DllBase, AppInfo->DllVirtualSize)) {
         return TRUE;
     }
 
@@ -445,10 +449,12 @@ VOID ListAutoApproveEXE(
     _In_ OUTPUTCALLBACK OutputCallback
 )
 {
-    WCHAR           k, lk;
-    SIZE_T          i, Length = 0;
-    LPWSTR          TestString = NULL;
-    UAC_AI_DATA     CallbackData;
+    BOOL bValidEntry;
+    WCHAR k, lk;
+    SIZE_T i, Length = 0;
+    LPWSTR TestString = NULL;
+    UAC_AI_DATA CallbackData;
+    SIZE_T MaxEntries = 100;
 
     if (AppInfo->lpAutoApproveEXEList == NULL)
         return;
@@ -460,20 +466,43 @@ VOID ListAutoApproveEXE(
     lk = 0;
     __try {
         do {
+            if (i >= MaxEntries)
+                break;
+
             TestString = (LPWSTR)AppInfo->lpAutoApproveEXEList[i];
             if (IsCrossPtr(AppInfo, (ULONG_PTR)TestString, (ULONG_PTR)AppInfo->lpAutoApproveEXEList))
                 break;
 
-            k = TestString[0];
-            if (!TestChar(k))
+            if (!IN_REGION(TestString, AppInfo->DllBase, AppInfo->DllVirtualSize))
+                break;
+
+            bValidEntry = FALSE;
+            __try {
+                k = TestString[0];
+                bValidEntry = TestChar(k);
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER) {
+                break;
+            }
+
+            if (!bValidEntry)
                 break;
 
             if (k < lk)
                 break;
+
             lk = k;
             i += 1;
-            if (i > 100)
-                break;
+
+            __try {
+                Length = _strlen(TestString);
+                if (Length > MAX_PATH * 2) {
+                    continue;
+                }
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER) {
+                continue;
+            }
 
             Length = _strlen(TestString);
             CallbackData.Length = Length;
@@ -502,9 +531,10 @@ VOID ListStringDataUnsorted(
     OUTPUTCALLBACK OutputCallback
 )
 {
-    SIZE_T          i, Length = 0;
-    LPWSTR          TestString = NULL;
-    UAC_AI_DATA     CallbackData;
+    BOOL bValidEntry = FALSE;
+    SIZE_T i, Length = 0, MaxEntries = 100;
+    LPWSTR TestString = NULL;
+    UAC_AI_DATA CallbackData;
 
     if (Data == NULL)
         return;
@@ -515,16 +545,38 @@ VOID ListStringDataUnsorted(
 
     __try {
         do {
+            if (i >= MaxEntries)
+                break;
+
             TestString = (LPWSTR)Data[i];
             if (IsCrossPtr(AppInfo, (ULONG_PTR)TestString, (ULONG_PTR)Data))
                 break;
 
-            if (!TestChar(TestString[0]))
+            if (!IN_REGION(TestString, AppInfo->DllBase, AppInfo->DllVirtualSize))
+                break;
+
+            bValidEntry = FALSE;
+            __try {
+                bValidEntry = TestChar(TestString[0]);
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER) {
+                break;
+            }
+
+            if (!bValidEntry)
                 break;
 
             i += 1;
-            if (i > 100)
-                break;
+
+            __try {
+                Length = _strlen(TestString);
+                if (Length > MAX_PATH * 2) {
+                    continue;
+                }
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER) {
+                continue;
+            }
 
             Length = _strlen(TestString);
             CallbackData.Length = Length;

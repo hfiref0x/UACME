@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2025
 *
 *  TITLE:       LOGGER.C
 *
-*  VERSION:     1.51
+*  VERSION:     1.60
 *
-*  DATE:        31 Oct 2021
+*  DATE:        17 Jun 2025
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -26,20 +26,29 @@
 */
 HANDLE LoggerCreate(
     _In_opt_ LPWSTR lpLogFileName
-    )
+)
 {
     WCHAR ch;
     LPWSTR fname = lpLogFileName;
     HANDLE hFile;
-    DWORD bytesIO;
+    DWORD bytesIO, lastError;
 
     if (lpLogFileName == NULL) {
         fname = TEXT("log.log");
     }
-    hFile = CreateFile(fname, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    hFile = CreateFile(fname, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL, NULL);
+
     if (hFile != INVALID_HANDLE_VALUE) {
         ch = (WCHAR)0xFEFF;
-        WriteFile(hFile, &ch, sizeof(WCHAR), &bytesIO, NULL);
+
+        if (!WriteFile(hFile, &ch, sizeof(WCHAR), &bytesIO, NULL)) {
+            lastError = GetLastError();
+            CloseHandle(hFile);
+            SetLastError(lastError);
+            return INVALID_HANDLE_VALUE;
+        }
     }
     return hFile;
 }
@@ -56,27 +65,38 @@ VOID LoggerWrite(
     _In_ HANDLE hLogFile,
     _In_ LPWSTR lpText,
     _In_ BOOL UseReturn
-    )
+)
 {
-    SIZE_T sz = 0;
+    SIZE_T textLength = 0, bufferSize = 0;
     DWORD bytesIO = 0;
     LPWSTR Buffer = NULL;
 
+    if (lpText == NULL)
+        return;
+
+    textLength = _strlen(lpText);
+    if (textLength == 0)
+        return;
+
     if (hLogFile != INVALID_HANDLE_VALUE) {
-        if (lpText == NULL)
-            return;
 
-        sz = _strlen(lpText);
-        if (sz == 0)
-            return;
+        if (UseReturn) {
+            if (textLength > (SIZE_MAX / sizeof(WCHAR)) - 3)
+                return;
+            bufferSize = (textLength + 3) * sizeof(WCHAR);
+        }
+        else {
+            if (textLength > (SIZE_MAX / sizeof(WCHAR)) - 1)
+                return;
+            bufferSize = (textLength + 1) * sizeof(WCHAR);
+        }
 
-        sz = sz * sizeof(WCHAR) + 4 + sizeof(UNICODE_NULL);
-        Buffer = (LPWSTR)supHeapAlloc(sz);
+        Buffer = (LPWSTR)supHeapAlloc(bufferSize);
         if (Buffer) {
             _strcpy(Buffer, lpText);
             if (UseReturn) _strcat(Buffer, TEXT("\r\n"));
-            sz = _strlen(Buffer);
-            WriteFile(hLogFile, Buffer, (DWORD)(sz * sizeof(WCHAR)), &bytesIO, NULL);
+            textLength = _strlen(Buffer);
+            WriteFile(hLogFile, Buffer, (DWORD)(textLength * sizeof(WCHAR)), &bytesIO, NULL);
             supHeapFree(Buffer);
         }
     }

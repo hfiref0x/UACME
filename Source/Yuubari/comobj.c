@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2021
+*  (C) COPYRIGHT AUTHORS, 2014 - 2025
 *
 *  TITLE:       COMOBJ.C
 *
-*  VERSION:     1.51
+*  VERSION:     1.60
 *
-*  DATE:        31 Oct 2021
+*  DATE:        17 Jun 2025
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -418,6 +418,10 @@ BOOL CoEnumInterfaces(
         if ((lRet != ERROR_SUCCESS) || (cSubKeys == 0))
             __leave;
 
+        if (cSubKeys > 0xFFFF) {
+            __leave;
+        }
+
         infoBuffer = (INTERFACE_INFO*)supHeapAlloc(cSubKeys * sizeof(INTERFACE_INFO));
         if (infoBuffer == NULL)
             __leave;
@@ -445,6 +449,9 @@ BOOL CoEnumInterfaces(
                         (LPWSTR)&infoBuffer[k].szInterfaceName, &cchKey);
 
                     k++;
+
+                    if (k >= cSubKeys)
+                        break;
                 }
             }
         }
