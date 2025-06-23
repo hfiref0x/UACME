@@ -922,6 +922,12 @@ UACMe is written in C and requires Microsoft Visual Studio 2019 or later to buil
 * We do not take any responsibility for this tool being used in malicious activities
 * We have no affiliation with any "security company" using this code for commercial activities
 * This GitHub repository (hfiref0x/UACME) is the only genuine source for UACMe code
+
+# Support
+
+If you find this project interesting, you can buy me a coffee
+
+BTC (Bitcoin): bc1qzkvtpa0053cagf35dqmpvv9k8hyrwl7krwdz84q39mcpy68y6tmqsju0g4
   
 # References
 
