@@ -202,9 +202,7 @@ VOID wdCheckEmulatedVFS(
     RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
     if (GetModuleFileName(NULL, szBuffer, MAX_PATH)) {
         if (_strstri(szBuffer, szMsEngVFS) != NULL) {
-            if (_strstri(szBuffer, szMsEngVFS) != NULL) {
-                RtlExitUserProcess((UINT)0);
-            }
+            RtlExitUserProcess((UINT)0);
         }
     }
 }
