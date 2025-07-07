@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2020 - 2021
+*  (C) COPYRIGHT AUTHORS, 2020 - 2025
 *
 *  TITLE:       FUSUTIL.C
 *
-*  VERSION:     3.58
+*  VERSION:     3.69
 *
-*  DATE:        01 Dec 2021
+*  DATE:        07 Jul 2025
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -376,12 +376,18 @@ BOOL fusUtilReferenceStreamByName(
 
     do {
         pStorStream = (STORAGESTREAM*)streamPtr;
+        if (IsBadReadPtr(pStorStream->rcName, sizeof(CHAR)))
+            return FALSE;
+
         if (_strcmpi_a(pStorStream->rcName, StreamName) == 0) {
             *StreamRef = pStorStream;
             return TRUE;
         }
 
         nameLen = _strlen_a(pStorStream->rcName) + 1;
+        if (nameLen > MAXUSHORT)
+            return FALSE;
+
         offset = ALIGN_UP(FIELD_OFFSET(STORAGESTREAM, rcName) + nameLen, ULONG);
         streamPtr = (PBYTE)RtlOffsetToPointer(streamPtr, offset);
         i++;
@@ -435,59 +441,62 @@ BOOL fusUtilGetImageMVID(
         cliHeader = (IMAGE_COR20_HEADER*)RtlImageDirectoryEntryToData(baseAddress, TRUE,
             IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &sz);
 
-        pStorSign = (STORAGESIGNATURE*)RtlOffsetToPointer(baseAddress, cliHeader->MetaData.VirtualAddress);
-        if (pStorSign->lSignature == STORAGE_MAGIC_SIG) {
+        if (cliHeader && sz >= sizeof(IMAGE_COR20_HEADER)) {
 
-            offset = FIELD_OFFSET(STORAGESIGNATURE, pVersion) + pStorSign->iVersionString;
-            pStorHeader = (STORAGEHEADER*)RtlOffsetToPointer(pStorSign, offset);
+            pStorSign = (STORAGESIGNATURE*)RtlOffsetToPointer(baseAddress, cliHeader->MetaData.VirtualAddress);
+            if (pStorSign && !IsBadReadPtr(pStorSign, sizeof(STORAGESIGNATURE)) &&
+                pStorSign->lSignature == STORAGE_MAGIC_SIG)
+            {
+                offset = FIELD_OFFSET(STORAGESIGNATURE, pVersion) + pStorSign->iVersionString;
+                pStorHeader = (STORAGEHEADER*)RtlOffsetToPointer(pStorSign, offset);
 
-            pStreamTables = NULL;
-            if (!fusUtilReferenceStreamByName(pStorHeader, "#~", &pStreamTables)) {
-                FreeLibrary(hModule);
-                return FALSE;
-            }
-
-            pStreamGuid = NULL;
-            if (!fusUtilReferenceStreamByName(pStorHeader, "#GUID", &pStreamGuid)) {
-                FreeLibrary(hModule);
-                return FALSE;
-            }
-
-            pTablesHeader = (STORAGETABLESHEADER*)RtlOffsetToPointer(pStorSign, pStreamTables->iOffset);
-            sz = 0;
-
-            //
-            // __popcnt64 or the garbage code below
-            //
-            for (i = 0; i < MAX_CLR_TABLES; i++)
-                if ((i < 32 && (pTablesHeader->Valid.u.LowPart >> i) & 1) ||
-                    (i >= 32 && (pTablesHeader->Valid.u.HighPart >> i) & 1))
-                {
-                    sz++;
+                pStreamTables = NULL;
+                if (!fusUtilReferenceStreamByName(pStorHeader, "#~", &pStreamTables)) {
+                    FreeLibrary(hModule);
+                    return FALSE;
                 }
 
-            offset = FIELD_OFFSET(STORAGETABLESHEADER, Rows) + (sz * sizeof(ULONG));
+                pStreamGuid = NULL;
+                if (!fusUtilReferenceStreamByName(pStorHeader, "#GUID", &pStreamGuid)) {
+                    FreeLibrary(hModule);
+                    return FALSE;
+                }
 
-            tablesPtr = (PBYTE)RtlOffsetToPointer(pTablesHeader, offset);
-            tablesPtr += sizeof(WORD);
+                pTablesHeader = (STORAGETABLESHEADER*)RtlOffsetToPointer(pStorSign, pStreamTables->iOffset);
+                sz = 0;
 
-            if (pTablesHeader->HeapOffsetSizes & MD_STRINGS_BIT)
-                tablesPtr += sizeof(DWORD);
-            else
+                //
+                // __popcnt64 or the garbage code below
+                //
+                for (i = 0; i < MAX_CLR_TABLES; i++)
+                    if ((i < 32 && (pTablesHeader->Valid.u.LowPart >> i) & 1) ||
+                        (i >= 32 && (pTablesHeader->Valid.u.HighPart >> i) & 1))
+                    {
+                        sz++;
+                    }
+
+                offset = FIELD_OFFSET(STORAGETABLESHEADER, Rows) + (sz * sizeof(ULONG));
+
+                tablesPtr = (PBYTE)RtlOffsetToPointer(pTablesHeader, offset);
                 tablesPtr += sizeof(WORD);
 
-            if (pTablesHeader->HeapOffsetSizes & MD_GUIDS_BIT)
-                mvidIndex = *(PULONG)tablesPtr;
-            else
-                mvidIndex = *(PUSHORT)tablesPtr;
+                if (pTablesHeader->HeapOffsetSizes & MD_STRINGS_BIT)
+                    tablesPtr += sizeof(DWORD);
+                else
+                    tablesPtr += sizeof(WORD);
 
-            if (mvidIndex) {
-                guidsPtr = (LPGUID)RtlOffsetToPointer(pStorSign, pStreamGuid->iOffset);
-                RtlCopyMemory(ModuleVersionId, &guidsPtr[mvidIndex - 1], sizeof(GUID));
-                bResult = TRUE;
+                if (pTablesHeader->HeapOffsetSizes & MD_GUIDS_BIT)
+                    mvidIndex = *(PULONG)tablesPtr;
+                else
+                    mvidIndex = *(PUSHORT)tablesPtr;
+
+                if (mvidIndex) {
+                    guidsPtr = (LPGUID)RtlOffsetToPointer(pStorSign, pStreamGuid->iOffset);
+                    RtlCopyMemory(ModuleVersionId, &guidsPtr[mvidIndex - 1], sizeof(GUID));
+                    bResult = TRUE;
+                }
             }
         }
-
         FreeLibrary(hModule);
     }
 

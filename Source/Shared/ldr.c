@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2017
+*  (C) COPYRIGHT AUTHORS, 2015 - 2025
 *
 *  TITLE:       LDR.C
 *
-*  VERSION:     2.72
+*  VERSION:     3.69
 *
-*  DATE:        26 May 2017
+*  DATE:        07 Jul 2025
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -22,10 +22,14 @@ DWORD align_gt(
     DWORD align
 )
 {
-    if ((p % align) == 0)
-        return p;
+    DWORD remainder;
 
-    return p + align - (p % align);
+    if (align == 0) return p;
+    remainder = p % align;
+    if (remainder == 0) return p;
+
+    if (p > MAXDWORD - (align - remainder)) return p;
+    return p + (align - remainder);
 }
 
 DWORD align_le(
@@ -44,40 +48,89 @@ LPVOID PELoaderLoadImage(
     _Out_opt_ PDWORD SizeOfImage
 )
 {
-    LPVOID                  exeBuffer = NULL;
-    PIMAGE_DOS_HEADER       dosh = (PIMAGE_DOS_HEADER)Buffer;
-    PIMAGE_FILE_HEADER      fileh = (PIMAGE_FILE_HEADER)((PBYTE)dosh + sizeof(DWORD) + dosh->e_lfanew);
-    PIMAGE_OPTIONAL_HEADER  popth = (PIMAGE_OPTIONAL_HEADER)((PBYTE)fileh + sizeof(IMAGE_FILE_HEADER));
-    PIMAGE_SECTION_HEADER   sections = (PIMAGE_SECTION_HEADER)((PBYTE)fileh + sizeof(IMAGE_FILE_HEADER) + fileh->SizeOfOptionalHeader);
-    DWORD                   c, p, rsz;
-    PIMAGE_BASE_RELOCATION  rel;
-    DWORD_PTR               delta;
-    LPWORD                  chains;
+    DWORD c, p, rsz;
+    DWORD optHeaderSize = 0, headersSize = 0;
+    DWORD_PTR delta;
+    LPWORD chains;
+    LPVOID exeBuffer = NULL;
+    PIMAGE_DOS_HEADER dosh;
+    PIMAGE_FILE_HEADER fileh;
+    PIMAGE_OPTIONAL_HEADER popth;
+    PIMAGE_SECTION_HEADER sections;
+    PIMAGE_BASE_RELOCATION rel;
+    PIMAGE_NT_HEADERS nth = NULL;
 
     do {
+        if (Buffer == NULL) {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            break;
+        }
 
-        if (SizeOfImage) {
-            *SizeOfImage = popth->SizeOfImage;
+        // check image headers
+        // we are supposed to deal with valid or system bins usually so these checks are slightly redurant
+
+        dosh = (PIMAGE_DOS_HEADER)Buffer;
+        if (dosh->e_magic != IMAGE_DOS_SIGNATURE) {
+            SetLastError(ERROR_BAD_EXE_FORMAT);
+            break;
+        }
+
+        if (dosh->e_lfanew < sizeof(IMAGE_DOS_HEADER) || dosh->e_lfanew > 0xFFFFF) {
+            SetLastError(ERROR_INVALID_EXE_SIGNATURE);
+            break;
+        }
+
+        nth = (PIMAGE_NT_HEADERS)((PBYTE)Buffer + dosh->e_lfanew);
+        if (nth->Signature != IMAGE_NT_SIGNATURE) {
+            SetLastError(ERROR_INVALID_EXE_SIGNATURE);
+            break;
+        }
+
+        fileh = (PIMAGE_FILE_HEADER)((PBYTE)dosh + sizeof(DWORD) + dosh->e_lfanew);
+        optHeaderSize = fileh->SizeOfOptionalHeader;
+        if (optHeaderSize != sizeof(IMAGE_OPTIONAL_HEADER32) &&
+            optHeaderSize != sizeof(IMAGE_OPTIONAL_HEADER64)) {
+            SetLastError(ERROR_BAD_EXE_FORMAT);
+            break;
+        }
+
+        popth = (PIMAGE_OPTIONAL_HEADER)((PBYTE)fileh + sizeof(IMAGE_FILE_HEADER));
+        if (popth->Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
+            popth->Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
+            SetLastError(ERROR_EXE_MARKED_INVALID);
+            break;
+        }
+
+        if (SizeOfImage) *SizeOfImage = popth->SizeOfImage;
+
+        // render image
+        headersSize = align_gt(popth->SizeOfHeaders, popth->FileAlignment);
+        if (headersSize > popth->SizeOfImage) {
+            SetLastError(ERROR_BAD_EXE_FORMAT);
+            break;
         }
 
         exeBuffer = VirtualAlloc(NULL, popth->SizeOfImage, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-        if (exeBuffer == NULL)
+        if (exeBuffer == NULL) {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             break;
+        }
 
-        // render image
-        memcpy(exeBuffer, Buffer, align_gt(popth->SizeOfHeaders, popth->FileAlignment));
+        memcpy(exeBuffer, Buffer, min(headersSize, popth->SizeOfHeaders));
 
-        for (c = 0; c < fileh->NumberOfSections; c++)
-            if ((sections[c].SizeOfRawData > 0) && (sections[c].PointerToRawData > 0))
+        sections = (PIMAGE_SECTION_HEADER)((PBYTE)fileh + sizeof(IMAGE_FILE_HEADER) + fileh->SizeOfOptionalHeader);
+        for (c = 0; c < fileh->NumberOfSections; c++) {
+            if ((sections[c].SizeOfRawData > 0) && (sections[c].PointerToRawData > 0)) {
                 memcpy((PBYTE)exeBuffer + sections[c].VirtualAddress,
-                (PBYTE)Buffer + align_le(sections[c].PointerToRawData, popth->FileAlignment),
+                    (PBYTE)Buffer + align_le(sections[c].PointerToRawData, popth->FileAlignment),
                     align_gt(sections[c].SizeOfRawData, popth->FileAlignment));
+            }
+        }
 
         // reloc image
         dosh = (PIMAGE_DOS_HEADER)exeBuffer;
         fileh = (PIMAGE_FILE_HEADER)((PBYTE)dosh + sizeof(DWORD) + dosh->e_lfanew);
         popth = (PIMAGE_OPTIONAL_HEADER)((PBYTE)fileh + sizeof(IMAGE_FILE_HEADER));
-        sections = (PIMAGE_SECTION_HEADER)((PBYTE)fileh + sizeof(IMAGE_FILE_HEADER) + fileh->SizeOfOptionalHeader);
 
         if (popth->NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_BASERELOC)
             if (popth->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress != 0)
@@ -112,6 +165,7 @@ LPVOID PELoaderLoadImage(
             }
 
         return exeBuffer;
+
     } while (FALSE);
 
     return NULL;
@@ -122,60 +176,91 @@ LPVOID PELoaderGetProcAddress(
     _In_ PCHAR RoutineName
 )
 {
-    PIMAGE_EXPORT_DIRECTORY     ExportDirectory = NULL;
-    PIMAGE_FILE_HEADER          fh1 = NULL;
-    PIMAGE_OPTIONAL_HEADER32    oh32 = NULL;
-    PIMAGE_OPTIONAL_HEADER64    oh64 = NULL;
+    USHORT OrdinalIndex;
+    LONG Result;
+    PIMAGE_EXPORT_DIRECTORY ExportDirectory = NULL;
+    PULONG NameTableBase, FunctionTableBase;
+    PUSHORT NameOrdinalTableBase;
+    PCHAR CurrentName;
+    ULONG High, Low, Middle = 0;
+    ULONG ExportDirRVA, ExportDirSize;
+    ULONG FunctionRVA;
 
-    USHORT      OrdinalNumber;
-    PULONG      NameTableBase;
-    PUSHORT     NameOrdinalTableBase;
-    PULONG      Addr;
-    LONG        Result;
-    ULONG       High, Low, Middle = 0;
+    union {
+        PIMAGE_NT_HEADERS64 nt64;
+        PIMAGE_NT_HEADERS32 nt32;
+        PIMAGE_NT_HEADERS nt;
+    } NtHeaders;
 
-    fh1 = (PIMAGE_FILE_HEADER)((ULONG_PTR)ImageBase + ((PIMAGE_DOS_HEADER)ImageBase)->e_lfanew + sizeof(DWORD));
-    oh32 = (PIMAGE_OPTIONAL_HEADER32)((ULONG_PTR)fh1 + sizeof(IMAGE_FILE_HEADER));
-    oh64 = (PIMAGE_OPTIONAL_HEADER64)oh32;
+    if (ImageBase == NULL || RoutineName == NULL) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
 
-    if (fh1->Machine == IMAGE_FILE_MACHINE_AMD64) {
-        ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)((ULONG_PTR)ImageBase +
-            oh64->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+    NtHeaders.nt = RtlImageNtHeader(ImageBase);
+    if (NtHeaders.nt == NULL) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    if (NtHeaders.nt->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64) {
+        ExportDirRVA = NtHeaders.nt64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+        ExportDirSize = NtHeaders.nt64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
+    }
+    else if (NtHeaders.nt->FileHeader.Machine == IMAGE_FILE_MACHINE_I386) {
+        ExportDirRVA = NtHeaders.nt32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+        ExportDirSize = NtHeaders.nt32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
     }
     else {
-        ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)((ULONG_PTR)ImageBase +
-            oh32->DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+        SetLastError(ERROR_EXE_MACHINE_TYPE_MISMATCH);
+        return NULL;
     }
 
-    NameTableBase = (PULONG)((PBYTE)ImageBase + (ULONG)ExportDirectory->AddressOfNames);
-    NameOrdinalTableBase = (PUSHORT)((PBYTE)ImageBase + (ULONG)ExportDirectory->AddressOfNameOrdinals);
+    if (ExportDirRVA == 0 || ExportDirSize == 0) {
+        SetLastError(ERROR_PROC_NOT_FOUND);
+        return NULL;
+    }
+
+    ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)RtlOffsetToPointer((ULONG_PTR)ImageBase, ExportDirRVA);
+    NameTableBase = (PULONG)RtlOffsetToPointer(ImageBase, (ULONG)ExportDirectory->AddressOfNames);
+    NameOrdinalTableBase = (PUSHORT)RtlOffsetToPointer(ImageBase, (ULONG)ExportDirectory->AddressOfNameOrdinals);
+    FunctionTableBase = (PULONG)((ULONG_PTR)ImageBase + ExportDirectory->AddressOfFunctions);
+
+    if (ExportDirectory->NumberOfNames == 0) {
+        SetLastError(ERROR_PROC_NOT_FOUND);
+        return NULL;
+    }
+
     Low = 0;
     High = ExportDirectory->NumberOfNames - 1;
-    while (High >= Low) {
-        Middle = (Low + High) >> 1;
-        Result = _strcmp_a(
-            RoutineName,
-            (char *)ImageBase + NameTableBase[Middle]
-        );
+
+    while (Low <= High) {
+        Middle = Low + (High - Low) / 2;
+        CurrentName = (PCHAR)RtlOffsetToPointer((ULONG_PTR)ImageBase, NameTableBase[Middle]);
+        Result = _strcmp_a(RoutineName, CurrentName);
+        if (Result == 0) {
+            OrdinalIndex = NameOrdinalTableBase[Middle];
+            if (OrdinalIndex >= ExportDirectory->NumberOfFunctions) {
+                SetLastError(ERROR_PROC_NOT_FOUND);
+                return NULL;
+            }
+            FunctionRVA = FunctionTableBase[OrdinalIndex];
+            if (FunctionRVA == 0) {
+                SetLastError(ERROR_PROC_NOT_FOUND);
+                return NULL;
+            }
+            return (LPVOID)RtlOffsetToPointer((ULONG_PTR)ImageBase, FunctionRVA);
+        }
         if (Result < 0) {
+            if (Middle == 0) break;
             High = Middle - 1;
         }
         else {
-            if (Result > 0) {
-                Low = Middle + 1;
-            }
-            else {
-                break;
-            }
+            Low = Middle + 1;
         }
-    } //while
-    if (High < Low)
-        return NULL;
 
-    OrdinalNumber = NameOrdinalTableBase[Middle];
-    if ((ULONG)OrdinalNumber >= ExportDirectory->NumberOfFunctions)
-        return NULL;
+    }
 
-    Addr = (PULONG)((PBYTE)ImageBase + (ULONG)ExportDirectory->AddressOfFunctions);
-    return (LPVOID)((PBYTE)ImageBase + Addr[OrdinalNumber]);
+    SetLastError(ERROR_PROC_NOT_FOUND);
+    return NULL;
 }

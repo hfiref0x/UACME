@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2014 - 2022
+*  (C) COPYRIGHT AUTHORS, 2014 - 2025
 *
 *  TITLE:       COMPRESS.C
 *
-*  VERSION:     3.61
+*  VERSION:     3.69
 *
-*  DATE:        22 Jun 2022
+*  DATE:        07 Jul 2025
 *
 *  Compression and encoding/decoding support.
 *
@@ -132,6 +132,9 @@ BOOL IsValidContainerHeader(
 )
 {
     DWORD HeaderCrc;
+
+    if (UnitHeader == NULL)
+        return FALSE;
 
     __try {
         if ((UnitHeader->Magic != UACME_CONTAINER_PACKED_DATA) &&   //Naka

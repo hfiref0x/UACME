@@ -4,9 +4,9 @@
 *
 *  TITLE:       SHELLSUP.C
 *
-*  VERSION:     3.65
+*  VERSION:     3.69
 *
-*  DATE:        25 Sep 2023
+*  DATE:        07 Jul 2025
 *
 *  Shell registry hijack autoelevation methods.
 *
@@ -323,6 +323,7 @@ NTSTATUS ucmShellRegModMethod(
     } while (FALSE);
 
     if (targetKey) NtClose(targetKey);
+    if (masterRootKey) NtClose(masterRootKey);
     if (lpSlaveNtKey) supHeapFree(lpSlaveNtKey);
 
     //

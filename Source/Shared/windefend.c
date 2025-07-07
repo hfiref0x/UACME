@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2015 - 2020
+*  (C) COPYRIGHT AUTHORS, 2015 - 2025
 *
 *  TITLE:       WINDEFEND.C
 *
-*  VERSION:     3.50
+*  VERSION:     3.69
 *
-*  DATE:        14 Sep 2020
+*  DATE:        07 Jul 2025
 *
 *  MSE / Windows Defender anti-emulation part.
 *
@@ -149,7 +149,12 @@ PVOID wdxGetProcedureAddressByHash(
 
     DWORD_PTR FunctionPtr;
 
+    if (ImageBase == NULL)
+        return NULL;
+
     DosHeader = (IMAGE_DOS_HEADER*)ImageBase;
+    if (DosHeader->e_magic != IMAGE_DOS_SIGNATURE)
+        return NULL;
 
     Exports = (IMAGE_EXPORT_DIRECTORY*)RtlImageDirectoryEntryToData(ImageBase, 
         TRUE,
@@ -195,9 +200,12 @@ VOID wdCheckEmulatedVFS(
     WCHAR szMsEngVFS[12] = { L':', L'\\', L'm', L'y', L'a', L'p', L'p', L'.', L'e', L'x', L'e', 0 };
 
     RtlSecureZeroMemory(&szBuffer, sizeof(szBuffer));
-    GetModuleFileName(NULL, szBuffer, MAX_PATH);
-    if (_strstri(szBuffer, szMsEngVFS) != NULL) {
-        RtlExitUserProcess((UINT)0);
+    if (GetModuleFileName(NULL, szBuffer, MAX_PATH)) {
+        if (_strstri(szBuffer, szMsEngVFS) != NULL) {
+            if (_strstri(szBuffer, szMsEngVFS) != NULL) {
+                RtlExitUserProcess((UINT)0);
+            }
+        }
     }
 }
 
@@ -227,6 +235,9 @@ NTSTATUS wdIsEmulatorPresent(
     {
         return STATUS_DLL_NOT_FOUND;
     }
+
+    if (ImageBase == NULL)
+        return STATUS_DLL_NOT_FOUND;
 
     Exports = (IMAGE_EXPORT_DIRECTORY*)RtlImageDirectoryEntryToData(ImageBase, TRUE,
         IMAGE_DIRECTORY_ENTRY_EXPORT, &sz);

