@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2021
+*  (C) COPYRIGHT AUTHORS, 2021 - 2025
 *
 *  TITLE:       PCA.C
 *
-*  VERSION:     3.56
+*  VERSION:     3.69
 *
-*  DATE:        30 July 2021
+*  DATE:        07 July 2025
 * 
 *  Fubuki Program Compatibility Assistant method support code.
 *
@@ -157,7 +157,7 @@ BOOL ucmxStopTaskByName(
 *
 * Purpose:
 *
-* Call etw write event.
+* Write ETW events to trigger the PCA process.
 *
 */
 ULONG pcaEtwCall()
@@ -245,7 +245,7 @@ ULONG pcaStopWDI()
 *
 * Purpose:
 *
-* PCA Windows 7 stub handler.
+* PCA Windows 7 specific trigger method.
 *
 */
 ULONG pcaWin7Trigger(
@@ -372,7 +372,7 @@ BOOL WINAPI pcaEntryPointDll(
                 MEM_TOP_DOWN,
                 PAGE_READWRITE);
 
-            if (NT_SUCCESS(ntStatus) && pvLoaderBlock) {
+            if (NT_SUCCESS(ntStatus) && pvLoaderBlock && viewSize >= sizeof(PCA_LOADER_BLOCK)) {
 
                 RtlSecureZeroMemory(&szLoader, sizeof(szLoader));
                 _strncpy(szLoader, MAX_PATH, pvLoaderBlock->szLoader, MAX_PATH);

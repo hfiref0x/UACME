@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2019 - 2024
+*  (C) COPYRIGHT AUTHORS, 2019 - 2025
 *
 *  TITLE:       UIHACKS.C
 *
-*  VERSION:     3.66
+*  VERSION:     3.69
 *
-*  DATE:        03 Apr 2024
+*  DATE:        07 Jul 2025
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -44,7 +44,7 @@ VOID ucmxSendInput(
 *
 * Purpose:
 *
-* Send input to the foreground window.
+* Send keyboard input to the foreground window with optional shift key.
 *
 */
 VOID ucmxSendControlInput(
@@ -82,7 +82,7 @@ VOID ucmxSendControlInput(
 *
 * Purpose:
 *
-* Send keys to foreground window.
+* Send a sequence of keystrokes to the foreground window.
 *
 */
 VOID ucmxSendKeys(
@@ -359,6 +359,9 @@ VOID ucmUIHackExecute2(
             ip.ki.wVk = VK_F1;
             ucmxSendInput(1, &ip, sizeof(INPUT));
             Sleep(1000);
+        }
+        else {
+            ucmDbgMsg(L"MMCMainFrame window not found\r\n");
         }
 
         TerminateProcess(shinfo.hProcess, 0);

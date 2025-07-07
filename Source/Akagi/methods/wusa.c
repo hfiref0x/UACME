@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2017 - 2020
+*  (C) COPYRIGHT AUTHORS, 2017 - 2025
 *
 *  TITLE:       WUSA.C
 *
-*  VERSION:     3.24
+*  VERSION:     3.69
 *
-*  DATE:        20 Apr 2020
+*  DATE:        07 Jul 2025
 *
 *  Windows Update Standalone Installer (WUSA) based routines.
 *
@@ -172,7 +172,7 @@ DWORD ucmxDirectoryWatchdogThread(
 
     LPWSTR                      CapturedDirectoryName = NULL, lpEnd = NULL;
 
-    WCHAR szBuffer[MAX_PATH + 1];
+    WCHAR szBuffer[MAX_PATH * 2];
 
     UNICODE_STRING usTargetDirectory, usWatchDirectory, usReparseDirectory;
 

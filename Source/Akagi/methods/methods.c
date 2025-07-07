@@ -4,9 +4,9 @@
 *
 *  TITLE:       METHODS.C
 *
-*  VERSION:     3.68
+*  VERSION:     3.69
 *
-*  DATE:        07 Mar 2025
+*  DATE:        07 Jul 2025
 *
 *  UAC bypass dispatch.
 *
@@ -381,14 +381,15 @@ NTSTATUS MethodsManagerCall(
     //
     // Wait a little bit for completion.
     //
-    if (Entry->SetParameters) {
-        if (bParametersBlockSet) {
-            Status = supWaitForGlobalCompletionEvent();
-            ucmConsolePrintStatus(TEXT("[+] MethodsManagerCall->supWaitForGlobalCompletionEvent"), Status);
-            supDestroySharedParametersBlock(g_ctx);
-        }
+    if (Entry->SetParameters && bParametersBlockSet) {
+        Status = supWaitForGlobalCompletionEvent();
+        ucmConsolePrintStatus(TEXT("[+] MethodsManagerCall->supWaitForGlobalCompletionEvent"), Status);
+        supDestroySharedParametersBlock(g_ctx);
     }
 
+    //
+    // Perform method-specific cleanup
+    //
     PostCleanupAttempt(Method);
 
     return MethodResult;

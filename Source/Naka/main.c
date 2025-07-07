@@ -1,12 +1,12 @@
 /*******************************************************************************
 *
-*  (C) COPYRIGHT AUTHORS, 2016 - 2022
+*  (C) COPYRIGHT AUTHORS, 2016 - 2025
 *
 *  TITLE:       MAIN.C
 *
-*  VERSION:     3.59
+*  VERSION:     3.69
 *
-*  DATE:        02 Feb 2022
+*  DATE:        07 Jul 2025
 *
 *  Naka, support payload compressor.
 *
@@ -16,7 +16,6 @@
 * PARTICULAR PURPOSE.
 *
 *******************************************************************************/
-#pragma once
 
 #include "naka.h"
 
@@ -386,7 +385,7 @@ BOOL EncryptBuffer(
     BCRYPT_KEY_HANDLE   hKey = NULL;
     HANDLE              heapCNG = NULL;
     DWORD               cbCipherData, cbObject, cbResult, cbBlockLen;
-    PBYTE               pbObject, pbCipherData, _pbIV;
+    PBYTE               pbObject, pbCipherData = NULL, _pbIV;
 
     do {
 
@@ -528,6 +527,7 @@ BOOL EncryptBuffer(
     }
 
     if (bResult == FALSE) {
+        if (pbCipherData) HeapFree(GetProcessHeap(), HEAP_ZERO_MEMORY, pbCipherData);
         *pbEncryptedBuffer = NULL;
         *pcbEncryptedBuffer = 0;
     }
@@ -551,6 +551,9 @@ BOOL supWriteBufferToFile(
 {
     HANDLE hFile;
     DWORD bytesIO;
+
+    if (Buffer == NULL || BufferSize == 0)
+        return FALSE;
 
     hFile = CreateFileW(lpFileName,
         GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);

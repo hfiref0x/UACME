@@ -4,9 +4,9 @@
 *
 *  TITLE:       DLLMAIN.C
 *
-*  VERSION:     3.68
+*  VERSION:     3.69
 *
-*  DATE:        07 Mar 2025
+*  DATE:        07 Jul 2025
 *
 *  Proxy dll entry point.
 *
@@ -77,6 +77,9 @@ VOID DefaultPayload(
     ExitCode = (ucmLaunchPayload(lpParameter, cbParameter) != FALSE);
 
     ucmDbgMsg(L"Fubuki, after ucmLaunchPayload\r\n");
+    if (ExitCode == 0) {
+        ucmDbgMsg(L"Fubuki, ucmLaunchPayload failed\r\n");
+    }
 
     //
     // If this is default executable, show runtime info.
@@ -273,7 +276,7 @@ VOID WINAPI EntryPointUIAccessLoader(
     VOID
 )
 {
-    ULONG r;
+    ULONG r = 0;
     WCHAR szParam[MAX_PATH * 2];
 
     if (wdIsEmulatorPresent() != STATUS_NOT_SUPPORTED) {
