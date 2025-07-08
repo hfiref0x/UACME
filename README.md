@@ -823,8 +823,8 @@ akagi64.exe 61 c:\windows\system32\charmap.exe
      * Implementation: ucmSspiDatagramMethod
      * Works from: Windows 7 RTM (7600)
      * AlwaysNotify compatible
-     * Fixed in: unfixed :see_no_evil:
-        * How: -
+     * Fixed in: Windows 10 (19041), a part of patch, 2024? year
+        * How: Side effect of Windows changes
       * Code status: added in v3.6.5
 79. Author: James Forshaw and Stefan Kanthak
      * Type: GUI Hack
