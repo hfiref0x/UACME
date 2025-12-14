@@ -5,9 +5,9 @@
 *
 *  TITLE:       NTOS.H
 *
-*  VERSION:     1.236
+*  VERSION:     1.237
 *
-*  DATE:        12 Jun 2025
+*  DATE:        22 Aug 2025
 *
 *  Common header file for the ntos API functions and definitions.
 *
@@ -114,8 +114,10 @@ typedef PVOID PMEM_EXTENDED_PARAMETER;
 #endif
 
 #ifndef IN_REGION
-#define IN_REGION(x, Base, Size) (((ULONG_PTR)(x) >= (ULONG_PTR)(Base)) && \
-            ((ULONG_PTR)(x) <= (ULONG_PTR)(Base) + (ULONG_PTR)(Size)))
+#define IN_REGION(x, Base, Size) ( \
+    (((ULONG_PTR)(Base) + (ULONG_PTR)(Size)) > (ULONG_PTR)(Base)) && \
+    /* x within [Base, Base+Size) */ \
+    (((ULONG_PTR)(x) >= (ULONG_PTR)(Base)) && ((ULONG_PTR)(x) < ((ULONG_PTR)(Base) + (ULONG_PTR)(Size)))))
 #endif
 
 #define PE_SIGNATURE_SIZE           4
@@ -1615,7 +1617,6 @@ typedef enum _PS_ATTRIBUTE_NUM {
 #define RTL_USER_PROC_IMAGE_KEY_MISSING                 0x00004000
 #define RTL_USER_PROC_DEV_OVERRIDE_ENABLED              0x00008000
 #define RTL_USER_PROC_OPTIN_PROCESS                     0x00020000
-#define RTL_USER_PROC_OPTIN_PROCESS                     0x00020000
 #define RTL_USER_PROC_SESSION_OWNER                     0x00040000
 #define RTL_USER_PROC_HANDLE_USER_CALLBACK_EXCEPTIONS   0x00080000
 #define RTL_USER_PROC_PROTECTED_PROCESS                 0x00400000
@@ -1924,6 +1925,9 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
     SystemCodeIntegrityPolicyManagementInformation = 248,
     SystemMemoryNumaCacheInformation = 249,
     SystemProcessorFeaturesBitMapInformation = 250,
+    SystemRefTraceInformationEx = 251,
+    SystemBasicProcessInformation = 252,
+    SystemHandleCountInformation = 253,
     MaxSystemInfoClass
 } SYSTEM_INFORMATION_CLASS, * PSYSTEM_INFORMATION_CLASS;
 
@@ -11759,6 +11763,7 @@ typedef enum _OBJECT_INFORMATION_CLASS {
     ObjectHandleFlagInformation,
     ObjectSessionInformation,
     ObjectSessionObjectInformation,
+    ObjectSetRefTraceInformation,
     MaxObjectInfoClass
 } OBJECT_INFORMATION_CLASS;
 
@@ -12459,22 +12464,6 @@ NtWriteFileGather(
     _In_ ULONG Length,
     _In_opt_ PLARGE_INTEGER ByteOffset,
     _In_opt_ PULONG Key);
-
-NTSYSAPI
-NTSTATUS
-NTAPI
-NtQueryDirectoryFile(
-    _In_ HANDLE FileHandle,
-    _In_opt_ HANDLE Event,
-    _In_opt_ PIO_APC_ROUTINE ApcRoutine,
-    _In_opt_ PVOID ApcContext,
-    _Out_ PIO_STATUS_BLOCK IoStatusBlock,
-    _Out_writes_bytes_(Length) PVOID FileInformation,
-    _In_ ULONG Length,
-    _In_ FILE_INFORMATION_CLASS FileInformationClass,
-    _In_ BOOLEAN ReturnSingleEntry,
-    _In_opt_ PUNICODE_STRING FileName,
-    _In_ BOOLEAN RestartScan);
 
 NTSYSAPI
 NTSTATUS

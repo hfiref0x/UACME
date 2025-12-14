@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.69
 *
-*  DATE:        07 Jul 2025
+*  DATE:        14 Dec 2025
 *
 * THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 * ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED
@@ -2070,26 +2070,24 @@ BOOL supQuerySystemRoot(
         if (!NT_SUCCESS(Status) || (lpData == NULL))
             break;
 
-        ccm = Length / sizeof(WCHAR);
-        cch = ccm;
-        if (lpData[cch - 1] != L'\\') {
-            ccm++;
-            needBackslash = TRUE;
-        }
-        else {
-            needBackslash = FALSE;
+        cch = _strlen(lpData);
+        if (cch == 0) {
+            SetLastError(ERROR_INVALID_DATA);
+            break;
         }
 
-        ccm += (cbSystem32Prep / sizeof(WCHAR));
+        needBackslash = (lpData[cch - 1] != L'\\');
+        ccm = cch + (needBackslash ? 1 : 0) + (cbSystem32Prep / sizeof(WCHAR));
 
         if (ccm >= MAX_PATH) {
             SetLastError(ERROR_BUFFER_OVERFLOW);
             break;
         }
 
-        _strncpy(context->szSystemRoot, MAX_PATH, lpData, cch);
+        _strncpy(context->szSystemRoot, MAX_PATH, lpData, cch + 1);
         if (needBackslash) {
-            context->szSystemRoot[cch - 1] = L'\\';
+            context->szSystemRoot[cch] = L'\\';
+            context->szSystemRoot[cch + 1] = UNICODE_NULL;
         }
 
         _strcpy(context->szSystemDirectory, context->szSystemRoot);
@@ -2143,6 +2141,8 @@ PVOID supGetSystemInfo(
             return NULL;
 
         buffer = supHeapAlloc((SIZE_T)bufferSize);
+        if (buffer == NULL)
+            return NULL;
     }
 
     if (NT_SUCCESS(ntStatus)) {
@@ -3910,21 +3910,32 @@ BOOL supConcatenatePaths(
     SIZE_T TargetLength, PathLength;
     BOOL TrailingBackslash, LeadingBackslash;
     SIZE_T EndingLength;
+    SIZE_T CopyLength;
+    SIZE_T i;
 
     if (Target == NULL || Path == NULL || TargetBufferSize == 0)
         return FALSE;
 
+    //
+    // Find current target length.
+    //
     TargetLength = 0;
-    while (Target[TargetLength] != 0 && TargetLength < TargetBufferSize)
+    while (TargetLength < TargetBufferSize && Target[TargetLength] != 0)
         TargetLength++;
 
     if (TargetLength >= TargetBufferSize)
         return FALSE;
 
+    //
+    // Find path length.
+    //
     PathLength = 0;
     while (Path[PathLength] != 0)
         PathLength++;
 
+    //
+    // LeadingBackslash is used to decide whether to add an extra separator.
+    //
     if (TargetLength > 0 && Target[TargetLength - 1] == TEXT('\\')) {
         TrailingBackslash = TRUE;
         TargetLength--;
@@ -3933,29 +3944,43 @@ BOOL supConcatenatePaths(
         TrailingBackslash = FALSE;
     }
 
-    LeadingBackslash = (Path[0] == TEXT('\\'));
-    if (LeadingBackslash) {
-        Path++;
-        PathLength--;
-    }
+    LeadingBackslash = (Path[0] == TEXT('\\')) ? TRUE : FALSE;
 
-    EndingLength = TargetLength + PathLength + ((!LeadingBackslash && !TrailingBackslash) ? 1 : 0) + 1; // +1 for NULL
+    //
+    // Compute required length.
+    //
+    EndingLength = TargetLength + PathLength + 1; // +1 for NULL
+
+    //
+    // Add separator only when Path does not already start with '\'.
+    //
+    if (!LeadingBackslash) {
+        EndingLength += 1; // for '\'
+    }
 
     if (EndingLength > TargetBufferSize)
         return FALSE;
 
-    if (!LeadingBackslash && !TrailingBackslash) {
+    //
+    // Insert separator if needed.
+    //
+    if (!LeadingBackslash) {
         Target[TargetLength] = TEXT('\\');
         TargetLength++;
     }
 
-    for (SIZE_T i = 0; i < PathLength && (TargetLength + i + 1) < TargetBufferSize; i++) {
+    //
+    // Copy Path (including its leading '\' if present).
+    //
+    CopyLength = EndingLength - TargetLength - 1; // excluding NULL
+
+    for (i = 0; i < CopyLength; i++) {
         Target[TargetLength + i] = Path[i];
     }
 
     Target[EndingLength - 1] = 0;
 
-    return (EndingLength <= TargetBufferSize);
+    return TRUE;
 }
 
 /*

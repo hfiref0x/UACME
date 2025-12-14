@@ -4,9 +4,9 @@
 *
 *  TITLE:       NTBUILDS.H
 *
-*  VERSION:     1.27
+*  VERSION:     1.28
 *
-*  DATE:        11 May 2025
+*  DATE:        18 Sep 2025
 *
 *  Windows NT builds definition file.
 *
@@ -91,5 +91,8 @@
 // Windows 11 24H2
 #define NT_WIN11_24H2           26100
 
+// Windows 11 25H2
+#define NT_WIN11_25H2           26200
+
 // Windows 11 Active Development Branch
-#define NT_WIN11_25H2           27842 //canary (25H2)
+#define NT_WIN11_ADB            27943

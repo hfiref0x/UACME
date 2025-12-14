@@ -6,7 +6,7 @@
 *
 *  VERSION:     3.69
 *
-*  DATE:        07 Jul 2025
+*  DATE:        14 Dec 2025
 *
 *  Global consts definition file.
 *
@@ -30,7 +30,7 @@
 #define UCM_VERSION_MAJOR       3
 #define UCM_VERSION_MINOR       6
 #define UCM_VERSION_REVISION    9
-#define UCM_VERSION_BUILD       2507
+#define UCM_VERSION_BUILD       2512
 
 #define SUPRUNPROCESS_TIMEOUT_DEFAULT 12000
 
