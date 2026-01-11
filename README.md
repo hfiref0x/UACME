@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/dvnyciarevyj3vuj?svg=true)](https://ci.appveyor.com/project/hfiref0x/uacme)
+[![Build status](https://img.shields.io/appveyor/build/hfiref0x/uacme?logo=appveyor)](https://ci.appveyor.com/project/hfiref0x/uacme)
 ![Visitors](https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fgithub.com%2Fhfiref0x%2Fuacme&countColor=%23263759&style=flat)
 
 # UACMe
@@ -969,4 +969,4 @@ BTC (Bitcoin): bc1qzkvtpa0053cagf35dqmpvv9k8hyrwl7krwdz84q39mcpy68y6tmqsju0g4
 
 # Authors
 
-(c) 2014 - 2025 UACMe Project
+(c) 2014 - 2026 UACMe Project
