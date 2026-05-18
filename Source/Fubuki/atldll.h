@@ -61,7 +61,10 @@
 #pragma comment(linker, " /EXPORT:AtlModuleUnRegisterTypeLib=\\\\?\\globalroot\\systemroot\\system32\\atl.AtlModuleUnRegisterTypeLib,@55")
 #pragma comment(linker, " /EXPORT:AtlModuleUnregisterServer=\\\\?\\globalroot\\systemroot\\system32\\atl.AtlModuleUnregisterServer,@22")
 #pragma comment(linker, " /EXPORT:AtlModuleUnregisterServerEx=\\\\?\\globalroot\\systemroot\\system32\\atl.AtlModuleUnregisterServerEx,@57")
-#pragma comment(linker, " /EXPORT:AtlModuleUpdateRegistryFromResourceD=\\\\?\\globalroot\\systemroot\\system32\\atl.AtlModuleUpdateRegistryFromResourceD,@23")
+// AtlModuleUpdateRegistryFromResourceD export forwarding removed to prevent
+// potential DLL hijacking via the \\?\globalroot path resolution chain.
+// Use LoadLibraryExW with LOAD_LIBRARY_SEARCH_SYSTEM32 flag if this export
+// is required at runtime.
 #pragma comment(linker, " /EXPORT:AtlPixelToHiMetric=\\\\?\\globalroot\\systemroot\\system32\\atl.AtlPixelToHiMetric,@28")
 #pragma comment(linker, " /EXPORT:AtlRegisterClassCategoriesHelper=\\\\?\\globalroot\\systemroot\\system32\\atl.AtlRegisterClassCategoriesHelper,@49")
 #pragma comment(linker, " /EXPORT:AtlSetErrorInfo=\\\\?\\globalroot\\systemroot\\system32\\atl.AtlSetErrorInfo,@25")
