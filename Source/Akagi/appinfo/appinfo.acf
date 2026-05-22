@@ -1,4 +1,0 @@
-interface LaunchAdminProcess
-{	
-	[async] RAiLaunchAdminProcess();
-}

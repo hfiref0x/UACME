@@ -1,6 +1,0 @@
-#include "bin32res.h"
-#include "winres.h"
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-IDR_FUBUKI32 RCDATA "bin\\fubuki32.cd"
-IDR_KAMIKAZE RCDATA "bin\\kamikaze.cd"
-IDR_SECRETS RCDATA "bin\\secrets32.bin"

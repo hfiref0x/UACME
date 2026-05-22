@@ -1,7 +1,0 @@
-[
-	explicit_handle
-]
-interface PcaService7
-{
-	RAiNotifyUserCallbackExceptionProcess();
-}
