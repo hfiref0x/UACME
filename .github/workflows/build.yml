@@ -2,15 +2,10 @@ name: Build UACME
 
 on:
   push:
-    branches: [ "master", "main" ]
+    branches: [ "**" ] # 任何分支有 Push 都会触发
   pull_request:
-    branches: [ "master", "main" ]
-  workflow_dispatch:
-    inputs:
-      version_ref:
-        description: '要构建的分支、Tag 或 Commit（留空默认构建当前分支，例如：3.6.x_plus 或 3.6.4）'
-        required: false
-        default: '3.6.x_plus'
+    branches: [ "**" ]
+  workflow_dispatch: # 支持手动点击按钮触发
 
 env:
   ACTIONS_RUNNER_FORCE_NODE24: "true"
@@ -20,25 +15,8 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Parse Version Name
-      id: parse_version
-      shell: pwsh
-      run: |
-        $inputRef = "${{ inputs.version_ref }}"
-        if ([string]::IsNullOrWhiteSpace($inputRef)) {
-          $ver = "${{ github.ref_name }}"
-        } else {
-          $ver = $inputRef
-        }
-        # 过滤文件名不合法的字符
-        $cleanVer = $ver -replace '[\\/:*?"<>|]', '-'
-        Write-Output "VER_TAG=$cleanVer" >> $env:GITHUB_ENV
-        Write-Output "VER_REF=$ver" >> $env:GITHUB_ENV
-
     - name: Checkout Code
-      uses: actions/checkout@v4.2.2
-      with:
-        ref: ${{ env.VER_REF }}
+      uses: actions/checkout@v4.2.2 # 默认自动拉取当前触发工作流的分支
 
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
@@ -50,7 +28,8 @@ jobs:
     - name: Upload Compiled Artifacts
       uses: actions/upload-artifact@v4.4.3
       with:
-        name: UACME-x64-${{ env.VER_TAG }}
+        # ${{ github.ref_name }} 会自动变成当前分支名（如 3.6.x_plus 或 master）
+        name: UACME-x64-${{ github.ref_name }}
         path: |
           Source/bin/**
           Source/**/Release/*.exe
