@@ -2,6 +2,7 @@ version: 1.0.{build}
 branches:
   only:
   - master
+  - /^v\d+\.\d+.*$/
 
 image: Visual Studio 2022
 
@@ -12,3 +13,30 @@ clone_folder: c:\projects\uacme
 
 build_script:
   - cmd: msbuild Source\uacme.sln /m /v:normal /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
+
+after_build:
+  - ps: |
+      $out = "c:\projects\uacme\dist"
+      New-Item -ItemType Directory -Force -Path $out | Out-Null
+      Get-ChildItem -Path Source -Recurse -Include *.exe,*.dll |
+        Where-Object { $_.FullName -match '\\output\\x64\\Release\\' } |
+        Copy-Item -Destination $out -Force
+      7z a "c:\projects\uacme\uacme-$env:APPVEYOR_BUILD_VERSION-x64.zip" "$out\*"
+
+artifacts:
+  - path: uacme-*-x64.zip
+    name: uacme
+
+deploy:
+  - provider: GitHub
+    tag: $(APPVEYOR_REPO_TAG_NAME)
+    release: $(APPVEYOR_REPO_TAG_NAME)
+    description: 'UACME $(APPVEYOR_REPO_TAG_NAME) (x64 Release, AppVeyor build $(APPVEYOR_BUILD_VERSION))'
+    auth_token:
+      secure: REPLACE_WITH_ENCRYPTED_GITHUB_TOKEN
+    artifact: uacme
+    draft: false
+    prerelease: false
+    force_update: true
+    on:
+      APPVEYOR_REPO_TAG: true
